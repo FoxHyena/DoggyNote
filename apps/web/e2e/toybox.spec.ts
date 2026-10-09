@@ -174,3 +174,24 @@ test('quick capture notices you signed in after it opened', async ({ browser }) 
   await expect(page.getByTestId('capture-input')).toBeVisible()
   await ctx.close()
 })
+
+test('comments on Toy box cards are private too', async ({ page, browser }) => {
+  await page.goto('/')
+  const me = await rexId(page)
+  const card = crypto.randomUUID()
+  const msg = crypto.randomUUID()
+  const secret = uniq('private remark')
+  const r = await page.request.post('/api/sync', {
+    data: {
+      changes: [
+        { id: card, patch: { id: card, kind: 'card', type: 'note', boardId: `toybox:${me}`, x: 0, y: 0, w: 260, h: 60, z: 1, color: 'none', content: { md: 'mine' }, createdAt: Date.now() } },
+        { id: msg, patch: { id: msg, kind: 'comment', boardId: `toybox:${me}`, cardId: card, text: secret, createdAt: Date.now() } },
+      ],
+    },
+  })
+  expect(r.ok()).toBe(true)
+  const other = await fido(browser)
+  const body = await (await other.request.get('/api/sync?since=0')).text()
+  expect(body).not.toContain(secret)
+  expect(JSON.parse(body).objects.find((o: { id: string }) => o.id === msg)).toEqual({ id: msg, hidden: true })
+})

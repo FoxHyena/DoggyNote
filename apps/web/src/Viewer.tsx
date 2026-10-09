@@ -10,6 +10,7 @@ import { ThemeToggle } from './ThemeToggle.tsx'
 import { Canvas } from './canvas/Canvas.tsx'
 import { TopBar } from './ui/TopBar.tsx'
 import { Loader } from './ui/Loader.tsx'
+import { CommentsPanel } from './ui/CommentsPanel.tsx'
 
 type Shared = { rootBoardId: string; sharedBoards: string[]; objects: Obj[] }
 
@@ -57,6 +58,7 @@ export function Viewer(props: { token: string }) {
                 </div>
               </Match>
             </Switch>
+            <CommentsPanel readOnly />
             <a class="made-with" href="/" target="_blank" rel="noopener">
               🐾 {COPY.appName}
             </a>

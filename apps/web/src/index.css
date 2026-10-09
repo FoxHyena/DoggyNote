@@ -1889,3 +1889,139 @@ button:disabled {
   color: var(--dn-accent);
   font-weight: 600;
 }
+
+/* ---- comments ---- */
+
+.comment-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 22px;
+  padding: 0 7px 0 6px;
+  border: 1px solid var(--dn-accent);
+  border-radius: 11px;
+  background: var(--dn-accent);
+  color: var(--dn-accent-text);
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.comment-badge.resolved {
+  background: var(--dn-panel);
+  border-color: var(--dn-border);
+  color: var(--dn-text-muted);
+}
+
+.comments-on {
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comment-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 12px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.comment {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--dn-border);
+}
+
+.comment-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.comment-author {
+  font-size: 13px;
+}
+
+.comment-time {
+  color: var(--dn-text-muted);
+}
+
+.comment-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dn-text-muted);
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+.link-btn:hover {
+  color: var(--dn-text);
+}
+
+.comment-text {
+  margin-top: 4px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.comment-text :is(p, ul, ol, h1, h2, h3, blockquote) {
+  margin: 4px 0;
+}
+
+.comment-reply {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 14px;
+  border-top: 1px solid var(--dn-border);
+}
+
+.comment-reply .primary-btn,
+.comment-edit-bar .primary-btn {
+  align-self: flex-end;
+}
+
+.comment-edit-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.comment-input {
+  width: 100%;
+  resize: vertical;
+  padding: 8px 10px;
+  border: 1px solid var(--dn-border);
+  border-radius: 8px;
+  background: var(--dn-bg);
+  color: var(--dn-text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.comment-input:focus {
+  outline: 2px solid var(--dn-selection);
+  outline-offset: 0;
+}
+
+.trash-head .bar-btn.on {
+  color: var(--dn-text-muted);
+}
+
+.trash-head h2 {
+  margin-right: auto;
+}

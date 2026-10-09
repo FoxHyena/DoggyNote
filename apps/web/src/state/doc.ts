@@ -7,6 +7,7 @@ import {
   type Board,
   type Card,
   type Change,
+  type Comment,
   type Connection,
   type Id,
   type Obj,
@@ -337,6 +338,8 @@ type Index = {
   cards: Map<Id, Card[]>
   connections: Map<Id, Connection[]>
   boards: Board[]
+  /** cardId → live messages, oldest first. */
+  comments: Map<Id, Comment[]>
 }
 
 /**
@@ -348,6 +351,7 @@ export const index = createRoot(() =>
     const cards = new Map<Id, Card[]>()
     const connections = new Map<Id, Connection[]>()
     const boards: Board[] = []
+    const comments = new Map<Id, Comment[]>()
     for (const o of Object.values(state.objs)) {
       if (o.purged || o.deletedAt) continue
       if (o.kind === 'card') {
@@ -359,13 +363,20 @@ export const index = createRoot(() =>
         if (list) list.push(o)
         else connections.set(o.boardId, [o])
       } else if (o.kind === 'board') boards.push(o)
+      else if (o.kind === 'comment') {
+        const list = comments.get(o.cardId)
+        if (list) list.push(o)
+        else comments.set(o.cardId, [o])
+      }
     }
-    return { cards, connections, boards }
+    for (const list of comments.values()) list.sort((a, b) => a.createdAt - b.createdAt)
+    return { cards, connections, boards, comments }
   }),
 )
 
 export const cardsOn = (boardId: Id): Card[] => index().cards.get(boardId) ?? []
 export const connectionsOn = (boardId: Id): Connection[] => index().connections.get(boardId) ?? []
+export const commentsOn = (cardId: Id): Comment[] => index().comments.get(cardId) ?? []
 
 /** Trashed (soft-deleted, not purged) cards on a board. Not memoised; read when the panel opens. */
 export function trashedOn(boardId: Id): Card[] {
