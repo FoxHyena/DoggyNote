@@ -22,6 +22,7 @@ import { Viewer } from './Viewer.tsx'
 import { FetchPalette } from './ui/Fetch.tsx'
 import { Diagnostics } from './ui/Diagnostics.tsx'
 import { UpdateToast } from './ui/UpdateToast.tsx'
+import { snapToGrid, toggleSnap } from './state/grid.ts'
 import { startUpdateChecks } from './state/updates.ts'
 import { paletteOpen, setPaletteOpen } from './state/ui.ts'
 import { Icon, ToolIcons } from './ui/icons.tsx'
@@ -103,6 +104,16 @@ function EditorApp() {
                 <button class="icon-btn" data-testid="open-fetch" title={`${COPY.search} (⌘K)`} onClick={() => setPaletteOpen(true)}>
                   <Icon>{ToolIcons.search()}</Icon>
                   <span class="icon-btn-label">{COPY.search}</span>
+                </button>
+                <button
+                  class="icon-btn"
+                  classList={{ on: snapToGrid() }}
+                  data-testid="snap-toggle"
+                  aria-pressed={snapToGrid()}
+                  title={`Snap to grid: ${snapToGrid() ? 'on' : 'off'} (⌘')`}
+                  onClick={toggleSnap}
+                >
+                  <Icon>{ToolIcons.grid()}</Icon>
                 </button>
                 <SyncStatus />
                 <ShareButton boardId={boardId()} />

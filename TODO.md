@@ -51,8 +51,8 @@ Legend: [x] done + tested · [~] in progress · [ ] not started
 - [~] 640 px image tier (#7). Decoded images at 100%: 94 → 34 MB
 
 ## Round 3 (in progress)
-- [~] Sharp zoom in the desktop app (2D world transform)
-- [ ] Dot grid + snap-to-grid toggle (⌘'), haptic tick on desktop
+- [x] Sharp zoom in the desktop app (2D world transform)
+- [x] Dot grid + snap-to-grid toggle (⌘'), glow + haptic tick on desktop
 - [ ] Memory pass (Mac app ≤150 MB)
 - [ ] Toy box (personal, **server-enforced privacy**) + global quick capture
 - [ ] Comment threads on cards

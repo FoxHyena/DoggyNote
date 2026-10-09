@@ -6,6 +6,8 @@ import {
   diff,
   docToText,
   autoSides,
+  dotSpacing,
+  snap,
   connectorPath,
   edgePoint,
   nearestSide,
@@ -62,6 +64,22 @@ describe('camera', () => {
     const mid = worldToScreen(c, { x: 50, y: 50 })
     expect(mid.x).toBeCloseTo(500)
     expect(mid.y).toBeCloseTo(400)
+  })
+})
+
+describe('grid', () => {
+  it('snaps to the nearest grid line', () => {
+    expect(snap(0)).toBe(0)
+    expect(snap(9)).toBe(0)
+    expect(snap(11)).toBe(20)
+    expect(snap(-11)).toBe(-20)
+    expect(snap(37, 10)).toBe(40)
+  })
+  it('dot spacing doubles until dots are far enough apart', () => {
+    expect(dotSpacing(1)).toBe(20)
+    expect(dotSpacing(0.5)).toBe(20) // 10 → 20
+    expect(dotSpacing(0.1)).toBe(16) // 2 → 4 → 8 → 16
+    expect(dotSpacing(2)).toBe(40)
   })
 })
 

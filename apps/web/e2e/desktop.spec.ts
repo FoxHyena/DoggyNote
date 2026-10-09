@@ -20,13 +20,13 @@ test.beforeEach(async ({ page }) => {
         return id
       },
       invoke: async (cmd: string, args?: Record<string, unknown>) => {
-        if (cmd.startsWith('plugin:updater|') || cmd.startsWith('plugin:process|')) keychain.calls.push(cmd)
+        if (cmd.startsWith('plugin:updater|') || cmd.startsWith('plugin:process|') || cmd === 'haptic') keychain.calls.push(cmd)
         // A test sets this to pretend the server has a newer desktop release.
         const offered = sessionStorage.getItem('fake-update')
         if (cmd === 'plugin:updater|check')
           return offered ? { rid: 1, currentVersion: '0.0.1', version: offered, date: null, body: 'notes', rawJson: {} } : null
         if (cmd === 'plugin:updater|download') return 2
-        if (cmd === 'plugin:updater|install' || cmd === 'plugin:process|restart' || cmd === 'plugin:resources|close') return null
+        if (cmd === 'plugin:updater|install' || cmd === 'plugin:process|restart' || cmd === 'plugin:resources|close' || cmd === 'haptic') return null
         if (cmd === 'get_token') return keychain.token
         if (cmd === 'set_token') {
           keychain.token = String(args?.token)
@@ -166,4 +166,26 @@ test('desktop: a newer release downloads in the background, then restarts on req
   await expect
     .poll(() => page.evaluate(() => (window as unknown as { __fakeKeychain: { calls: string[] } }).__fakeKeychain.calls))
     .toEqual(['plugin:updater|check', 'plugin:updater|download', 'plugin:updater|install', 'plugin:process|restart'])
+})
+
+test('desktop: snapping across grid points taps the trackpad haptic', async ({ page }) => {
+  await page.goto('/')
+  await page.getByLabel('Username').fill('rex')
+  await page.getByLabel('Password').fill('goodboy123')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await freshBoard(page)
+  await page.getByTestId('snap-toggle').click()
+  const note = await addNote(page, 'buzzy pup', 0.4, 0.4)
+  await page.mouse.click(5, 5) // deselect via the canvas edge
+  const b = (await note.boundingBox())!
+  await page.mouse.move(b.x + 30, b.y + 12)
+  await page.mouse.down()
+  // Human speed: ticks are throttled so a fast fling doesn't buzz continuously.
+  for (let i = 1; i <= 6; i++) {
+    await page.mouse.move(b.x + 30 + i * 20, b.y + 12, { steps: 2 })
+    await page.waitForTimeout(60)
+  }
+  await page.mouse.up()
+  const calls = await page.evaluate(() => (window as unknown as { __fakeKeychain: { calls: string[] } }).__fakeKeychain.calls)
+  expect(calls.filter((c) => c === 'haptic').length).toBeGreaterThanOrEqual(3)
 })
