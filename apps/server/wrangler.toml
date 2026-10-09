@@ -2,6 +2,14 @@ name = "doggynote"
 main = "src/index.ts"
 compatibility_date = "2026-09-01"
 
+# The site lives at notepad.dog; www redirects there (see app.ts and boot.js).
+# The old workers.dev address stays up so links and apps from before keep working.
+workers_dev = true
+routes = [
+  { pattern = "notepad.dog", custom_domain = true },
+  { pattern = "www.notepad.dog", custom_domain = true },
+]
+
 # The web app's build is served as static assets; only /api/* runs the Worker.
 # Unknown paths (e.g. /s/<token>) fall back to index.html for the SPA.
 [assets]

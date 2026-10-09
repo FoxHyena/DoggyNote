@@ -31,7 +31,7 @@ Legend: [x] done + tested · [~] in progress · [ ] not started
 - [x] View-only share links (with/without inner boards, revoke = instant 404)
 - [x] Tauri app: Keychain token, CORS bearer API, links open in browser, traffic-light title bar
 - [x] Real Mac app checked end to end (login, note synced, heavy board, diagnostics ⌃⌥D)
-- [x] Deployed: https://doggynote.oreothehyena.workers.dev (D1 + R2 + Worker, smoke-tested)
+- [x] Deployed: https://notepad.dog (was doggynote.oreothehyena.workers.dev, still up). D1 + R2 + Worker, smoke-tested
 - [x] Release Mac app + DMG built against the live server
 - [ ] **You:** create your admin account (see below), then install the DMG
 

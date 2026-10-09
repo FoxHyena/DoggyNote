@@ -11,6 +11,18 @@ export type { Env } from './env.ts'
 
 export const app = new Hono<AppEnv>().basePath('/api')
 
+/** The one canonical host; www.notepad.dog sends people here. */
+export const CANONICAL_HOST = 'notepad.dog'
+
+app.use('*', async (c, next) => {
+  const url = new URL(c.req.url)
+  if (url.hostname === `www.${CANONICAL_HOST}`) {
+    url.hostname = CANONICAL_HOST
+    return c.redirect(url.toString(), 301)
+  }
+  await next()
+})
+
 // The desktop app calls the API cross-origin with a bearer token. Only listed
 // origins get CORS headers; cookies are never allowed cross-origin.
 app.use('*', async (c, next) => {

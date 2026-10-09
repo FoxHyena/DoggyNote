@@ -47,7 +47,8 @@ Every merge to `main` runs `.github/workflows/release.yml`:
 
 The version is `0.<minor in version.json>.<run number>`; bump `minor` by hand for big releases. Installed apps update themselves via `tauri-plugin-updater`, and browsers get a reload toast.
 
-- Friends install from `https://doggynote.oreothehyena.workers.dev/api/desktop/download`.
+- The site is **https://notepad.dog** (`www.` redirects). Friends install from `https://notepad.dog/api/desktop/download`.
+  The old `doggynote.oreothehyena.workers.dev` address stays up for older links and apps.
 - The updater key and signing cert live in `~/.tauri/` on the maintainer's Mac and in GitHub secrets. **Back them up.**
   - Losing the updater key means installed apps can't verify updates, and everyone reinstalls once.
   - Losing the cert means one more Keychain prompt per person.
