@@ -45,7 +45,8 @@ function EditorApp() {
     setPhase('booting')
     if (!booted) {
       booted = true
-      // Warm the editor so the first note opens instantly. Viewers never load it.
+      // Warm the editor so the first note opens instantly, and so notes stay
+      // editable offline (the chunk can't be fetched then). Viewers never load it.
       void import('./editor/codemirror.ts')
       await doc.load({ persist: true, readOnly: false })
       const { first, fresh } = await startSync({ onSignedOut: () => setSignedOut(true) })

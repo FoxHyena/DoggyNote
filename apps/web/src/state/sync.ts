@@ -11,7 +11,8 @@ import { SIZES, localBlob, markUploaded, onAssetQueued, pendingUploads, type Ass
 // the network returns, and every 10 s while the tab is visible.
 
 export type SyncState = 'idle' | 'syncing' | 'offline' | 'error' | 'signed-out'
-export const [syncState, setSyncState] = createSignal<SyncState>('idle')
+// Starts as 'syncing': until the first round finishes, "Synced" would be a lie.
+export const [syncState, setSyncState] = createSignal<SyncState>('syncing')
 export const [pendingCount, setPendingCount] = createSignal(0)
 export const [lastError, setLastError] = createSignal<string | null>(null)
 

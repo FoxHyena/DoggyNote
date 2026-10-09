@@ -111,10 +111,11 @@ export function Canvas(props: { readOnly: boolean }) {
     () => {
       const c = camera()
       const v = viewport()
-      // Generous margin + coarse snapping: panning re-culls only every few
-      // hundred screen pixels, so cards aren't mounted/unmounted every frame.
-      const step = 2 ** Math.round(Math.log2(512 / c.zoom))
-      return cullRect(viewRect(c, v.width, v.height), 400 / c.zoom, step)
+      // Margin + coarse snapping: panning re-culls only every few hundred
+      // screen pixels, so cards aren't mounted/unmounted every frame. Kept
+      // modest: every mounted card costs DOM and decoded-image memory.
+      const step = 2 ** Math.round(Math.log2(256 / c.zoom))
+      return cullRect(viewRect(c, v.width, v.height), 160 / c.zoom, step)
     },
     undefined,
     { equals: (a, b) => a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h },
