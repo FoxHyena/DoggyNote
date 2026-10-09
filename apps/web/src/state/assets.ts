@@ -1,6 +1,6 @@
 import { newId, type Id } from '@doggynote/core'
 import * as idb from './idb.ts'
-import { assetPath } from './api.ts'
+import { assetUrl } from './api.ts'
 
 // Images are resized in the browser before upload: Workers can't run sharp and
 // Cloudflare Images costs money. Three sizes, re-encoded, which also strips
@@ -85,7 +85,7 @@ export async function acquireUrl(assetId: Id, size: AssetSize): Promise<string> 
   } catch {
     blob = undefined
   }
-  if (!blob) return assetPath(assetId, size)
+  if (!blob) return assetUrl(assetId, size)
   const again = urls.get(key)
   if (again) {
     again.refs++

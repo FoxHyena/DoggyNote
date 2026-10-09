@@ -103,3 +103,61 @@ test('later edits show up for viewers on reload; trashed cards do not', async ({
   await expect(cardByText(v, 'fresh news')).toBeVisible()
   await expect(cardByText(v, 'will be buried')).toHaveCount(0)
 })
+
+test.describe('image access', () => {
+  /** Upload a small image to the current board and return its asset id (via a synced pull). */
+  async function addImage(page: Page): Promise<string> {
+    const png = await page.evaluate(async () => {
+      const c = new OffscreenCanvas(120, 90)
+      const ctx = c.getContext('2d')!
+      ctx.fillStyle = '#7fa7d1'
+      ctx.fillRect(0, 0, 120, 90)
+      const buf = new Uint8Array(await (await c.convertToBlob({ type: 'image/png' })).arrayBuffer())
+      let s = ''
+      for (const b of buf) s += String.fromCharCode(b)
+      return btoa(s)
+    })
+    await page.getByTestId('image-input').setInputFiles({ name: 'x.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') })
+    await expect(page.getByTestId('card-image')).toHaveCount(1)
+    await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
+    const board = decodeURIComponent(page.url().split('#/b/')[1])
+    const { objects } = (await (await page.request.get('/api/sync?since=0')).json()) as { objects: { boardId?: string; type?: string; content?: { assetId?: string } }[] }
+    return objects.find((o) => o.boardId === board && o.type === 'image')!.content!.assetId!
+  }
+
+  test('strangers need a share link, and only for images on shared boards', async ({ page, browser }) => {
+    await freshBoard(page)
+    const shown = await addImage(page)
+    const url = await createShare(page)
+    const token = url.split('/s/')[1]
+    await page.getByTestId('share').click() // close the panel
+
+    // An image on a different, unshared board.
+    await freshBoard(page)
+    const hidden = await addImage(page)
+
+    const anon = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+    const get = (path: string) => anon.request.get(path)
+    expect((await get(`/api/assets/${shown}/thumb`)).status(), 'no credential').toBe(401)
+    const ok = await get(`/api/assets/${shown}/thumb?share=${token}`)
+    expect(ok.status(), 'shared image').toBe(200)
+    expect(ok.headers()['cache-control']).toContain('private')
+    expect((await get(`/api/assets/${hidden}/thumb?share=${token}`)).status(), 'image outside the share').toBe(403)
+    expect((await get(`/api/assets/${shown}/thumb?share=nope`)).status(), 'bogus share').toBe(401)
+    expect((await get(`/api/assets/${shown}/thumb?t=forged.123.abc`)).status(), 'forged token').toBe(401)
+
+    // The viewer page actually shows it.
+    const v = await stranger(browser, url)
+    await expect.poll(() => v.getByTestId('card-image').evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBeGreaterThan(0)
+
+    // Turning the link off cuts image access too.
+    expect((await page.request.delete(`/api/shares/${token}`)).ok()).toBe(true)
+    expect((await get(`/api/assets/${shown}/thumb?share=${token}`)).status(), 'revoked share').toBe(401)
+  })
+
+  test('signed-in editors load images with their session', async ({ page }) => {
+    await freshBoard(page)
+    const id = await addImage(page)
+    expect((await page.request.get(`/api/assets/${id}/medium`)).status()).toBe(200)
+  })
+})

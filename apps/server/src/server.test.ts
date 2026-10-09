@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { app } from './app.ts'
-import { hashPassword, sha256Hex, verifyPassword } from './crypto.ts'
+import { hashPassword, sha256Hex, signAssetToken, verifyAssetToken, verifyPassword } from './crypto.ts'
 import { parseChanges, upsertSql } from './sync.ts'
 import { decodeEntities, isFetchableUrl } from './unfurl.ts'
 
@@ -59,4 +59,26 @@ describe('unfurl helpers', () => {
     expect(isFetchableUrl('file:///etc/passwd')).toBeNull()
     expect(isFetchableUrl('not a url')).toBeNull()
   })
+})
+
+describe('asset tokens', () => {
+  const secret = 'test-secret'
+  it('round-trips the user id until expiry', async () => {
+    const t = await signAssetToken(secret, 'user-1', 2_000)
+    expect(await verifyAssetToken(secret, t, 1_000)).toBe('user-1')
+    expect(await verifyAssetToken(secret, t, 2_000)).toBeNull()
+  })
+  it('rejects tampering and the wrong secret', async () => {
+    const t = await signAssetToken(secret, 'user-1', 9_999_999_999_999)
+    const [, exp, sig] = t.split('.')
+    expect(await verifyAssetToken(secret, `user-2.${exp}.${sig}`, 0)).toBeNull()
+    expect(await verifyAssetToken('other', t, 0)).toBeNull()
+    expect(await verifyAssetToken(secret, 'garbage', 0)).toBeNull()
+    expect(await verifyAssetToken(secret, 'a.b.!!!', 0)).toBeNull()
+  })
+})
+
+it('images need a credential', async () => {
+  const res = await app.request('/api/assets/00000000-0000-4000-8000-000000000000/thumb', {}, { DB: { prepare: () => ({ bind: () => ({ first: async () => null }) }) } } as never)
+  expect(res.status).toBe(401)
 })

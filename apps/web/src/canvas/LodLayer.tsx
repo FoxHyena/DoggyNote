@@ -4,7 +4,7 @@ import { theme as themeSignal } from '../theme.ts'
 import * as doc from '../state/doc.ts'
 import { boardId, camera, selection, viewport } from '../state/ui.ts'
 import { columnChildren } from '../state/actions.ts'
-import { assetPath } from '../state/api.ts'
+import { assetUrl } from '../state/api.ts'
 import { acquireUrl, releaseUrl } from '../state/assets.ts'
 import { cardHeight } from './layout.ts'
 
@@ -65,7 +65,7 @@ function atlasFor(cell: number): HTMLCanvasElement {
 
 function loadThumb(assetId: string) {
   void acquireUrl(assetId, 'thumb')
-    .catch(() => assetPath(assetId, 'thumb'))
+    .catch(() => assetUrl(assetId, 'thumb'))
     .then((src) => {
       // <img> rather than fetch(): it's the path that works everywhere, including
       // the desktop webview loading cross-origin from the server.
