@@ -6,7 +6,8 @@
 #   3. a drag-to-Applications disk image
 #   4. latest.json for the updater, written to $OUT
 #
-# Env: VERSION, TAURI_SIGNING_PRIVATE_KEY(_PASSWORD), optional SIGN_KEYCHAIN, OUT (default ./release)
+# Env: VERSION, TAURI_SIGNING_PRIVATE_KEY(_PASSWORD), optional SIGN_KEYCHAIN + SIGN_IDENTITY
+# (cert SHA-1; defaults to the name), OUT (default ./release)
 set -e
 cd "$(dirname "$0")/.."
 : "${VERSION:?VERSION is required}"
@@ -18,7 +19,7 @@ APP="$B/macos/DoggyNote.app"
 rm -rf "$OUT" && mkdir -p "$OUT/$VERSION"
 
 if [ -n "$SIGN_KEYCHAIN" ]; then
-  codesign --force --deep --keychain "$SIGN_KEYCHAIN" --sign "DoggyNote Signing" "$APP"
+  codesign --force --deep --keychain "$SIGN_KEYCHAIN" --sign "${SIGN_IDENTITY:-DoggyNote Signing}" "$APP"
   codesign --verify --deep "$APP"
   echo "✓ signed: $(codesign -dr - "$APP" 2>&1 | tail -1)"
 fi
