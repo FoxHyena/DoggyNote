@@ -79,7 +79,25 @@ export type Connection = Base & {
   arrow: 'end' | 'none'
 }
 
-export type Obj = Card | Board | Connection
+/**
+ * One message in the thread on a card. Each message is its own object, so two
+ * people replying at once can't overwrite each other. The server stamps
+ * `authorId`/`author` from the session; only the author can edit or delete.
+ * The thread's resolved state lives on its first message.
+ */
+export type Comment = Base & {
+  kind: 'comment'
+  /** Follows the card when it moves boards, so shares and Toy box privacy cover it. */
+  boardId: Id
+  cardId: Id
+  authorId: Id
+  author: string
+  text: string
+  editedAt?: number | null
+  resolvedAt?: number | null
+}
+
+export type Obj = Card | Board | Connection | Comment
 
 export const HOME_BOARD_ID = 'home'
 

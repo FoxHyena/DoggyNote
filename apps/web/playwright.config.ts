@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
+import { API_PORT, WEB_PORT } from './e2e/ports.ts'
 
 export const AUTH_FILE = 'e2e/.auth/rex.json'
 
@@ -10,7 +11,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'list',
   globalSetup: './e2e/global-setup.ts',
-  use: { baseURL: 'http://localhost:5173', storageState: AUTH_FILE },
+  use: { baseURL: `http://localhost:${WEB_PORT}`, storageState: AUTH_FILE },
   // WebKit is what Tauri runs on macOS; Chromium is what most share-link viewers use.
   projects: [
     { name: 'webkit', use: { ...devices['Desktop Safari'], storageState: AUTH_FILE } },
@@ -19,22 +20,23 @@ export default defineConfig({
   webServer: [
     // The production build: same chunks and timing users get. Proxies /api to the Worker.
     {
-      command: 'VITE_APP_VERSION=0.0.1 pnpm build && pnpm preview --port 5173 --strictPort',
-      url: 'http://localhost:5173',
+      command: `VITE_APP_VERSION=0.0.1 pnpm build && API_PORT=${API_PORT} pnpm preview --port ${WEB_PORT} --strictPort`,
+      url: `http://localhost:${WEB_PORT}`,
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
     },
     // The real Worker on a fresh local D1 + R2, seeded with users rex (admin) and fido.
     {
-      command: 'pnpm --filter server e2e:serve',
-      url: 'http://localhost:8787/api/health',
-      reuseExistingServer: !process.env.CI,
+      // Never reused: every run gets a fresh database.
+      command: `PORT=${API_PORT} pnpm --filter server e2e:serve`,
+      url: `http://localhost:${API_PORT}/api/health`,
+      reuseExistingServer: false,
       timeout: 120_000,
     },
     // The desktop flavour of the build (talks to the API cross-origin with a bearer
     // token), served from another origin to stand in for tauri://localhost.
     {
-      command: 'VITE_APP_VERSION=0.0.1 VITE_API_BASE=http://localhost:8787 pnpm exec vite build --outDir dist-desktop && pnpm exec vite preview --outDir dist-desktop --port 4174 --strictPort',
+      command: `VITE_APP_VERSION=0.0.1 VITE_API_BASE=http://localhost:${API_PORT} pnpm exec vite build --outDir dist-desktop && pnpm exec vite preview --outDir dist-desktop --port 4174 --strictPort`,
       url: 'http://localhost:4174',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,

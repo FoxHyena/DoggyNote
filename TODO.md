@@ -55,10 +55,10 @@ Legend: [x] done + tested · [~] in progress · [ ] not started
 - [x] Dot grid + snap-to-grid toggle (⌘'), glow + haptic tick on desktop
 - [~] Memory pass: overview 183→164 MB, 100% 202→186 MB (target 150 not reached; rest is WebKit GPU tiles + JS heap)
 - [x] Toy box (personal, **server-enforced privacy**) + global quick capture (⌃⌥Space). Others get `{id, hidden}` stubs; writes/shares/images 403. Native capture window checked
-- [ ] Comment threads on cards
+- [x] Comment threads on cards: badge + side panel, server-stamped authors, author-only edits, read-only in share links
 - [ ] File uploads
 - [ ] Export board as PNG
-- [ ] Milanote import (needs a sample export)
+- [-] Milanote import: dropped, Milanote can't export the boards
 
 ## Still open
 1. [ ] Memory: busy boards still ~183–202 MB in the Mac app (target 150). The rest is WebKit graphics surfaces + JS heap; next lever is fewer GPU layers

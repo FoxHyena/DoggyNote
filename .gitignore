@@ -10,3 +10,6 @@ playwright-report
 **/e2e/.auth
 dist-desktop
 apps/desktop/release
+
+# Real Milanote exports for building the importer (private, never committed)
+import-samples/

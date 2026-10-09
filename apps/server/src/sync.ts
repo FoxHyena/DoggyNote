@@ -4,7 +4,7 @@ import type { AppEnv } from './env.ts'
 // Push: field patches, merged per top-level field (last write to arrive wins).
 // Pull: every object whose seq is above the client's cursor.
 
-export const KINDS = new Set(['board', 'card', 'connection'])
+export const KINDS = new Set(['board', 'card', 'connection', 'comment'])
 const KEY = /^[a-zA-Z][a-zA-Z0-9]{0,31}$/
 // ':' is for namespaced ids like "toybox:<userId>".
 const ID = /^[a-zA-Z0-9_:-]{1,64}$/
@@ -68,6 +68,35 @@ export function ownerFor(id: string, boardId: string | null): string | null {
   return null
 }
 
+type Existing = { id: string; kind: string; board_id: string | null; owner_id: string | null; author_id: string | null }
+
+// ---- comments ------------------------------------------------------------------
+// The author of a comment is whoever is signed in when it's created: the server
+// stamps it, so it can't be spoofed. Only the author edits or deletes a message;
+// anyone can resolve a thread, and a comment follows its card between boards.
+
+const OTHERS_MAY_SET = new Set(['resolvedAt', 'boardId'])
+
+/** Stamps or protects comment authorship in place. Returns an error message to refuse the change. */
+export function stampComment(
+  patch: Record<string, unknown>,
+  prev: Pick<Existing, 'kind' | 'author_id'> | undefined,
+  kind: string,
+  me: { id: string; username: string },
+): string | null {
+  if (kind !== 'comment' && prev?.kind !== 'comment') return null
+  if (!prev) {
+    patch.authorId = me.id
+    patch.author = me.username
+    return null
+  }
+  if (prev.kind !== 'comment') return 'bad kind'
+  delete patch.authorId
+  delete patch.author
+  if (prev.author_id !== me.id && !Object.keys(patch).every((k) => OTHERS_MAY_SET.has(k))) return 'Only the author can change a comment'
+  return null
+}
+
 export const sync = new Hono<AppEnv>()
 
 sync.post('/sync', async (c) => {
@@ -76,17 +105,20 @@ sync.post('/sync', async (c) => {
   if (!parsed.length) return c.json({ ok: true })
   const db = c.env.DB
   const now = Date.now()
-  const user = c.get('user').id
+  const me = c.get('user')
+  const user = me.id
 
   // Current board + owner of everything being written, to enforce Toy box privacy.
-  const existing = new Map<string, { board_id: string | null; owner_id: string | null }>()
+  const existing = new Map<string, Existing>()
   const ids = parsed.map((p) => p.id)
   for (let i = 0; i < ids.length; i += 90) {
     const chunk = ids.slice(i, i + 90)
     const { results } = await db
-      .prepare(`SELECT id, board_id, owner_id FROM objects WHERE id IN (${chunk.map((_, j) => `?${j + 1}`).join(',')})`)
+      .prepare(
+        `SELECT id, kind, board_id, owner_id, json_extract(data, '$.authorId') AS author_id FROM objects WHERE id IN (${chunk.map((_, j) => `?${j + 1}`).join(',')})`,
+      )
       .bind(...chunk)
-      .all<{ id: string; board_id: string | null; owner_id: string | null }>()
+      .all<Existing>()
     for (const r of results) existing.set(r.id, r)
   }
 
@@ -94,7 +126,9 @@ sync.post('/sync', async (c) => {
   for (const { id, patch } of parsed) {
     const prev = existing.get(id)
     if (prev?.owner_id && prev.owner_id !== user) return c.json({ error: "That belongs to someone else's Toy box" }, 403)
-    const kind = typeof patch.kind === 'string' ? patch.kind : 'card'
+    const kind = typeof patch.kind === 'string' ? patch.kind : (prev?.kind ?? 'card')
+    const denied = stampComment(patch, prev, kind, me)
+    if (denied) return c.json({ error: denied }, 403)
     const boardId = typeof patch.boardId === 'string' ? patch.boardId : null
     const owner = ownerFor(id, boardId ?? prev?.board_id ?? null)
     if (owner && owner !== user) return c.json({ error: "You can't put things in someone else's Toy box" }, 403)

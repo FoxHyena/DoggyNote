@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { app } from './app.ts'
 import { hashPassword, sha256Hex, signAssetToken, verifyAssetToken, verifyPassword } from './crypto.ts'
-import { ownerFor, parseChanges, upsertSql } from './sync.ts'
+import { ownerFor, parseChanges, stampComment, upsertSql } from './sync.ts'
 import { decodeEntities, isFetchableUrl } from './unfurl.ts'
 
 it('health check responds', async () => {
@@ -131,5 +131,37 @@ describe('Toy box ownership', () => {
     expect(ownerFor('card-1', 'toybox:u1')).toBe('u1')
     expect(ownerFor('card-1', 'some-board')).toBeNull()
     expect(ownerFor('card-1', null)).toBeNull()
+  })
+})
+
+describe('comment authorship', () => {
+  const rex = { id: 'u-rex', username: 'rex' }
+  const fido = { id: 'u-fido', username: 'fido' }
+  const existing = { kind: 'comment', author_id: 'u-rex' }
+
+  it('stamps the signed-in author on a new comment, whatever the client sent', () => {
+    const p: Record<string, unknown> = { kind: 'comment', text: 'hi', authorId: 'u-fido', author: 'fido' }
+    expect(stampComment(p, undefined, 'comment', rex)).toBeNull()
+    expect(p).toMatchObject({ authorId: 'u-rex', author: 'rex' })
+  })
+  it('lets the author edit and delete, and never re-assigns authorship', () => {
+    const p: Record<string, unknown> = { text: 'edited', editedAt: 1, deletedAt: 2, authorId: 'u-fido' }
+    expect(stampComment(p, existing, 'comment', rex)).toBeNull()
+    expect(p).not.toHaveProperty('authorId')
+  })
+  it("lets anyone resolve a thread or move it with its card, but not edit someone else's words", () => {
+    expect(stampComment({ resolvedAt: 5 }, existing, 'comment', fido)).toBeNull()
+    expect(stampComment({ boardId: 'b2' }, existing, 'comment', fido)).toBeNull()
+    expect(stampComment({ text: 'gotcha' }, existing, 'comment', fido)).toMatch(/author/)
+    expect(stampComment({ deletedAt: 1 }, existing, 'comment', fido)).toMatch(/author/)
+    expect(stampComment({ kind: 'card', x: 1 }, existing, 'card', fido)).toMatch(/author/)
+  })
+  it("can't turn an existing card into a comment", () => {
+    expect(stampComment({ kind: 'comment' }, { kind: 'card', author_id: null }, 'comment', rex)).toBe('bad kind')
+  })
+  it('leaves other kinds alone', () => {
+    const p = { x: 1 }
+    expect(stampComment(p, { kind: 'card', author_id: null }, 'card', fido)).toBeNull()
+    expect(p).toEqual({ x: 1 })
   })
 })

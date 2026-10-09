@@ -2,6 +2,10 @@ import { For, Match, Show, Switch, onCleanup, onMount, type JSX } from 'solid-js
 import { SIDES, type Card } from '@doggynote/core'
 import { editingId, isSelected, selection } from '../state/ui.ts'
 import { registerCardEl } from './layout.ts'
+import * as doc from '../state/doc.ts'
+import { isResolved } from '../state/comments.ts'
+import { openThread } from '../ui/CommentsPanel.tsx'
+import { Icon, ToolIcons } from '../ui/icons.tsx'
 import { draggingIds, resizingId } from './dnd.ts'
 import { NoteCard } from '../cards/NoteCard.tsx'
 import { TodoCard } from '../cards/TodoCard.tsx'
@@ -43,6 +47,8 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
     return s
   }
 
+  const comments = () => (props.card.type === 'board' ? 0 : doc.commentsOn(props.card.id).length)
+
   const props2 = () => ({ card: props.card, editing: editing(), lod: props.lod, readOnly: props.readOnly })
 
   return (
@@ -83,6 +89,22 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
           <ColumnCard {...(props2() as CardProps<'column'>)} />
         </Match>
       </Switch>
+      <Show when={comments() && !props.lod}>
+        <button
+          class="comment-badge"
+          classList={{ resolved: isResolved(props.card.id) }}
+          data-testid="comment-badge"
+          title={isResolved(props.card.id) ? 'Resolved thread' : 'Comments'}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            openThread(props.card.id)
+          }}
+        >
+          <Icon size={13}>{ToolIcons.comment()}</Icon>
+          {comments()}
+        </button>
+      </Show>
       <Show when={!props.readOnly && single() && free() && props.card.type !== 'board' && !props.lod}>
         <div class="resize-handle" data-resize data-testid="resize-handle" title="Resize" />
       </Show>

@@ -8,6 +8,7 @@ import { draggingIds } from '../canvas/dnd.ts'
 import { layoutTick, rectOf } from '../canvas/layout.ts'
 import { union, worldToScreen } from '@doggynote/core'
 import { BOARD_ICONS, BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
+import { openThread } from './CommentsPanel.tsx'
 
 // Floating bar for the current selection: colour, board icon, bury (trash).
 
@@ -87,6 +88,12 @@ export function SelectionBar() {
           </div>
         </Show>
         <div class="bar-sep" />
+        <Show when={cards().length === 1 && cards()[0].type !== 'board'}>
+          <button class="bar-btn" data-testid="comment-button" title="Comment on this card" onClick={() => openThread(cards()[0].id)}>
+            <Icon size={18}>{ToolIcons.comment()}</Icon>
+            Comment
+          </button>
+        </Show>
         <button class="bar-btn" data-testid="bury" title={`Move to ${COPY.trash} (Delete)`} onClick={trashSelection}>
           <Icon size={18}>{ToolIcons.trash()}</Icon>
           Bury

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { addNote, cardByText, freshBoard } from './helpers.ts'
+import { API_PORT } from './ports.ts'
 
 // The desktop app's code path: no cookies, a bearer token kept by the native
 // side (Keychain), API calls cross-origin to the server. We stand in for the
@@ -61,7 +62,7 @@ test('desktop: sign in with a Keychain token, sync cross-origin, open links in t
   expect((await context.cookies()).filter((c) => c.name === 'dn_session')).toHaveLength(0)
 
   // Requests carry the bearer token and succeed cross-origin.
-  const authed = page.waitForRequest((r) => r.url().startsWith('http://localhost:8787/api/sync') && !!r.headers()['authorization'])
+  const authed = page.waitForRequest((r) => r.url().startsWith(`http://localhost:${API_PORT}/api/sync`) && !!r.headers()['authorization'])
   await freshBoard(page)
   await addNote(page, 'from the desktop')
   await authed
@@ -74,7 +75,7 @@ test('desktop: sign in with a Keychain token, sync cross-origin, open links in t
   // Share links point at the server, not tauri://.
   await page.getByTestId('share').click()
   await page.getByTestId('create-share').click()
-  await expect(page.getByTestId('share-url').first()).toHaveValue(/^http:\/\/localhost:8787\/s\//)
+  await expect(page.getByTestId('share-url').first()).toHaveValue(new RegExp(`^http://localhost:${API_PORT}/s/`))
 
   // External links go to the system browser.
   await page.evaluate(() => {

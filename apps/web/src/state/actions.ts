@@ -198,5 +198,7 @@ export function moveCardTo(id: Id, toBoard: Id, place: Placement) {
   // All of it is one undo step.
   const patches: Record<Id, Partial<Obj>> = { [id]: patch }
   for (const conn of doc.connectionsOn(c.boardId)) if (conn.from === id || conn.to === id) patches[conn.id] = { purged: true }
+  // Its comments go with it, so the new board's sharing (or Toy box privacy) covers them.
+  for (const m of doc.commentsOn(id)) patches[m.id] = { boardId: toBoard }
   doc.update(patches)
 }

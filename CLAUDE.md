@@ -33,7 +33,9 @@ pnpm --filter server create-user <name> <password> [--admin] [--remote]
 PERF_HEADED=1 pnpm --filter web exec playwright test perf --project=chromium   # GPU perf check
 ```
 
-e2e runs against the production build plus a real Worker on a fresh local D1. Tests share that
+e2e runs against the production build plus a real Worker on a fresh local D1, on ports of its own
+(web 5175, Worker 8788; `e2e/ports.ts`), so a dev or hand-started Worker on 8787 is never reused.
+CI runs WebKit and Chromium as parallel jobs. Tests share that
 server, so each test works on its own `freshBoard()`.
 
 ## Releases
