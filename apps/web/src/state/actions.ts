@@ -26,6 +26,7 @@ export const EMPTY_CONTENT: { [T in CardType]: () => CardContent[T] } = {
   image: () => ({ assetId: '', width: 1, height: 1 }),
   link: () => ({ url: '', status: 'pending' }),
   column: () => ({ title: '' }),
+  file: () => ({ assetId: '', name: '', size: 0, mime: '' }),
 }
 
 /** Where a new card goes: a world point (card's top-centre lands there) or a column slot. */

@@ -3,6 +3,7 @@ import { createCard, createNoteWithText, type Placement } from '../state/actions
 import { importImage } from '../state/assets.ts'
 import { unfurl } from '../state/unfurl.ts'
 import { select } from '../state/ui.ts'
+import { addFiles } from '../state/files.ts'
 
 // Paste and drop onto the canvas: images become image cards, a URL becomes a
 // link card, other text becomes a note.
@@ -50,14 +51,20 @@ export function addText(text: string, at: Vec, onBoard?: Id) {
   else createNoteWithText(t, { at })
 }
 
+/** Images become image cards, anything else a file card. Returns false if there were no files. */
+export function addAnyFiles(files: File[], at: Vec, onBoard?: Id): boolean {
+  if (!files.length) return false
+  const images = files.filter((f) => IMAGE_TYPES.test(f.type))
+  const others = files.filter((f) => !IMAGE_TYPES.test(f.type))
+  if (images.length) void addImages(images, at, onBoard)
+  if (others.length) addFiles(others, { x: at.x + images.length * 24, y: at.y + images.length * 24 }, onBoard)
+  return true
+}
+
 export function handleCanvasPaste(e: ClipboardEvent, at: Vec): boolean {
   const dt = e.clipboardData
   if (!dt) return false
-  const images = [...dt.files].filter((f) => IMAGE_TYPES.test(f.type))
-  if (images.length) {
-    void addImages(images, at)
-    return true
-  }
+  if (addAnyFiles([...dt.files], at)) return true
   const text = dt.getData('text/plain')
   if (text) {
     addText(text, at)
@@ -69,8 +76,7 @@ export function handleCanvasPaste(e: ClipboardEvent, at: Vec): boolean {
 export function handleCanvasDrop(e: DragEvent, at: Vec) {
   const dt = e.dataTransfer
   if (!dt) return
-  const images = [...dt.files].filter((f) => IMAGE_TYPES.test(f.type))
-  if (images.length) return void addImages(images, at)
+  if (addAnyFiles([...dt.files], at)) return
   const uri = dt.getData('text/uri-list').split('\n').find((l) => l && !l.startsWith('#'))
   if (uri) return void addText(uri, at)
   const text = dt.getData('text/plain')

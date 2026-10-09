@@ -5,7 +5,7 @@ import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { appendOrder, createCard, type Placement } from '../state/actions.ts'
 import { boardId, camera, connectMode, setConnectMode, setTrashOpen, trashOpen, viewport } from '../state/ui.ts'
-import { addImages } from '../canvas/paste.ts'
+import { addAnyFiles, addImages } from '../canvas/paste.ts'
 import { Icon, ToolIcons } from './icons.tsx'
 
 type Tool = { id: CardType | 'line'; label: string; icon: () => JSX.Element }
@@ -40,6 +40,7 @@ export function placementAt(clientX: number, clientY: number): Placement | null 
 
 export function Toolbar() {
   let fileInput!: HTMLInputElement
+  let uploadInput!: HTMLInputElement
   const [ghost, setGhost] = createSignal<{ tool: Tool; at: Vec } | null>(null)
 
   function onToolPointerDown(e: PointerEvent, tool: Tool) {
@@ -71,7 +72,7 @@ export function Toolbar() {
     el.addEventListener('pointerup', up)
   }
 
-  const trashCount = () => (trashOpen(), doc.trashedOn(boardId()).length)
+  const trashCount = () => (trashOpen(), doc.index(), doc.trashedOn(boardId()).length + doc.trashedCommentsOn(boardId()).length)
 
   return (
     <aside class="toolbar" aria-label="Tools">
@@ -94,6 +95,23 @@ export function Toolbar() {
         <Icon size={22}>{ToolIcons.image()}</Icon>
         <span>Image</span>
       </button>
+      <button class="tool" data-testid="tool-upload" title="Upload files (PDFs, docs, anything up to 50 MB)" onClick={() => uploadInput.click()}>
+        <Icon size={22}>{ToolIcons.upload()}</Icon>
+        <span>Upload</span>
+      </button>
+      <input
+        ref={uploadInput}
+        type="file"
+        multiple
+        hidden
+        data-testid="upload-input"
+        onChange={(e) => {
+          const files = [...(e.currentTarget.files ?? [])]
+          e.currentTarget.value = ''
+          const p = centrePlacement('file')
+          if ('at' in p) addAnyFiles(files, p.at)
+        }}
+      />
       <input
         ref={fileInput}
         type="file"

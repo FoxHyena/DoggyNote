@@ -68,12 +68,17 @@ export function ownerFor(id: string, boardId: string | null): string | null {
   return null
 }
 
-type Existing = { id: string; kind: string; board_id: string | null; owner_id: string | null; author_id: string | null }
+type Existing = { id: string; kind: string; board_id: string | null; owner_id: string | null; author_id: string | null; deleted_at: number | null; purged: number | null }
 
 // ---- comments ------------------------------------------------------------------
 // The author of a comment is whoever is signed in when it's created: the server
 // stamps it, so it can't be spoofed. Only the author edits or deletes a message;
 // anyone can resolve a thread, and a comment follows its card between boards.
+//
+// Deleting a message takes it back from everyone at once: while it's deleted it
+// belongs to its author alone (others get the same `{ id, hidden }` stub as a
+// Toy box, so their devices drop it), it waits in the author's Buried bones in
+// case it was a slip, and emptying those wipes the text for good.
 
 const OTHERS_MAY_SET = new Set(['resolvedAt', 'boardId'])
 
@@ -93,8 +98,22 @@ export function stampComment(
   if (prev.kind !== 'comment') return 'bad kind'
   delete patch.authorId
   delete patch.author
+  if (patch.purged === true) patch.text = ''
   if (prev.author_id !== me.id && !Object.keys(patch).every((k) => OTHERS_MAY_SET.has(k))) return 'Only the author can change a comment'
   return null
+}
+
+/** A deleted (or purged) comment is private to its author; a live one is shared. */
+export function deletedCommentOwner(
+  kind: string,
+  patch: Record<string, unknown>,
+  prev: Pick<Existing, 'kind' | 'author_id' | 'deleted_at' | 'purged'> | undefined,
+  me: string,
+): string | null {
+  if (kind !== 'comment') return null
+  const deleted = 'deletedAt' in patch ? !!patch.deletedAt : !!prev?.deleted_at
+  const purged = 'purged' in patch ? patch.purged === true : !!prev?.purged
+  return deleted || purged ? (prev?.author_id ?? me) : null
 }
 
 export const sync = new Hono<AppEnv>()
@@ -115,7 +134,7 @@ sync.post('/sync', async (c) => {
     const chunk = ids.slice(i, i + 90)
     const { results } = await db
       .prepare(
-        `SELECT id, kind, board_id, owner_id, json_extract(data, '$.authorId') AS author_id FROM objects WHERE id IN (${chunk.map((_, j) => `?${j + 1}`).join(',')})`,
+        `SELECT id, kind, board_id, owner_id, json_extract(data, '$.authorId') AS author_id, json_extract(data, '$.deletedAt') AS deleted_at, json_extract(data, '$.purged') AS purged FROM objects WHERE id IN (${chunk.map((_, j) => `?${j + 1}`).join(',')})`,
       )
       .bind(...chunk)
       .all<Existing>()
@@ -125,13 +144,14 @@ sync.post('/sync', async (c) => {
   const stmts: D1PreparedStatement[] = []
   for (const { id, patch } of parsed) {
     const prev = existing.get(id)
-    if (prev?.owner_id && prev.owner_id !== user) return c.json({ error: "That belongs to someone else's Toy box" }, 403)
+    if (prev?.owner_id && prev.owner_id !== user) return c.json({ error: "That's private to someone else" }, 403)
     const kind = typeof patch.kind === 'string' ? patch.kind : (prev?.kind ?? 'card')
     const denied = stampComment(patch, prev, kind, me)
     if (denied) return c.json({ error: denied }, 403)
     const boardId = typeof patch.boardId === 'string' ? patch.boardId : null
-    const owner = ownerFor(id, boardId ?? prev?.board_id ?? null)
-    if (owner && owner !== user) return c.json({ error: "You can't put things in someone else's Toy box" }, 403)
+    const toybox = ownerFor(id, boardId ?? prev?.board_id ?? null)
+    if (toybox && toybox !== user) return c.json({ error: "You can't put things in someone else's Toy box" }, 403)
+    const owner = toybox ?? deletedCommentOwner(kind, patch, prev, user)
     const { sql, args } = upsertSql(patch)
     stmts.push(db.prepare("UPDATE counters SET value = value + 1 WHERE name = 'seq'"))
     stmts.push(db.prepare(sql).bind(id, kind, boardId, JSON.stringify({ ...patch, id }), now, user, owner, ...args))

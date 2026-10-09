@@ -4,7 +4,8 @@ import { requireUser, sessionUser } from './auth.ts'
 import { signAssetToken, verifyAssetToken } from './crypto.ts'
 import { resolveShare } from './shares.ts'
 
-// Images live in R2 as "<assetId>/<size>". Reading one needs one of:
+// Images live in R2 as "<assetId>/<size>", uploaded files as "<assetId>/file".
+// Reading either needs one of:
 //   - a session (cookie, or bearer): the browser editor
 //   - ?t=<asset token>: the desktop app, whose cross-origin <img> can't send a bearer header
 //   - ?share=<share token>: a share viewer, and only for images on the boards that link covers
@@ -14,6 +15,9 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
 const MAX_BYTES = 15 * 1024 * 1024
 const DAY = 86_400_000
+/** Same limit as MAX_FILE_BYTES in @doggynote/core. */
+export const MAX_FILE_BYTES = 50 * 1024 * 1024
+const MIME = /^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i
 
 export const assets = new Hono<AppEnv>()
 
@@ -99,7 +103,7 @@ assets.get('/assets/:id/:size', async (c) => {
   if (!UUID.test(id) || !SIZES.has(size)) return c.json({ error: 'bad asset path' }, 400)
   const access = await canRead(c, id)
   if (access === 'unauthenticated') return c.json({ error: 'Sign in or use a share link to see this image' }, 401)
-  if (access === 'forbidden') return c.json({ error: "This image isn't part of that share link" }, 403)
+  if (access === 'forbidden') return c.json({ error: "This image isn't yours to see" }, 403)
   const obj = await c.env.BUCKET.get(`${id}/${size}`)
   if (!obj) return c.json({ error: 'not found' }, 404)
   const headers = new Headers()
@@ -108,5 +112,62 @@ assets.get('/assets/:id/:size', async (c) => {
   // Private: browsers may cache (bytes never change), shared caches and CDNs may not.
   headers.set('cache-control', 'private, max-age=31536000, immutable')
   headers.set('x-content-type-options', 'nosniff')
+  return new Response(obj.body, { headers })
+})
+
+// ---- uploaded files ------------------------------------------------------------
+
+/** Keeps a file name printable and short; the original is only ever a label. */
+export function cleanFileName(name: string): string {
+  const n = name.replace(/[\u0000-\u001f\u007f/\\]/g, '').trim().slice(0, 200)
+  return n || 'file'
+}
+
+/** `attachment` with an ASCII fallback plus the UTF-8 name (RFC 6266). */
+export function contentDisposition(name: string): string {
+  const ascii = name.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_')
+  return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(name)}`
+}
+
+/** Streams the body straight to R2; nothing is buffered in the Worker. */
+assets.put('/files/:id', requireUser, async (c) => {
+  const id = c.req.param('id')
+  if (!UUID.test(id)) return c.json({ error: 'bad file id' }, 400)
+  const len = Number(c.req.header('content-length') ?? NaN)
+  if (!Number.isFinite(len)) return c.json({ error: 'content-length required' }, 411)
+  if (len > MAX_FILE_BYTES) return c.json({ error: 'Files can be up to 50 MB' }, 413)
+  const body = c.req.raw.body
+  if (!body) return c.json({ error: 'empty file' }, 400)
+  // Immutable, like images.
+  if (await c.env.BUCKET.head(`${id}/file`)) return c.json({ ok: true }, 200)
+  const raw = (c.req.header('content-type') ?? '').split(';')[0].trim()
+  const type = MIME.test(raw) ? raw : 'application/octet-stream'
+  const name = cleanFileName(c.req.query('name') ?? '')
+  await c.env.BUCKET.put(`${id}/file`, body, { httpMetadata: { contentType: type }, customMetadata: { name } })
+  await c.env.DB.prepare('INSERT OR IGNORE INTO assets (id, size, mime, bytes, created_by, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)')
+    .bind(id, 'file', type, len, c.get('user').id, Date.now())
+    .run()
+  return c.json({ ok: true }, 201)
+})
+
+assets.get('/files/:id', async (c) => {
+  const id = c.req.param('id')
+  if (!UUID.test(id)) return c.json({ error: 'bad file id' }, 400)
+  const access = await canRead(c, id)
+  if (access === 'unauthenticated') return c.json({ error: 'Sign in or use a share link to get this file' }, 401)
+  if (access === 'forbidden') return c.json({ error: "This file isn't yours to get" }, 403)
+  const obj = await c.env.BUCKET.get(`${id}/file`)
+  if (!obj) return c.json({ error: 'not found' }, 404)
+  const headers = new Headers()
+  obj.writeHttpMetadata(headers)
+  headers.set('etag', obj.httpEtag)
+  headers.set('content-length', String(obj.size))
+  headers.set('cache-control', 'private, max-age=31536000, immutable')
+  // Someone else's upload must never run as a page on our origin (an .html or
+  // .svg file would otherwise be script with our cookies): always a download,
+  // sniffing off, and sandboxed even if a browser renders it anyway.
+  headers.set('content-disposition', contentDisposition(obj.customMetadata?.name ?? 'file'))
+  headers.set('x-content-type-options', 'nosniff')
+  headers.set('content-security-policy', "sandbox; default-src 'none'")
   return new Response(obj.body, { headers })
 })

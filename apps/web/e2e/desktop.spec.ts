@@ -190,3 +190,24 @@ test('desktop: snapping across grid points taps the trackpad haptic', async ({ p
   const calls = await page.evaluate(() => (window as unknown as { __fakeKeychain: { calls: string[] } }).__fakeKeychain.calls)
   expect(calls.filter((c) => c === 'haptic').length).toBeGreaterThanOrEqual(3)
 })
+
+test('desktop: upload a file cross-origin; the download opens in the browser with a file token', async ({ page, request }) => {
+  await page.goto('/')
+  await page.getByLabel('Username').fill('rex')
+  await page.getByLabel('Password').fill('goodboy123')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await freshBoard(page)
+  const name = `desk-${Math.random().toString(36).slice(2, 7)}.zip`
+  const bytes = Buffer.from('zip-ish bytes from the desktop')
+  await page.getByTestId('upload-input').setInputFiles({ name, mimeType: 'application/zip', buffer: bytes })
+  const link = cardByText(page, name).getByTestId('file-download')
+  await expect(link).toBeVisible({ timeout: 15_000 })
+  await link.click()
+  const opened = await page.evaluate(() => (window as unknown as { __fakeKeychain: { opened: string[] } }).__fakeKeychain.opened)
+  const url = opened.find((u) => u.includes('/api/files/'))!
+  expect(url).toMatch(new RegExp(`^http://localhost:${API_PORT}/api/files/[0-9a-f-]+\\?t=`))
+  // The system browser has no session: the token alone gets the bytes.
+  const res = await request.get(url, { headers: { cookie: '' } })
+  expect(res.status()).toBe(200)
+  expect(Buffer.compare(await res.body(), bytes)).toBe(0)
+})

@@ -2,6 +2,8 @@ import { createSignal } from 'solid-js'
 import { newId, type Comment, type Id } from '@doggynote/core'
 import * as doc from './doc.ts'
 import { user } from './session.ts'
+import { showToast } from './toast.ts'
+import { COPY } from '@doggynote/theme'
 
 // Comment threads on cards. Messages aren't undoable (they're conversation, not
 // canvas edits), so they go through `silent`. The server re-stamps the author.
@@ -34,8 +36,21 @@ export function editComment(id: Id, text: string) {
   if (t) doc.silent({ [id]: { text: t, editedAt: Date.now() } as Partial<Comment> })
 }
 
+/** Gone for everyone else at once (the server makes it private to you); restorable from Buried bones. */
 export function deleteComment(id: Id) {
   doc.silent({ [id]: { deletedAt: Date.now() } })
+  showToast(`Comment deleted. It's in ${COPY.trash} if you need it back.`)
+}
+
+export function restoreComment(id: Id) {
+  doc.silent({ [id]: { deletedAt: null } })
+}
+
+/** Erase for good: the text is wiped on the server too. Not undoable, on purpose. */
+export function purgeComments(ids: Id[]) {
+  const patches: Record<Id, Partial<Comment>> = {}
+  for (const id of ids) patches[id] = { purged: true, text: '' }
+  doc.silent(patches)
 }
 
 export function setResolved(cardId: Id, resolved: boolean) {

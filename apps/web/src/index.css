@@ -2025,3 +2025,89 @@ button:disabled {
 .trash-head h2 {
   margin-right: auto;
 }
+
+/* ---- files ---- */
+
+.file-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.file-preview {
+  display: block;
+  width: 100%;
+  border-bottom: 1px solid var(--dn-border);
+  background: var(--dn-panel);
+  pointer-events: none;
+}
+
+.file-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+}
+
+.file-kind {
+  flex: none;
+  min-width: 44px;
+  padding: 8px 4px;
+  border-radius: 6px;
+  background: var(--dn-accent);
+  color: var(--dn-accent-text);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--c-text);
+  font-weight: 600;
+}
+
+a.file-name {
+  text-decoration: none;
+}
+
+a.file-name:hover {
+  text-decoration: underline;
+}
+
+.file-meta {
+  font-size: 12px;
+  color: var(--dn-text-muted);
+}
+
+.file-card[data-status='uploading'] .file-kind {
+  opacity: 0.6;
+}
+
+.file-card[data-status='error'] .file-meta {
+  color: var(--c-text);
+  font-weight: 600;
+}
+
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  max-width: min(520px, calc(100% - 32px));
+  padding: 10px 16px;
+  border: 1px solid var(--dn-border);
+  border-radius: 10px;
+  background: var(--dn-panel);
+  color: var(--dn-text);
+  z-index: 60;
+  animation: slide-in 160ms ease-out;
+}

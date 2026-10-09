@@ -75,3 +75,14 @@ export async function assetUrl(assetId: string, size: string): Promise<string> {
   }
   return base
 }
+
+/** Download URL for an uploaded file, with whatever credential this client needs. */
+export async function fileUrl(assetId: string): Promise<string> {
+  const base = `${API_BASE}/api/files/${encodeURIComponent(assetId)}`
+  if (shareToken) return `${base}?share=${encodeURIComponent(shareToken)}`
+  if (bearer) {
+    const t = await currentAssetToken()
+    return t ? `${base}?t=${encodeURIComponent(t)}` : base
+  }
+  return base
+}

@@ -125,6 +125,20 @@ export function amendOrCommit(id: Id, snap: Partial<Obj>) {
   } else commitFrom({ [id]: snap })
 }
 
+/**
+ * A background result for an object (an upload finishing): persist it, and fold
+ * it into the newest undo step if that step touched the object, so redo never
+ * brings back the in-progress value. Never an undo step of its own.
+ */
+export function amendOrSilent(id: Id, patch: Partial<Obj>) {
+  if (readOnly) return
+  applyPatchToStore(id, patch)
+  const p = structuredClone(unwrap(patch)) as Record<string, unknown>
+  undoStack.amendTop(id, p)
+  record(id, p as Partial<Obj>)
+  for (const l of outboxListeners) l()
+}
+
 /** Throw away a card that was just created and left empty, without an undo entry. */
 export function discardNew(id: Id) {
   const top = undoStack.peek()
@@ -382,6 +396,13 @@ export const commentsOn = (cardId: Id): Comment[] => index().comments.get(cardId
 export function trashedOn(boardId: Id): Card[] {
   return Object.values(state.objs)
     .filter((o): o is Card => o.kind === 'card' && o.boardId === boardId && !!o.deletedAt && !o.purged)
+    .sort((a, b) => (b.deletedAt ?? 0) - (a.deletedAt ?? 0))
+}
+
+/** Your deleted (not yet wiped) comments on a board. Only the author's devices have them. */
+export function trashedCommentsOn(boardId: Id): Comment[] {
+  return Object.values(state.objs)
+    .filter((o): o is Comment => o.kind === 'comment' && o.boardId === boardId && !!o.deletedAt && !o.purged)
     .sort((a, b) => (b.deletedAt ?? 0) - (a.deletedAt ?? 0))
 }
 

@@ -7,7 +7,7 @@ import type { Side } from './geometry.ts'
 
 export type Id = string
 
-export type CardType = 'note' | 'todo' | 'board' | 'image' | 'link' | 'column'
+export type CardType = 'note' | 'todo' | 'board' | 'image' | 'link' | 'column' | 'file'
 
 /** A ProseMirror document as JSON. Rendered without ProseMirror by richtext.ts. */
 export type RichDoc = { type: 'doc'; content?: RichNode[] }
@@ -30,6 +30,11 @@ export type CardContent = {
   image: { assetId: Id; width: number; height: number; caption?: string; sizes?: ('thumb' | 'small' | 'medium' | 'full')[] }
   link: { url: string; title?: string; description?: string; image?: string; siteName?: string; status?: 'pending' | 'ok' | 'error' }
   column: { title: string }
+  /**
+   * An uploaded file, stored in R2 as "<assetId>/file". PDFs also get a
+   * first-page preview stored as the image rendition "<assetId>/thumb".
+   */
+  file: { assetId: Id; name: string; size: number; mime: string; status?: 'uploading' | 'ok' | 'error'; error?: string; thumb?: { width: number; height: number } }
 }
 
 type Base = {
@@ -108,6 +113,7 @@ export const DEFAULT_SIZE: Record<CardType, { w: number; h: number }> = {
   image: { w: 260, h: 200 },
   link: { w: 260, h: 220 },
   column: { w: 280, h: 120 },
+  file: { w: 260, h: 72 },
 }
 
 export const isAlive = (o: Obj | undefined): boolean => !!o && !o.purged && !o.deletedAt
