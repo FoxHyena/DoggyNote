@@ -26,7 +26,8 @@ export type CardContent = {
   note: { md: string; doc?: RichDoc }
   todo: { title: string; items: TodoItem[] }
   board: { boardId: Id }
-  image: { assetId: Id; width: number; height: number; caption?: string }
+  /** `sizes` lists stored renditions; images from before the 640 px tier have none (thumb/medium/full). */
+  image: { assetId: Id; width: number; height: number; caption?: string; sizes?: ('thumb' | 'small' | 'medium' | 'full')[] }
   link: { url: string; title?: string; description?: string; image?: string; siteName?: string; status?: 'pending' | 'ok' | 'error' }
   column: { title: string }
 }

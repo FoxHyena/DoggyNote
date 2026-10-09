@@ -102,7 +102,7 @@ test.describe('sync between devices', () => {
     await expect(cardByText(page, 'A says hi')).toHaveCount(0)
   })
 
-  test('images upload in three sizes and load on another device', async ({ page, browser, request }) => {
+  test('images upload in four sizes and load on another device', async ({ page, browser, request }) => {
     await freshBoard(page)
     const png = await page.evaluate(async () => {
       const c = new OffscreenCanvas(900, 600)
@@ -124,7 +124,7 @@ test.describe('sync between devices', () => {
     const src = (await img.getAttribute('src'))!
     const m = src.match(/\/api\/assets\/([0-9a-f-]{36})\//)
     expect(m, `remote image src: ${src}`).not.toBeNull()
-    for (const size of ['thumb', 'medium', 'full']) {
+    for (const size of ['thumb', 'small', 'medium', 'full']) {
       const res = await request.get(`/api/assets/${m![1]}/${size}`)
       expect(res.status(), size).toBe(200)
       expect(res.headers()['content-type']).toMatch(/^image\//)

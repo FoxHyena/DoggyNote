@@ -18,7 +18,7 @@ export async function addImages(files: File[], at: Vec): Promise<Id[]> {
       const w = Math.min(DEFAULT_SIZE.image.w, img.width)
       ids.push(
         createCard('image', { at: { x: at.x + offset, y: at.y + offset } }, {
-          content: { assetId: img.assetId, width: img.width, height: img.height },
+          content: { assetId: img.assetId, width: img.width, height: img.height, sizes: img.sizes },
           edit: false,
           extra: { w, h: Math.round((w * img.height) / img.width) },
         }),

@@ -7,7 +7,9 @@ import { assetUrl } from './api.ts'
 // EXIF (GPS etc.) from everything we store. Only GIF originals are kept as-is
 // so animation survives at full size.
 
-export const SIZES = { thumb: 256, medium: 1024, full: 4096 } as const
+// `small` (640) is what a card at 100% on a Retina screen needs; decoding
+// `medium` there cost ~2.5× the memory per visible image.
+export const SIZES = { thumb: 256, small: 640, medium: 1024, full: 4096 } as const
 export type AssetSize = keyof typeof SIZES
 
 const listeners = new Set<() => void>()
@@ -22,7 +24,7 @@ function canEncodeWebp(): Promise<boolean> {
   return webpOk
 }
 
-export type ImportedImage = { assetId: Id; width: number; height: number }
+export type ImportedImage = { assetId: Id; width: number; height: number; sizes: AssetSize[] }
 
 export async function importImage(file: Blob): Promise<ImportedImage> {
   const bitmap = await createImageBitmap(file)
@@ -49,7 +51,7 @@ export async function importImage(file: Blob): Promise<ImportedImage> {
   await idb.putMany('assets', entries)
   await idb.put('meta', `upload:${assetId}`, true)
   for (const l of listeners) l()
-  return { assetId, width, height }
+  return { assetId, width, height, sizes: Object.keys(SIZES) as AssetSize[] }
 }
 
 export async function pendingUploads(): Promise<Id[]> {

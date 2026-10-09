@@ -9,7 +9,7 @@ import { resolveShare } from './shares.ts'
 //   - ?t=<asset token>: the desktop app, whose cross-origin <img> can't send a bearer header
 //   - ?share=<share token>: a share viewer, and only for images on the boards that link covers
 
-const SIZES = new Set(['thumb', 'medium', 'full'])
+const SIZES = new Set(['thumb', 'small', 'medium', 'full'])
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
 const MAX_BYTES = 15 * 1024 * 1024

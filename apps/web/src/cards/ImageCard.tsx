@@ -9,7 +9,10 @@ import type { CardProps } from '../canvas/CardView.tsx'
 export function ImageCard(props: CardProps<'image'>) {
   const size = createMemo<AssetSize>(() => {
     const onScreen = props.card.w * camera().zoom * (window.devicePixelRatio || 1)
-    return props.lod || onScreen <= 256 ? 'thumb' : onScreen <= 1024 ? 'medium' : 'full'
+    if (props.lod || onScreen <= 256) return 'thumb'
+    // Older images have no `small`; they step up to `medium`.
+    if (onScreen <= 640 && props.card.content.sizes?.includes('small')) return 'small'
+    return onScreen <= 1024 ? 'medium' : 'full'
   })
   const [src, setSrc] = createSignal<string>()
 

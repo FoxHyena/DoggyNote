@@ -326,6 +326,18 @@ test.describe('images', () => {
       .toBeGreaterThan(20)
   })
 
+  test('at 100% a card decodes the 640px size; older images without it use 1024px', async ({ page }) => {
+    await page.getByTestId('image-input').setInputFiles({ name: 'pup.png', mimeType: 'image/png', buffer: await pngBytes(page, 1600, 1200) })
+    const img = page.getByTestId('card-image')
+    await expect(img).toHaveAttribute('data-size', page.viewportSize() && (await page.evaluate(() => devicePixelRatio)) > 2.4 ? 'medium' : 'small')
+    // Pretend it's an image from before the 640px tier.
+    const id = await page.locator('.card-image').getAttribute('data-card-id')
+    await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
+    await page.request.post('/api/sync', { data: { changes: [{ id, patch: { content: { assetId: 'x', width: 1600, height: 1200 } } }] } })
+    await page.getByTestId('sync-status').click()
+    await expect(img).toHaveAttribute('data-size', 'medium')
+  })
+
   test('drop an image file onto the canvas', async ({ page }) => {
     const bytes = [...(await pngBytes(page, 300, 300, '#7fa7d1'))]
     const p = await at(page, 0.4, 0.4)
