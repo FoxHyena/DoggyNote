@@ -51,19 +51,25 @@ shares.delete('/shares/:token', requireUser, async (c) => {
   return c.json({ ok: true })
 })
 
-/** Public: the objects behind a share link. */
-shares.get('/share/:token', async (c) => {
-  c.header('cache-control', 'no-store')
-  const share = await c.env.DB.prepare('SELECT board_id, include_children FROM shares WHERE token = ?1 AND revoked_at IS NULL')
-    .bind(c.req.param('token'))
+export type ResolvedShare = { root: Obj; sharedBoards: Set<string>; objects: Obj[] }
+
+/**
+ * Everything a share link exposes: its root board, every board reachable
+ * through live board cards (when inner boards are included), and their objects.
+ * Null if the link is unknown, revoked, or its board is gone.
+ */
+export async function resolveShare(db: D1Database, token: string): Promise<ResolvedShare | null> {
+  const share = await db
+    .prepare('SELECT board_id, include_children FROM shares WHERE token = ?1 AND revoked_at IS NULL')
+    .bind(token)
     .first<{ board_id: string; include_children: number }>()
-  if (!share) return c.json({ error: 'This link has been turned off or never existed' }, 404)
+  if (!share) return null
 
   const load = async (sql: string, ...args: unknown[]) =>
-    (await c.env.DB.prepare(sql).bind(...args).all<{ data: string }>()).results.map((r) => JSON.parse(r.data) as Obj)
+    (await db.prepare(sql).bind(...args).all<{ data: string }>()).results.map((r) => JSON.parse(r.data) as Obj)
 
   const root = (await load("SELECT data FROM objects WHERE id = ?1 AND kind = 'board'", share.board_id))[0]
-  if (!root || !alive(root)) return c.json({ error: 'This board no longer exists' }, 404)
+  if (!root || !alive(root)) return null
 
   const out: Obj[] = [root]
   const seen = new Set([root.id])
@@ -85,8 +91,6 @@ shares.get('/share/:token', async (c) => {
       queue.push(b.id)
     }
   }
-  // Boards whose contents the link opens. Anything else is just a tile.
-  const sharedBoards = [...seen]
   // Child boards whose content isn't shared still need their board object for the tile.
   if (!share.include_children) {
     const childIds = out.filter((o) => o.kind === 'card' && o.type === 'board').map((o) => o.content?.boardId).filter((x): x is string => !!x)
@@ -95,5 +99,13 @@ shares.get('/share/:token', async (c) => {
       out.push(...(await load(`SELECT data FROM objects WHERE kind = 'board' AND id IN (${placeholders})`, ...childIds)).filter(alive))
     }
   }
-  return c.json({ rootBoardId: root.id, sharedBoards, objects: out })
+  return { root, sharedBoards: seen, objects: out }
+}
+
+/** Public: the objects behind a share link. */
+shares.get('/share/:token', async (c) => {
+  c.header('cache-control', 'no-store')
+  const res = await resolveShare(c.env.DB, c.req.param('token'))
+  if (!res) return c.json({ error: 'This link has been turned off or never existed' }, 404)
+  return c.json({ rootBoardId: res.root.id, sharedBoards: [...res.sharedBoards], objects: res.objects })
 })

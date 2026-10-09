@@ -55,7 +55,8 @@ export async function clickEmpty(page: Page, fx = 0.95, fy = 0.95) {
 
 /** Fresh board so tests don't see each other's cards (they share a server once sync lands). */
 export async function freshBoard(page: Page, name = `Test ${Math.random().toString(36).slice(2, 7)}`) {
-  await page.goto('/')
+  // Start from the Doghouse explicitly: '/' reopens the last board you were on.
+  await page.goto('/#/b/home')
   await expect(page.getByTestId('canvas')).toBeVisible()
   await page.getByTestId('tool-board').click()
   await page.keyboard.type(name)

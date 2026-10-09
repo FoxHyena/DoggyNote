@@ -49,3 +49,30 @@ export async function sha256Hex(s: string): Promise<string> {
   const d = new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(s)))
   return [...d].map((b) => b.toString(16).padStart(2, '0')).join('')
 }
+
+async function hmacKey(secret: string): Promise<CryptoKey> {
+  return crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify'])
+}
+
+/** `<userId>.<expiresAtMs>.<sig>`: lets <img> tags fetch images for a signed-in user without a header. */
+export async function signAssetToken(secret: string, userId: string, expiresAt: number): Promise<string> {
+  const payload = `${userId}.${expiresAt}`
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', await hmacKey(secret), enc.encode(payload)))
+  return `${payload}.${b64url(sig)}`
+}
+
+/** The user id if the token is genuine and unexpired, else null. */
+export async function verifyAssetToken(secret: string, token: string, now: number): Promise<string | null> {
+  const parts = token.split('.')
+  if (parts.length !== 3) return null
+  const [userId, exp, sig] = parts
+  if (!userId || !(Number(exp) > now)) return null
+  let sigBytes: Uint8Array<ArrayBuffer>
+  try {
+    sigBytes = fromB64url(sig)
+  } catch {
+    return null
+  }
+  const ok = await crypto.subtle.verify('HMAC', await hmacKey(secret), sigBytes, enc.encode(`${userId}.${exp}`))
+  return ok ? userId : null
+}

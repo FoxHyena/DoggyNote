@@ -2,7 +2,7 @@ import { Match, Switch, createResource, onCleanup } from 'solid-js'
 import { installShortcuts } from './ui/shortcuts.ts'
 import type { Obj } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
-import { ApiError, api } from './state/api.ts'
+import { ApiError, api, setShareToken } from './state/api.ts'
 import * as doc from './state/doc.ts'
 import { boardId, setRootBoard } from './state/ui.ts'
 import { createTheme } from './theme.ts'
@@ -19,6 +19,7 @@ export function Viewer(props: { token: string }) {
   onCleanup(installShortcuts({ readOnly: true }))
   const [data] = createResource(async () => {
     const res = await api<Shared>(`/api/share/${encodeURIComponent(props.token)}`)
+    setShareToken(props.token)
     await doc.load({ persist: false, readOnly: true })
     doc.loadSnapshot(res.objects)
     setRootBoard(res.rootBoardId)

@@ -17,10 +17,10 @@ function tokenFrom(c: Context<AppEnv>): string | null {
   return getCookie(c, SESSION_COOKIE) ?? null
 }
 
-/** Session gate: cookie (browser) or bearer token (desktop app). Read from D1 every request so logout/revoke is immediate. */
-export const requireUser: MiddlewareHandler<AppEnv> = async (c, next) => {
+/** The signed-in user for this request (cookie or bearer), or null. Reads D1 every time. */
+export async function sessionUser(c: Context<AppEnv>): Promise<{ user: User; hash: string } | null> {
   const token = tokenFrom(c)
-  if (!token) return c.json({ error: 'Not signed in' }, 401)
+  if (!token) return null
   const hash = await sha256Hex(token)
   const row = await c.env.DB.prepare(
     `SELECT u.id, u.username, u.is_admin FROM sessions s JOIN users u ON u.id = s.user_id
@@ -28,9 +28,16 @@ export const requireUser: MiddlewareHandler<AppEnv> = async (c, next) => {
   )
     .bind(hash, Date.now())
     .first<{ id: string; username: string; is_admin: number }>()
-  if (!row) return c.json({ error: 'Session expired' }, 401)
-  c.set('user', toUser(row))
-  c.set('sessionHash', hash)
+  return row ? { user: toUser(row), hash } : null
+}
+
+/** Session gate: cookie (browser) or bearer token (desktop app). Read from D1 every request so logout/revoke is immediate. */
+export const requireUser: MiddlewareHandler<AppEnv> = async (c, next) => {
+  if (!tokenFrom(c)) return c.json({ error: 'Not signed in' }, 401)
+  const s = await sessionUser(c)
+  if (!s) return c.json({ error: 'Session expired' }, 401)
+  c.set('user', s.user)
+  c.set('sessionHash', s.hash)
   await next()
 }
 

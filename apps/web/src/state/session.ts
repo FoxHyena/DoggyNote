@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js'
-import { ApiError, api, setBearer } from './api.ts'
+import { ApiError, api, clearAssetToken, setBearer } from './api.ts'
 import * as doc from './doc.ts'
 import { isTauri, tokenStore } from './platform.ts'
 
@@ -81,6 +81,7 @@ export async function logout() {
   }
   await tokenStore.clear()
   setBearer(null)
+  clearAssetToken()
   cacheUser(null)
   await doc.resetLocal()
   location.hash = ''
