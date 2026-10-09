@@ -53,7 +53,7 @@ Legend: [x] done + tested · [~] in progress · [ ] not started
 ## Round 3 (in progress)
 - [x] Sharp zoom in the desktop app (2D world transform)
 - [x] Dot grid + snap-to-grid toggle (⌘'), glow + haptic tick on desktop
-- [ ] Memory pass (Mac app ≤150 MB)
+- [~] Memory pass: overview 183→164 MB, 100% 202→186 MB (target 150 not reached; rest is WebKit GPU tiles + JS heap)
 - [ ] Toy box (personal, **server-enforced privacy**) + global quick capture
 - [ ] Comment threads on cards
 - [ ] File uploads

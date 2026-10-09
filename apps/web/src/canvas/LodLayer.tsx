@@ -141,7 +141,8 @@ export function LodLayer() {
     const v = viewport()
     const cam = camera()
     const pal = palette()
-    const dpr = window.devicePixelRatio || 1
+    // 1× is plenty for shapes this small, and a Retina backing store would be 4× the memory.
+    const dpr = 1
     if (el.width !== Math.round(v.width * dpr) || el.height !== Math.round(v.height * dpr)) {
       el.width = Math.round(v.width * dpr)
       el.height = Math.round(v.height * dpr)
