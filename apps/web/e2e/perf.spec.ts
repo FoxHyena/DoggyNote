@@ -29,7 +29,7 @@ async function seed(page: Page): Promise<string> {
           columnId: null, order: 0, content: { boardId }, createdAt: now,
         },
       ]
-      // 300 images: upload three sizes each (small real PNG/JPEG bytes).
+      // 300 images: upload all four sizes each (small real JPEG bytes).
       const colors = ['#e8a849', '#d9765f', '#86b89f', '#7fa7d1', '#a99bd6', '#e6a87c']
       const encode = async (w: number, h: number, c: string, type: string) => {
         const cv = new OffscreenCanvas(w, h)
@@ -44,6 +44,7 @@ async function seed(page: Page): Promise<string> {
       }
       const sizes: [string, number, number][] = [
         ['thumb', 256, 192],
+        ['small', 640, 480],
         ['medium', 1024, 768],
         ['full', 1600, 1200],
       ]
@@ -72,7 +73,7 @@ async function seed(page: Page): Promise<string> {
         const isImage = i % Math.round(total / IMAGES) === 0 && imageIds.length > 0
         const base = { id: id(), kind: 'card', boardId, x: col * 300, y: row * 280, w: 260, z: i + 1, color: 'none', columnId: null, order: 0, createdAt: now }
         if (isImage) {
-          objs.push({ ...base, type: 'image', h: 195, content: { assetId: imageIds.pop(), width: 1600, height: 1200 } })
+          objs.push({ ...base, type: 'image', h: 195, content: { assetId: imageIds.pop(), width: 1600, height: 1200, sizes: ['thumb', 'small', 'medium', 'full'] } })
         } else {
           const text = LOREM.repeat(1 + (i % 3))
           objs.push({
