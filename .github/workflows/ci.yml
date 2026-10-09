@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Typecheck + unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r typecheck
+      - run: pnpm test
+
+  e2e:
+    name: End-to-end (WebKit + Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install browsers
+        run: pnpm --filter web exec playwright install --with-deps webkit chromium
+      # Starts the prod build, the Worker on a fresh local D1/R2, the desktop
+      # flavour of the build and the link-preview fixtures (see playwright.config.ts).
+      - run: pnpm test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+          retention-days: 7
+
+  perf:
+    name: Perf budget (informational)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Shared runners are noisy; this reports numbers but never blocks a merge.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter web exec playwright install --with-deps chromium
+      - name: Run perf spec
+        working-directory: apps/web
+        run: |
+          PERF=1 pnpm exec playwright test --project=chromium --grep @perf --reporter=line | tee perf.log
+          echo '### Perf (1,000 cards / 300 images)' >> "$GITHUB_STEP_SUMMARY"
+          grep '^PERF' perf.log | sed 's/^PERF /```json\n/; s/$/\n```/' >> "$GITHUB_STEP_SUMMARY" || true
