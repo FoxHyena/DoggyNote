@@ -155,6 +155,7 @@ export const ToolIcons: Record<string, () => JSX.Element> = {
   close: () => <path d="M6 6l12 12M18 6 6 18" />,
   comment: () => <path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4.5 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" />,
   check: () => <path d="M5 12.5 10 17l9-10" />,
+  download: () => <path d="M12 4v12M7 11l5 5 5-5M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" />,
   upload: () => <path d="M12 16V4M7 9l5-5 5 5M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" />,
   restore: () => <path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v4.5h4.5" />,
   external: () => <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />,

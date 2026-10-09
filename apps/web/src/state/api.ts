@@ -16,7 +16,8 @@ export class ApiError extends Error {
   }
 }
 
-export async function api<T>(path: string, init: RequestInit & { json?: unknown } = {}): Promise<T> {
+/** A checked request: throws ApiError with the server's message, else returns the response. */
+export async function apiRaw(path: string, init: RequestInit & { json?: unknown } = {}): Promise<Response> {
   const headers = new Headers(init.headers)
   if (bearer) headers.set('authorization', `Bearer ${bearer}`)
   let body = init.body
@@ -24,8 +25,13 @@ export async function api<T>(path: string, init: RequestInit & { json?: unknown 
     headers.set('content-type', 'application/json')
     body = JSON.stringify(init.json)
   }
-  const res = await fetch(API_BASE + path, { ...init, headers, body, // Cookies only same-origin (the browser app). The desktop app is cross-origin and uses a bearer token.
-    credentials: API_BASE ? 'omit' : 'same-origin' })
+  const res = await fetch(API_BASE + path, {
+    ...init,
+    headers,
+    body,
+    // Cookies only same-origin (the browser app). The desktop app is cross-origin and uses a bearer token.
+    credentials: API_BASE ? 'omit' : 'same-origin',
+  })
   if (!res.ok) {
     let msg = res.statusText
     try {
@@ -35,6 +41,11 @@ export async function api<T>(path: string, init: RequestInit & { json?: unknown 
     }
     throw new ApiError(res.status, msg)
   }
+  return res
+}
+
+export async function api<T>(path: string, init: RequestInit & { json?: unknown } = {}): Promise<T> {
+  const res = await apiRaw(path, init)
   const type = res.headers.get('content-type') ?? ''
   return (type.includes('application/json') ? res.json() : res.text()) as Promise<T>
 }

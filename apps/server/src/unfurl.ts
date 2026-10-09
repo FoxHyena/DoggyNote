@@ -88,3 +88,24 @@ export async function unfurl(target: URL, fetcher: typeof fetch = fetch): Promis
     image,
   }
 }
+
+export const MAX_PROXY_BYTES = 5 * 1024 * 1024
+
+/** Fetches an image and passes it on, refusing anything that isn't a reasonably sized image. */
+export async function proxyImage(target: URL, fetcher: typeof fetch = fetch): Promise<Response> {
+  const res = await fetcher(target.href, {
+    headers: { 'user-agent': 'Mozilla/5.0 (compatible; DoggyNoteBot/1.0; +link-preview)', accept: 'image/*' },
+    redirect: 'follow',
+    signal: AbortSignal.timeout(8000),
+  })
+  if (!res.ok || !res.body) throw new Error(`upstream ${res.status}`)
+  const type = (res.headers.get('content-type') ?? '').split(';')[0].trim()
+  // Never SVG: it's a document, and could carry script.
+  if (!/^image\/(png|jpe?g|gif|webp|avif)$/i.test(type)) throw new Error('not an image')
+  if (Number(res.headers.get('content-length') ?? 0) > MAX_PROXY_BYTES) throw new Error('image too large')
+  const body = await res.arrayBuffer()
+  if (body.byteLength > MAX_PROXY_BYTES) throw new Error('image too large')
+  return new Response(body, {
+    headers: { 'content-type': type, 'cache-control': 'private, max-age=86400', 'x-content-type-options': 'nosniff', 'content-security-policy': "sandbox; default-src 'none'" },
+  })
+}
