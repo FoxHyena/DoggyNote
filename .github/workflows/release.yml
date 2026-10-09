@@ -99,7 +99,13 @@ jobs:
           security import "$RUNNER_TEMP/cert.p12" -k "$KC" -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KCPW" "$KC" > /dev/null
           rm "$RUNNER_TEMP/cert.p12"
+          # codesign only resolves identities in keychains on the search list.
+          security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+          # Sign by fingerprint: the cert is self-signed (untrusted), so lookups by name can miss it.
+          ID=$(security find-identity -p codesigning "$KC" | awk '/DoggyNote Signing/ {print $2; exit}')
+          test -n "$ID" || { security find-identity -p codesigning "$KC"; exit 1; }
           echo "SIGN_KEYCHAIN=$KC" >> "$GITHUB_ENV"
+          echo "SIGN_IDENTITY=$ID" >> "$GITHUB_ENV"
 
       - name: Build app
         working-directory: apps/desktop
