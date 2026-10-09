@@ -1,0 +1,169 @@
+import { describe, expect, it } from 'vitest'
+import {
+  UndoStack,
+  cullRect,
+  diff,
+  docToText,
+  edgePoint,
+  findFreeSpot,
+  intersects,
+  fitCamera,
+  invert,
+  orderBetween,
+  ordersBetween,
+  rectFromPoints,
+  sanitizeDoc,
+  screenToWorld,
+  worldToScreen,
+  zoomAt,
+  type Card,
+  type Change,
+} from './index.ts'
+
+describe('camera', () => {
+  const cam = { x: 100, y: 50, zoom: 2 }
+
+  it('round-trips screen and world coordinates', () => {
+    const w = screenToWorld(cam, { x: 40, y: 60 })
+    expect(w).toEqual({ x: 120, y: 80 })
+    expect(worldToScreen(cam, w)).toEqual({ x: 40, y: 60 })
+  })
+
+  it('zoomAt keeps the anchor point fixed', () => {
+    const anchor = { x: 300, y: 200 }
+    const before = screenToWorld(cam, anchor)
+    const next = zoomAt(cam, anchor, 0.5)
+    const after = screenToWorld(next, anchor)
+    expect(after.x).toBeCloseTo(before.x)
+    expect(after.y).toBeCloseTo(before.y)
+    expect(next.zoom).toBe(0.5)
+  })
+
+  it('zoomAt clamps zoom', () => {
+    expect(zoomAt(cam, { x: 0, y: 0 }, 100).zoom).toBe(4)
+    expect(zoomAt(cam, { x: 0, y: 0 }, 0.001).zoom).toBe(0.1)
+  })
+
+  it('cullRect snaps outward so small pans keep the same rect', () => {
+    const a = cullRect({ x: 10, y: 10, w: 800, h: 600 }, 200, 256)
+    const b = cullRect({ x: 12, y: 12, w: 800, h: 600 }, 200, 256)
+    expect(a).toEqual(b)
+    expect(a.x).toBeLessThanOrEqual(10 - 200)
+  })
+
+  it('fitCamera centres the bounds and never zooms past 100%', () => {
+    const c = fitCamera({ x: 0, y: 0, w: 100, h: 100 }, 1000, 800)
+    expect(c.zoom).toBe(1)
+    const mid = worldToScreen(c, { x: 50, y: 50 })
+    expect(mid.x).toBeCloseTo(500)
+    expect(mid.y).toBeCloseTo(400)
+  })
+})
+
+describe('geometry', () => {
+  it('findFreeSpot keeps a clear spot and moves off an occupied one', () => {
+    const want = { x: 0, y: 0, w: 100, h: 50 }
+    expect(findFreeSpot(want, [])).toEqual({ x: 0, y: 0 })
+    const spot = findFreeSpot(want, [{ x: 0, y: 0, w: 100, h: 50 }])
+    expect(intersects({ ...want, ...spot }, { x: 0, y: 0, w: 100, h: 50 })).toBe(false)
+    expect(Math.hypot(spot.x, spot.y)).toBeLessThan(200)
+  })
+
+  it('rectFromPoints works in any drag direction', () => {
+    expect(rectFromPoints({ x: 10, y: 10 }, { x: 0, y: 0 })).toEqual({ x: 0, y: 0, w: 10, h: 10 })
+  })
+  it('edgePoint lands on the rect edge toward the target', () => {
+    const r = { x: 0, y: 0, w: 100, h: 50 }
+    expect(edgePoint(r, { x: 500, y: 25 })).toEqual({ x: 100, y: 25 })
+    expect(edgePoint(r, { x: 50, y: -500 })).toEqual({ x: 50, y: 0 })
+  })
+})
+
+describe('patches + undo', () => {
+  const card = { id: 'a', kind: 'card', x: 0, y: 0, color: 'none' } as unknown as Card
+
+  it('diff keeps only changed keys and records previous values', () => {
+    expect(diff(card, { x: 10, y: 0 })).toEqual({ id: 'a', before: { x: 0 }, after: { x: 10 } })
+    expect(diff(card, { x: 0 })).toBeNull()
+  })
+
+  it('treats null and undefined as equal', () => {
+    expect(diff({ ...card, columnId: undefined } as Card, { columnId: null })).toBeNull()
+  })
+
+  it('invert swaps before/after and reverses order', () => {
+    const tx: Change[] = [
+      { id: 'a', before: { x: 0 }, after: { x: 1 } },
+      { id: 'b', before: { x: 5 }, after: { x: 6 } },
+    ]
+    expect(invert(tx)).toEqual([
+      { id: 'b', before: { x: 6 }, after: { x: 5 } },
+      { id: 'a', before: { x: 1 }, after: { x: 0 } },
+    ])
+  })
+
+  it('UndoStack undoes, redoes, and clears redo on new edits', () => {
+    const s = new UndoStack()
+    const t1: Change[] = [{ id: 'a', before: { x: 0 }, after: { x: 1 } }]
+    const t2: Change[] = [{ id: 'a', before: { x: 1 }, after: { x: 2 } }]
+    s.push(t1)
+    s.push(t2)
+    expect(s.undo()).toEqual(invert(t2))
+    expect(s.canRedo).toBe(true)
+    expect(s.redo()).toEqual(t2)
+    s.undo()
+    s.push([{ id: 'b', before: {}, after: { x: 9 } }])
+    expect(s.canRedo).toBe(false)
+  })
+})
+
+describe('ordering', () => {
+  it('orderBetween handles ends and middles', () => {
+    expect(orderBetween(undefined, undefined)).toBe(1)
+    expect(orderBetween(1, undefined)).toBe(2)
+    expect(orderBetween(undefined, 1)).toBe(0)
+    expect(orderBetween(1, 2)).toBe(1.5)
+  })
+  it('ordersBetween spaces values strictly inside the gap', () => {
+    const o = ordersBetween(1, 2, 3)
+    expect(o).toHaveLength(3)
+    expect(o[0]).toBeGreaterThan(1)
+    expect(o[2]).toBeLessThan(2)
+    expect(o[0]).toBeLessThan(o[1])
+  })
+})
+
+describe('rich text', () => {
+  it('drops unknown nodes, marks and unsafe links', () => {
+    const doc = sanitizeDoc({
+      type: 'doc',
+      content: [
+        { type: 'script', text: 'x' },
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'hi', marks: [{ type: 'link', attrs: { href: 'javascript:alert(1)' } }, { type: 'strong' }, { type: 'onclick' }] },
+            { type: 'text', text: ' ok', marks: [{ type: 'link', attrs: { href: 'https://dog.example/' } }] },
+          ],
+        },
+      ],
+    })
+    expect(doc.content).toHaveLength(1)
+    expect(doc.content![0].content![0].marks).toEqual([{ type: 'strong' }])
+    expect(doc.content![0].content![1].marks).toEqual([{ type: 'link', attrs: { href: 'https://dog.example/' } }])
+  })
+  it('rejects non-docs', () => {
+    expect(sanitizeDoc('<b>hi</b>')).toEqual({ type: 'doc', content: [] })
+  })
+  it('docToText joins blocks with newlines', () => {
+    expect(
+      docToText({
+        type: 'doc',
+        content: [
+          { type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: 'Title' }] },
+          { type: 'bullet_list', content: [{ type: 'list_item', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'one' }] }] }] },
+        ],
+      }),
+    ).toBe('Title\none')
+  })
+})

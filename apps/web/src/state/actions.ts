@@ -1,0 +1,153 @@
+import {
+  DEFAULT_SIZE,
+  newId,
+  orderBetween,
+  textToDoc,
+  type Board,
+  type Card,
+  type CardContent,
+  type CardType,
+  type Change,
+  type Connection,
+  type Id,
+  type Obj,
+  type Vec,
+} from '@doggynote/core'
+import type { CardColor } from '@doggynote/theme'
+import * as doc from './doc.ts'
+import { beginEdit, boardId, clearSelection, editingId, endEdit, select, selection } from './ui.ts'
+
+export const EMPTY_CONTENT: { [T in CardType]: () => CardContent[T] } = {
+  note: () => ({ doc: { type: 'doc', content: [{ type: 'paragraph' }] } }),
+  todo: () => ({ title: '', items: [{ id: newId(), text: '', done: false }] }),
+  board: () => ({ boardId: '' }),
+  image: () => ({ assetId: '', width: 1, height: 1 }),
+  link: () => ({ url: '', status: 'pending' }),
+  column: () => ({ title: '' }),
+}
+
+/** Where a new card goes: a world point (card's top-centre lands there) or a column slot. */
+export type Placement = { at: Vec } | { columnId: Id; order: number }
+
+export function columnChildren(columnId: Id): Card[] {
+  const col = doc.getCard(columnId)
+  if (!col) return []
+  return doc
+    .cardsOn(col.boardId)
+    .filter((c) => c.columnId === columnId)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+}
+
+export function appendOrder(columnId: Id): number {
+  const kids = columnChildren(columnId)
+  return orderBetween(kids[kids.length - 1]?.order, undefined)
+}
+
+function baseCard<T extends CardType>(type: T, place: Placement, content: CardContent[T], extra: Partial<Card> = {}): Card<T> {
+  const b = boardId()
+  const size = DEFAULT_SIZE[type]
+  const inColumn = 'columnId' in place
+  return {
+    id: newId(),
+    kind: 'card',
+    type,
+    boardId: b,
+    x: inColumn ? 0 : Math.round(place.at.x - size.w / 2),
+    y: inColumn ? 0 : Math.round(place.at.y - 20),
+    w: size.w,
+    h: size.h,
+    z: doc.maxZ(b) + 1,
+    color: 'none',
+    columnId: inColumn ? place.columnId : null,
+    order: inColumn ? place.order : 0,
+    content,
+    createdAt: Date.now(),
+    ...extra,
+  } as Card<T>
+}
+
+/** Create a card of `type`, select it, and (for text cards) start editing. */
+export function createCard(type: CardType, place: Placement, opts: { content?: unknown; edit?: boolean; extra?: Partial<Card> } = {}): Id {
+  endEdit()
+  const tx: Change[] = []
+  let content = (opts.content ?? EMPTY_CONTENT[type]()) as CardContent[CardType]
+  if (type === 'board' && !opts.content) {
+    const board: Board = {
+      id: newId(),
+      kind: 'board',
+      parentId: boardId(),
+      title: '',
+      icon: 'paw',
+      color: BOARD_COLORS[Math.floor(Math.random() * BOARD_COLORS.length)],
+      createdAt: Date.now(),
+    }
+    tx.push(doc.createChange(board))
+    content = { boardId: board.id }
+  }
+  const card = baseCard(type, place, content, opts.extra)
+  tx.push(doc.createChange(card))
+  doc.commit(tx)
+  const editable = type === 'note' || type === 'todo' || type === 'column' || type === 'board' || type === 'link'
+  if (opts.edit ?? editable) beginEdit(card.id, { isNew: true })
+  else select([card.id])
+  return card.id
+}
+
+const BOARD_COLORS: CardColor[] = ['gold', 'collar', 'ball', 'sky', 'lilac', 'peach']
+
+export function createNoteWithText(text: string, place: Placement): Id {
+  return createCard('note', place, { content: { doc: textToDoc(text) }, edit: false })
+}
+
+export function trashSelection() {
+  const ids = [...selection()]
+  if (!ids.length) return
+  if (editingId()) endEdit()
+  const now = Date.now()
+  const patches: Record<Id, Partial<Obj>> = {}
+  for (const id of ids) {
+    const o = doc.get(id)
+    if (!o) continue
+    // Connections have no trash view; they're simply removed (undo brings them back).
+    if (o.kind === 'connection') patches[id] = { purged: true }
+    else if (o.kind === 'card') patches[id] = { deletedAt: now }
+  }
+  doc.update(patches)
+  clearSelection()
+}
+
+export function restoreCard(id: Id) {
+  doc.update({ [id]: { deletedAt: null } })
+}
+
+export function emptyTrash(cards: Card[]) {
+  const patches: Record<Id, Partial<Obj>> = {}
+  for (const c of cards) patches[c.id] = { purged: true }
+  doc.update(patches)
+}
+
+export function setColor(ids: Iterable<Id>, color: CardColor) {
+  const patches: Record<Id, Partial<Obj>> = {}
+  for (const id of ids) {
+    const o = doc.get(id)
+    if (o?.kind === 'card') {
+      patches[id] = { color }
+      // A board card's colour is the board's colour.
+      if (o.type === 'board') patches[(o as Card<'board'>).content.boardId] = { color }
+    }
+  }
+  doc.update(patches)
+}
+
+export function connect(from: Id, to: Id): Id | null {
+  if (from === to) return null
+  const existing = doc.connectionsOn(boardId()).find((c) => (c.from === from && c.to === to) || (c.from === to && c.to === from))
+  if (existing) return existing.id
+  const conn: Connection = { id: newId(), kind: 'connection', boardId: boardId(), from, to, arrow: 'end', createdAt: Date.now() }
+  doc.commit([doc.createChange(conn)])
+  return conn.id
+}
+
+export function selectAll() {
+  select(doc.cardsOn(boardId()).filter((c) => !c.columnId).map((c) => c.id))
+}

@@ -1,0 +1,14 @@
+{
+  "name": "desktop",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build --bundles app && sh scripts/make-dmg.sh",
+    "build:local": "VITE_API_BASE=http://localhost:8787 VITE_DIAG=1 VITE_TOKEN_STORE=web tauri build --bundles app"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.9.0"
+  }
+}

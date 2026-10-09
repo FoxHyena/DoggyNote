@@ -1,0 +1,51 @@
+// The desktop shell: a window around the web app, plus two small native bits
+// the web build can't do itself: Keychain storage for the session token, and
+// opening links in the system browser (via tauri-plugin-opener).
+
+const SERVICE: &str = "dog.doggynote.app";
+const ACCOUNT: &str = "session";
+
+fn entry() -> Result<keyring::Entry, String> {
+  keyring::Entry::new(SERVICE, ACCOUNT).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_token() -> Result<Option<String>, String> {
+  match entry()?.get_password() {
+    Ok(t) => Ok(Some(t)),
+    Err(keyring::Error::NoEntry) => Ok(None),
+    Err(e) => Err(e.to_string()),
+  }
+}
+
+#[tauri::command]
+fn set_token(token: String) -> Result<(), String> {
+  entry()?.set_password(&token).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn clear_token() -> Result<(), String> {
+  match entry()?.delete_credential() {
+    Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
+    Err(e) => Err(e.to_string()),
+  }
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+  tauri::Builder::default()
+    .plugin(tauri_plugin_opener::init())
+    .invoke_handler(tauri::generate_handler![get_token, set_token, clear_token])
+    .setup(|app| {
+      if cfg!(debug_assertions) {
+        app.handle().plugin(
+          tauri_plugin_log::Builder::default()
+            .level(log::LevelFilter::Info)
+            .build(),
+        )?;
+      }
+      Ok(())
+    })
+    .run(tauri::generate_context!())
+    .expect("error while building tauri application");
+}

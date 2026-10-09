@@ -1,0 +1,50 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "DoggyNote",
+  "version": "0.1.0",
+  "identifier": "dog.doggynote.app",
+  "build": {
+    "frontendDist": "../../web/dist-desktop",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "pnpm --filter web dev --port 5173 --strictPort",
+    "beforeBuildCommand": "pnpm --filter web exec vite build --outDir dist-desktop --emptyOutDir"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "DoggyNote",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 720,
+        "minHeight": 480,
+        "resizable": true,
+        "label": "main",
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
+      }
+    ],
+    "security": {
+      "csp": {
+        "default-src": "'self'",
+        "script-src": "'self'",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' data: blob: https: http:",
+        "connect-src": "'self' ipc: http://ipc.localhost https: http://localhost:8787"
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "android": {
+      "debugApplicationIdSuffix": ".debug"
+    }
+  }
+}

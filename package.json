@@ -1,0 +1,17 @@
+{
+  "name": "doggynote",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.22.0",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm -r build",
+    "test": "vitest run",
+    "test:e2e": "pnpm --filter web test:e2e",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.2",
+    "vitest": "^4.0.0"
+  }
+}

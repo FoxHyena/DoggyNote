@@ -1,0 +1,25 @@
+name = "doggynote"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+# The web app's build is served as static assets; only /api/* runs the Worker.
+# Unknown paths (e.g. /s/<token>) fall back to index.html for the SPA.
+[assets]
+directory = "../web/dist"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "doggynote"
+# Replaced by the real id from `wrangler d1 create doggynote` before deploying.
+database_id = "525b9023-dd9a-422c-8a06-fb81765ed42d"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "doggynote-assets"
+
+[vars]
+# Origins allowed to call the API cross-origin with a bearer token (the desktop app).
+ALLOWED_ORIGINS = "tauri://localhost,http://tauri.localhost,https://tauri.localhost"

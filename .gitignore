@@ -1,0 +1,11 @@
+node_modules
+dist
+.wrangler
+.dev.vars
+target
+test-results
+playwright-report
+*.tsbuildinfo
+.DS_Store
+**/e2e/.auth
+dist-desktop
