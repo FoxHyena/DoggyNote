@@ -5,6 +5,7 @@ import {
   cullRect,
   fitCamera,
   intersects,
+  nearestSide,
   ordersBetween,
   panBy,
   rectFromPoints,
@@ -16,6 +17,7 @@ import {
   type Id,
   type Obj,
   type Rect,
+  type Side,
   type Vec,
 } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
@@ -44,7 +46,7 @@ import { CardView } from './CardView.tsx'
 import { LodLayer } from './LodLayer.tsx'
 import { Connections } from './Connections.tsx'
 import { cardEl, cardHeight, rectOf, setMeasuring } from './layout.ts'
-import { setDropTarget, dropTarget, setConnectPreview, setDraggingIds } from './dnd.ts'
+import { setDropTarget, dropTarget, connectPreview, setConnectPreview, setDraggingIds } from './dnd.ts'
 import { handleCanvasDrop, handleCanvasPaste } from './paste.ts'
 
 type Gesture =
@@ -53,7 +55,7 @@ type Gesture =
   | { kind: 'press'; id: Id; start: Vec; shift: boolean; target: HTMLElement; client: Vec }
   | { kind: 'drag'; ids: Id[]; startWorld: Vec; origins: Map<Id, Vec>; snap: Record<Id, Partial<Obj>> }
   | { kind: 'resize'; id: Id; startX: number; w0: number; snap: Record<Id, Partial<Obj>> }
-  | { kind: 'connect'; from: Id }
+  | { kind: 'connect'; from: Id; fromSide: Side }
 
 const DRAG_THRESHOLD = 4
 
@@ -192,11 +194,13 @@ export function Canvas(props: { readOnly: boolean }) {
       doc.markBusy([id])
       return startGesture(e, { kind: 'resize', id, startX: e.clientX, w0: c.w, snap: { [id]: doc.snapshot(id, ['w']) } })
     }
-    if (target.closest('[data-connect-handle]')) {
+    const handle = target.closest('[data-connect-handle]') as HTMLElement | null
+    if (handle) {
       const from = cardIdAt(target)!
+      const fromSide = (handle.dataset.connectHandle || 'right') as Side
       endEdit()
-      setConnectPreview({ from, to: toWorld(e) })
-      return startGesture(e, { kind: 'connect', from })
+      setConnectPreview({ from, fromSide, to: toWorld(e), target: null })
+      return startGesture(e, { kind: 'connect', from, fromSide })
     }
     const connId = (target.closest('[data-connection-id]') as HTMLElement | null)?.dataset.connectionId
     if (connId) {
@@ -309,10 +313,19 @@ export function Canvas(props: { readOnly: boolean }) {
         break
       }
       case 'connect': {
-        setConnectPreview({ from: g.from, to: toWorld(e) })
+        setConnectPreview({ from: g.from, fromSide: g.fromSide, to: toWorld(e), target: snapTarget(e, g.from) })
         break
       }
     }
+  }
+
+  /** The card under the pointer (other than `from`) and its side nearest the pointer. */
+  function snapTarget(e: { clientX: number; clientY: number }, from: Id): { id: Id; side: Side } | null {
+    const under = document.elementFromPoint(e.clientX, e.clientY)
+    const id = cardIdAt(under, e)
+    if (!id || id === from) return null
+    const r = rectOf(id)
+    return r ? { id, side: nearestSide(r, toWorld(e)) } : null
   }
 
   function onPointerUp(e: PointerEvent) {
@@ -374,9 +387,9 @@ export function Canvas(props: { readOnly: boolean }) {
         break
       case 'connect': {
         setConnectPreview(null)
-        const to = cardIdAt(document.elementFromPoint(e.clientX, e.clientY))
-        if (to && to !== g.from) {
-          const id = connect(g.from, to)
+        const t = snapTarget(e, g.from)
+        if (t) {
+          const id = connect(g.from, t.id, { fromSide: g.fromSide, toSide: t.side })
           if (id) select([id])
         }
         break
@@ -490,7 +503,7 @@ export function Canvas(props: { readOnly: boolean }) {
       ref={vp}
       class="viewport"
       data-testid="canvas"
-      classList={{ panning: panning(), moving: moving(), 'space-held': spaceHeld(), lod: lod(), 'connect-mode': !!connectMode(), readonly: props.readOnly }}
+      classList={{ panning: panning(), moving: moving(), connecting: !!connectPreview(), 'space-held': spaceHeld(), lod: lod(), 'connect-mode': !!connectMode(), readonly: props.readOnly }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}

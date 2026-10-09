@@ -11,6 +11,7 @@ import {
   type Connection,
   type Id,
   type Obj,
+  type Side,
   type Vec,
 } from '@doggynote/core'
 import type { CardColor } from '@doggynote/theme'
@@ -139,11 +140,33 @@ export function setColor(ids: Iterable<Id>, color: CardColor) {
   doc.update(patches)
 }
 
-export function connect(from: Id, to: Id): Id | null {
+/** Connect two cards. Sides pin each end to a side midpoint; leave them out for facing sides. */
+export function connect(from: Id, to: Id, sides: { fromSide?: Side; toSide?: Side } = {}): Id | null {
   if (from === to) return null
   const existing = doc.connectionsOn(boardId()).find((c) => (c.from === from && c.to === to) || (c.from === to && c.to === from))
-  if (existing) return existing.id
-  const conn: Connection = { id: newId(), kind: 'connection', boardId: boardId(), from, to, arrow: 'end', createdAt: Date.now() }
+  if (existing) {
+    // Re-dragging the same pair just re-pins its ends.
+    if (sides.fromSide || sides.toSide) {
+      const same = existing.from === from
+      doc.update({
+        [existing.id]: same
+          ? { fromSide: sides.fromSide ?? null, toSide: sides.toSide ?? null }
+          : { fromSide: sides.toSide ?? null, toSide: sides.fromSide ?? null },
+      })
+    }
+    return existing.id
+  }
+  const conn: Connection = {
+    id: newId(),
+    kind: 'connection',
+    boardId: boardId(),
+    from,
+    to,
+    fromSide: sides.fromSide ?? null,
+    toSide: sides.toSide ?? null,
+    arrow: 'end',
+    createdAt: Date.now(),
+  }
   doc.commit([doc.createChange(conn)])
   return conn.id
 }

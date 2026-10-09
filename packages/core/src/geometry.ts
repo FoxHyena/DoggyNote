@@ -86,3 +86,69 @@ export function findFreeSpot(want: Rect, taken: Rect[], step = 40, gap = 16, max
   }
   return { x: want.x, y: want.y }
 }
+
+// ---- connector anchors ------------------------------------------------------
+
+export type Side = 'top' | 'right' | 'bottom' | 'left'
+export const SIDES: readonly Side[] = ['top', 'right', 'bottom', 'left']
+
+const NORMAL: Record<Side, Vec> = { top: { x: 0, y: -1 }, right: { x: 1, y: 0 }, bottom: { x: 0, y: 1 }, left: { x: -1, y: 0 } }
+
+/** Midpoint of one side of a rect. Connectors attach here. */
+export function sideAnchor(r: Rect, side: Side): Vec {
+  switch (side) {
+    case 'top':
+      return { x: r.x + r.w / 2, y: r.y }
+    case 'bottom':
+      return { x: r.x + r.w / 2, y: r.y + r.h }
+    case 'left':
+      return { x: r.x, y: r.y + r.h / 2 }
+    case 'right':
+      return { x: r.x + r.w, y: r.y + r.h / 2 }
+  }
+}
+
+/** The side of `r` closest to point `p` (inside or outside the rect). */
+export function nearestSide(r: Rect, p: Vec): Side {
+  const d: Record<Side, number> = {
+    top: Math.abs(p.y - r.y),
+    bottom: Math.abs(p.y - (r.y + r.h)),
+    left: Math.abs(p.x - r.x),
+    right: Math.abs(p.x - (r.x + r.w)),
+  }
+  return SIDES.reduce((best, s) => (d[s] < d[best] ? s : best), 'top' as Side)
+}
+
+/** Facing sides for two rects: along whichever axis separates them more. */
+export function autoSides(a: Rect, b: Rect): [Side, Side] {
+  const ca = center(a)
+  const cb = center(b)
+  const dx = (cb.x - ca.x) / ((a.w + b.w) / 2 || 1)
+  const dy = (cb.y - ca.y) / ((a.h + b.h) / 2 || 1)
+  if (Math.abs(dx) >= Math.abs(dy)) return dx >= 0 ? ['right', 'left'] : ['left', 'right']
+  return dy >= 0 ? ['bottom', 'top'] : ['top', 'bottom']
+}
+
+const push = (p: Vec, side: Side, by: number): Vec => ({ x: p.x + NORMAL[side].x * by, y: p.y + NORMAL[side].y * by })
+
+/**
+ * SVG path for a connector between side anchors: a cubic curve whose ends leave
+ * and enter perpendicular to their sides. `to` may be a bare point (while
+ * dragging, before it snaps to a card). Ends are pushed out by `gap` / `arrowGap`
+ * so the line clears the card edge and the arrowhead tip lands on it.
+ */
+export function connectorPath(
+  a: Rect,
+  sideA: Side,
+  to: { rect: Rect; side: Side } | Vec,
+  gap = 4,
+  arrowGap = 8,
+): { d: string; start: Vec; end: Vec } {
+  const start = push(sideAnchor(a, sideA), sideA, gap)
+  const end = 'rect' in to ? push(sideAnchor(to.rect, to.side), to.side, arrowGap) : to
+  const k = Math.max(24, Math.min(160, Math.hypot(end.x - start.x, end.y - start.y) * 0.4))
+  const c1 = push(start, sideA, k)
+  const c2 = 'rect' in to ? push(end, to.side, k) : end
+  const r = (n: number) => Math.round(n * 10) / 10
+  return { d: `M${r(start.x)},${r(start.y)} C${r(c1.x)},${r(c1.y)} ${r(c2.x)},${r(c2.y)} ${r(end.x)},${r(end.y)}`, start, end }
+}

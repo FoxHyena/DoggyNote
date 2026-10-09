@@ -4,7 +4,11 @@ import {
   cullRect,
   diff,
   docToText,
+  autoSides,
+  connectorPath,
   edgePoint,
+  nearestSide,
+  sideAnchor,
   findFreeSpot,
   intersects,
   fitCamera,
@@ -57,6 +61,38 @@ describe('camera', () => {
     const mid = worldToScreen(c, { x: 50, y: 50 })
     expect(mid.x).toBeCloseTo(500)
     expect(mid.y).toBeCloseTo(400)
+  })
+})
+
+describe('connector anchors', () => {
+  const r = { x: 0, y: 0, w: 200, h: 100 }
+  it('sideAnchor is each side midpoint', () => {
+    expect(sideAnchor(r, 'top')).toEqual({ x: 100, y: 0 })
+    expect(sideAnchor(r, 'right')).toEqual({ x: 200, y: 50 })
+    expect(sideAnchor(r, 'bottom')).toEqual({ x: 100, y: 100 })
+    expect(sideAnchor(r, 'left')).toEqual({ x: 0, y: 50 })
+  })
+  it('nearestSide picks the closest edge, inside or out', () => {
+    expect(nearestSide(r, { x: 20, y: 50 })).toBe('left')
+    expect(nearestSide(r, { x: 100, y: 8 })).toBe('top')
+    expect(nearestSide(r, { x: 190, y: 60 })).toBe('right')
+    expect(nearestSide(r, { x: 100, y: 140 })).toBe('bottom')
+  })
+  it('autoSides faces the rects along the dominant axis', () => {
+    expect(autoSides(r, { x: 400, y: 10, w: 200, h: 100 })).toEqual(['right', 'left'])
+    expect(autoSides(r, { x: -400, y: 0, w: 200, h: 100 })).toEqual(['left', 'right'])
+    expect(autoSides(r, { x: 0, y: 300, w: 200, h: 100 })).toEqual(['bottom', 'top'])
+    expect(autoSides(r, { x: 50, y: -300, w: 200, h: 100 })).toEqual(['top', 'bottom'])
+  })
+  it('connectorPath starts and ends just outside the anchors', () => {
+    const b = { x: 400, y: 0, w: 200, h: 100 }
+    const p = connectorPath(r, 'right', { rect: b, side: 'left' })
+    expect(p.start).toEqual({ x: 204, y: 50 })
+    expect(p.end).toEqual({ x: 392, y: 50 })
+    expect(p.d.startsWith('M204,50 C')).toBe(true)
+    expect(p.d.endsWith('392,50')).toBe(true)
+    const free = connectorPath(r, 'bottom', { x: 10, y: 400 })
+    expect(free.end).toEqual({ x: 10, y: 400 })
   })
 })
 
