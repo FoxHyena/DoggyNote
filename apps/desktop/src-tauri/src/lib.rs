@@ -32,13 +32,29 @@ fn clear_token() -> Result<(), String> {
   }
 }
 
+/// A light trackpad "tick" (the alignment pattern) when a dragged card snaps
+/// to a new grid point. AppKit wants this on the main thread.
+#[tauri::command]
+fn haptic(app: tauri::AppHandle) {
+  #[cfg(target_os = "macos")]
+  {
+    let _ = app.run_on_main_thread(|| {
+      use objc2_app_kit::{NSHapticFeedbackManager, NSHapticFeedbackPattern, NSHapticFeedbackPerformanceTime, NSHapticFeedbackPerformer};
+      NSHapticFeedbackManager::defaultPerformer()
+        .performFeedbackPattern_performanceTime(NSHapticFeedbackPattern::Alignment, NSHapticFeedbackPerformanceTime::Now);
+    });
+  }
+  #[cfg(not(target_os = "macos"))]
+  let _ = app;
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_updater::Builder::new().build())
     .plugin(tauri_plugin_process::init())
-    .invoke_handler(tauri::generate_handler![get_token, set_token, clear_token])
+    .invoke_handler(tauri::generate_handler![get_token, set_token, clear_token, haptic])
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(

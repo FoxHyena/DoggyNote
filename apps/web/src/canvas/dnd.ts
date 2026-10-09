@@ -7,3 +7,4 @@ export const [dropTarget, setDropTarget] = createSignal<{ columnId: Id; index: n
 export type ConnectPreview = { from: Id; fromSide: Side; to: Vec; target: { id: Id; side: Side } | null }
 export const [connectPreview, setConnectPreview] = createSignal<ConnectPreview | null>(null)
 export const [draggingIds, setDraggingIds] = createSignal<ReadonlySet<Id>>(new Set())
+export const [resizingId, setResizingId] = createSignal<Id | null>(null)

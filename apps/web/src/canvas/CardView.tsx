@@ -2,7 +2,7 @@ import { For, Match, Show, Switch, onCleanup, onMount, type JSX } from 'solid-js
 import { SIDES, type Card } from '@doggynote/core'
 import { editingId, isSelected, selection } from '../state/ui.ts'
 import { registerCardEl } from './layout.ts'
-import { draggingIds } from './dnd.ts'
+import { draggingIds, resizingId } from './dnd.ts'
 import { NoteCard } from '../cards/NoteCard.tsx'
 import { TodoCard } from '../cards/TodoCard.tsx'
 import { BoardCard } from '../cards/BoardCard.tsx'
@@ -55,6 +55,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         selected: selected(),
         editing: editing(),
         dragging: draggingIds().has(props.card.id),
+        resizing: resizingId() === props.card.id,
         colored: props.card.color !== 'none' && !!props.card.color,
       }}
       data-card-id={props.card.id}

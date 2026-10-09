@@ -14,6 +14,7 @@ export const SURFACE_TOKENS = [
   'accent',
   'accentText', // text drawn on top of `accent`
   'selection',
+  'gridDot', // background dots: quiet, but visible
 ] as const
 
 export type SurfaceToken = (typeof SURFACE_TOKENS)[number]
@@ -30,6 +31,7 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     accent: '#e8a849', // golden retriever
     accentText: '#1c1b1a',
     selection: '#e8a849',
+    gridDot: '#3d3934',
   },
   light: {
     bg: '#f3efe9',
@@ -42,6 +44,7 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     accent: '#9a5f0c',
     accentText: '#ffffff',
     selection: '#b06c10',
+    gridDot: '#d3cabe',
   },
 }
 

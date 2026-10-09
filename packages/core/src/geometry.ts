@@ -152,3 +152,23 @@ export function connectorPath(
   const r = (n: number) => Math.round(n * 10) / 10
   return { d: `M${r(start.x)},${r(start.y)} C${r(c1.x)},${r(c1.y)} ${r(c2.x)},${r(c2.y)} ${r(end.x)},${r(end.y)}`, start, end }
 }
+
+// ---- grid ---------------------------------------------------------------------
+
+/** Board grid spacing in world px. The background dots sit on multiples of it. */
+export const GRID = 20
+
+/** Round to the nearest grid line. */
+export function snap(n: number, grid = GRID): number {
+  return Math.round(n / grid) * grid
+}
+
+/**
+ * Screen spacing for the background dots: the grid at this zoom, doubled until
+ * the dots are at least `min` px apart so a zoomed-out board doesn't turn to mush.
+ */
+export function dotSpacing(zoom: number, min = 12, grid = GRID): number {
+  let step = grid * zoom
+  while (step < min) step *= 2
+  return step
+}

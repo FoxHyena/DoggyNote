@@ -14,6 +14,7 @@ import {
   trashOpen,
 } from '../state/ui.ts'
 import { zoomBy, zoomTo, zoomToFit } from '../canvas/Canvas.tsx'
+import { toggleSnap } from '../state/grid.ts'
 
 const isTyping = (t: EventTarget | null) => !!(t as HTMLElement | null)?.closest?.('input,textarea,[contenteditable="true"]')
 
@@ -28,6 +29,7 @@ export function installShortcuts(opts: { readOnly: boolean }) {
     if (mod && e.key === '0') return void (e.preventDefault(), zoomTo(1))
     if (mod && e.key === '1') return void (e.preventDefault(), zoomToFit())
     if (mod && e.key.toLowerCase() === 'k') return void (e.preventDefault(), setPaletteOpen(!paletteOpen()))
+    if (mod && e.key === "'" && !opts.readOnly) return void (e.preventDefault(), toggleSnap())
 
     if (typing) return
     if (opts.readOnly) {

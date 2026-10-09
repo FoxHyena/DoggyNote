@@ -278,8 +278,47 @@ button:disabled {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  background: var(--dn-bg);
   outline: none;
+  /* Grid dots: spacing and offset follow the camera (Canvas.tsx sets the vars). */
+  background-color: var(--dn-bg);
+  background-image: radial-gradient(
+    circle at center,
+    color-mix(in srgb, var(--dn-grid-dot) calc(var(--dot-alpha, 1) * 100%), transparent) 1.1px,
+    transparent 1.6px
+  );
+  background-size: var(--dot-step, 20px) var(--dot-step, 20px);
+  background-position: var(--dot-x, 0) var(--dot-y, 0);
+}
+
+/* Snapping: the snapped card glides the last few px instead of jumping. */
+.viewport.snapping .card.dragging,
+.viewport.snapping .card.resizing {
+  transition:
+    left 70ms ease-out,
+    top 70ms ease-out,
+    width 70ms ease-out;
+}
+
+.grid-glow {
+  position: absolute;
+  pointer-events: none;
+  background-image: radial-gradient(circle at center, var(--dn-selection) 1.6px, transparent 2.2px);
+  background-size: var(--grid) var(--grid);
+  -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent);
+  mask-image: radial-gradient(closest-side, #000 55%, transparent);
+  opacity: 0.55;
+  animation: glow-in 120ms ease-out;
+}
+
+@keyframes glow-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.icon-btn.on {
+  color: var(--dn-accent);
+  background: var(--dn-card-hover);
 }
 
 /* A paw while panning. */

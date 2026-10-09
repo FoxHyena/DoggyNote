@@ -28,3 +28,7 @@ tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 # Session token lives in the macOS Keychain, not in web storage.
 keyring = { version = "3", features = ["apple-native"] }
+
+# Trackpad haptics for snap-to-grid (macOS only).
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSHapticFeedback"] }

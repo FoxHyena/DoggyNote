@@ -21,6 +21,11 @@ describe('contrast', () => {
     it(`${t}: accent text clears 4.5:1 on accent`, () => {
       expect(contrast(s.accentText, s.accent)).toBeGreaterThanOrEqual(4.5)
     })
+    it(`${t}: grid dots are subtle but visible on the canvas (1.25–2.2:1)`, () => {
+      const c = contrast(s.gridDot, s.bg)
+      expect(c).toBeGreaterThanOrEqual(1.25)
+      expect(c).toBeLessThanOrEqual(2.2)
+    })
     it(`${t}: selection outline clears 3:1 on canvas`, () => {
       expect(contrast(s.selection, s.bg)).toBeGreaterThanOrEqual(3)
     })

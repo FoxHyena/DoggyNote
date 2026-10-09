@@ -2,6 +2,7 @@ import {
   DEFAULT_SIZE,
   newId,
   orderBetween,
+  snap,
   type Board,
   type Card,
   type CardContent,
@@ -15,6 +16,7 @@ import {
 } from '@doggynote/core'
 import type { CardColor } from '@doggynote/theme'
 import * as doc from './doc.ts'
+import { snapToGrid } from './grid.ts'
 import { beginEdit, boardId, clearSelection, editingId, endEdit, select, selection } from './ui.ts'
 
 export const EMPTY_CONTENT: { [T in CardType]: () => CardContent[T] } = {
@@ -43,6 +45,9 @@ export function appendOrder(columnId: Id): number {
   return orderBetween(kids[kids.length - 1]?.order, undefined)
 }
 
+/** New cards land on the grid when snapping is on. */
+const onGrid = (n: number) => (snapToGrid() ? snap(n) : Math.round(n))
+
 function baseCard<T extends CardType>(type: T, place: Placement, content: CardContent[T], extra: Partial<Card> = {}): Card<T> {
   const b = boardId()
   const size = DEFAULT_SIZE[type]
@@ -52,8 +57,8 @@ function baseCard<T extends CardType>(type: T, place: Placement, content: CardCo
     kind: 'card',
     type,
     boardId: b,
-    x: inColumn ? 0 : Math.round(place.at.x - size.w / 2),
-    y: inColumn ? 0 : Math.round(place.at.y - 20),
+    x: inColumn ? 0 : onGrid(place.at.x - size.w / 2),
+    y: inColumn ? 0 : onGrid(place.at.y - 20),
     w: size.w,
     h: size.h,
     z: doc.maxZ(b) + 1,

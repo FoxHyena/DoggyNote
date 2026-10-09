@@ -1,6 +1,9 @@
 import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, onMount } from 'solid-js'
 import {
+  GRID,
   LOD_ZOOM,
+  dotSpacing,
+  snap,
   clampZoom,
   cullRect,
   fitCamera,
@@ -46,15 +49,16 @@ import { CardView } from './CardView.tsx'
 import { LodLayer } from './LodLayer.tsx'
 import { Connections } from './Connections.tsx'
 import { cardEl, cardHeight, rectOf, setMeasuring } from './layout.ts'
-import { setDropTarget, dropTarget, connectPreview, setConnectPreview, setDraggingIds } from './dnd.ts'
+import { setDropTarget, dropTarget, connectPreview, setConnectPreview, draggingIds, setDraggingIds, resizingId, setResizingId } from './dnd.ts'
+import { snapTick, snapToGrid } from '../state/grid.ts'
 import { handleCanvasDrop, handleCanvasPaste } from './paste.ts'
 
 type Gesture =
   | { kind: 'pan'; last: Vec; start: Vec; target: HTMLElement }
   | { kind: 'marquee'; start: Vec; base: Set<Id> }
   | { kind: 'press'; id: Id; start: Vec; shift: boolean; target: HTMLElement; client: Vec }
-  | { kind: 'drag'; ids: Id[]; startWorld: Vec; origins: Map<Id, Vec>; snap: Record<Id, Partial<Obj>> }
-  | { kind: 'resize'; id: Id; startX: number; w0: number; snap: Record<Id, Partial<Obj>> }
+  | { kind: 'drag'; ids: Id[]; primary: Id; startWorld: Vec; origins: Map<Id, Vec>; snap: Record<Id, Partial<Obj>>; lastGrid?: string }
+  | { kind: 'resize'; id: Id; startX: number; w0: number; snap: Record<Id, Partial<Obj>>; lastGrid?: number }
   | { kind: 'connect'; from: Id; fromSide: Side }
 
 const DRAG_THRESHOLD = 4
@@ -67,6 +71,22 @@ export function Canvas(props: { readOnly: boolean }) {
   let gesture: Gesture | null = null
 
   const lod = createMemo(() => camera().zoom < LOD_ZOOM)
+  const [snapping, setSnapping] = createSignal(false)
+
+  // Background dots: two CSS variables per camera change, no DOM.
+  const dots = () => {
+    const c = camera()
+    const step = dotSpacing(c.zoom)
+    const ox = (-c.x * c.zoom) % step
+    const oy = (-c.y * c.zoom) % step
+    return {
+      '--dot-step': `${step}px`,
+      '--dot-x': `${ox - step / 2}px`,
+      '--dot-y': `${oy - step / 2}px`,
+      // Fade out as the overview takes over.
+      '--dot-alpha': String(Math.min(1, Math.max(0, (c.zoom - 0.12) / 0.2))),
+    }
+  }
 
   // Promote the world to its own GPU layer only while the camera moves. A
   // permanent will-change pins the raster at the zoom it was created at, so a
@@ -264,7 +284,7 @@ export function Canvas(props: { readOnly: boolean }) {
     }
     setDraggingIds(new Set(ids))
     doc.markBusy(ids)
-    gesture = { kind: 'drag', ids, startWorld: toWorld({ clientX: g.client.x, clientY: g.client.y }), origins, snap }
+    gesture = { kind: 'drag', ids, primary: g.id, startWorld: toWorld({ clientX: g.client.x, clientY: g.client.y }), origins, snap }
     onPointerMove(e)
   }
 
@@ -294,8 +314,22 @@ export function Canvas(props: { readOnly: boolean }) {
       }
       case 'drag': {
         const w = toWorld(e)
-        const dx = w.x - g.startWorld.x
-        const dy = w.y - g.startWorld.y
+        let dx = w.x - g.startWorld.x
+        let dy = w.y - g.startWorld.y
+        // Snap the grabbed card's corner; everything else selected moves by the
+        // same snapped delta, so the group keeps its shape. ⌥ bypasses.
+        const snapping = snapToGrid() && !e.altKey
+        setSnapping(snapping)
+        if (snapping) {
+          const o = g.origins.get(g.primary)!
+          const sx = snap(o.x + dx)
+          const sy = snap(o.y + dy)
+          dx = sx - o.x
+          dy = sy - o.y
+          const key = `${sx},${sy}`
+          if (g.lastGrid !== undefined && g.lastGrid !== key) snapTick()
+          g.lastGrid = key
+        }
         for (const id of g.ids) {
           const o = g.origins.get(id)!
           doc.transient(id, { x: Math.round(o.x + dx), y: Math.round(o.y + dy) } as Partial<Card>)
@@ -309,7 +343,17 @@ export function Canvas(props: { readOnly: boolean }) {
       case 'resize': {
         const c = doc.getCard(g.id)!
         const min = c.type === 'image' ? 80 : 160
-        doc.transient(g.id, { w: Math.max(min, Math.round(g.w0 + (e.clientX - g.startX) / camera().zoom)) } as Partial<Card>)
+        let w = Math.max(min, Math.round(g.w0 + (e.clientX - g.startX) / camera().zoom))
+        // Snapping puts the right edge on a grid line.
+        const snapping = snapToGrid() && !e.altKey
+        setSnapping(snapping)
+        if (snapping) {
+          w = Math.max(snap(c.x + min, GRID) - c.x, snap(c.x + w) - c.x)
+          if (g.lastGrid !== undefined && g.lastGrid !== w) snapTick()
+          g.lastGrid = w
+        }
+        setResizingId(g.id)
+        doc.transient(g.id, { w } as Partial<Card>)
         break
       }
       case 'connect': {
@@ -332,6 +376,8 @@ export function Canvas(props: { readOnly: boolean }) {
     const g = gesture
     gesture = null
     setPanning(false)
+    setSnapping(false)
+    setResizingId(null)
     if (!g) return
     switch (g.kind) {
       case 'pan': {
@@ -506,7 +552,8 @@ export function Canvas(props: { readOnly: boolean }) {
       ref={vp}
       class="viewport"
       data-testid="canvas"
-      classList={{ panning: panning(), moving: moving(), connecting: !!connectPreview(), 'space-held': spaceHeld(), lod: lod(), 'connect-mode': !!connectMode(), readonly: props.readOnly }}
+      style={dots()}
+      classList={{ panning: panning(), moving: moving(), snapping: snapping(), 'snap-on': snapToGrid(), connecting: !!connectPreview(), 'space-held': spaceHeld(), lod: lod(), 'connect-mode': !!connectMode(), readonly: props.readOnly }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -522,6 +569,9 @@ export function Canvas(props: { readOnly: boolean }) {
       }}
     >
       <div class="world" data-testid="world" style={{ transform: transform() }}>
+        <Show when={snapping()}>
+          <GridGlow />
+        </Show>
         <Connections />
         <Show when={!lod()}>
           <For each={visible()}>{(c) => <CardView card={c} lod={false} readOnly={props.readOnly} />}</For>
@@ -596,4 +646,34 @@ export function animateCamera(to: { x: number; y: number; zoom: number }, ms = 2
     if (t < 1) anim = requestAnimationFrame(step)
   }
   anim = requestAnimationFrame(step)
+}
+
+/** Brighter grid dots around whatever is being dragged or resized, so the snap points are easy to see. */
+function GridGlow() {
+  const rect = createMemo(() => {
+    const ids = [...draggingIds(), ...(resizingId() ? [resizingId()!] : [])]
+    const rects = ids.map((id) => rectOf(id)).filter((r): r is Rect => !!r)
+    const u = union(rects)
+    if (!u) return null
+    const pad = GRID * 4
+    // Align the box to the grid so its dot pattern sits exactly on the board's.
+    const x = Math.floor((u.x - pad) / GRID) * GRID
+    const y = Math.floor((u.y - pad) / GRID) * GRID
+    return { x, y, w: Math.ceil((u.w + pad * 2) / GRID) * GRID, h: Math.ceil((u.h + pad * 2) / GRID) * GRID }
+  })
+  return (
+    <Show when={rect()}>
+      <div
+        class="grid-glow"
+        data-testid="grid-glow"
+        style={{
+          left: `${rect()!.x - GRID / 2}px`,
+          top: `${rect()!.y - GRID / 2}px`,
+          width: `${rect()!.w + GRID}px`,
+          height: `${rect()!.h + GRID}px`,
+          '--grid': `${GRID}px`,
+        }}
+      />
+    </Show>
+  )
 }
