@@ -35,7 +35,7 @@ ln -s /Applications "$STAGE/Applications"
 hdiutil create -volname DoggyNote -srcfolder "$STAGE" -ov -format UDZO "$OUT/$VERSION/$DMG" >/dev/null
 rm -rf "$STAGE"
 
-BASE=${PUBLIC_URL:-https://doggynote.oreothehyena.workers.dev}
+BASE=${PUBLIC_URL:-https://notepad.dog}
 NOTES=${NOTES:-"DoggyNote $VERSION"}
 node -e '
 const [version, sig, base, dmg, notes, arch] = process.argv.slice(1)

@@ -208,3 +208,15 @@ describe('image proxy', () => {
     await expect(proxyImage(u, upstream(new Uint8Array(5 * 1024 * 1024 + 1), 'image/png'))).rejects.toThrow('too large')
   })
 })
+
+describe('canonical host', () => {
+  it('sends www.notepad.dog to notepad.dog, keeping the path and query', async () => {
+    const res = await app.request('https://www.notepad.dog/api/health?x=1')
+    expect(res.status).toBe(301)
+    expect(res.headers.get('location')).toBe('https://notepad.dog/api/health?x=1')
+  })
+  it('serves the canonical host and the old address normally', async () => {
+    expect((await app.request('https://notepad.dog/api/health')).status).toBe(200)
+    expect((await app.request('https://doggynote.oreothehyena.workers.dev/api/health')).status).toBe(200)
+  })
+})
