@@ -42,8 +42,15 @@ Legend: [x] done + tested · [~] in progress · [ ] not started
 - [x] ⌘K "Fetch" search across boards + cards
 - [x] Full suite: 116 e2e specs × 2 browsers green (2× repeat), 54 unit tests
 
-## Follow-ups (next)
-1. [ ] **Image access tied to sign-in or an active share link** (today: anyone with an image's direct URL can open it)
-2. [ ] Memory: busy boards use 166–217 MB in the Mac app (target was 150). Add a 640 px image tier; most of the rest is WebKit cache it frees under pressure
-3. [ ] Code-sign the Mac app so the Keychain prompt appears once, not after every update
-4. [ ] v0.2 features: Toy box (unsorted), comments, file uploads, PNG export, Milanote import
+## Round 2 (Oct 2026)
+- [x] CI on every PR: typecheck + unit + e2e (WebKit + Chromium) + informational perf (#1)
+- [x] Private images: session, desktop asset token, or share link scoped to shared boards (#2)
+- [x] Connectors snap to side midpoints; curved; facing sides when unpinned (#5)
+- [x] Markdown notes, Obsidian-style live preview (CodeMirror 6), legacy notes migrated (#4)
+- [~] Release pipeline: auto deploy + signed, self-updating Mac app (#6). **Needs your `CLOUDFLARE_API_TOKEN` secret**
+- [~] 640 px image tier (#7). Decoded images at 100%: 94 → 34 MB
+
+## Still open
+1. [ ] Memory: busy boards still ~183–202 MB in the Mac app (target 150). The rest is WebKit graphics surfaces + JS heap; next lever is fewer GPU layers
+2. [ ] Intel Mac build (CI builds Apple silicon only); a universal build if a friend needs it
+3. [ ] v0.2 backlog: Toy box (unsorted + quick-capture hotkey), comments, file uploads, PNG export, Milanote import
