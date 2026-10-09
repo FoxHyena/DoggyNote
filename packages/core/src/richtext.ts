@@ -4,7 +4,20 @@ import type { RichDoc, RichNode } from './model.ts'
 // public), so before rendering we keep only known node and mark types and only
 // safe link targets. The web renderer builds DOM from this, never innerHTML.
 
-export const BLOCK_NODES = ['paragraph', 'heading', 'bullet_list', 'ordered_list', 'list_item', 'blockquote'] as const
+export const BLOCK_NODES = [
+  'paragraph',
+  'heading',
+  'bullet_list',
+  'ordered_list',
+  'list_item',
+  'task_item',
+  'blockquote',
+  'code_block',
+  'horizontal_rule',
+  'table',
+  'table_row',
+  'table_cell',
+] as const
 export const INLINE_NODES = ['text', 'hard_break'] as const
 export const MARKS = ['strong', 'em', 'code', 'link', 'strike'] as const
 
@@ -38,8 +51,11 @@ function cleanNode(n: RichNode): RichNode | null {
   const out: RichNode = { type: n.type }
   if (n.type === 'heading') {
     const level = Number(n.attrs?.level)
-    out.attrs = { level: level >= 1 && level <= 3 ? level : 1 }
+    out.attrs = { level: level >= 1 && level <= 6 ? level : 1 }
   }
+  if (n.type === 'task_item') out.attrs = { checked: n.attrs?.checked === true, line: Math.max(0, Number(n.attrs?.line) || 0) }
+  if (n.type === 'ordered_list' && n.attrs?.start !== undefined) out.attrs = { start: Math.max(0, Math.floor(Number(n.attrs.start) || 1)) }
+  if (n.type === 'table_cell') out.attrs = { header: n.attrs?.header === true }
   if (n.content) out.content = n.content.map(cleanNode).filter((c): c is RichNode => c !== null)
   return out
 }
@@ -57,7 +73,7 @@ export function docToText(doc: RichDoc | undefined): string {
     if (n.type === 'text') line.push(n.text ?? '')
     else if (n.type === 'hard_break') line.push('\n')
     else if (n.content) {
-      const isBlock = n.type === 'paragraph' || n.type === 'heading'
+      const isBlock = n.type === 'paragraph' || n.type === 'heading' || n.type === 'code_block' || n.type === 'table_cell'
       const inner: string[] = isBlock ? [] : line
       for (const c of n.content) walk(c, inner)
       if (isBlock) lines.push(inner.join(''))

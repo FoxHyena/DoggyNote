@@ -1,23 +1,27 @@
-import { For, Show, onCleanup, onMount } from 'solid-js'
-import { isDocEmpty, type Card, type RichDoc } from '@doggynote/core'
+import { For, Show, createMemo, onCleanup, onMount } from 'solid-js'
+import { noteMarkdown, parseMarkdown, toggleTask, type Card } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
 import { editIsNewCard, endEdit, onEndEdit } from '../state/ui.ts'
 import { RichText } from '../editor/RichText.tsx'
 import { takeEditCaret } from '../canvas/Canvas.tsx'
 import type { CardProps } from '../canvas/CardView.tsx'
-import type { NoteEditor as Editor } from '../editor/prosemirror.ts'
+import type { FormatCommand, NoteEditor as Editor } from '../editor/codemirror.ts'
 
 // Brand-new notes left empty disappear instead of littering the board.
 onEndEdit((id) => {
   const c = doc.getCard(id) as Card<'note'> | undefined
-  if (c?.type === 'note' && editIsNewCard() && isDocEmpty(c.content.doc)) doc.discardNew(id)
+  if (c?.type === 'note' && editIsNewCard() && !noteMarkdown(c).trim()) doc.discardNew(id)
 })
 
 export function NoteCard(props: CardProps<'note'>) {
+  const source = () => noteMarkdown(props.card)
+  const parsed = createMemo(() => parseMarkdown(source()))
+  // Ticking a task in the rendered note edits its markdown line (one undo step).
+  const toggle = (line: number) => doc.update({ [props.card.id]: { content: { md: toggleTask(source(), line) } } as Partial<Card> })
   return (
     <Show when={!props.lod} fallback={<div class="lod-box" style={{ height: `${Math.max(24, props.card.h - 24)}px` }} />}>
       <div class="note-body">
-        <Show when={props.editing} fallback={<RichText doc={props.card.content.doc} />}>
+        <Show when={props.editing} fallback={<RichText doc={parsed()} onToggleTask={props.readOnly ? undefined : toggle} />}>
           <NoteEditor card={props.card} />
         </Show>
       </div>
@@ -25,13 +29,14 @@ export function NoteCard(props: CardProps<'note'>) {
   )
 }
 
-const FORMAT: { cmd: 'bold' | 'italic' | 'strike' | 'heading' | 'bullets' | 'numbers'; label: string; title: string }[] = [
-  { cmd: 'bold', label: 'B', title: 'Bold (⌘B)' },
-  { cmd: 'italic', label: 'I', title: 'Italic (⌘I)' },
-  { cmd: 'strike', label: 'S', title: 'Strikethrough (⌘⇧X)' },
-  { cmd: 'heading', label: 'H', title: 'Heading (# )' },
-  { cmd: 'bullets', label: '•', title: 'Bulleted list (- )' },
-  { cmd: 'numbers', label: '1.', title: 'Numbered list (1. )' },
+const FORMAT: { cmd: FormatCommand; label: string; title: string }[] = [
+  { cmd: 'bold', label: 'B', title: 'Bold: **text** (⌘B)' },
+  { cmd: 'italic', label: 'I', title: 'Italic: _text_ (⌘I)' },
+  { cmd: 'strike', label: 'S', title: 'Strikethrough: ~~text~~ (⌘⇧X)' },
+  { cmd: 'heading', label: 'H', title: 'Heading: ## ' },
+  { cmd: 'bullets', label: '•', title: 'Bulleted list: - ' },
+  { cmd: 'numbers', label: '1.', title: 'Numbered list: 1. ' },
+  { cmd: 'task', label: '☐', title: 'Task: - [ ] ' },
 ]
 
 function NoteEditor(props: { card: Card<'note'> }) {
@@ -64,11 +69,11 @@ function NoteEditor(props: { card: Card<'note'> }) {
     buffer.focus()
     buffer.addEventListener('keydown', onBufferKey)
     buffer.addEventListener('input', onBufferInput)
-    const { createEditor, backspace } = await import('../editor/prosemirror.ts')
+    const { createEditor } = await import('../editor/codemirror.ts')
     if (disposed) return
-    editor = createEditor(mount, props.card.content.doc, {
+    editor = createEditor(mount, noteMarkdown(props.card), {
       placeAt: caret ?? undefined,
-      onChange: (d: RichDoc) => doc.transient(id, { content: { doc: d } } as Partial<Card>),
+      onChange: (md: string) => doc.transient(id, { content: { md } } as Partial<Card>),
       onExit: () => endEdit(),
     })
     buffer.remove()
@@ -77,7 +82,7 @@ function NoteEditor(props: { card: Card<'note'> }) {
       if (a === 'exit') exit = true
       else if (a === 'selectAll') editor.selectAll()
       else if (a === 'enter') editor.typeText('\n')
-      else if (a === 'backspace') backspace(editor.view)
+      else if (a === 'backspace') editor.backspace()
       else editor.typeText(a.text)
     }
     if (exit) endEdit()

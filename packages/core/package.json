@@ -9,6 +9,10 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
-    "@doggynote/theme": "workspace:*"
+    "@doggynote/theme": "workspace:*",
+    "markdown-it": "^14.3.2"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.2.0"
   }
 }

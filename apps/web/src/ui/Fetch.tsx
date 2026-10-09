@@ -1,5 +1,5 @@
 import { For, Show, createMemo, createSignal, onMount } from 'solid-js'
-import { HOME_BOARD_ID, docToText, type Card, type Id } from '@doggynote/core'
+import { HOME_BOARD_ID, mdToText, noteMarkdown, type Card, type Id } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { openBoard, select, setPaletteOpen, viewport } from '../state/ui.ts'
@@ -14,7 +14,7 @@ type Hit = { kind: 'board' | 'card'; id: Id; boardId: Id; title: string; snippet
 function cardText(c: Card): string {
   switch (c.type) {
     case 'note':
-      return docToText((c as Card<'note'>).content.doc)
+      return mdToText(noteMarkdown(c as Card<'note'>))
     case 'todo': {
       const t = (c as Card<'todo'>).content
       return [t.title, ...t.items.map((i) => i.text)].join('\n')

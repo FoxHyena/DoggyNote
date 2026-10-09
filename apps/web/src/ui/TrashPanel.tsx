@@ -1,5 +1,5 @@
 import { For, Show, createMemo } from 'solid-js'
-import { docToText, type Card } from '@doggynote/core'
+import { mdToText, noteMarkdown, type Card } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { emptyTrash, restoreCard } from '../state/actions.ts'
@@ -9,7 +9,7 @@ import { Icon, ToolIcons } from './icons.tsx'
 export function describeCard(c: Card): string {
   switch (c.type) {
     case 'note':
-      return docToText((c as Card<'note'>).content.doc).split('\n')[0] || 'Empty note'
+      return mdToText(noteMarkdown(c as Card<'note'>)).split('\n')[0] || 'Empty note'
     case 'todo': {
       const t = (c as Card<'todo'>).content
       return t.title || t.items[0]?.text || 'To-do list'

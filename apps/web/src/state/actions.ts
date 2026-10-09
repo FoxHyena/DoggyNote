@@ -2,7 +2,6 @@ import {
   DEFAULT_SIZE,
   newId,
   orderBetween,
-  textToDoc,
   type Board,
   type Card,
   type CardContent,
@@ -19,7 +18,7 @@ import * as doc from './doc.ts'
 import { beginEdit, boardId, clearSelection, editingId, endEdit, select, selection } from './ui.ts'
 
 export const EMPTY_CONTENT: { [T in CardType]: () => CardContent[T] } = {
-  note: () => ({ doc: { type: 'doc', content: [{ type: 'paragraph' }] } }),
+  note: () => ({ md: '' }),
   todo: () => ({ title: '', items: [{ id: newId(), text: '', done: false }] }),
   board: () => ({ boardId: '' }),
   image: () => ({ assetId: '', width: 1, height: 1 }),
@@ -97,7 +96,7 @@ export function createCard(type: CardType, place: Placement, opts: { content?: u
 const BOARD_COLORS: CardColor[] = ['gold', 'collar', 'ball', 'sky', 'lilac', 'peach']
 
 export function createNoteWithText(text: string, place: Placement): Id {
-  return createCard('note', place, { content: { doc: textToDoc(text) }, edit: false })
+  return createCard('note', place, { content: { md: text }, edit: false })
 }
 
 export function trashSelection() {
