@@ -7,9 +7,10 @@ import { select } from '../state/ui.ts'
 // Paste and drop onto the canvas: images become image cards, a URL becomes a
 // link card, other text becomes a note.
 
-const IMAGE_TYPES = /^image\/(png|jpe?g|gif|webp|heic|heif|avif|bmp)$/i
+export const IMAGE_TYPES = /^image\/(png|jpe?g|gif|webp|heic|heif|avif|bmp)$/i
 
-export async function addImages(files: File[], at: Vec): Promise<Id[]> {
+/** Add images as cards (on the current board, or `onBoard`, e.g. the Toy box). */
+export async function addImages(files: File[], at: Vec, onBoard?: Id): Promise<Id[]> {
   const ids: Id[] = []
   let offset = 0
   for (const f of files) {
@@ -21,6 +22,7 @@ export async function addImages(files: File[], at: Vec): Promise<Id[]> {
           content: { assetId: img.assetId, width: img.width, height: img.height, sizes: img.sizes },
           edit: false,
           extra: { w, h: Math.round((w * img.height) / img.width) },
+          boardId: onBoard,
         }),
       )
       offset += 24
@@ -28,21 +30,23 @@ export async function addImages(files: File[], at: Vec): Promise<Id[]> {
       console.error('[doggynote] image import failed', err)
     }
   }
-  if (ids.length) select(ids)
+  if (ids.length && !onBoard) select(ids)
   return ids
 }
 
-export function addLink(url: string, place: Placement): Id {
-  const id = createCard('link', place, { content: { url, status: 'pending' }, edit: false })
+export function addLink(url: string, place: Placement, onBoard?: Id): Id {
+  const id = createCard('link', place, { content: { url, status: 'pending' }, edit: false, boardId: onBoard })
   void unfurl(id)
   return id
 }
 
-function addText(text: string, at: Vec) {
+/** A URL becomes a link card, anything else a note. */
+export function addText(text: string, at: Vec, onBoard?: Id) {
   const t = text.trim()
   if (!t) return
   const href = safeHref(t)
-  if (href && !/\s/.test(t)) addLink(href, { at })
+  if (href && !/\s/.test(t)) addLink(href, { at }, onBoard)
+  else if (onBoard) createCard('note', { at }, { content: { md: t }, edit: false, boardId: onBoard })
   else createNoteWithText(t, { at })
 }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { app } from './app.ts'
 import { hashPassword, sha256Hex, signAssetToken, verifyAssetToken, verifyPassword } from './crypto.ts'
-import { parseChanges, upsertSql } from './sync.ts'
+import { ownerFor, parseChanges, upsertSql } from './sync.ts'
 import { decodeEntities, isFetchableUrl } from './unfurl.ts'
 
 it('health check responds', async () => {
@@ -32,6 +32,9 @@ describe('passwords', () => {
 })
 
 describe('sync validation', () => {
+  it('accepts namespaced ids like toybox:<user>', () => {
+    expect(parseChanges({ changes: [{ id: 'toybox:abc-123', patch: { kind: 'board' } }] })).toHaveLength(1)
+  })
   it('accepts well-formed patches', () => {
     expect(parseChanges({ changes: [{ id: 'abc-1', patch: { x: 1, content: { a: 1 } } }] })).toEqual([{ id: 'abc-1', patch: { x: 1, content: { a: 1 } } }])
   })
@@ -45,7 +48,8 @@ describe('sync validation', () => {
   })
   it('upsertSql sets each top-level key with a bound JSON value', () => {
     const { sql, args } = upsertSql({ id: 'a', x: 5, content: { t: 'hi' } })
-    expect(sql).toContain(`json_set(objects.data, '$.x', json(?7), '$.content', json(?8))`)
+    expect(sql).toContain(`json_set(objects.data, '$.x', json(?8), '$.content', json(?9))`)
+    expect(sql).toContain('owner_id = ?7')
     expect(args).toEqual(['5', '{"t":"hi"}'])
   })
 })
@@ -118,5 +122,14 @@ describe('desktop releases', () => {
     for (const p of ['/api/desktop/files/0.1.42/..%2F..%2Flatest.json', '/api/desktop/files/0.1.42/secret.png', '/api/desktop/files/x/DoggyNote.app.tar.gz']) {
       expect((await app.request(p, {}, env)).status).toBe(404)
     }
+  })
+})
+
+describe('Toy box ownership', () => {
+  it('a Toy box board and everything on it belong to its user', () => {
+    expect(ownerFor('toybox:u1', null)).toBe('u1')
+    expect(ownerFor('card-1', 'toybox:u1')).toBe('u1')
+    expect(ownerFor('card-1', 'some-board')).toBeNull()
+    expect(ownerFor('card-1', null)).toBeNull()
   })
 })

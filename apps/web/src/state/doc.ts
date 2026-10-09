@@ -259,6 +259,18 @@ export function receiveRemote(rows: Obj[]) {
   if (!rows.length) return
   batch(() => {
     for (const row of rows) {
+      // Someone else's private object (e.g. moved into their Toy box): the server
+      // sends only a stub, and any copy on this device goes away.
+      if ((row as { hidden?: boolean }).hidden) {
+        deferred.delete(row.id)
+        outbox.delete(row.id)
+        if (state.objs[row.id]) setState('objs', row.id, undefined as never)
+        if (persist) {
+          dirtyObjs.add(row.id)
+          dirtyOutbox.add(row.id)
+        }
+        continue
+      }
       if (busy.has(row.id)) {
         deferred.set(row.id, row)
         continue

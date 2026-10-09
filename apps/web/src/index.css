@@ -1814,3 +1814,78 @@ button:disabled {
 .update-required p {
   color: var(--dn-text-muted);
 }
+
+/* ---- Toy box ------------------------------------------------------------------ */
+
+.toybox-sub {
+  margin: 8px 16px 0;
+  font-size: 12px;
+  color: var(--dn-text-muted);
+}
+
+.toybox-add {
+  padding: 10px 12px 4px;
+}
+
+.toybox-add textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 8px 10px;
+  border: 1px solid var(--dn-border);
+  border-radius: 8px;
+  background: var(--dn-bg);
+  color: var(--dn-text);
+  font: inherit;
+}
+
+.toybox-add textarea:focus {
+  outline: 2px solid var(--dn-selection);
+  outline-offset: 0;
+}
+
+.toybox-item {
+  cursor: grab;
+  touch-action: none;
+}
+
+.toybox-item:active {
+  cursor: grabbing;
+}
+
+/* ---- quick capture window ------------------------------------------------------ */
+
+.capture {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: var(--dn-panel);
+}
+
+.capture-input {
+  flex: 1;
+  resize: none;
+  padding: 10px 12px;
+  border: 1px solid var(--dn-border);
+  border-radius: 10px;
+  background: var(--dn-bg);
+  color: var(--dn-text);
+  font: 15px/1.4 inherit;
+  outline: none;
+}
+
+.capture-input:focus {
+  border-color: var(--dn-selection);
+}
+
+.capture-status,
+.capture-hint {
+  font-size: 12px;
+  color: var(--dn-text-muted);
+}
+
+.capture-status[data-state='saved'] {
+  color: var(--dn-accent);
+  font-weight: 600;
+}

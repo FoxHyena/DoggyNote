@@ -21,6 +21,20 @@
         "label": "main",
         "titleBarStyle": "Overlay",
         "hiddenTitle": true
+      },
+      {
+        "label": "capture",
+        "title": "Quick capture",
+        "url": "index.html#/capture",
+        "visible": false,
+        "width": 460,
+        "height": 170,
+        "resizable": false,
+        "alwaysOnTop": true,
+        "decorations": false,
+        "center": true,
+        "skipTaskbar": true,
+        "focus": true
       }
     ],
     "security": {

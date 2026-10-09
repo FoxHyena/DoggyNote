@@ -56,6 +56,35 @@ pub fn run() {
     .plugin(tauri_plugin_process::init())
     .invoke_handler(tauri::generate_handler![get_token, set_token, clear_token, haptic])
     .setup(|app| {
+      // ⌃⌥Space from anywhere: toggle the quick-capture window (Toy box).
+      #[cfg(desktop)]
+      {
+        use tauri::Manager;
+        use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+        let capture = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::Space);
+        app.handle().plugin(
+          tauri_plugin_global_shortcut::Builder::new()
+            .with_handler(move |app, shortcut, event| {
+              if shortcut != &capture || event.state() != ShortcutState::Pressed {
+                return;
+              }
+              if let Some(w) = app.get_webview_window("capture") {
+                if w.is_visible().unwrap_or(false) {
+                  let _ = w.hide();
+                } else {
+                  let _ = w.center();
+                  let _ = w.show();
+                  let _ = w.set_focus();
+                }
+              }
+            })
+            .build(),
+        )?;
+        // Another app may already own the shortcut; capture still works from the app itself.
+        if let Err(e) = app.global_shortcut().register(capture) {
+          log::warn!("quick-capture shortcut unavailable: {e}");
+        }
+      }
       if cfg!(debug_assertions) {
         app.handle().plugin(
           tauri_plugin_log::Builder::default()

@@ -19,9 +19,14 @@ import { checkSession } from './state/session.ts'
 import { startSync } from './state/sync.ts'
 import { installLinkHandler } from './state/platform.ts'
 import { Viewer } from './Viewer.tsx'
+import { Capture } from './Capture.tsx'
+import { isTauri } from './state/platform.ts'
+import { syncNow } from './state/sync.ts'
 import { FetchPalette } from './ui/Fetch.tsx'
 import { Diagnostics } from './ui/Diagnostics.tsx'
 import { UpdateToast } from './ui/UpdateToast.tsx'
+import { ToyboxButton, ToyboxPanel } from './ui/ToyboxPanel.tsx'
+import { ensureToybox } from './state/toybox.ts'
 import { snapToGrid, toggleSnap } from './state/grid.ts'
 import { startUpdateChecks } from './state/updates.ts'
 import { paletteOpen, setPaletteOpen } from './state/ui.ts'
@@ -30,7 +35,9 @@ import { Icon, ToolIcons } from './ui/icons.tsx'
 export default function Root() {
   installLinkHandler()
   const share = location.pathname.match(/^\/s\/([^/]+)/)
-  return share ? <Viewer token={decodeURIComponent(share[1])} /> : <EditorApp />
+  if (share) return <Viewer token={decodeURIComponent(share[1])} />
+  if (location.hash.startsWith('#/capture')) return <Capture />
+  return <EditorApp />
 }
 
 type Phase = 'checking' | 'login' | 'booting' | 'ready'
@@ -50,6 +57,8 @@ function EditorApp() {
       void import('./editor/codemirror.ts')
       await doc.load({ persist: true, readOnly: false })
       const { first, fresh } = await startSync({ onSignedOut: () => setSignedOut(true) })
+      // Quick captures land on the server; pull them in right away.
+      if (isTauri) void import('@tauri-apps/api/event').then(({ listen }) => listen('toybox-captured', () => void syncNow()))
       // A new device pulls before creating the home board, so it doesn't clobber the real one.
       if (fresh) await first
       doc.ensureHome(COPY.home)
@@ -58,6 +67,7 @@ function EditorApp() {
       void first.then(() => {
         if (!doc.getBoard(boardId())) openBoard(HOME_BOARD_ID)
         migrateNotesToMarkdown()
+        ensureToybox()
       })
     }
     setSignedOut(false)
@@ -116,6 +126,7 @@ function EditorApp() {
                 >
                   <Icon>{ToolIcons.grid()}</Icon>
                 </button>
+                <ToyboxButton />
                 <SyncStatus />
                 <ShareButton boardId={boardId()} />
                 <ThemeToggle mode={theme.mode()} onCycle={theme.cycle} />
@@ -128,6 +139,7 @@ function EditorApp() {
             <Canvas readOnly={false} />
             <SelectionBar />
             <TrashPanel />
+            <ToyboxPanel />
           </main>
         </div>
         <Show when={paletteOpen()}>

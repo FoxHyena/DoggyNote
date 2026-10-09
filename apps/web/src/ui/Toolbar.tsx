@@ -29,8 +29,8 @@ function centrePlacement(type: CardType = 'note'): Placement {
   return { at: { x: spot.x + size.w / 2, y: spot.y + 20 } }
 }
 
-/** Card placement under a screen point: a column slot if over a column, else the world point. */
-function placementAt(clientX: number, clientY: number): Placement | null {
+/** Where a drop at a screen point lands: a column slot if over a column, else a world point. Null off-canvas. */
+export function placementAt(clientX: number, clientY: number): Placement | null {
   const v = viewport()
   if (clientX < v.left || clientY < v.top || clientX > v.left + v.width || clientY > v.top + v.height) return null
   const col = (document.elementFromPoint(clientX, clientY)?.closest('.card-column') as HTMLElement | null)?.dataset.cardId

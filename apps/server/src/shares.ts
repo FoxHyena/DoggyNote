@@ -19,6 +19,7 @@ type Obj = {
 }
 
 const alive = (o: Obj) => !o.purged && !o.deletedAt
+const isPrivate = (o: Obj) => o.id.startsWith('toybox:') || !!o.boardId?.startsWith('toybox:')
 
 export const shares = new Hono<AppEnv>()
 
@@ -36,6 +37,7 @@ shares.get('/shares', requireUser, async (c) => {
 shares.post('/shares', requireUser, async (c) => {
   const { boardId, includeChildren } = await c.req.json<{ boardId?: unknown; includeChildren?: unknown }>().catch(() => ({}) as Record<string, unknown>)
   if (typeof boardId !== 'string' || !boardId) return c.json({ error: 'boardId required' }, 400)
+  if (boardId.startsWith('toybox:')) return c.json({ error: 'A Toy box is private and can’t be shared' }, 400)
   const exists = await c.env.DB.prepare("SELECT 1 FROM objects WHERE id = ?1 AND kind = 'board'").bind(boardId).first()
   if (!exists) return c.json({ error: 'Board not found (has it synced yet?)' }, 404)
   const token = randomToken(18)
@@ -68,15 +70,15 @@ export async function resolveShare(db: D1Database, token: string): Promise<Resol
   const load = async (sql: string, ...args: unknown[]) =>
     (await db.prepare(sql).bind(...args).all<{ data: string }>()).results.map((r) => JSON.parse(r.data) as Obj)
 
-  const root = (await load("SELECT data FROM objects WHERE id = ?1 AND kind = 'board'", share.board_id))[0]
-  if (!root || !alive(root)) return null
+  const root = (await load("SELECT data FROM objects WHERE id = ?1 AND kind = 'board' AND owner_id IS NULL", share.board_id))[0]
+  if (!root || !alive(root) || isPrivate(root)) return null
 
   const out: Obj[] = [root]
   const seen = new Set([root.id])
   const queue = [root.id]
   while (queue.length) {
     const boardId = queue.shift()!
-    const items = (await load('SELECT data FROM objects WHERE board_id = ?1', boardId)).filter(alive)
+    const items = (await load('SELECT data FROM objects WHERE board_id = ?1 AND owner_id IS NULL', boardId)).filter((o) => alive(o) && !isPrivate(o))
     out.push(...items)
     if (!share.include_children) continue
     // Follow live board cards into child boards.
