@@ -63,4 +63,4 @@ Legend: [x] done + tested · [~] in progress · [ ] not started
 ## Still open
 1. [ ] Memory: busy boards still ~183–202 MB in the Mac app (target 150). The rest is WebKit graphics surfaces + JS heap; next lever is fewer GPU layers
 2. [ ] Intel Mac build (CI builds Apple silicon only); a universal build if a friend needs it
-3. [ ] v0.2 backlog: Toy box (unsorted + quick-capture hotkey), comments, file uploads, PNG export, Milanote import
+3. [x] v0.2 backlog: Toy box (unsorted + quick-capture hotkey), comments, file uploads, PNG export. Milanote import dropped (no export available)
