@@ -19,7 +19,7 @@ export default defineConfig({
   webServer: [
     // The production build: same chunks and timing users get. Proxies /api to the Worker.
     {
-      command: 'pnpm build && pnpm preview --port 5173 --strictPort',
+      command: 'VITE_APP_VERSION=0.0.1 pnpm build && pnpm preview --port 5173 --strictPort',
       url: 'http://localhost:5173',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
@@ -34,7 +34,7 @@ export default defineConfig({
     // The desktop flavour of the build (talks to the API cross-origin with a bearer
     // token), served from another origin to stand in for tauri://localhost.
     {
-      command: 'VITE_API_BASE=http://localhost:8787 pnpm exec vite build --outDir dist-desktop && pnpm exec vite preview --outDir dist-desktop --port 4174 --strictPort',
+      command: 'VITE_APP_VERSION=0.0.1 VITE_API_BASE=http://localhost:8787 pnpm exec vite build --outDir dist-desktop && pnpm exec vite preview --outDir dist-desktop --port 4174 --strictPort',
       url: 'http://localhost:4174',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,

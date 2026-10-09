@@ -19,6 +19,9 @@
     "@doggynote/core": "workspace:*",
     "@doggynote/theme": "workspace:*",
     "@lezer/markdown": "^1.8.0",
+    "@tauri-apps/api": "^2.12.2",
+    "@tauri-apps/plugin-process": "^2.4.0",
+    "@tauri-apps/plugin-updater": "^2.13.2",
     "solid-js": "^1.9.15"
   },
   "devDependencies": {

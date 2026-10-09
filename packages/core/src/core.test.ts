@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   UndoStack,
+  compareVersions,
   cullRect,
   diff,
   docToText,
@@ -150,6 +151,14 @@ describe('patches + undo', () => {
     s.undo()
     s.push([{ id: 'b', before: {}, after: { x: 9 } }])
     expect(s.canRedo).toBe(false)
+  })
+})
+
+describe('compareVersions', () => {
+  it('orders dotted versions numerically', () => {
+    expect(compareVersions('0.1.10', '0.1.9')).toBeGreaterThan(0)
+    expect(compareVersions('0.2.0', '0.10.0')).toBeLessThan(0)
+    expect(compareVersions('1.0', '1.0.0')).toBe(0)
   })
 })
 

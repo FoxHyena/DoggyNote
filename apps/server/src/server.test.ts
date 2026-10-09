@@ -82,3 +82,41 @@ it('images need a credential', async () => {
   const res = await app.request('/api/assets/00000000-0000-4000-8000-000000000000/thumb', {}, { DB: { prepare: () => ({ bind: () => ({ first: async () => null }) }) } } as never)
   expect(res.status).toBe(401)
 })
+
+describe('desktop releases', () => {
+  const manifest = { version: '0.1.42', dmg: 'DoggyNote_0.1.42_aarch64.dmg', platforms: { 'darwin-aarch64': { url: 'x', signature: 'y' } } }
+  const files: Record<string, string> = {
+    'desktop/latest.json': JSON.stringify(manifest),
+    'desktop/0.1.42/DoggyNote_0.1.42_aarch64.dmg': 'DMG',
+  }
+  const BUCKET = {
+    get: async (key: string) =>
+      key in files
+        ? { body: files[key], httpEtag: '"e"', writeHttpMetadata: () => undefined, json: async () => JSON.parse(files[key]) }
+        : null,
+  }
+  const env = { BUCKET, APP_VERSION: '0.1.42', MIN_CLIENT: '0.1.0' } as never
+
+  it('reports the deployed version', async () => {
+    const res = await app.request('/api/version', {}, env)
+    expect(await res.json()).toEqual({ version: '0.1.42', minClient: '0.1.0' })
+  })
+  it('serves the updater manifest', async () => {
+    const res = await app.request('/api/desktop/latest.json', {}, env)
+    expect(res.status).toBe(200)
+    expect(((await res.json()) as { version: string }).version).toBe("0.1.42")
+  })
+  it('redirects /download to the newest disk image, which downloads', async () => {
+    const res = await app.request('/api/desktop/download', {}, env)
+    expect(res.status).toBe(302)
+    expect(res.headers.get('location')).toBe('/api/desktop/files/0.1.42/DoggyNote_0.1.42_aarch64.dmg')
+    const file = await app.request(res.headers.get('location')!, {}, env)
+    expect(file.status).toBe(200)
+    expect(file.headers.get('content-disposition')).toContain('attachment')
+  })
+  it('only serves release files, never other bucket keys', async () => {
+    for (const p of ['/api/desktop/files/0.1.42/..%2F..%2Flatest.json', '/api/desktop/files/0.1.42/secret.png', '/api/desktop/files/x/DoggyNote.app.tar.gz']) {
+      expect((await app.request(p, {}, env)).status).toBe(404)
+    }
+  })
+})

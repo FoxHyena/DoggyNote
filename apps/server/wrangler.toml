@@ -23,3 +23,6 @@ bucket_name = "doggynote-assets"
 [vars]
 # Origins allowed to call the API cross-origin with a bearer token (the desktop app).
 ALLOWED_ORIGINS = "tauri://localhost,http://tauri.localhost,https://tauri.localhost"
+# Oldest desktop version the API still supports. Bump only for a breaking API
+# change: older apps then show "update required" instead of misbehaving.
+MIN_CLIENT = "0.0.0"
