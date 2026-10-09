@@ -3,6 +3,7 @@ import { app } from './app.ts'
 import { hashPassword, sha256Hex, signAssetToken, verifyAssetToken, verifyPassword } from './crypto.ts'
 import { ownerFor, parseChanges, stampComment, upsertSql } from './sync.ts'
 import { decodeEntities, isFetchableUrl } from './unfurl.ts'
+import { cleanFileName, contentDisposition } from './assets.ts'
 
 it('health check responds', async () => {
   const res = await app.request('/api/health')
@@ -163,5 +164,17 @@ describe('comment authorship', () => {
     const p = { x: 1 }
     expect(stampComment(p, { kind: 'card', author_id: null }, 'card', fido)).toBeNull()
     expect(p).toEqual({ x: 1 })
+  })
+})
+
+describe('file downloads', () => {
+  it('keeps names printable, short and pathless', () => {
+    expect(cleanFileName('../../etc/passwd')).toBe('....etcpasswd')
+    expect(cleanFileName('a\u0000b\nc.pdf')).toBe('abc.pdf')
+    expect(cleanFileName('   ')).toBe('file')
+    expect(cleanFileName('x'.repeat(500))).toHaveLength(200)
+  })
+  it('always downloads, with an ASCII fallback and the UTF-8 name', () => {
+    expect(contentDisposition('Pup "plan" ü.pdf')).toBe(`attachment; filename="Pup _plan_ _.pdf"; filename*=UTF-8''Pup%20%22plan%22%20%C3%BC.pdf`)
   })
 })

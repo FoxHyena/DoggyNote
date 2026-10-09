@@ -27,6 +27,7 @@ import { Diagnostics } from './ui/Diagnostics.tsx'
 import { UpdateToast } from './ui/UpdateToast.tsx'
 import { ToyboxButton, ToyboxPanel } from './ui/ToyboxPanel.tsx'
 import { CommentsPanel } from './ui/CommentsPanel.tsx'
+import { Toast } from './ui/Toast.tsx'
 import { ensureToybox } from './state/toybox.ts'
 import { snapToGrid, toggleSnap } from './state/grid.ts'
 import { startUpdateChecks } from './state/updates.ts'
@@ -142,6 +143,7 @@ function EditorApp() {
             <TrashPanel />
             <ToyboxPanel />
             <CommentsPanel />
+            <Toast />
           </main>
         </div>
         <Show when={paletteOpen()}>

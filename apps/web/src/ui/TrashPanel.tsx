@@ -24,6 +24,8 @@ export function describeCard(c: Card): string {
     }
     case 'column':
       return (c as Card<'column'>).content.title || 'Column'
+    case 'file':
+      return (c as Card<'file'>).content.name || 'File'
   }
 }
 

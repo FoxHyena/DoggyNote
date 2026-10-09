@@ -5,7 +5,7 @@ import * as doc from '../state/doc.ts'
 import { moveCardTo } from '../state/actions.ts'
 import { boardId, camera, viewport } from '../state/ui.ts'
 import { toyboxCards, toyboxId } from '../state/toybox.ts'
-import { addImages, addText, IMAGE_TYPES } from '../canvas/paste.ts'
+import { addAnyFiles, addText } from '../canvas/paste.ts'
 import { describeCard } from './TrashPanel.tsx'
 import { placementAt } from './Toolbar.tsx'
 import { Icon, ToolIcons } from './icons.tsx'
@@ -52,10 +52,9 @@ export function ToyboxPanel() {
     const tb = toyboxId()
     const dt = e.clipboardData
     if (!tb || !dt) return
-    const images = [...dt.files].filter((f) => IMAGE_TYPES.test(f.type))
-    if (images.length) {
+    if (dt.files.length) {
       e.preventDefault()
-      void addImages(images, { x: 0, y: 0 }, tb)
+      addAnyFiles([...dt.files], { x: 0, y: 0 }, tb)
     }
   }
 
@@ -64,8 +63,7 @@ export function ToyboxPanel() {
     const dt = e.dataTransfer
     if (!tb || !dt) return
     e.preventDefault()
-    const images = [...dt.files].filter((f) => IMAGE_TYPES.test(f.type))
-    if (images.length) return void addImages(images, { x: 0, y: 0 }, tb)
+    if (addAnyFiles([...dt.files], { x: 0, y: 0 }, tb)) return
     const text = dt.getData('text/uri-list').split('\n').find((l) => l && !l.startsWith('#')) || dt.getData('text/plain')
     if (text) addText(text, { x: 0, y: 0 }, tb)
   }

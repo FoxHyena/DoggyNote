@@ -13,6 +13,7 @@ import { BoardCard } from '../cards/BoardCard.tsx'
 import { ImageCard } from '../cards/ImageCard.tsx'
 import { LinkCard } from '../cards/LinkCard.tsx'
 import { ColumnCard } from '../cards/ColumnCard.tsx'
+import { FileCard } from '../cards/FileCard.tsx'
 
 export type CardProps<T extends Card['type'] = Card['type']> = {
   card: Card<T>
@@ -84,6 +85,9 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         </Match>
         <Match when={props.card.type === 'link'}>
           <LinkCard {...(props2() as CardProps<'link'>)} />
+        </Match>
+        <Match when={props.card.type === 'file'}>
+          <FileCard {...(props2() as CardProps<'file'>)} />
         </Match>
         <Match when={props.card.type === 'column'}>
           <ColumnCard {...(props2() as CardProps<'column'>)} />

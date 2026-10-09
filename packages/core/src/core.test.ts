@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  MAX_FILE_BYTES,
   UndoStack,
+  fileKind,
+  formatBytes,
   compareVersions,
   cullRect,
   diff,
@@ -228,5 +231,21 @@ describe('rich text', () => {
         ],
       }),
     ).toBe('Title\none')
+  })
+})
+
+describe('files', () => {
+  it('knows common kinds by extension, then by type', () => {
+    expect(fileKind('application/pdf', 'menu.pdf')).toBe('pdf')
+    expect(fileKind('', 'Plan.KEY')).toBe('slides')
+    expect(fileKind('application/octet-stream', 'photos.zip')).toBe('zip')
+    expect(fileKind('audio/mpeg', 'bark')).toBe('audio')
+    expect(fileKind('application/x-thing', 'mystery')).toBe('other')
+  })
+  it('formats sizes', () => {
+    expect(formatBytes(950)).toBe('950 B')
+    expect(formatBytes(12_300)).toBe('12 KB')
+    expect(formatBytes(3.4 * 1024 * 1024)).toBe('3.4 MB')
+    expect(formatBytes(MAX_FILE_BYTES)).toBe('50 MB')
   })
 })
