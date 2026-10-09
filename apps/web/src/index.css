@@ -1845,6 +1845,8 @@ button:disabled {
 }
 
 .toybox-item {
+  /* type · text · Place · bury, on one row */
+  grid-template-columns: auto 1fr auto auto;
   cursor: grab;
   touch-action: none;
 }
