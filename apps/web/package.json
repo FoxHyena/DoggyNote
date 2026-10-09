@@ -11,18 +11,14 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/lang-markdown": "^6.5.2",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.14",
     "@doggynote/core": "workspace:*",
     "@doggynote/theme": "workspace:*",
-    "orderedmap": "^2.1.1",
-    "prosemirror-commands": "^1.7.2",
-    "prosemirror-history": "^1.5.1",
-    "prosemirror-inputrules": "^1.5.1",
-    "prosemirror-keymap": "^1.2.3",
-    "prosemirror-model": "^1.25.12",
-    "prosemirror-schema-basic": "^1.2.5",
-    "prosemirror-schema-list": "^1.5.1",
-    "prosemirror-state": "^1.4.4",
-    "prosemirror-view": "^1.42.6",
+    "@lezer/markdown": "^1.8.0",
     "solid-js": "^1.9.15"
   },
   "devDependencies": {

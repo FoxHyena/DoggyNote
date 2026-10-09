@@ -13,7 +13,7 @@ Plan: `~/.claude/plans/hey-there-i-d-like-curious-shore.md`. Phases 0–5. MVP f
 apps/web/        SolidJS + Vite canvas app (editor + read-only share viewer). e2e in apps/web/e2e
 apps/desktop/    Tauri 2 shell around apps/web (src-tauri/)
 apps/server/     Cloudflare Worker (Hono): auth, sync, assets (R2), shares, unfurl. D1 migrations in migrations/
-packages/core/   Pure TS: geometry, spatial index, ops, undo. No DOM
+packages/core/   Pure TS: geometry + connector anchors, camera, patches/undo, markdown parsing. No DOM
 packages/theme/  Colour tokens (light + dark), theme mode logic, dog-themed copy
 ```
 
@@ -52,4 +52,5 @@ server, so each test works on its own `freshBoard()`.
 5. **Dog-themed names live in `COPY`** (`packages/theme/src/copy.ts`). Never inline these strings.
 6. Prefer boring solutions. One maintainer, a handful of users.
 7. **Sync is per field.** Only acknowledge fields that didn't change while a push was in flight (`ackOutbox`). Re-sending a stale field overwrites someone else's newer edit.
-8. **Images are public by URL today.** See TODO follow-up 1 before storing anything private.
+8. **Images need a credential.** That's a session, a `?t=` asset token (desktop app) or `?share=` (viewer only, for images on shared boards). Always build image URLs with `assetUrl()` in `state/api.ts`.
+9. **Notes are markdown** (`content.md`). `packages/core/src/markdown.ts` parses it into the sanitized tree that `RichText` draws with `createElement` only. Never render note HTML with `innerHTML`. The editor is CodeMirror 6 with a live preview (`editor/codemirror.ts`), lazy-loaded.

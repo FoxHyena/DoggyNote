@@ -22,7 +22,8 @@ export type RichNode = {
 export type TodoItem = { id: Id; text: string; done: boolean }
 
 export type CardContent = {
-  note: { doc: RichDoc }
+  /** Markdown source. `doc` is the pre-markdown format, migrated on load (see noteMarkdown). */
+  note: { md: string; doc?: RichDoc }
   todo: { title: string; items: TodoItem[] }
   board: { boardId: Id }
   image: { assetId: Id; width: number; height: number; caption?: string }

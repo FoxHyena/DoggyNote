@@ -541,6 +541,67 @@ button:disabled {
   background: color-mix(in srgb, currentColor 10%, transparent);
 }
 
+.rich h4,
+.rich h5,
+.rich h6 {
+  margin: 0.2em 0 0.35em;
+  font-size: 1em;
+}
+
+.rich li.task {
+  list-style: none;
+  margin-left: -1.3em;
+}
+
+.rich li.task > p {
+  display: inline;
+}
+
+.rich li.task.done > p {
+  text-decoration: line-through;
+  opacity: 0.65;
+}
+
+.rich .task-check {
+  margin: 0 6px 0 0;
+  vertical-align: -2px;
+  accent-color: var(--dn-accent);
+  cursor: pointer;
+}
+
+.rich pre {
+  margin: 0 0 0.4em;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.rich pre code {
+  padding: 0;
+  background: none;
+}
+
+.rich hr {
+  border: 0;
+  border-top: 1px solid var(--dn-border);
+  margin: 0.6em 0;
+}
+
+.rich table {
+  border-collapse: collapse;
+  margin: 0 0 0.4em;
+  font-size: 0.92em;
+}
+
+.rich th,
+.rich td {
+  border: 1px solid var(--dn-border);
+  padding: 2px 6px;
+  text-align: left;
+}
+
 .rich a {
   color: inherit;
   text-decoration: underline;
@@ -549,11 +610,48 @@ button:disabled {
   cursor: pointer;
 }
 
-.pm {
-  outline: none;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  min-height: 1.4em;
+/* ---- note editor: markdown live preview (CodeMirror) ----------------------- */
+
+.note-editor .cm-md-h1 { font-size: 1.35em; font-weight: 700; line-height: 1.25; }
+.note-editor .cm-md-h2 { font-size: 1.18em; font-weight: 700; line-height: 1.25; }
+.note-editor .cm-md-h3 { font-size: 1.05em; font-weight: 700; }
+.note-editor .cm-md-h4,
+.note-editor .cm-md-h5,
+.note-editor .cm-md-h6 { font-weight: 700; }
+.note-editor .cm-md-strong { font-weight: 700; }
+.note-editor .cm-md-em { font-style: italic; }
+.note-editor .cm-md-strike { text-decoration: line-through; }
+.note-editor .cm-md-done { text-decoration: line-through; opacity: 0.65; }
+.note-editor .cm-md-code {
+  font: 0.92em ui-monospace, SFMono-Regular, Menlo, monospace;
+  padding: 1px 3px;
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+.note-editor .cm-md-link {
+  text-decoration: underline;
+  text-decoration-color: var(--dn-accent);
+  text-underline-offset: 2px;
+}
+/* Markdown markers on the line you're editing: visible, but quiet. */
+.note-editor .cm-md-mark { opacity: 0.4; }
+.note-editor .cm-md-quote {
+  border-left: 3px solid var(--dn-border);
+  padding-left: 10px !important;
+  opacity: 0.8;
+}
+.note-editor .cm-md-codeblock {
+  font: 0.92em ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: color-mix(in srgb, currentColor 7%, transparent);
+  padding: 0 6px !important;
+}
+.note-editor .cm-md-hr { border-bottom: 1px solid var(--dn-border); }
+.note-editor .cm-md-bullet { display: inline-block; width: 1.1em; }
+.note-editor .cm-md-task {
+  margin: 0 6px 0 0;
+  vertical-align: -2px;
+  accent-color: var(--dn-accent);
+  cursor: pointer;
 }
 
 .pm-buffer {

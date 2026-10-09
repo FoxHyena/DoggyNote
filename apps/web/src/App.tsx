@@ -14,7 +14,7 @@ import { AccountMenu, SyncStatus } from './ui/AccountMenu.tsx'
 import { ShareButton } from './ui/ShareDialog.tsx'
 import { installShortcuts } from './ui/shortcuts.ts'
 import { boardId, endEdit, openBoard } from './state/ui.ts'
-import { HOME_BOARD_ID } from '@doggynote/core'
+import { HOME_BOARD_ID, noteMarkdown, type Card, type Id, type Obj } from '@doggynote/core'
 import { checkSession } from './state/session.ts'
 import { startSync } from './state/sync.ts'
 import { installLinkHandler } from './state/platform.ts'
@@ -43,7 +43,7 @@ function EditorApp() {
     if (!booted) {
       booted = true
       // Warm the editor so the first note opens instantly. Viewers never load it.
-      void import('./editor/prosemirror.ts')
+      void import('./editor/codemirror.ts')
       await doc.load({ persist: true, readOnly: false })
       const { first, fresh } = await startSync({ onSignedOut: () => setSignedOut(true) })
       // A new device pulls before creating the home board, so it doesn't clobber the real one.
@@ -53,6 +53,7 @@ function EditorApp() {
       // sync has had its say, or a slow pull would bounce us home.
       void first.then(() => {
         if (!doc.getBoard(boardId())) openBoard(HOME_BOARD_ID)
+        migrateNotesToMarkdown()
       })
     }
     setSignedOut(false)
@@ -126,4 +127,19 @@ function EditorApp() {
       </Match>
     </Switch>
   )
+}
+
+/**
+ * One-time move from the old ProseMirror note format to markdown. Runs after
+ * the first sync on every device; once one device has converted a note, the
+ * others just receive the markdown. Not an undo step.
+ */
+function migrateNotesToMarkdown() {
+  const patches: Record<Id, Partial<Obj>> = {}
+  for (const o of Object.values(doc.objs)) {
+    if (o.kind !== 'card' || o.type !== 'note' || o.purged) continue
+    const c = o as Card<'note'>
+    if (typeof (c.content as { md?: unknown }).md !== 'string') patches[c.id] = { content: { md: noteMarkdown(c) } } as Partial<Card>
+  }
+  if (Object.keys(patches).length) doc.silent(patches)
 }
