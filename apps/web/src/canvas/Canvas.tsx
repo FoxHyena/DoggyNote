@@ -484,7 +484,10 @@ export function Canvas(props: { readOnly: boolean }) {
 
   const transform = () => {
     const c = camera()
-    return `translate3d(${-c.x * c.zoom}px, ${-c.y * c.zoom}px, 0) scale(${c.zoom})`
+    // 2D on purpose: in WebKit (the desktop app) a 3D transform pins the world
+    // to a GPU layer rasterized once at 1×, so zooming in stretches a bitmap
+    // and text goes soft. A 2D transform re-renders sharp once motion stops.
+    return `translate(${-c.x * c.zoom}px, ${-c.y * c.zoom}px) scale(${c.zoom})`
   }
 
   const marqueeStyle = () => {

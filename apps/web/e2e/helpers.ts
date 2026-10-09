@@ -2,10 +2,10 @@ import { expect, type Locator, type Page } from '@playwright/test'
 
 export const MOD = 'ControlOrMeta'
 
-/** Camera from the world transform: translate3d(tx, ty, 0) scale(z). */
+/** Camera from the world transform: translate(tx, ty) scale(z). */
 export async function camera(page: Page) {
   const t = await page.getByTestId('world').evaluate((el) => (el as HTMLElement).style.transform)
-  const m = t.match(/translate3d\((-?[\d.e-]+)px, (-?[\d.e-]+)px, 0px\) scale\(([\d.e-]+)\)/)
+  const m = t.match(/translate\((-?[\d.e-]+)px, (-?[\d.e-]+)px\) scale\(([\d.e-]+)\)/)
   if (!m) throw new Error(`unexpected transform ${t}`)
   return { tx: Number(m[1]), ty: Number(m[2]), zoom: Number(m[3]) }
 }

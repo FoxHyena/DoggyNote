@@ -50,6 +50,16 @@ Legend: [x] done + tested · [~] in progress · [ ] not started
 - [~] Release pipeline: auto deploy + signed, self-updating Mac app (#6). **Needs your `CLOUDFLARE_API_TOKEN` secret**
 - [~] 640 px image tier (#7). Decoded images at 100%: 94 → 34 MB
 
+## Round 3 (in progress)
+- [~] Sharp zoom in the desktop app (2D world transform)
+- [ ] Dot grid + snap-to-grid toggle (⌘'), haptic tick on desktop
+- [ ] Memory pass (Mac app ≤150 MB)
+- [ ] Toy box (personal, **server-enforced privacy**) + global quick capture
+- [ ] Comment threads on cards
+- [ ] File uploads
+- [ ] Export board as PNG
+- [ ] Milanote import (needs a sample export)
+
 ## Still open
 1. [ ] Memory: busy boards still ~183–202 MB in the Mac app (target 150). The rest is WebKit graphics surfaces + JS heap; next lever is fewer GPU layers
 2. [ ] Intel Mac build (CI builds Apple silicon only); a universal build if a friend needs it
