@@ -1,4 +1,5 @@
 import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, onMount } from 'solid-js'
+import { exporting } from '../state/export.ts'
 import {
   GRID,
   LOD_ZOOM,
@@ -70,7 +71,8 @@ export function Canvas(props: { readOnly: boolean }) {
   const [panning, setPanning] = createSignal(false)
   let gesture: Gesture | null = null
 
-  const lod = createMemo(() => camera().zoom < LOD_ZOOM)
+  // An export needs every card in full, whatever the zoom.
+  const lod = createMemo(() => camera().zoom < LOD_ZOOM && !exporting())
   const [snapping, setSnapping] = createSignal(false)
 
   // Background dots: two CSS variables per camera change, no DOM.
@@ -122,6 +124,7 @@ export function Canvas(props: { readOnly: boolean }) {
   )
 
   const visible = createMemo(() => {
+    if (exporting()) return doc.cardsOn(boardId()).filter((c) => !c.columnId)
     const r = cull()
     return doc.cardsOn(boardId()).filter((c) => !c.columnId && intersects(r, { x: c.x, y: c.y, w: c.w, h: cardHeight(c) }))
   })

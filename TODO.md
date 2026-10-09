@@ -57,10 +57,10 @@ Legend: [x] done + tested · [~] in progress · [ ] not started
 - [x] Toy box (personal, **server-enforced privacy**) + global quick capture (⌃⌥Space). Others get `{id, hidden}` stubs; writes/shares/images 403. Native capture window checked
 - [x] Comment threads on cards: badge + side panel, server-stamped authors, author-only edits, read-only in share links
 - [x] File uploads: any file ≤50 MB, PDF page-1 previews (pdf.js, lazy), always-attachment downloads. Native check done
-- [ ] Export board as PNG
+- [x] PNG export: board or selection, 1×/2×, canvas or transparent background; link previews via /api/proxy-image; native Save dialog in the Mac app
 - [-] Milanote import: dropped, Milanote can't export the boards
 
 ## Still open
 1. [ ] Memory: busy boards still ~183–202 MB in the Mac app (target 150). The rest is WebKit graphics surfaces + JS heap; next lever is fewer GPU layers
 2. [ ] Intel Mac build (CI builds Apple silicon only); a universal build if a friend needs it
-3. [ ] v0.2 backlog: Toy box (unsorted + quick-capture hotkey), comments, file uploads, PNG export, Milanote import
+3. [x] v0.2 backlog: Toy box (unsorted + quick-capture hotkey), comments, file uploads, PNG export. Milanote import dropped (no export available)

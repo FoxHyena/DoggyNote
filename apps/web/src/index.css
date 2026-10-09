@@ -62,7 +62,8 @@ button:disabled {
   background: var(--dn-panel);
   border-bottom: 1px solid var(--dn-border);
   min-width: 0;
-  z-index: 20;
+  /* Above the stage's floating UI (selection bar 30, panels 40), so its menus are never covered. */
+  z-index: 45;
 }
 
 .crumbs {
@@ -2110,4 +2111,58 @@ a.file-name:hover {
   color: var(--dn-text);
   z-index: 60;
   animation: slide-in 160ms ease-out;
+}
+
+/* ---- export ---- */
+
+.export-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.export-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.export-label {
+  font-size: 13px;
+  color: var(--dn-text-muted);
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--dn-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.segmented button {
+  padding: 5px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--dn-text);
+  font-size: 13px;
+}
+
+.segmented button + button {
+  border-left: 1px solid var(--dn-border);
+}
+
+.segmented button.on {
+  background: var(--dn-accent);
+  color: var(--dn-accent-text);
+}
+
+.segmented button:disabled {
+  color: var(--dn-text-muted);
+}
+
+.share-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--dn-text);
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { app } from './app.ts'
 import { hashPassword, sha256Hex, signAssetToken, verifyAssetToken, verifyPassword } from './crypto.ts'
 import { deletedCommentOwner, ownerFor, parseChanges, stampComment, upsertSql } from './sync.ts'
-import { decodeEntities, isFetchableUrl } from './unfurl.ts'
+import { decodeEntities, isFetchableUrl, proxyImage } from './unfurl.ts'
 import { cleanFileName, contentDisposition } from './assets.ts'
 
 it('health check responds', async () => {
@@ -190,5 +190,21 @@ describe('file downloads', () => {
   })
   it('always downloads, with an ASCII fallback and the UTF-8 name', () => {
     expect(contentDisposition('Pup "plan" ü.pdf')).toBe(`attachment; filename="Pup _plan_ _.pdf"; filename*=UTF-8''Pup%20%22plan%22%20%C3%BC.pdf`)
+  })
+})
+
+describe('image proxy', () => {
+  const upstream = (body: BodyInit, type: string, status = 200): typeof fetch => async () => new Response(body, { status, headers: { 'content-type': type } })
+  const u = new URL('https://example.com/a.png')
+  it('passes images through', async () => {
+    const res = await proxyImage(u, upstream(new Uint8Array([1, 2, 3]), 'image/png'))
+    expect(res.headers.get('content-type')).toBe('image/png')
+    expect(new Uint8Array(await res.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]))
+  })
+  it('refuses pages, SVG, failures and huge files', async () => {
+    await expect(proxyImage(u, upstream('<html>', 'text/html'))).rejects.toThrow('not an image')
+    await expect(proxyImage(u, upstream('<svg/>', 'image/svg+xml'))).rejects.toThrow('not an image')
+    await expect(proxyImage(u, upstream('', 'image/png', 404))).rejects.toThrow('upstream 404')
+    await expect(proxyImage(u, upstream(new Uint8Array(5 * 1024 * 1024 + 1), 'image/png'))).rejects.toThrow('too large')
   })
 })

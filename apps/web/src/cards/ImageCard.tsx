@@ -1,6 +1,7 @@
 import { createEffect, createMemo, createSignal, onCleanup } from 'solid-js'
 import { acquireUrl, releaseUrl, type AssetSize } from '../state/assets.ts'
 import { camera } from '../state/ui.ts'
+import { exportScale, exporting } from '../state/export.ts'
 import type { CardProps } from '../canvas/CardView.tsx'
 
 // Picks the smallest stored size that still looks sharp at the current zoom,
@@ -8,13 +9,16 @@ import type { CardProps } from '../canvas/CardView.tsx'
 
 export function ImageCard(props: CardProps<'image'>) {
   const size = createMemo<AssetSize>(() => {
-    const onScreen = props.card.w * camera().zoom * (window.devicePixelRatio || 1)
+    // An export renders at its own scale, whatever the camera is doing.
+    const onScreen = exporting() ? props.card.w * exportScale() : props.card.w * camera().zoom * (window.devicePixelRatio || 1)
     if (props.lod || onScreen <= 256) return 'thumb'
     // Older images have no `small`; they step up to `medium`.
     if (onScreen <= 640 && props.card.content.sizes?.includes('small')) return 'small'
     return onScreen <= 1024 ? 'medium' : 'full'
   })
   const [src, setSrc] = createSignal<string>()
+  /** The size `src` currently shows (it lags `size()` while the next one loads). */
+  const [loaded, setLoaded] = createSignal<AssetSize>()
 
   createEffect(() => {
     const { assetId } = props.card.content
@@ -25,6 +29,7 @@ export function ImageCard(props: CardProps<'image'>) {
       if (cancelled) return releaseUrl(u)
       url = u
       setSrc(u)
+      setLoaded(s)
     })
     onCleanup(() => {
       cancelled = true
@@ -35,7 +40,7 @@ export function ImageCard(props: CardProps<'image'>) {
 
   return (
     <div class="image-card" style={{ 'aspect-ratio': `${props.card.content.width} / ${props.card.content.height}` }}>
-      <img src={src()} alt={props.card.content.caption ?? ''} draggable={false} decoding="async" loading="lazy" data-size={size()} data-testid="card-image" />
+      <img src={src()} alt={props.card.content.caption ?? ''} draggable={false} decoding="async" loading="lazy" data-size={size()} data-loaded={loaded()} data-testid="card-image" />
     </div>
   )
 }

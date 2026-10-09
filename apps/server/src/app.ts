@@ -5,7 +5,7 @@ import { sync } from './sync.ts'
 import { assets } from './assets.ts'
 import { shares } from './shares.ts'
 import { desktop } from './desktop.ts'
-import { isFetchableUrl, unfurl } from './unfurl.ts'
+import { isFetchableUrl, proxyImage, unfurl } from './unfurl.ts'
 
 export type { Env } from './env.ts'
 
@@ -72,6 +72,17 @@ authed.get('/unfurl', async (c) => {
     return c.json(await unfurl(target))
   } catch (e) {
     return c.json({ error: `Couldn't fetch that page (${e instanceof Error ? e.message : 'error'})` }, 502)
+  }
+})
+// Link-preview images for PNG export: other sites don't send CORS headers, so
+// the browser can't read their pixels. Signed-in only, images only, size-capped.
+authed.get('/proxy-image', async (c) => {
+  const target = isFetchableUrl(c.req.query('url') ?? '')
+  if (!target) return c.json({ error: 'Only http(s) images' }, 400)
+  try {
+    return await proxyImage(target)
+  } catch (e) {
+    return c.json({ error: `Couldn't fetch that image (${e instanceof Error ? e.message : 'error'})` }, 502)
   }
 })
 app.route('/', authed)

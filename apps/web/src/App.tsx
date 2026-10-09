@@ -12,6 +12,7 @@ import { Loader } from './ui/Loader.tsx'
 import { Login } from './ui/Login.tsx'
 import { AccountMenu, SyncStatus } from './ui/AccountMenu.tsx'
 import { ShareButton } from './ui/ShareDialog.tsx'
+import { ExportButton } from './ui/ExportMenu.tsx'
 import { installShortcuts } from './ui/shortcuts.ts'
 import { boardId, endEdit, openBoard } from './state/ui.ts'
 import { HOME_BOARD_ID, noteMarkdown, type Card, type Id, type Obj } from '@doggynote/core'
@@ -131,6 +132,7 @@ function EditorApp() {
                 <ToyboxButton />
                 <SyncStatus />
                 <ShareButton boardId={boardId()} />
+                <ExportButton />
                 <ThemeToggle mode={theme.mode()} onCycle={theme.cycle} />
                 <AccountMenu />
               </>
