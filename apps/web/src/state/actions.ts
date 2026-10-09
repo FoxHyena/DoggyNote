@@ -48,8 +48,8 @@ export function appendOrder(columnId: Id): number {
 /** New cards land on the grid when snapping is on. */
 const onGrid = (n: number) => (snapToGrid() ? snap(n) : Math.round(n))
 
-function baseCard<T extends CardType>(type: T, place: Placement, content: CardContent[T], extra: Partial<Card> = {}): Card<T> {
-  const b = boardId()
+function baseCard<T extends CardType>(type: T, place: Placement, content: CardContent[T], extra: Partial<Card> = {}, onBoard?: Id): Card<T> {
+  const b = onBoard ?? boardId()
   const size = DEFAULT_SIZE[type]
   const inColumn = 'columnId' in place
   return {
@@ -72,7 +72,11 @@ function baseCard<T extends CardType>(type: T, place: Placement, content: CardCo
 }
 
 /** Create a card of `type`, select it, and (for text cards) start editing. */
-export function createCard(type: CardType, place: Placement, opts: { content?: unknown; edit?: boolean; extra?: Partial<Card> } = {}): Id {
+export function createCard(
+  type: CardType,
+  place: Placement,
+  opts: { content?: unknown; edit?: boolean; extra?: Partial<Card>; boardId?: Id } = {},
+): Id {
   endEdit()
   const tx: Change[] = []
   let content = (opts.content ?? EMPTY_CONTENT[type]()) as CardContent[CardType]
@@ -89,9 +93,11 @@ export function createCard(type: CardType, place: Placement, opts: { content?: u
     tx.push(doc.createChange(board))
     content = { boardId: board.id }
   }
-  const card = baseCard(type, place, content, opts.extra)
+  const card = baseCard(type, place, content, opts.extra, opts.boardId)
   tx.push(doc.createChange(card))
   doc.commit(tx)
+  // Created somewhere else (e.g. straight into the Toy box): don't select or edit it here.
+  if (opts.boardId && opts.boardId !== boardId()) return card.id
   const editable = type === 'note' || type === 'todo' || type === 'column' || type === 'board' || type === 'link'
   if (opts.edit ?? editable) beginEdit(card.id, { isNew: true })
   else select([card.id])
@@ -177,4 +183,20 @@ export function connect(from: Id, to: Id, sides: { fromSide?: Side; toSide?: Sid
 
 export function selectAll() {
   select(doc.cardsOn(boardId()).filter((c) => !c.columnId).map((c) => c.id))
+}
+
+/** Move a card to another board (e.g. out of the Toy box) at a point or into a column. One undo step. */
+export function moveCardTo(id: Id, toBoard: Id, place: Placement) {
+  const c = doc.getCard(id)
+  if (!c) return
+  const size = { w: c.w, h: c.h }
+  const patch: Partial<Card> =
+    'columnId' in place
+      ? { boardId: toBoard, columnId: place.columnId, order: place.order }
+      : { boardId: toBoard, columnId: null, x: onGrid(place.at.x - size.w / 2), y: onGrid(place.at.y - 20), z: doc.maxZ(toBoard) + 1 }
+  // Connections can't span boards, so ones touching the moved card are removed.
+  // All of it is one undo step.
+  const patches: Record<Id, Partial<Obj>> = { [id]: patch }
+  for (const conn of doc.connectionsOn(c.boardId)) if (conn.from === id || conn.to === id) patches[conn.id] = { purged: true }
+  doc.update(patches)
 }

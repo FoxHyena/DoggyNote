@@ -71,6 +71,12 @@ export function BoardIconSvg(props: { icon: BoardIcon; size?: number }) {
 }
 
 export const ToolIcons: Record<string, () => JSX.Element> = {
+  inbox: () => (
+    <>
+      <path d="M4 13h4.5l1.5 2.5h4l1.5-2.5H20" />
+      <path d="M5.5 6.5 4 13v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5l-1.5-6.5a1 1 0 0 0-1-.8h-11a1 1 0 0 0-1 .8z" />
+    </>
+  ),
   grid: () => (
     <>
       <circle cx="6" cy="6" r="1.4" fill="currentColor" stroke="none" />

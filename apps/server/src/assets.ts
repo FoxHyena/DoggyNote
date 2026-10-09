@@ -50,8 +50,19 @@ assets.put('/assets/:id/:size', requireUser, async (c) => {
 
 type Access = 'ok' | 'unauthenticated' | 'forbidden'
 
+/** True if every card using this image sits in someone else's Toy box. */
+async function privateToSomeoneElse(c: Context<AppEnv>, assetId: string, userId: string): Promise<boolean> {
+  const { results } = await c.env.DB.prepare(
+    "SELECT owner_id FROM objects WHERE kind = 'card' AND json_extract(data, '$.content.assetId') = ?1",
+  )
+    .bind(assetId)
+    .all<{ owner_id: string | null }>()
+  return results.length > 0 && results.every((r) => r.owner_id && r.owner_id !== userId)
+}
+
 async function canRead(c: Context<AppEnv>, assetId: string): Promise<Access> {
-  if (await sessionUser(c)) return 'ok'
+  const session = await sessionUser(c)
+  if (session) return (await privateToSomeoneElse(c, assetId, session.user.id)) ? 'forbidden' : 'ok'
 
   const t = c.req.query('t')
   if (t) {
@@ -60,7 +71,8 @@ async function canRead(c: Context<AppEnv>, assetId: string): Promise<Access> {
     if (!userId) return 'unauthenticated'
     // A removed account's tokens stop working at once.
     const exists = await c.env.DB.prepare('SELECT 1 FROM users WHERE id = ?1').bind(userId).first()
-    return exists ? 'ok' : 'unauthenticated'
+    if (!exists) return 'unauthenticated'
+    return (await privateToSomeoneElse(c, assetId, userId)) ? 'forbidden' : 'ok'
   }
 
   const share = c.req.query('share')

@@ -54,7 +54,7 @@ Legend: [x] done + tested · [~] in progress · [ ] not started
 - [x] Sharp zoom in the desktop app (2D world transform)
 - [x] Dot grid + snap-to-grid toggle (⌘'), glow + haptic tick on desktop
 - [~] Memory pass: overview 183→164 MB, 100% 202→186 MB (target 150 not reached; rest is WebKit GPU tiles + JS heap)
-- [ ] Toy box (personal, **server-enforced privacy**) + global quick capture
+- [x] Toy box (personal, **server-enforced privacy**) + global quick capture (⌃⌥Space). Others get `{id, hidden}` stubs; writes/shares/images 403. Native capture window checked
 - [ ] Comment threads on cards
 - [ ] File uploads
 - [ ] Export board as PNG

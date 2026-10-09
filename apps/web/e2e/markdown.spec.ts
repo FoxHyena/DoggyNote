@@ -126,13 +126,14 @@ test('old-format notes still show, and get converted to markdown', async ({ page
     },
   }
   expect((await page.request.post('/api/sync', { data: { changes: [{ id, patch: legacy }] } })).ok()).toBe(true)
-  const pulled = page.waitForResponse((r) => r.url().includes('/api/sync?since=') && r.request().method() === 'GET')
   await page.reload()
   await expect(page.getByTestId('canvas')).toBeVisible()
-  await pulled
-  await page.keyboard.press(`${MOD}+1`) // fit: bring the injected card into view
+  // The pull can take several pages on a busy server; re-fit until the card has arrived.
   const note = cardByText(page, 'Legacy pup')
-  await expect(note.locator('h2')).toHaveText('Legacy pup')
+  await expect(async () => {
+    await page.keyboard.press(`${MOD}+1`)
+    await expect(note.locator('h2')).toHaveText('Legacy pup', { timeout: 1000 })
+  }).toPass({ timeout: 15_000 })
   await expect(note.locator('strong')).toHaveText('here')
   await expect.poll(() => serverMarkdown(page, 'Legacy pup'), { timeout: 15_000 }).toBe('## Legacy pup\n\nstill **here**')
 })
