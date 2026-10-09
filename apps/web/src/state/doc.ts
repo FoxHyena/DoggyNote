@@ -399,6 +399,13 @@ export function trashedOn(boardId: Id): Card[] {
     .sort((a, b) => (b.deletedAt ?? 0) - (a.deletedAt ?? 0))
 }
 
+/** Your deleted (not yet wiped) comments on a board. Only the author's devices have them. */
+export function trashedCommentsOn(boardId: Id): Comment[] {
+  return Object.values(state.objs)
+    .filter((o): o is Comment => o.kind === 'comment' && o.boardId === boardId && !!o.deletedAt && !o.purged)
+    .sort((a, b) => (b.deletedAt ?? 0) - (a.deletedAt ?? 0))
+}
+
 export function maxZ(boardId: Id): number {
   let z = 0
   for (const c of cardsOn(boardId)) z = Math.max(z, c.z ?? 0)

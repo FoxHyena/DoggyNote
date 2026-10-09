@@ -72,7 +72,7 @@ export function Toolbar() {
     el.addEventListener('pointerup', up)
   }
 
-  const trashCount = () => (trashOpen(), doc.trashedOn(boardId()).length)
+  const trashCount = () => (trashOpen(), doc.index(), doc.trashedOn(boardId()).length + doc.trashedCommentsOn(boardId()).length)
 
   return (
     <aside class="toolbar" aria-label="Tools">

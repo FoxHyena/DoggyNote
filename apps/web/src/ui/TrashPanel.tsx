@@ -3,6 +3,7 @@ import { mdToText, noteMarkdown, type Card } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { emptyTrash, restoreCard } from '../state/actions.ts'
+import { purgeComments, restoreComment } from '../state/comments.ts'
 import { boardId, setTrashOpen, trashOpen } from '../state/ui.ts'
 import { Icon, ToolIcons } from './icons.tsx'
 
@@ -32,6 +33,7 @@ export function describeCard(c: Card): string {
 export function TrashPanel() {
   // Re-read whenever the document index changes (a restore, a new burial).
   const items = createMemo(() => (doc.index(), trashOpen() ? doc.trashedOn(boardId()) : []))
+  const comments = createMemo(() => (doc.index(), trashOpen() ? doc.trashedCommentsOn(boardId()) : []))
   return (
     <Show when={trashOpen()}>
       <aside class="trash" data-testid="trash-panel" aria-label={COPY.trash}>
@@ -41,7 +43,7 @@ export function TrashPanel() {
             <Icon>{ToolIcons.close()}</Icon>
           </button>
         </header>
-        <Show when={items().length} fallback={<p class="trash-empty">No bones buried on this board.</p>}>
+        <Show when={items().length || comments().length} fallback={<p class="trash-empty">No bones buried on this board.</p>}>
           <ul class="trash-list">
             <For each={items()}>
               {(c) => (
@@ -55,8 +57,27 @@ export function TrashPanel() {
                 </li>
               )}
             </For>
+            <For each={comments()}>
+              {(m) => (
+                <li class="trash-item" data-testid="trash-comment">
+                  <span class="trash-type">comment</span>
+                  <span class="trash-text">{m.text.split('\n')[0]}</span>
+                  <button class="bar-btn" data-testid="restore-comment" title="Put it back in the thread" onClick={() => restoreComment(m.id)}>
+                    <Icon size={16}>{ToolIcons.restore()}</Icon>
+                    Restore
+                  </button>
+                </li>
+              )}
+            </For>
           </ul>
-          <button class="danger-btn" data-testid="empty-trash" onClick={() => emptyTrash(items())}>
+          <button
+            class="danger-btn"
+            data-testid="empty-trash"
+            onClick={() => {
+              if (items().length) emptyTrash(items())
+              purgeComments(comments().map((m) => m.id))
+            }}
+          >
             Empty {COPY.trash.toLowerCase()}
           </button>
         </Show>

@@ -56,7 +56,7 @@ Legend: [x] done + tested · [~] in progress · [ ] not started
 - [~] Memory pass: overview 183→164 MB, 100% 202→186 MB (target 150 not reached; rest is WebKit GPU tiles + JS heap)
 - [x] Toy box (personal, **server-enforced privacy**) + global quick capture (⌃⌥Space). Others get `{id, hidden}` stubs; writes/shares/images 403. Native capture window checked
 - [x] Comment threads on cards: badge + side panel, server-stamped authors, author-only edits, read-only in share links
-- [ ] File uploads
+- [x] File uploads: any file ≤50 MB, PDF page-1 previews (pdf.js, lazy), always-attachment downloads. Native check done
 - [ ] Export board as PNG
 - [-] Milanote import: dropped, Milanote can't export the boards
 

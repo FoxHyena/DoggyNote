@@ -1,4 +1,4 @@
-import { expect, test, type Browser, type Page } from '@playwright/test'
+import { expect, test, type APIRequestContext, type Browser, type Page } from '@playwright/test'
 import { MOD, addNote, cardByText, dragBy, freshBoard } from './helpers.ts'
 
 // Comment threads on cards: a badge with a count, a side panel, replies,
@@ -20,6 +20,18 @@ async function send(page: Page, text: string) {
   await input.press(`${MOD}+Enter`)
   await expect(page.getByTestId('comment').filter({ hasText: text.replaceAll('**', '') })).toBeVisible()
   await expect(input).toHaveValue('')
+}
+
+/** Every object the server sends this requester (the pull is paged). */
+async function pullAll(req: APIRequestContext): Promise<{ id: string; [k: string]: unknown }[]> {
+  const out = []
+  let since = 0
+  for (;;) {
+    const r = await (await req.get(`/api/sync?since=${since}`)).json()
+    out.push(...r.objects)
+    if (!r.more) return out
+    since = r.cursor
+  }
 }
 
 async function synced(page: Page) {
@@ -69,22 +81,49 @@ test('start a thread, reply, resolve and reopen; the badge keeps count', async (
   await expect(page.getByTestId('comment')).toHaveText([/Who threw this\?/, /Me again/, /Third throw/])
 })
 
-test('edit and delete your own messages', async ({ page }) => {
+test('edit your message; delete takes it back from everyone, restorable until the trash is emptied', async ({ page, browser }) => {
   await freshBoard(page)
   const note = uniq('bowl')
+  const secret = uniq('secret plan')
   await addNote(page, note)
   await dragBy(page, cardByText(page, note), 12, 0) // select (a click would open it)
   await page.getByTestId('comment-button').click()
   await send(page, 'typo hre')
   await page.getByTestId('comment-edit').click()
-  await page.getByTestId('comment-edit-input').fill('typo here')
+  await page.getByTestId('comment-edit-input').fill(secret)
   await page.getByTestId('comment-edit-input').press(`${MOD}+Enter`)
-  await expect(page.getByTestId('comment')).toHaveText([/typo here.*|.*edited.*typo here/s])
+  await expect(page.getByTestId('comment')).toContainText(secret)
   await expect(page.getByTestId('comment')).toContainText('edited')
+  await synced(page)
+  const id = (await pullAll(page.request)).find((o) => o.kind === 'comment' && o.text === secret)!.id
+  const ctx = await asFido(browser)
+  const fidoSees = async () => (await pullAll(ctx.request)).find((o) => o.id === id)
 
+  // Delete: gone from the thread and the badge, and from everyone else's data.
   await page.getByTestId('comment-delete').click()
   await expect(page.getByTestId('comment')).toHaveCount(0)
+  await expect(page.getByTestId('toast')).toContainText('Buried bones')
   await expect(cardByText(page, note).getByTestId('comment-badge')).toHaveCount(0)
+  await expect.poll(fidoSees, { timeout: 10_000 }).toEqual({ id, hidden: true })
+
+  // It was a slip: restore from Buried bones, and everyone has it again.
+  await page.getByTestId('comments-close').click()
+  await page.getByTestId('tool-trash').click()
+  await page.getByTestId('trash-comment').filter({ hasText: secret }).getByTestId('restore-comment').click()
+  await expect(cardByText(page, note).getByTestId('comment-badge')).toHaveText('1')
+  await expect.poll(async () => (await fidoSees()).text, { timeout: 10_000 }).toBe(secret)
+
+  // Delete again and empty the trash: the words are wiped on the server.
+  await cardByText(page, note).getByTestId('comment-badge').click()
+  await page.getByTestId('comment-delete').click()
+  await page.getByTestId('comments-close').click()
+  await page.getByTestId('tool-trash').click()
+  await expect(page.getByTestId('trash-comment')).toHaveCount(1)
+  await page.getByTestId('empty-trash').click()
+  const mine = async () => (await pullAll(page.request)).find((o) => o.id === id)
+  await expect.poll(mine, { timeout: 10_000 }).toMatchObject({ purged: true, text: '' })
+  expect(await fidoSees()).toEqual({ id, hidden: true })
+  await ctx.close()
 })
 
 test('two people replying at once both land, under their own names', async ({ page, browser }) => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { app } from './app.ts'
 import { hashPassword, sha256Hex, signAssetToken, verifyAssetToken, verifyPassword } from './crypto.ts'
-import { ownerFor, parseChanges, stampComment, upsertSql } from './sync.ts'
+import { deletedCommentOwner, ownerFor, parseChanges, stampComment, upsertSql } from './sync.ts'
 import { decodeEntities, isFetchableUrl } from './unfurl.ts'
 import { cleanFileName, contentDisposition } from './assets.ts'
 
@@ -159,6 +159,20 @@ describe('comment authorship', () => {
   })
   it("can't turn an existing card into a comment", () => {
     expect(stampComment({ kind: 'comment' }, { kind: 'card', author_id: null }, 'comment', rex)).toBe('bad kind')
+  })
+  it('wipes the text when a comment is purged', () => {
+    const p: Record<string, unknown> = { purged: true }
+    expect(stampComment(p, existing, 'comment', rex)).toBeNull()
+    expect(p.text).toBe('')
+  })
+  it('a deleted comment is private to its author until restored', () => {
+    const live = { kind: 'comment', author_id: 'u-rex', deleted_at: null, purged: null }
+    expect(deletedCommentOwner('comment', { deletedAt: 9 }, live, 'u-rex')).toBe('u-rex')
+    expect(deletedCommentOwner('comment', { boardId: 'b' }, { ...live, deleted_at: 9 }, 'u-fido')).toBe('u-rex')
+    expect(deletedCommentOwner('comment', { purged: true, text: '' }, { ...live, deleted_at: 9 }, 'u-rex')).toBe('u-rex')
+    expect(deletedCommentOwner('comment', { deletedAt: null }, { ...live, deleted_at: 9 }, 'u-rex')).toBeNull()
+    expect(deletedCommentOwner('comment', { text: 'hi' }, live, 'u-rex')).toBeNull()
+    expect(deletedCommentOwner('card', { deletedAt: 9 }, undefined, 'u-rex')).toBeNull()
   })
   it('leaves other kinds alone', () => {
     const p = { x: 1 }
