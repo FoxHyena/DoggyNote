@@ -1,12 +1,14 @@
 import { For, Show, createMemo } from 'solid-js'
-import { center, edgePoint, type Connection } from '@doggynote/core'
+import { SIDES, autoSides, connectorPath, sideAnchor, type Connection } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
 import { boardId, isSelected } from '../state/ui.ts'
 import { layoutTick, rectOf } from './layout.ts'
 import { connectPreview } from './dnd.ts'
 
-// All connectors for the board in one SVG. Each line recomputes only when one
-// of its two cards moves or resizes.
+// All connectors for the board in one SVG. Each end attaches to the middle of
+// a card side: the side it was dropped on, or (if never pinned) whichever
+// sides face each other right now. Each line recomputes only when one of its
+// two cards moves or resizes.
 
 function ConnLine(props: { conn: Connection }) {
   const geo = createMemo(() => {
@@ -14,9 +16,8 @@ function ConnLine(props: { conn: Connection }) {
     const a = rectOf(props.conn.from)
     const b = rectOf(props.conn.to)
     if (!a || !b) return null
-    const p1 = edgePoint(a, center(b), 6)
-    const p2 = edgePoint(b, center(a), 8)
-    return `M${p1.x},${p1.y} L${p2.x},${p2.y}`
+    const [autoA, autoB] = autoSides(a, b)
+    return connectorPath(a, props.conn.fromSide ?? autoA, { rect: b, side: props.conn.toSide ?? autoB }).d
   })
   return (
     <Show when={geo()}>
@@ -30,12 +31,14 @@ function ConnLine(props: { conn: Connection }) {
 
 export function Connections() {
   const preview = createMemo(() => {
+    layoutTick()
     const p = connectPreview()
     if (!p) return null
     const a = rectOf(p.from)
     if (!a) return null
-    const s = edgePoint(a, p.to, 6)
-    return `M${s.x},${s.y} L${p.to.x},${p.to.y}`
+    const t = p.target && rectOf(p.target.id)
+    const path = connectorPath(a, p.fromSide, t ? { rect: t, side: p.target!.side } : p.to)
+    return { d: path.d, target: t ? { rect: t, side: p.target!.side } : null }
   })
 
   return (
@@ -47,7 +50,26 @@ export function Connections() {
       </defs>
       <For each={doc.connectionsOn(boardId())}>{(c) => <ConnLine conn={c} />}</For>
       <Show when={preview()}>
-        <path class="conn-line conn-preview" d={preview()!} marker-end="url(#dn-arrow)" />
+        <path class="conn-line conn-preview" d={preview()!.d} marker-end="url(#dn-arrow)" data-testid="connection-preview" />
+        {/* While hovering a card: its four anchors, with the one it'll snap to lit. */}
+        <Show when={preview()!.target}>
+          <For each={SIDES}>
+            {(side) => {
+              const pt = () => sideAnchor(preview()!.target!.rect, side)
+              return (
+                <circle
+                  class="anchor"
+                  classList={{ hot: preview()!.target!.side === side }}
+                  data-testid="anchor"
+                  data-side={side}
+                  cx={pt().x}
+                  cy={pt().y}
+                  r={preview()!.target!.side === side ? 6 : 4}
+                />
+              )
+            }}
+          </For>
+        </Show>
       </Show>
     </svg>
   )

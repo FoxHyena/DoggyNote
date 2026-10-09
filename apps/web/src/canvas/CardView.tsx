@@ -1,5 +1,5 @@
-import { Match, Show, Switch, onCleanup, onMount, type JSX } from 'solid-js'
-import type { Card } from '@doggynote/core'
+import { For, Match, Show, Switch, onCleanup, onMount, type JSX } from 'solid-js'
+import { SIDES, type Card } from '@doggynote/core'
 import { editingId, isSelected, selection } from '../state/ui.ts'
 import { registerCardEl } from './layout.ts'
 import { draggingIds } from './dnd.ts'
@@ -86,7 +86,9 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         <div class="resize-handle" data-resize data-testid="resize-handle" title="Resize" />
       </Show>
       <Show when={!props.readOnly && !props.lod}>
-        <div class="connect-handle" data-connect-handle data-testid="connect-handle" title="Drag to connect" />
+        <For each={SIDES}>
+          {(side) => <div class={`connect-handle ${side}`} data-connect-handle={side} data-testid={`connect-handle-${side}`} title="Drag to connect" />}
+        </For>
       </Show>
     </div>
   )

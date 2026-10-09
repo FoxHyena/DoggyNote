@@ -3,6 +3,7 @@
 // server can merge them per field and the undo stack can invert them.
 
 import type { CardColor } from '@doggynote/theme'
+import type { Side } from './geometry.ts'
 
 export type Id = string
 
@@ -70,6 +71,9 @@ export type Connection = Base & {
   boardId: Id
   from: Id
   to: Id
+  /** Side each end is pinned to. Missing means "facing sides", recomputed as cards move. */
+  fromSide?: Side | null
+  toSide?: Side | null
   arrow: 'end' | 'none'
 }
 

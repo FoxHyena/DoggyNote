@@ -170,7 +170,7 @@ test.describe('connectors', () => {
     const a = await addNote(page, 'from here', 0.25, 0.3)
     const b = await addNote(page, 'to there', 0.7, 0.6)
     await a.hover()
-    const h = (await a.getByTestId('connect-handle').boundingBox())!
+    const h = (await a.getByTestId('connect-handle-right').boundingBox())!
     const bb = (await b.boundingBox())!
     await page.mouse.move(h.x + 7, h.y + 7)
     await page.mouse.down()
@@ -184,11 +184,91 @@ test.describe('connectors', () => {
     await expect.poll(() => line.getAttribute('d')).not.toBe(d0)
 
     await clickEmpty(page)
-    const lb = (await line.boundingBox())!
-    await page.mouse.click(lb.x + lb.width / 2, lb.y + lb.height / 2)
+    // Click the curve's actual midpoint (a bounding-box centre isn't on a curve).
+    const mid = await line.evaluate((el: SVGPathElement) => {
+      const p = el.getPointAtLength(el.getTotalLength() / 2)
+      const m = el.getScreenCTM()!
+      return { x: p.x * m.a + p.y * m.c + m.e, y: p.x * m.b + p.y * m.d + m.f }
+    })
+    await page.mouse.click(mid.x, mid.y)
     await expect(page.locator('.conn.selected')).toHaveCount(1)
     await page.keyboard.press('Delete')
     await expect(page.getByTestId('connection')).toHaveCount(0)
+  })
+
+  /** World rect of a card from its on-screen box and the camera. */
+  async function worldRect(page: Page, card: import('@playwright/test').Locator) {
+    const b = (await card.boundingBox())!
+    const c = (await page.getByTestId('canvas').boundingBox())!
+    const cam = await camera(page)
+    return { x: (b.x - c.x - cam.tx) / cam.zoom, y: (b.y - c.y - cam.ty) / cam.zoom, w: b.width / cam.zoom, h: b.height / cam.zoom }
+  }
+  /** Last point of a path's `d` (where the arrow ends), in world coordinates. */
+  async function pathEnd(line: import('@playwright/test').Locator) {
+    const nums = ((await line.getAttribute('d')) ?? '').match(/-?[\d.]+/g)!.map(Number)
+    return { x: nums[nums.length - 2], y: nums[nums.length - 1] }
+  }
+  async function dragConnector(page: Page, from: import('@playwright/test').Locator, side: string, to: { x: number; y: number }) {
+    await from.hover()
+    const h = (await from.getByTestId(`connect-handle-${side}`).boundingBox())!
+    await page.mouse.move(h.x + 7, h.y + 7)
+    await page.mouse.down()
+    await page.mouse.move(to.x, to.y, { steps: 10 })
+  }
+
+  test('dropping on a card snaps to the middle of its nearest side', async ({ page }) => {
+    const a = await addNote(page, 'source pup', 0.2, 0.3)
+    const b = await addNote(page, 'target pup', 0.65, 0.6)
+    const bb = (await b.boundingBox())!
+
+    // Over B's left edge region: the left anchor lights up and the drop pins to it.
+    await dragConnector(page, a, 'right', { x: bb.x + 10, y: bb.y + bb.height / 2 })
+    await expect(page.getByTestId('anchor')).toHaveCount(4)
+    await expect(page.locator('[data-testid="anchor"].hot')).toHaveAttribute('data-side', 'left')
+    await page.mouse.up()
+    const line = page.getByTestId('connection').locator('.conn-line')
+    const r = await worldRect(page, b)
+    const end = await pathEnd(line)
+    expect(end.x).toBeCloseTo(r.x - 8, 0) // arrow tip stops just outside the edge
+    expect(end.y).toBeCloseTo(r.y + r.h / 2, 0)
+
+    // Re-drag onto B's top edge: same connection, now pinned to the top.
+    await dragConnector(page, a, 'bottom', { x: bb.x + bb.width / 2, y: bb.y + 4 })
+    await expect(page.locator('[data-testid="anchor"].hot')).toHaveAttribute('data-side', 'top')
+    await page.mouse.up()
+    await expect(page.getByTestId('connection')).toHaveCount(1)
+    const top = await pathEnd(line)
+    const r2 = await worldRect(page, b)
+    expect(top.x).toBeCloseTo(r2.x + r2.w / 2, 0)
+    expect(top.y).toBeCloseTo(r2.y - 8, 0)
+
+    // Moving B keeps the pinned side (auto-facing would switch it to the left).
+    await dragBy(page, b, 160, -40)
+    await clickEmpty(page)
+    const r3 = await worldRect(page, b)
+    const moved = await pathEnd(line)
+    expect(moved.x).toBeCloseTo(r3.x + r3.w / 2, 0)
+    expect(moved.y).toBeCloseTo(r3.y - 8, 0)
+  })
+
+  test('the Line tool connects facing sides, which follow the cards', async ({ page }) => {
+    const a = await addNote(page, 'west pup', 0.2, 0.4)
+    const b = await addNote(page, 'east pup', 0.75, 0.4)
+    await page.getByTestId('tool-line').click()
+    await a.click()
+    await b.click()
+    const line = page.getByTestId('connection').locator('.conn-line')
+    const rb = await worldRect(page, b)
+    const end = await pathEnd(line)
+    expect(end.x).toBeCloseTo(rb.x - 8, 0)
+    expect(end.y).toBeCloseTo(rb.y + rb.h / 2, 0)
+    // Move B well below A: the ends swap to bottom/top.
+    await dragBy(page, b, -300, 260)
+    await clickEmpty(page)
+    const rb2 = await worldRect(page, b)
+    const end2 = await pathEnd(line)
+    expect(end2.x).toBeCloseTo(rb2.x + rb2.w / 2, 0)
+    expect(end2.y).toBeCloseTo(rb2.y - 8, 0)
   })
 
   test('Line tool: click two cards to connect them', async ({ page }) => {
