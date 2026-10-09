@@ -1,0 +1,131 @@
+name: Release
+
+# Every merge to main: test, deploy the Worker + web app, then build, sign and
+# publish the Mac app. Installed apps pick the new version up via the updater.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  PUBLIC_URL: https://doggynote.oreothehyena.workers.dev
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      notes: ${{ steps.v.outputs.notes }}
+    steps:
+      - uses: actions/checkout@v4
+      # 0.<minor from version.json>.<release run number>
+      - id: v
+        run: |
+          echo "version=0.$(jq -r .minor version.json).${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "notes=$(git log -1 --pretty=%s | tr -d '\r' | head -c 300)" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy Worker + web app
+    needs: [ci, version]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build web app
+        run: VITE_APP_VERSION=$VERSION pnpm --filter web build
+      - name: Migrate database
+        working-directory: apps/server
+        run: pnpm exec wrangler d1 migrations apply doggynote --remote
+      - name: Deploy
+        working-directory: apps/server
+        run: pnpm exec wrangler deploy --var APP_VERSION:$VERSION
+
+  desktop:
+    name: Build + publish Mac app
+    needs: [version, deploy]
+    runs-on: macos-14 # Apple silicon
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      NOTES: ${{ needs.version.outputs.notes }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+      - run: pnpm install --frozen-lockfile
+
+      - name: Stamp version
+        working-directory: apps/desktop/src-tauri
+        run: jq --arg v "$VERSION" '.version = $v' tauri.conf.json > t.json && mv t.json tauri.conf.json
+
+      - name: Import signing certificate
+        env:
+          MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        run: |
+          KC="$RUNNER_TEMP/signing.keychain-db"
+          KCPW=$(openssl rand -base64 18)
+          echo "$MACOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$KCPW" "$KC"
+          security set-keychain-settings -lut 3600 "$KC"
+          security unlock-keychain -p "$KCPW" "$KC"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KC" -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KCPW" "$KC" > /dev/null
+          rm "$RUNNER_TEMP/cert.p12"
+          echo "SIGN_KEYCHAIN=$KC" >> "$GITHUB_ENV"
+
+      - name: Build app
+        working-directory: apps/desktop
+        run: VITE_API_BASE=$PUBLIC_URL VITE_APP_VERSION=$VERSION pnpm exec tauri build --bundles app
+
+      - name: Sign + package
+        working-directory: apps/desktop
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: OUT=release sh scripts/release-desktop.sh
+
+      - name: Upload to R2 (latest.json last)
+        working-directory: apps/server
+        run: |
+          R=../desktop/release
+          put() { pnpm exec wrangler r2 object put "doggynote-assets/desktop/$1" --file "$2" --content-type "$3" --remote; }
+          put "$VERSION/DoggyNote.app.tar.gz" "$R/$VERSION/DoggyNote.app.tar.gz" application/gzip
+          put "$VERSION/DoggyNote_${VERSION}_aarch64.dmg" "$R/$VERSION/DoggyNote_${VERSION}_aarch64.dmg" application/x-apple-diskimage
+          put latest.json "$R/latest.json" application/json
+
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "v$VERSION" "apps/desktop/release/$VERSION/DoggyNote_${VERSION}_aarch64.dmg" --title "DoggyNote $VERSION" --notes "$NOTES"
+
+      - name: Remove signing keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true

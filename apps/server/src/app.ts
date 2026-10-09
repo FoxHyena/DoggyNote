@@ -4,6 +4,7 @@ import { auth, requireUser, users } from './auth.ts'
 import { sync } from './sync.ts'
 import { assets } from './assets.ts'
 import { shares } from './shares.ts'
+import { desktop } from './desktop.ts'
 import { isFetchableUrl, unfurl } from './unfurl.ts'
 
 export type { Env } from './env.ts'
@@ -58,6 +59,7 @@ app.post('/diag', async (c) => {
 app.route('/auth', auth)
 app.route('/', assets)
 app.route('/', shares)
+app.route('/', desktop)
 
 const authed = new Hono<AppEnv>()
 authed.use('*', requireUser)

@@ -10,10 +10,23 @@ test.use({ storageState: { cookies: [], origins: [] }, baseURL: 'http://localhos
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     const w = window as unknown as Record<string, unknown>
-    const keychain: { token: string | null; opened: string[] } = { token: sessionStorage.getItem('fake-keychain'), opened: [] }
+    const keychain: { token: string | null; opened: string[]; calls: string[] } = { token: sessionStorage.getItem('fake-keychain'), opened: [], calls: [] }
     w.__fakeKeychain = keychain
+    let cb = 0
     w.__TAURI_INTERNALS__ = {
+      transformCallback: (fn: unknown) => {
+        const id = ++cb
+        w[`_${id}`] = fn
+        return id
+      },
       invoke: async (cmd: string, args?: Record<string, unknown>) => {
+        if (cmd.startsWith('plugin:updater|') || cmd.startsWith('plugin:process|')) keychain.calls.push(cmd)
+        // A test sets this to pretend the server has a newer desktop release.
+        const offered = sessionStorage.getItem('fake-update')
+        if (cmd === 'plugin:updater|check')
+          return offered ? { rid: 1, currentVersion: '0.0.1', version: offered, date: null, body: 'notes', rawJson: {} } : null
+        if (cmd === 'plugin:updater|download') return 2
+        if (cmd === 'plugin:updater|install' || cmd === 'plugin:process|restart' || cmd === 'plugin:resources|close') return null
         if (cmd === 'get_token') return keychain.token
         if (cmd === 'set_token') {
           keychain.token = String(args?.token)
@@ -138,4 +151,19 @@ test('desktop: zoomed-out overview draws image thumbnails loaded cross-origin', 
     .toBeGreaterThan(20)
   await page.waitForTimeout(500)
   await expect(page.getByTestId('lod-layer')).toHaveAttribute('data-thumbs', '1')
+})
+
+test('desktop: a newer release downloads in the background, then restarts on request', async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem('fake-update', '0.1.50'))
+  await page.goto('/')
+  await page.getByLabel('Username').fill('rex')
+  await page.getByLabel('Password').fill('goodboy123')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  const toast = page.getByTestId('update-toast')
+  await expect(toast).toContainText('A fresh bone is ready')
+  await expect(toast).toContainText('v0.1.50')
+  await page.getByTestId('apply-update').click()
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { __fakeKeychain: { calls: string[] } }).__fakeKeychain.calls))
+    .toEqual(['plugin:updater|check', 'plugin:updater|download', 'plugin:updater|install', 'plugin:process|restart'])
 })

@@ -9,3 +9,4 @@ playwright-report
 .DS_Store
 **/e2e/.auth
 dist-desktop
+apps/desktop/release

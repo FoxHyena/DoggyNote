@@ -17,3 +17,14 @@ export function ordersBetween(before: number | undefined, after: number | undefi
   const step = (hi - lo) / (count + 1)
   return Array.from({ length: count }, (_, i) => lo + step * (i + 1))
 }
+
+/** Compare dotted versions ("0.1.42"): negative if a < b, 0 if equal, positive if a > b. Non-numeric parts count as 0. */
+export function compareVersions(a: string, b: string): number {
+  const pa = a.split('.').map((n) => parseInt(n, 10) || 0)
+  const pb = b.split('.').map((n) => parseInt(n, 10) || 0)
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] ?? 0) - (pb[i] ?? 0)
+    if (d) return d
+  }
+  return 0
+}

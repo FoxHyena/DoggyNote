@@ -1,6 +1,7 @@
 // The desktop shell: a window around the web app, plus two small native bits
 // the web build can't do itself: Keychain storage for the session token, and
-// opening links in the system browser (via tauri-plugin-opener).
+// opening links in the system browser (via tauri-plugin-opener). Updates come
+// from tauri-plugin-updater, checked against the server's /api/desktop/latest.json.
 
 const SERVICE: &str = "dog.doggynote.app";
 const ACCOUNT: &str = "session";
@@ -35,6 +36,8 @@ fn clear_token() -> Result<(), String> {
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_opener::init())
+    .plugin(tauri_plugin_updater::Builder::new().build())
+    .plugin(tauri_plugin_process::init())
     .invoke_handler(tauri::generate_handler![get_token, set_token, clear_token])
     .setup(|app| {
       if cfg!(debug_assertions) {

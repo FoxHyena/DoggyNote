@@ -36,6 +36,22 @@ PERF_HEADED=1 pnpm --filter web exec playwright test perf --project=chromium   #
 e2e runs against the production build plus a real Worker on a fresh local D1. Tests share that
 server, so each test works on its own `freshBoard()`.
 
+## Releases
+
+Every merge to `main` runs `.github/workflows/release.yml`:
+1. The full CI runs again.
+2. The Worker and web app deploy, with migrations applied first.
+3. The Mac app is built, signed with the self-signed "DoggyNote Signing" cert, and uploaded to R2 as an updater bundle, a DMG and `latest.json` (written last).
+
+The version is `0.<minor in version.json>.<run number>`; bump `minor` by hand for big releases. Installed apps update themselves via `tauri-plugin-updater`, and browsers get a reload toast.
+
+- Friends install from `https://doggynote.oreothehyena.workers.dev/api/desktop/download`.
+- The updater key and signing cert live in `~/.tauri/` on the maintainer's Mac and in GitHub secrets. **Back them up.**
+  - Losing the updater key means installed apps can't verify updates, and everyone reinstalls once.
+  - Losing the cert means one more Keychain prompt per person.
+
+**API compatibility:** the web app and Worker deploy together, but desktop apps lag behind. API changes must be additive. A breaking change has to bump `MIN_CLIENT` in `apps/server/wrangler.toml`, which sends older apps to an "update required" screen.
+
 ## Rules
 
 1. **Every feature gets an end-to-end test as it's built.** Add a Playwright spec in `apps/web/e2e/` that drives real input on WebKit and Chromium. Then check the feature by hand in the running app. A phase isn't done until the full e2e suite and the unit tests are green.

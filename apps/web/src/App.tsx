@@ -21,6 +21,8 @@ import { installLinkHandler } from './state/platform.ts'
 import { Viewer } from './Viewer.tsx'
 import { FetchPalette } from './ui/Fetch.tsx'
 import { Diagnostics } from './ui/Diagnostics.tsx'
+import { UpdateToast } from './ui/UpdateToast.tsx'
+import { startUpdateChecks } from './state/updates.ts'
 import { paletteOpen, setPaletteOpen } from './state/ui.ts'
 import { Icon, ToolIcons } from './ui/icons.tsx'
 
@@ -58,6 +60,7 @@ function EditorApp() {
     }
     setSignedOut(false)
     setPhase('ready')
+    startUpdateChecks()
   }
 
   onMount(async () => {
@@ -119,6 +122,7 @@ function EditorApp() {
           <FetchPalette />
         </Show>
         <Diagnostics />
+        <UpdateToast />
         <Show when={signedOut()}>
           <div class="dialog-backdrop">
             <Login onLogin={() => void boot()} />
