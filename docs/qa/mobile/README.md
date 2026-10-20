@@ -138,6 +138,24 @@ Break attempts all held: bury three and undo, long-press box select, a 30-line n
 - iOS Simulator (iPhone 16e, iPad mini) was used for the signed-out pages (login, viewer) and safe areas. Driving the signed-in app needs keystrokes through macOS accessibility, which prompts for permission, so those flows were checked in Playwright's WebKit with touch emulation instead.
 - Real iOS showed read-only native checkboxes as black squares; DoggyNote now draws its own (`a216a6a`).
 
+### Saved-app header and dock check (2026-10-20)
+
+The iOS 27.0.1 report concerns blur over the upper half of the header and a dock that looks raised. Safari was sharp while the Home Screen app remained blurry. The reporter confirmed blur with sticky/fixed opaque headers, an empty fixed status-bar surface, and a fresh installation without the legacy translucent status-bar setting. The failed CSS experiments were removed. Adding 20px made the header sharp but added too much space; 10px was mostly good with slight blur. The reporter chose 15px after testing the tighter candidates and accepted the rebuilt Home Screen app on the iOS 27.0.1 phone ("Perfect").
+
+The clearance applies only to phone headers in portrait on installed Safari 27. Detection uses `Version/27` because the phone reports a frozen `iPhone OS 18_7` token. Safari tabs, Android, older iOS, unverified future Safari releases, and landscape get no added clearance. The header retains its 52px control row; the toast offset includes the same clearance.
+
+The legacy `apple-mobile-web-app-status-bar-style: black-translucent` setting is removed for new installations. Existing icons can retain their install-time treatment. Installed iOS uses the host's `innerHeight` for the shell, initialized in `boot.js` and refreshed on viewport/window resize and `pageshow`. This supports both existing edge-to-edge installations and fresh installations that reserve native status-bar space. Keyboard positioning still uses `visualViewport`, separately from shell sizing.
+
+The phone probe measured an existing 440×956 standalone viewport: root and dock end at 956, top safe area is 62px, and bottom padding is exactly one 34px inset. The fresh default-status-bar installation reports a 440×894 viewport, zero top inset, and the same 34px bottom inset; root and dock correctly end at 894. The added blur clearance is needed in both modes, including when the top safe-area inset is zero. There is no duplicated bottom inset, so bottom padding is retained.
+
+`mobile-pwa.spec.ts` checks shell geometry with portrait and landscape safe-area values in browser and installed-iOS paths. It checks the dock's screen edge, one application of bottom clearance, the header row, and the canvas between the bars. It also covers changing host bounds, `pageshow` restoration, and keyboard changes that must not resize the shell. These are layout/API tests: setting the installed flag in Playwright does **not** simulate the native iOS status-bar compositor.
+
+Local checks cover typecheck, build, 188 unit tests, and mobile WebKit/Chromium PWA/shell/editing/gestures/viewer cases, including header clearance by Safari release, install mode, and orientation. Browser screenshots and phone geometry are in `/tmp/doggynote-ios-qa/` on the QA Mac. Native Simulator QA reached Safari's login page, then CUA lost native-window access (`cgWindowNotFound`); Home Screen launches on iOS 26.3 and 18.6 remain unverified. The reporter accepted the final 15px clearance on the iOS 27 phone. Rotation, theme, sheet, and keyboard checks were not separately confirmed in that acceptance.
+
+Before pushing, test the candidate from Safari **and** a Home Screen icon on iOS 27.0.1. Capture viewport dimensions, safe-area values, and header/dock bounds alongside screenshots. Check light/dark themes, portrait/landscape, cold launch, background/return, sheets, and keyboard dismissal. Keep an existing installation and a fresh test installation separate; do not remove an existing installation with unsynced edits.
+
+For a phone-accessible local build, use the local test Worker and run Vite preview with `--host 0.0.0.0`. Open the Mac's LAN address and preview port on the same network, then sign in with the disposable local test account. This check must pass before deployment; the automated CSS tests alone cannot confirm the iOS 27 rendering result.
+
 ## Reproducing
 
 ```bash

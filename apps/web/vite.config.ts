@@ -50,8 +50,8 @@ function homeScreen(): Plugin {
       meta('apple-mobile-web-app-capable', 'yes'),
       meta('mobile-web-app-capable', 'yes'),
       meta('apple-mobile-web-app-title', COPY.appName),
-      // The page draws under the status bar; the header's safe-area padding keeps it clear.
-      meta('apple-mobile-web-app-status-bar-style', 'black-translucent'),
+      // Let iOS own the status-bar boundary instead of opting into the legacy
+      // black-translucent treatment retained by Home Screen installations.
       meta('theme-color', surfaces.light.panel, { media: '(prefers-color-scheme: light)' }),
       meta('theme-color', surfaces.dark.panel, { media: '(prefers-color-scheme: dark)' }),
     ],
