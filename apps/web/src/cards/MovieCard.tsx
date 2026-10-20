@@ -101,7 +101,13 @@ function MovieSearch(props: { card: Card<'movie'> }) {
     abort?.abort()
   })
 
+  // A row picks on release over the same row it was pressed on: some touch WebKit
+  // builds never turn the tap into a click. Click stays for screen readers.
+  let pressed: number | null = null
+  let picked = false
   const pick = (h: SearchHit) => {
+    if (picked) return
+    picked = true
     doc.transient(props.card.id, { content: { kind: h.kind, tmdbId: h.tmdbId, title: h.title, year: h.year, status: 'pending' } } as Partial<Card>)
     endEdit()
   }
@@ -164,6 +170,9 @@ function MovieSearch(props: { card: Card<'movie'> }) {
                 // cancel the click in touch WebKit.)
                 onMouseDown={(e) => e.preventDefault()}
                 onPointerEnter={() => setActive(i())}
+                onPointerDown={() => (pressed = i())}
+                onPointerCancel={() => (pressed = null)}
+                onPointerUp={() => pressed === i() && pick(h)}
                 onClick={() => pick(h)}
               >
                 <span class="movie-result-thumb">
