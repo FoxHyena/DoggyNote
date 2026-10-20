@@ -130,6 +130,31 @@ test('the share viewer and the overview show the poster', async ({ page, browser
   await ctx.close()
 })
 
+test('the overview greys a watched poster too, in every engine', async ({ page }) => {
+  await paste(page, 'https://www.themoviedb.org/movie/157336')
+  await posterLoaded(page, 'Interstellar')
+  await waitForSync(page)
+  await clickEmpty(page)
+  // The most colourful pixel on the overview canvas: the stand-in poster is navy.
+  const colour = () => page.getByTestId('lod-layer').evaluate((el) => {
+    const canvas = el instanceof HTMLCanvasElement ? el : el.querySelector('canvas')!
+    const d = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data
+    let most = 0
+    for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 200) most = Math.max(most, Math.max(d[i], d[i + 1], d[i + 2]) - Math.min(d[i], d[i + 1], d[i + 2]))
+    return most
+  })
+  await setCamera(page, { x: -200, y: -200, zoom: 0.2 })
+  await expect.poll(() => page.getByTestId('lod-layer').getAttribute('data-thumbs').then(Number)).toBeGreaterThanOrEqual(1)
+  await expect.poll(colour).toBeGreaterThan(30)
+  await setCamera(page, { x: -200, y: -200, zoom: 1 })
+  await movie(page, 'Interstellar').getByTestId('movie-watched').click()
+  await expect(movie(page, 'Interstellar').getByTestId('movie-watched')).toHaveAttribute('aria-pressed', 'true')
+  await waitForSync(page)
+  await clickEmpty(page)
+  await setCamera(page, { x: -200, y: -200, zoom: 0.2 })
+  await expect.poll(colour).toBeLessThan(16)
+})
+
 test('a card made by an agent names the title; the app fetches the rest once approved', async ({ page }) => {
   await waitForSync(page)
   const boardId = boardOf(page)

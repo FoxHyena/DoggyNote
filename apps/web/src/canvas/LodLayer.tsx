@@ -195,18 +195,26 @@ export function LodLayer() {
         const ph = Math.max(1, Math.min(pw * 1.5, h - pad * 2 - (tall ? 26 * z : 0)))
         const assetId = film.assetId
         const t = typeof assetId === 'string' ? thumb(assetId) : null
-        // Watched posters step back, as on the card.
-        if (film.watched) {
-          ctx.globalAlpha = 0.6
-          ctx.filter = 'grayscale(1)'
-        }
         if (t && atlas) ctx.drawImage(atlas, t.sx, t.sy, t.sw, t.sh, x + pad, y + pad, pw, ph)
         else {
           ctx.fillStyle = pal.border
           ctx.fillRect(x + pad, y + pad, pw, ph)
         }
-        ctx.globalAlpha = 1
-        ctx.filter = 'none'
+        // Watched posters step back into greys, as on the card. Blend modes, not
+        // ctx.filter: WebKit (the Mac app, iOS) ignores canvas filters.
+        if (film.watched) {
+          // Any colourless fill takes the saturation out; a pixel wider, for the poster's soft edge.
+          ctx.globalCompositeOperation = 'saturation'
+          ctx.fillStyle = 'black'
+          ctx.fillRect(x + pad - 1, y + pad - 1, pw + 2, ph + 2)
+          ctx.globalCompositeOperation = 'source-over'
+          // Light: faded into the card. Dark: lifted, so a dark poster doesn't melt into it.
+          const dark = document.documentElement.dataset.theme !== 'light'
+          ctx.globalAlpha = dark ? 0.15 : 0.2
+          ctx.fillStyle = dark ? pal['none-text'] : bg
+          ctx.fillRect(x + pad, y + pad, pw, ph)
+          ctx.globalAlpha = 1
+        }
         ctx.fillStyle = pal.muted
         ctx.globalAlpha = 0.35
         const tx = tall ? x + pad : x + pad * 2 + pw

@@ -111,3 +111,11 @@
 .proposal-step-phone { display: none; }
 .app.phone .proposal-step-phone { display: inline; }
 .app.phone .proposal-step:not(.proposal-step-phone) { display: none; }
+/* Short screens (a phone on its side): drop the intro and the lone list row, and keep
+   Preview on the board in reach at the bottom of the sheet. */
+@media (max-height: 500px) {
+  .agents-review > .agents-heading + p { display: none; }
+  .agents-review-layout { grid-template-columns: 1fr; gap: 8px; }
+  .agents-proposal-list.single .agents-proposal-choice { display: none; }
+  .agents-preview-button { position: sticky; bottom: 0; z-index: 1; box-shadow: 0 8px 0 var(--dn-panel), 0 -10px 12px var(--dn-panel); }
+}

@@ -65,6 +65,11 @@ test('a real stdio MCP client stages a board layout, a person previews/approves 
   await page.getByTestId('proposal-next').click()
   await expect(page.getByTestId('proposal-step')).toHaveText(/^1 of \d+$/)
   await expect(page.locator('[data-preview-current]')).toHaveCount(1)
+  // It wears a tinted band in both themes (the light theme's card shadow once replaced it).
+  for (const theme of ['dark', 'light']) {
+    await page.evaluate((t) => (document.documentElement.dataset.theme = t), theme)
+    await expect(page.locator('[data-preview-current]')).toHaveCSS('box-shadow', /0px 0px 0px 5px/)
+  }
   // Escape leaves the preview, and the live board is untouched.
   await page.keyboard.press('Escape')
   await expect(banner).toHaveCount(0)
