@@ -1,0 +1,137 @@
+[
+  {
+    "title": "Before: crowded header",
+    "group": "Before",
+    "path": "docs/qa/feature-expansion/native-final-current-build-sync.png"
+  },
+  {
+    "title": "After: compact native navigation",
+    "group": "Native",
+    "path": "docs/qa/compact-navigation/native-final-build-light.png"
+  },
+  {
+    "title": "Dark appearance",
+    "group": "Native",
+    "path": "docs/qa/compact-navigation/native-final-build-dark.png"
+  },
+  {
+    "title": "Inbox capture, ready to place",
+    "group": "Native",
+    "path": "docs/qa/compact-navigation/native-inbox-capture-dark.png"
+  },
+  {
+    "title": "Canvas zoom options",
+    "group": "Native",
+    "path": "docs/qa/compact-navigation/native-canvas-zoom-dark.png"
+  },
+  {
+    "title": "Secondary actions in More",
+    "group": "Native",
+    "path": "docs/qa/compact-navigation/native-more-dark.png"
+  },
+  {
+    "title": "Export from More",
+    "group": "Native",
+    "path": "docs/qa/compact-navigation/native-export-dark.png"
+  },
+  {
+    "title": "Account and appearance choices",
+    "group": "Native",
+    "path": "docs/qa/compact-navigation/native-account-light.png"
+  },
+  {
+    "title": "Share stays one click away",
+    "group": "Native",
+    "path": "docs/qa/compact-navigation/native-share-light.png"
+  },
+  {
+    "title": "Quiet save details beside the title",
+    "group": "Native",
+    "path": "docs/qa/compact-navigation/native-save-details-light.png"
+  },
+  {
+    "title": "Proposal history from More",
+    "group": "Native",
+    "path": "docs/qa/compact-navigation/native-proposal-history-dark.png"
+  },
+  {
+    "title": "Light \u00b7 1440px",
+    "group": "Webkit",
+    "path": "docs/qa/compact-navigation/webkit-navigation-light-1440.png"
+  },
+  {
+    "title": "Light \u00b7 720px \u00b7 native title-bar clearance",
+    "group": "Webkit",
+    "path": "docs/qa/compact-navigation/webkit-navigation-light-720.png"
+  },
+  {
+    "title": "Light \u00b7 600px",
+    "group": "Webkit",
+    "path": "docs/qa/compact-navigation/webkit-navigation-light-600.png"
+  },
+  {
+    "title": "Light \u00b7 360px",
+    "group": "Webkit",
+    "path": "docs/qa/compact-navigation/webkit-navigation-light-360.png"
+  },
+  {
+    "title": "Dark \u00b7 1440px",
+    "group": "Webkit",
+    "path": "docs/qa/compact-navigation/webkit-navigation-dark-1440.png"
+  },
+  {
+    "title": "Dark \u00b7 720px \u00b7 native title-bar clearance",
+    "group": "Webkit",
+    "path": "docs/qa/compact-navigation/webkit-navigation-dark-720.png"
+  },
+  {
+    "title": "Dark \u00b7 600px",
+    "group": "Webkit",
+    "path": "docs/qa/compact-navigation/webkit-navigation-dark-600.png"
+  },
+  {
+    "title": "Dark \u00b7 360px",
+    "group": "Webkit",
+    "path": "docs/qa/compact-navigation/webkit-navigation-dark-360.png"
+  },
+  {
+    "title": "Light \u00b7 1440px",
+    "group": "Chromium",
+    "path": "docs/qa/compact-navigation/chromium-navigation-light-1440.png"
+  },
+  {
+    "title": "Light \u00b7 720px \u00b7 native title-bar clearance",
+    "group": "Chromium",
+    "path": "docs/qa/compact-navigation/chromium-navigation-light-720.png"
+  },
+  {
+    "title": "Light \u00b7 600px",
+    "group": "Chromium",
+    "path": "docs/qa/compact-navigation/chromium-navigation-light-600.png"
+  },
+  {
+    "title": "Light \u00b7 360px",
+    "group": "Chromium",
+    "path": "docs/qa/compact-navigation/chromium-navigation-light-360.png"
+  },
+  {
+    "title": "Dark \u00b7 1440px",
+    "group": "Chromium",
+    "path": "docs/qa/compact-navigation/chromium-navigation-dark-1440.png"
+  },
+  {
+    "title": "Dark \u00b7 720px \u00b7 native title-bar clearance",
+    "group": "Chromium",
+    "path": "docs/qa/compact-navigation/chromium-navigation-dark-720.png"
+  },
+  {
+    "title": "Dark \u00b7 600px",
+    "group": "Chromium",
+    "path": "docs/qa/compact-navigation/chromium-navigation-dark-600.png"
+  },
+  {
+    "title": "Dark \u00b7 360px",
+    "group": "Chromium",
+    "path": "docs/qa/compact-navigation/chromium-navigation-dark-360.png"
+  }
+]

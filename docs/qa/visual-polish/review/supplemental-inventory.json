@@ -1,0 +1,642 @@
+[
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 1440,
+    "surface": "populated-preview",
+    "file": "chromium-light-1440-populated-proposal-preview.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 1440,
+    "surface": "invitation-statuses",
+    "file": "chromium-light-1440-invitation-statuses.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 1440,
+    "surface": "agent-sticky-header-fixed",
+    "file": "chromium-light-1440-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 1440,
+    "surface": "error-contrast-fixed",
+    "file": "chromium-light-1440-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(74, 21, 10)",
+      "background": "rgb(242, 178, 162)"
+    }
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 1024,
+    "surface": "populated-preview",
+    "file": "chromium-light-1024-populated-proposal-preview.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 1024,
+    "surface": "invitation-statuses",
+    "file": "chromium-light-1024-invitation-statuses.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 1024,
+    "surface": "agent-sticky-header-fixed",
+    "file": "chromium-light-1024-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 1024,
+    "surface": "error-contrast-fixed",
+    "file": "chromium-light-1024-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(74, 21, 10)",
+      "background": "rgb(242, 178, 162)"
+    }
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 720,
+    "surface": "populated-preview",
+    "file": "chromium-light-720-populated-proposal-preview.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 720,
+    "surface": "invitation-statuses",
+    "file": "chromium-light-720-invitation-statuses.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 720,
+    "surface": "agent-sticky-header-fixed",
+    "file": "chromium-light-720-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 720,
+    "surface": "error-contrast-fixed",
+    "file": "chromium-light-720-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(74, 21, 10)",
+      "background": "rgb(242, 178, 162)"
+    }
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 600,
+    "surface": "populated-preview",
+    "file": "chromium-light-600-populated-proposal-preview.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 600,
+    "surface": "invitation-statuses",
+    "file": "chromium-light-600-invitation-statuses.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 600,
+    "surface": "agent-sticky-header-fixed",
+    "file": "chromium-light-600-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 600,
+    "surface": "error-contrast-fixed",
+    "file": "chromium-light-600-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(74, 21, 10)",
+      "background": "rgb(242, 178, 162)"
+    }
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 360,
+    "surface": "populated-preview",
+    "file": "chromium-light-360-populated-proposal-preview.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 360,
+    "surface": "invitation-statuses",
+    "file": "chromium-light-360-invitation-statuses.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 360,
+    "surface": "agent-sticky-header-fixed",
+    "file": "chromium-light-360-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 360,
+    "surface": "error-contrast-fixed",
+    "file": "chromium-light-360-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(74, 21, 10)",
+      "background": "rgb(242, 178, 162)"
+    }
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 1440,
+    "surface": "populated-preview",
+    "file": "chromium-dark-1440-populated-proposal-preview.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 1440,
+    "surface": "invitation-statuses",
+    "file": "chromium-dark-1440-invitation-statuses.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 1440,
+    "surface": "agent-sticky-header-fixed",
+    "file": "chromium-dark-1440-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 1440,
+    "surface": "error-contrast-fixed",
+    "file": "chromium-dark-1440-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(43, 14, 7)",
+      "background": "rgb(217, 118, 95)"
+    }
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 1024,
+    "surface": "populated-preview",
+    "file": "chromium-dark-1024-populated-proposal-preview.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 1024,
+    "surface": "invitation-statuses",
+    "file": "chromium-dark-1024-invitation-statuses.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 1024,
+    "surface": "agent-sticky-header-fixed",
+    "file": "chromium-dark-1024-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 1024,
+    "surface": "error-contrast-fixed",
+    "file": "chromium-dark-1024-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(43, 14, 7)",
+      "background": "rgb(217, 118, 95)"
+    }
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 720,
+    "surface": "populated-preview",
+    "file": "chromium-dark-720-populated-proposal-preview.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 720,
+    "surface": "invitation-statuses",
+    "file": "chromium-dark-720-invitation-statuses.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 720,
+    "surface": "agent-sticky-header-fixed",
+    "file": "chromium-dark-720-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 720,
+    "surface": "error-contrast-fixed",
+    "file": "chromium-dark-720-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(43, 14, 7)",
+      "background": "rgb(217, 118, 95)"
+    }
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 600,
+    "surface": "populated-preview",
+    "file": "chromium-dark-600-populated-proposal-preview.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 600,
+    "surface": "invitation-statuses",
+    "file": "chromium-dark-600-invitation-statuses.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 600,
+    "surface": "agent-sticky-header-fixed",
+    "file": "chromium-dark-600-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 600,
+    "surface": "error-contrast-fixed",
+    "file": "chromium-dark-600-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(43, 14, 7)",
+      "background": "rgb(217, 118, 95)"
+    }
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 360,
+    "surface": "populated-preview",
+    "file": "chromium-dark-360-populated-proposal-preview.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 360,
+    "surface": "invitation-statuses",
+    "file": "chromium-dark-360-invitation-statuses.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 360,
+    "surface": "agent-sticky-header-fixed",
+    "file": "chromium-dark-360-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 360,
+    "surface": "error-contrast-fixed",
+    "file": "chromium-dark-360-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(43, 14, 7)",
+      "background": "rgb(217, 118, 95)"
+    }
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 1440,
+    "surface": "populated-preview",
+    "file": "webkit-light-1440-populated-proposal-preview.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 1440,
+    "surface": "invitation-statuses",
+    "file": "webkit-light-1440-invitation-statuses.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 1440,
+    "surface": "agent-sticky-header-fixed",
+    "file": "webkit-light-1440-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 1440,
+    "surface": "error-contrast-fixed",
+    "file": "webkit-light-1440-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(74, 21, 10)",
+      "background": "rgb(242, 178, 162)"
+    }
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 1024,
+    "surface": "populated-preview",
+    "file": "webkit-light-1024-populated-proposal-preview.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 1024,
+    "surface": "invitation-statuses",
+    "file": "webkit-light-1024-invitation-statuses.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 1024,
+    "surface": "agent-sticky-header-fixed",
+    "file": "webkit-light-1024-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 1024,
+    "surface": "error-contrast-fixed",
+    "file": "webkit-light-1024-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(74, 21, 10)",
+      "background": "rgb(242, 178, 162)"
+    }
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 720,
+    "surface": "populated-preview",
+    "file": "webkit-light-720-populated-proposal-preview.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 720,
+    "surface": "invitation-statuses",
+    "file": "webkit-light-720-invitation-statuses.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 720,
+    "surface": "agent-sticky-header-fixed",
+    "file": "webkit-light-720-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 720,
+    "surface": "error-contrast-fixed",
+    "file": "webkit-light-720-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(74, 21, 10)",
+      "background": "rgb(242, 178, 162)"
+    }
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 600,
+    "surface": "populated-preview",
+    "file": "webkit-light-600-populated-proposal-preview.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 600,
+    "surface": "invitation-statuses",
+    "file": "webkit-light-600-invitation-statuses.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 600,
+    "surface": "agent-sticky-header-fixed",
+    "file": "webkit-light-600-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 600,
+    "surface": "error-contrast-fixed",
+    "file": "webkit-light-600-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(74, 21, 10)",
+      "background": "rgb(242, 178, 162)"
+    }
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 360,
+    "surface": "populated-preview",
+    "file": "webkit-light-360-populated-proposal-preview.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 360,
+    "surface": "invitation-statuses",
+    "file": "webkit-light-360-invitation-statuses.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 360,
+    "surface": "agent-sticky-header-fixed",
+    "file": "webkit-light-360-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 360,
+    "surface": "error-contrast-fixed",
+    "file": "webkit-light-360-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(74, 21, 10)",
+      "background": "rgb(242, 178, 162)"
+    }
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 1440,
+    "surface": "populated-preview",
+    "file": "webkit-dark-1440-populated-proposal-preview.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 1440,
+    "surface": "invitation-statuses",
+    "file": "webkit-dark-1440-invitation-statuses.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 1440,
+    "surface": "agent-sticky-header-fixed",
+    "file": "webkit-dark-1440-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 1440,
+    "surface": "error-contrast-fixed",
+    "file": "webkit-dark-1440-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(43, 14, 7)",
+      "background": "rgb(217, 118, 95)"
+    }
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 1024,
+    "surface": "populated-preview",
+    "file": "webkit-dark-1024-populated-proposal-preview.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 1024,
+    "surface": "invitation-statuses",
+    "file": "webkit-dark-1024-invitation-statuses.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 1024,
+    "surface": "agent-sticky-header-fixed",
+    "file": "webkit-dark-1024-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 1024,
+    "surface": "error-contrast-fixed",
+    "file": "webkit-dark-1024-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(43, 14, 7)",
+      "background": "rgb(217, 118, 95)"
+    }
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 720,
+    "surface": "populated-preview",
+    "file": "webkit-dark-720-populated-proposal-preview.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 720,
+    "surface": "invitation-statuses",
+    "file": "webkit-dark-720-invitation-statuses.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 720,
+    "surface": "agent-sticky-header-fixed",
+    "file": "webkit-dark-720-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 720,
+    "surface": "error-contrast-fixed",
+    "file": "webkit-dark-720-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(43, 14, 7)",
+      "background": "rgb(217, 118, 95)"
+    }
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 600,
+    "surface": "populated-preview",
+    "file": "webkit-dark-600-populated-proposal-preview.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 600,
+    "surface": "invitation-statuses",
+    "file": "webkit-dark-600-invitation-statuses.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 600,
+    "surface": "agent-sticky-header-fixed",
+    "file": "webkit-dark-600-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 600,
+    "surface": "error-contrast-fixed",
+    "file": "webkit-dark-600-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(43, 14, 7)",
+      "background": "rgb(217, 118, 95)"
+    }
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 360,
+    "surface": "populated-preview",
+    "file": "webkit-dark-360-populated-proposal-preview.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 360,
+    "surface": "invitation-statuses",
+    "file": "webkit-dark-360-invitation-statuses.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 360,
+    "surface": "agent-sticky-header-fixed",
+    "file": "webkit-dark-360-agent-sticky-header-fixed.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 360,
+    "surface": "error-contrast-fixed",
+    "file": "webkit-dark-360-agent-error-fixed.png",
+    "colors": {
+      "foreground": "rgb(43, 14, 7)",
+      "background": "rgb(217, 118, 95)"
+    }
+  }
+]

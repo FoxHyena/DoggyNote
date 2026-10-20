@@ -1,0 +1,182 @@
+[
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 1440,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "chromium-light-1440-touch-header.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 1024,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "chromium-light-1024-touch-header.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 720,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "chromium-light-720-touch-header.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 600,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "chromium-light-600-touch-header.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 360,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "chromium-light-360-touch-header.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 1440,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "chromium-dark-1440-touch-header.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 1024,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "chromium-dark-1024-touch-header.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 720,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "chromium-dark-720-touch-header.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 600,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "chromium-dark-600-touch-header.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 360,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "chromium-dark-360-touch-header.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 1440,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "webkit-light-1440-touch-header.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 1024,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "webkit-light-1024-touch-header.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 720,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "webkit-light-720-touch-header.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 600,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "webkit-light-600-touch-header.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 360,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "webkit-light-360-touch-header.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 1440,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "webkit-dark-1440-touch-header.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 1024,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "webkit-dark-1024-touch-header.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 720,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "webkit-dark-720-touch-header.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 600,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "webkit-dark-600-touch-header.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 360,
+    "height": 480,
+    "state": "coarse pointer targets >=44px; header controls contained and separate",
+    "result": "passed",
+    "file": "webkit-dark-360-touch-header.png"
+  }
+]

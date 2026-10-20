@@ -1,0 +1,182 @@
+[
+  {
+    "file": "native-admin-dark.png",
+    "title": "Manage people",
+    "badge": "Native app · Dark",
+    "caption": "The People tab groups account creation, password recovery and session controls.",
+    "note": "Check whether the main actions are easy to find.",
+    "n": 1,
+    "group": 1,
+    "source": "docs/qa/feature-expansion/native-admin-dark.png"
+  },
+  {
+    "file": "native-invitations-dark.png",
+    "title": "Create an invitation",
+    "badge": "Native app · Dark",
+    "caption": "The Invitations tab explains the seven-day, single-use invitation and its empty state.",
+    "note": "The generated-link and signup-form screens were not captured.",
+    "n": 2,
+    "group": 1,
+    "source": "docs/qa/feature-expansion/native-invitations-dark.png"
+  },
+  {
+    "file": "manual-invite-signup-private-home.png",
+    "title": "Arrive in a private home",
+    "badge": "Browser · Manual signup",
+    "caption": "A recipient followed an invitation, chose credentials and landed in an empty personal home.",
+    "note": "New accounts start without access to the legacy shared space.",
+    "n": 3,
+    "group": 1,
+    "source": "docs/qa/feature-expansion/manual-invite-signup-private-home.png"
+  },
+  {
+    "file": "manual-username-share-edit.png",
+    "title": "Edit after a username invitation",
+    "badge": "Browser · Recipient",
+    "caption": "The owner granted editing access by username. The recipient signed in and created the visible note.",
+    "note": "Look at the Can edit label and the available editing tools.",
+    "n": 4,
+    "group": 2,
+    "source": "docs/qa/feature-expansion/manual-username-share-edit.png"
+  },
+  {
+    "file": "manual-editlink-fido-edit.png",
+    "title": "Edit after accepting a link",
+    "badge": "Browser · Recipient",
+    "caption": "Fido opened an editing invitation, signed in, joined the board and added a contribution.",
+    "note": "This is the joined-board outcome; the join form was not captured.",
+    "n": 5,
+    "group": 2,
+    "source": "docs/qa/feature-expansion/manual-editlink-fido-edit.png"
+  },
+  {
+    "file": "mcp-connections-light.png",
+    "title": "Choose an agent connection scope",
+    "badge": "Browser · Light · Narrow",
+    "caption": "Connections name their access mode and selected boards. The token itself is excluded from this pack.",
+    "note": "Review the board labels and the distinction between read-only and proposals.",
+    "n": 6,
+    "group": 3,
+    "source": "apps/web/test-results/agents-a-real-stdio-MCP-cl-58a90-s-it-and-reverses-it-safely-webkit/connections.png"
+  },
+  {
+    "file": "native-mcp-proposed-light.png",
+    "title": "Preview a proposed layout",
+    "badge": "Native app · Manual MCP",
+    "caption": "A real SDK client staged four objects. The native app displayed the proposed board before approval.",
+    "note": "This earlier native capture precedes the final preview text-contrast fix; see the final browser views below.",
+    "n": 7,
+    "group": 3,
+    "source": "docs/qa/feature-expansion/native-mcp-proposed-light.png"
+  },
+  {
+    "file": "native-mcp-applied-light.png",
+    "title": "Approve and see the live cards",
+    "badge": "Native app · Manual MCP",
+    "caption": "After approval, the note, column, checklist and link appeared on the live board.",
+    "note": "The proposal has now changed the board, rather than only its preview.",
+    "n": 8,
+    "group": 3,
+    "source": "docs/qa/feature-expansion/native-mcp-applied-light.png"
+  },
+  {
+    "file": "native-mcp-reversed-light.png",
+    "title": "Reverse the applied proposal",
+    "badge": "Native app · Manual MCP",
+    "caption": "Reversing the proposal removed its objects from the live board; the proposal status became reversed.",
+    "note": "Review whether the reversal result is understandable.",
+    "n": 9,
+    "group": 3,
+    "source": "docs/qa/feature-expansion/native-mcp-reversed-light.png"
+  },
+  {
+    "file": "mcp-proposal-dark.png",
+    "title": "Review the final dark preview",
+    "badge": "Browser · Final test run",
+    "caption": "The final browser capture shows the gold note with the corrected text color and the spaced column heading.",
+    "note": "Compare the card contrast and approval action placement.",
+    "n": 10,
+    "group": 3,
+    "source": "apps/web/test-results/agents-a-real-stdio-MCP-cl-58a90-s-it-and-reverses-it-safely-webkit/proposal-dark.png"
+  },
+  {
+    "file": "mcp-proposal-light-narrow.png",
+    "title": "Review the final narrow preview",
+    "badge": "Browser · 600px · Reduced motion",
+    "caption": "The same proposal fits in a narrow light-theme window without clipping its cards.",
+    "note": "Review the stacked layout, board selector and approval controls.",
+    "n": 11,
+    "group": 3,
+    "source": "apps/web/test-results/agents-a-real-stdio-MCP-cl-58a90-s-it-and-reverses-it-safely-webkit/proposal-light-narrow.png"
+  },
+  {
+    "file": "native-active-note-before-close.png",
+    "title": "Leave a complete note in progress",
+    "badge": "Native app · Before close",
+    "caption": "The full note was observed in the editor before closing the window.",
+    "note": "This is a captured state, not a recording of the close gesture.",
+    "n": 12,
+    "group": 4,
+    "source": "docs/qa/feature-expansion/native-active-note-before-close.png"
+  },
+  {
+    "file": "native-note-restored-after-cmdw.png",
+    "title": "Reopen after Cmd+W",
+    "badge": "Native app · After reopen",
+    "caption": "The complete note remained visible after Cmd+W and reopening the app.",
+    "note": "Text preservation was also checked with the red window-close button.",
+    "n": 13,
+    "group": 4,
+    "source": "docs/qa/feature-expansion/native-note-restored-after-cmdw.png"
+  },
+  {
+    "file": "native-final-current-build-sync.png",
+    "title": "Inspect the final save details",
+    "badge": "Native app · Rebuilt final source",
+    "caption": "The latest native build shows the shared contributions and zero waiting changes or image uploads.",
+    "note": "Review the quiet Save status control and the detail panel.",
+    "n": 14,
+    "group": 4,
+    "source": "docs/qa/feature-expansion/native-final-current-build-sync.png"
+  },
+  {
+    "file": "native-offline-active-checkpoint.png",
+    "title": "Keep typing while offline",
+    "badge": "Native app · Server stopped",
+    "caption": "The full offline note is visible in the active editor while the status reads Offline.",
+    "note": "The local test server was stopped; this was a real offline check.",
+    "n": 15,
+    "group": 5,
+    "source": "docs/qa/feature-expansion/native-offline-active-checkpoint.png"
+  },
+  {
+    "file": "native-offline-restored-after-cmdq.png",
+    "title": "Reopen while still offline",
+    "badge": "Native app · After Cmd+Q",
+    "caption": "The app was quit and reopened before the server returned. The complete note survived.",
+    "note": "Compare the note text with the preceding screenshot.",
+    "n": 16,
+    "group": 5,
+    "source": "docs/qa/feature-expansion/native-offline-restored-after-cmdq.png"
+  },
+  {
+    "file": "native-reconnected-zero-pending.png",
+    "title": "Reconnect and finish syncing",
+    "badge": "Native app · Online again",
+    "caption": "After restarting the same local server, the note stayed intact and pending work reached zero.",
+    "note": "Review the transition back to the quiet save state.",
+    "n": 17,
+    "group": 5,
+    "source": "docs/qa/feature-expansion/native-reconnected-zero-pending.png"
+  },
+  {
+    "file": "native-recovery-save-dialog.png",
+    "title": "Export a recovery copy",
+    "badge": "Native app · macOS Save dialog",
+    "caption": "Download unsynced changes opens a native JSON Save dialog. Cancel returns to the editor and keeps the recovery copy.",
+    "note": "The dialog is captured here; the preceding access-change notification is not.",
+    "n": 18,
+    "group": 6,
+    "source": "docs/qa/feature-expansion/native-recovery-save-dialog.png"
+  }
+]

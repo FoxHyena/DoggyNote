@@ -1,0 +1,28 @@
+{
+  "scope": "Inbox rename and compact navigation",
+  "unit": {
+    "passed": 125,
+    "files": 9
+  },
+  "browser": {
+    "startTime": "2026-10-20T05:17:40.973Z",
+    "duration": 132131.24,
+    "expected": 263,
+    "skipped": 3,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "manual": [
+    "Native Inbox capture, place, undo and redo",
+    "Native zoom and snap",
+    "More opens export; native Save dialog reached",
+    "Account explicit theme choices and Escape focus",
+    "Share panel and save details",
+    "Final rebuilt native app: Backspace menu safety, save-details Tab/Escape focus, Boards focus and durable cards",
+    "Two visual review rounds, light/dark at 1440/720/600/360; native traffic-light clearance"
+  ],
+  "artifacts": {
+    "gallery": "../../../output/review/doggynote-navigation-review.html",
+    "manifest": "../../../output/review/navigation-review-sources.json"
+  }
+}
