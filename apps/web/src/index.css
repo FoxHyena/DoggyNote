@@ -480,8 +480,12 @@ html[data-input='mouse'] .connect-handle:hover {
 .card[data-preview='removed'] { --preview-colour: var(--dn-diff-removed); outline-style: dashed; }
 /* Faded enough to read as going, still legible. */
 .card[data-preview='removed'] > :not(.preview-chip) { opacity: 0.78; }
-/* The change Next change is on. */
-.card[data-preview-current] { outline-width: 3px; outline-offset: 5px; }
+/* The change Next change is on: a heavier outline with a tinted band inside it. */
+.card[data-preview-current] {
+  outline-width: 3px;
+  outline-offset: 5px;
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--preview-colour) 30%, transparent);
+}
 .preview-chip {
   position: absolute;
   z-index: 3;
@@ -1888,6 +1892,7 @@ html[data-input="mouse"] a.file-name:hover {
 
 /* In the dark a grey of a dark poster would melt into the card: lift it a little. */
 :root:not([data-theme='light']) .movie-card.watched .movie-poster-img {
+  opacity: 1;
   filter: grayscale(1) brightness(1.35) contrast(0.85);
 }
 
