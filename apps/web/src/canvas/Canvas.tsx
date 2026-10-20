@@ -63,6 +63,7 @@ import { cardEl, cardHeight, rectOf, setMeasuring } from './layout.ts'
 import { setDropTarget, dropTarget, connectPreview, setConnectPreview, draggingIds, setDraggingIds, resizingId, setResizingId } from './dnd.ts'
 import { snapTick, snapToGrid } from '../state/grid.ts'
 import { handleCanvasDrop, handleCanvasPaste } from './paste.ts'
+import { isClipProxy } from '../state/clipboard.ts'
 import { BoardIconSvg } from '../ui/icons.tsx'
 import { setToyboxOpen, toyboxOpen } from '../ui/ToyboxPanel.tsx'
 import { setThreadCardId, threadCardId } from '../state/comments.ts'
@@ -421,6 +422,7 @@ export function Canvas(props: { readOnly: boolean }) {
 
   function onPointerMove(e: PointerEvent) {
     if (e.pointerType === 'touch') return touchMove(e)
+    lastPointer = { clientX: e.clientX, clientY: e.clientY }
     moveGesture(e)
   }
 
@@ -944,9 +946,13 @@ export function Canvas(props: { readOnly: boolean }) {
     const v = viewport()
     return screenToWorld(camera(), { x: v.width / 2, y: v.height / 2 })
   }
+  // Pastes land under the mouse when it's over the board, else in the middle.
+  let lastPointer: { clientX: number; clientY: number } | null = null
   const onPaste = (e: ClipboardEvent) => {
-    if (props.readOnly || typing(e.target) || editingId()) return
-    if (handleCanvasPaste(e, centerWorld())) e.preventDefault()
+    if (props.readOnly || (typing(e.target) && !isClipProxy(e.target)) || editingId()) return
+    const at = lastPointer ? toWorld(lastPointer) : centerWorld()
+    const column = lastPointer ? columnAt(at, new Set()) : null
+    if (handleCanvasPaste(e, at, column?.id)) e.preventDefault()
   }
 
   onMount(() => {
@@ -999,6 +1005,7 @@ export function Canvas(props: { readOnly: boolean }) {
       classList={{ panning: panning(), moving: moving(), snapping: snapping(), 'snap-on': snapToGrid(), connecting: !!connectPreview(), 'space-held': spaceHeld(), lod: lod(), 'connect-mode': !!connectMode(), readonly: props.readOnly }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
+      onPointerLeave={(e) => { if (e.pointerType !== 'touch') lastPointer = null }}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
       onDblClick={onDblClick}

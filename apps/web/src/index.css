@@ -201,7 +201,7 @@ html[data-input="mouse"] .menu-item:hover {
   margin: 4px 6px;
   background: var(--dn-border);
 }
-.todo-options-menu {
+.bar-menu {
   position: fixed;
   right: auto;
   width: 240px;
@@ -456,6 +456,20 @@ html[data-input='mouse'] .connect-handle:hover {
 /* The resize handle sits on the bottom-right corner; keep it on top of the bottom anchor. */
 .resize-handle {
   z-index: 1;
+}
+
+/* Copy, cut and paste run through this for a moment (see state/clipboard.ts). */
+.clip-proxy {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+  font-size: 16px;
 }
 
 .unknown-card {

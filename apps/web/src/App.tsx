@@ -46,6 +46,7 @@ import { EditDock } from './ui/EditDock.tsx'
 import { MobileDock } from './ui/MobileDock.tsx'
 import { installSheetDrag } from './ui/sheet.ts'
 import { phone } from './state/device.ts'
+import { installClipboard } from './state/clipboard.ts'
 
 export default function Root() {
   installLinkHandler()
@@ -109,6 +110,7 @@ function EditorApp() {
 
   onMount(() => {
     const off = installShortcuts({ get readOnly() { return !canEditBoard(boardId()) } })
+    const clipOff = installClipboard({ get readOnly() { return !canEditBoard(boardId()) } })
     let nativeOff: (() => void) | undefined
     let disposed = false
     void installNativeSave().then((cleanup) => { if (disposed) cleanup(); else nativeOff = cleanup }).catch(console.warn)
@@ -124,6 +126,7 @@ function EditorApp() {
       disposed = true
       nativeOff?.()
       off()
+      clipOff()
       window.removeEventListener('pagehide', save)
       document.removeEventListener('visibilitychange', onVis)
     })
