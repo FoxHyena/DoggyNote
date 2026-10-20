@@ -243,9 +243,7 @@ export function MovieCard(props: CardProps<'movie'>) {
             <div class="movie-actions">
               <Show when={!props.readOnly} fallback={<Show when={c().watched}><span class="movie-watched-label">Watched</span></Show>}>
                 <button class="movie-watch" classList={{ on: !!c().watched }} aria-pressed={!!c().watched} data-nodrag data-testid="movie-watched" onClick={toggleWatched}>
-                  <Show when={c().watched} fallback="Mark watched">
-                    <Icon>{ToolIcons.check()}</Icon> Watched
-                  </Show>
+                  <Icon>{c().watched ? ToolIcons.check() : ToolIcons.circle()}</Icon> Watched
                 </button>
                 <Show when={c().info}>
                   <button class="movie-details-toggle" aria-expanded={!!c().details} data-nodrag data-testid="movie-details-toggle" onClick={toggleDetails}>

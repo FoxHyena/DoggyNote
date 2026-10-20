@@ -1828,9 +1828,13 @@ html[data-input="mouse"] a.file-name:hover {
 
 /* movies and shows */
 
+.card[data-type='movie'] {
+  container-type: inline-size;
+}
+
 .movie-card {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   column-gap: 12px;
   padding: 12px;
 }
@@ -1858,6 +1862,17 @@ html[data-input="mouse"] a.file-name:hover {
   justify-content: center;
   height: 100%;
   color: var(--dn-text-muted);
+}
+
+/* Narrow cards (in a column): a smaller poster, so the buttons share a row. */
+@container (max-width: 284px) {
+  .movie-poster {
+    width: 72px;
+  }
+
+  .movie-actions :is(.movie-watch, .movie-details-toggle) {
+    padding-inline: 8px;
+  }
 }
 
 /* Watched: the poster steps back; the words stay readable. */
@@ -2065,6 +2080,13 @@ html[data-input="mouse"] .movie-watch.on:hover {
   border-radius: 8px;
   background: transparent;
   color: inherit;
+}
+
+/* The card's own outline already says "editing"; one ring is enough. */
+.movie-search-input:focus,
+.movie-search-input:focus-visible {
+  outline: none;
+  border-color: var(--dn-accent);
 }
 
 .movie-search-input::placeholder {

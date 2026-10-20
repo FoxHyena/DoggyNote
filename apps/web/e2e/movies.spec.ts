@@ -13,10 +13,17 @@ const movie = (page: Page, title: string) => page.locator('[data-type=movie]', {
 const posterLoaded = (page: Page, title: string) =>
   expect.poll(() => movie(page, title).getByTestId('movie-poster-img').evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBe(16)
 
+/** The card as the server has it, once the fetched details have synced. */
 async function serverMovie(page: Page, title: string) {
   await waitForSync(page)
-  const { objects } = await pullAllObjects(page.request)
-  return objects.find((o: { type?: string; content?: { title?: string } }) => o.type === 'movie' && o.content?.title === title)
+  type M = { type?: string; content?: { title?: string; status?: string } }
+  let found: M | undefined
+  await expect.poll(async () => {
+    const { objects } = await pullAllObjects(page.request)
+    found = objects.find((o: M) => o.type === 'movie' && o.content?.title === title)
+    return found?.content?.status
+  }, { timeout: 10_000 }).toBe('ok')
+  return found as M & { content: Record<string, unknown> & { assetId: string } }
 }
 
 const paste = (page: Page, text: string) =>
@@ -191,4 +198,13 @@ test('a card left without a pick rests quietly and can be picked later', async (
   await expect(page.getByTestId('movie-search')).toBeFocused()
   await page.keyboard.press('Escape')
   await expect(page.locator('[data-type=movie]')).toHaveCount(0)
+})
+
+test('in a narrow card the poster shrinks so Watched and Details share a row', async ({ page }) => {
+  await seedCards(page, [{ type: 'movie', w: 264, content: { kind: 'movie', tmdbId: 999, title: '', status: 'pending' } }])
+  const card = movie(page, 'Lost Reel')
+  await expect(card.getByTestId('movie-details-toggle')).toBeVisible()
+  const [w, d] = [await card.getByTestId('movie-watched').boundingBox(), await card.getByTestId('movie-details-toggle').boundingBox()]
+  expect(Math.abs(w!.y - d!.y)).toBeLessThan(2)
+  expect((await card.getByTestId('movie-poster').boundingBox())!.width).toBeLessThan(80)
 })
