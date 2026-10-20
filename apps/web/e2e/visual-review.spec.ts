@@ -149,8 +149,11 @@ for (const theme of ['Light', 'Dark'] as const) {
     expect((await postSync(page.request, { data: { changes: [{ id: noteId, patch: { id: noteId, kind: 'card', type: 'note', boardId: id, x: 20, y: 20, w: 250, h: 100, z: 1, color: 'none', content: { md: '# Shared weekend plans\nMeet by the river and bring **fresh water**.' }, createdAt: now } }] } })).ok()).toBe(true)
     await page.evaluate(id => localStorage.setItem(`doggynote.cam.${id}`, JSON.stringify({ x: 0, y: -40, zoom: 1 })), id)
     await page.route('**/api/access', async route => {
-      const response = await route.fetch(), access = await response.json()
-      await route.fulfill({ json: { ...access, boards: access.boards.map((board: { id: string }) => board.id === id ? { ...board, ownerId: 'visual-owner', legacy: false, canEdit: false, canManage: false } : board) } })
+      // The app polls access; a poll still in flight when the test ends has nothing to answer.
+      try {
+        const response = await route.fetch(), access = await response.json()
+        await route.fulfill({ json: { ...access, boards: access.boards.map((board: { id: string }) => board.id === id ? { ...board, ownerId: 'visual-owner', legacy: false, canEdit: false, canManage: false } : board) } })
+      } catch {}
     })
     await page.reload()
     await expect(page.getByTestId('board-permission')).toHaveText('View only')
