@@ -103,10 +103,11 @@ const STATES = {
     await page.getByText('Severance').first().waitFor({ timeout: 8000 })
   },
   'movie-search': async (page, touch) => {
-    if (touch) {
+    // Phones add from the dock's +; tablets and desktops have the toolbar.
+    if (await exists(page, '[data-testid=dock-add]')) {
       await pressId(page, 'dock-add')
       await pressId(page, 'add-movie')
-    } else await page.getByTestId('tool-movie').click()
+    } else await pressId(page, 'tool-movie')
     await page.getByTestId('movie-search').fill('s')
     await page.keyboard.type('e')
     await page.getByTestId('movie-result').first().waitFor({ timeout: 5000 })
