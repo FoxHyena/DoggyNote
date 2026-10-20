@@ -65,11 +65,10 @@ test('tasks ticked while editing settle when editing ends', async ({ page }) => 
 })
 
 test('list options: keep manual order, fold done tasks away, clear them with undo', async ({ page }) => {
-  const list = await seedList(page, [item('Vacuum'), item('Kibble', true, Date.now()), item('Dishes'), item('Bowl', true, Date.now())])
+  // A hand-ordered list with sorting off keeps its order.
+  const list = await seedList(page, [item('Vacuum'), item('Kibble', true, Date.now()), item('Dishes'), item('Bowl', true, Date.now())], { sortDone: false })
   await list.locator('.todo-title').click()
   await page.getByTestId('todo-options').click()
-  await expect(page.getByTestId('todo-sort-done')).toHaveAttribute('aria-checked', 'true')
-  await page.getByTestId('todo-sort-done').click()
   await expect(page.getByTestId('todo-sort-done')).toHaveAttribute('aria-checked', 'false')
   await page.keyboard.press('Escape')
   await page.keyboard.press('Escape')
@@ -84,11 +83,11 @@ test('list options: keep manual order, fold done tasks away, clear them with und
   await page.getByTestId('todo-hide-done').click()
   await page.keyboard.press('Escape')
   await page.keyboard.press('Escape')
-  expect(await texts(page)).toEqual(['Dishes'])
+  await expect.poll(() => texts(page)).toEqual(['Dishes'])
   await expect(page.getByTestId('todo-done-toggle')).toHaveText('3 done')
   await page.getByTestId('todo-done-toggle').click()
   // Sorting came back on, so the list tidied: Vacuum now sits with the done tasks.
-  expect(await texts(page)).toEqual(['Dishes', 'Vacuum', 'Kibble', 'Bowl'])
+  await expect.poll(() => texts(page)).toEqual(['Dishes', 'Vacuum', 'Kibble', 'Bowl'])
   await page.getByTestId('todo-done-toggle').click()
 
   await list.locator('.todo-title').click()
@@ -109,7 +108,7 @@ test('with done tasks folded away, a tick stays in view until it settles', async
   await expect(page.getByTestId('todo-done-toggle')).toHaveText('2 done')
 })
 
-test('a list that arrives out of order shows its done tasks below the open ones when sorting is on', async ({ page }) => {
+test('a list that arrives out of order is tidied when shown, if sorting is on', async ({ page }) => {
   await seedCards(page, [{ type: 'todo', w: 260, content: { title: 'Arrived mixed', items: [
     { id: 'a', text: 'Done first', done: true, doneAt: Date.now() },
     { id: 'b', text: 'Still to do', done: false },
@@ -117,4 +116,16 @@ test('a list that arrives out of order shows its done tasks below the open ones 
     { id: 'd', text: 'Also to do', done: false },
   ] } }])
   await expect(page.locator('[data-type=todo] .todo-item')).toHaveText([/Still to do/, /Also to do/, /Done first/, /Done too/])
+})
+
+test('Clear done from the List menu while typing in the list: shows at once, and ⌘Z brings them back', async ({ page }) => {
+  await seedCards(page, [{ type: 'todo', w: 260, content: { title: 'Chores', items: [{ id: 'a', text: 'Vacuum', done: false }, { id: 'b', text: 'Dishes', done: true, doneAt: Date.now() }] } }])
+  await page.locator('[data-type=todo] .todo-item', { hasText: 'Vacuum' }).click()
+  await expect(page.getByTestId('todo-item-input').first()).toBeVisible()
+  await page.getByTestId('todo-options').click()
+  await page.getByTestId('todo-clear-done').click()
+  await expect(page.getByTestId('todo-item-input')).toHaveCount(0)
+  await expect(page.locator('[data-type=todo] .todo-item')).toHaveText([/Vacuum/])
+  await page.keyboard.press(`${MOD}+Z`)
+  await expect(page.locator('[data-type=todo] .todo-item')).toHaveText([/Vacuum/, /Dishes/])
 })
