@@ -40,7 +40,7 @@ function AddButton() {
   let root!: HTMLDivElement, trigger!: HTMLButtonElement, photo!: HTMLInputElement, camInput!: HTMLInputElement, files!: HTMLInputElement
   installMenu(open, () => setOpen(false), () => root, () => trigger)
   // A burst of taps on ＋ shouldn't flicker the sheet open and shut: ignore taps while it animates.
-  let toggledAt = 0
+  let toggledAt = -Infinity
   const toggle = () => {
     if (performance.now() - toggledAt < 350) return
     toggledAt = performance.now()
