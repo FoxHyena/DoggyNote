@@ -177,6 +177,22 @@ export function amendOrSilent(id: Id, patch: Partial<Obj>) {
   for (const l of outboxListeners) l()
 }
 
+/**
+ * A follow-up to the newest edit (a ticked task settling into place a beat later):
+ * folded into the newest undo step when that step changed the same fields of this
+ * object, so one undo reverts both; otherwise committed as its own step.
+ */
+export function amend(id: Id, patch: Partial<Obj>) {
+  if (!canWriteObject(get(id))) return
+  const change = undoStack.peek()?.find((c) => c.id === id)
+  if (!change || !Object.keys(patch).every((k) => k in change.before)) return update({ [id]: patch })
+  const p = structuredClone(unwrap(patch)) as Record<string, unknown>
+  applyPatchToStore(id, patch)
+  undoStack.amendTop(id, p)
+  record(id, p as Partial<Obj>)
+  for (const l of outboxListeners) l()
+}
+
 /** Throw away a card that was just created and left empty, without an undo entry. */
 export function discardNew(id: Id) {
   const top = undoStack.peek()

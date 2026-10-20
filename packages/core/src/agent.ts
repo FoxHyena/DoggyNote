@@ -20,7 +20,7 @@ export const agentObjectSchema = z.discriminatedUnion('kind', [
   z.strictObject({ ...common, kind: z.literal('board'), parentId: id.nullable(), title: z.string().max(200), icon: z.enum(['paw', 'bone', 'ball', 'collar', 'kennel', 'bowl', 'star', 'heart']), color }),
   z.discriminatedUnion('type', [
     z.strictObject({ ...card, type: z.literal('note'), content: z.strictObject({ md: text }) }),
-    z.strictObject({ ...card, type: z.literal('todo'), content: z.strictObject({ title: z.string().max(1000), items: z.array(z.strictObject({ id, text: z.string().max(10_000), done: z.boolean() })).max(1000) }) }),
+    z.strictObject({ ...card, type: z.literal('todo'), content: z.strictObject({ title: z.string().max(1000), items: z.array(z.strictObject({ id, text: z.string().max(10_000), done: z.boolean(), doneAt: stamp.nullable().optional() })).max(1000), sortDone: z.boolean().optional(), hideDone: z.boolean().optional() }) }),
     z.strictObject({ ...card, type: z.literal('board'), content: z.strictObject({ boardId: id }) }),
     z.strictObject({ ...card, columnId: z.null().optional(), type: z.literal('column'), content: z.strictObject({ title: z.string().max(1000) }) }),
     z.strictObject({ ...card, type: z.literal('link'), content: z.strictObject({ url: safeUrl, title: z.string().max(1000).optional(), description: z.string().max(10_000).optional(), image: safeUrl.optional(), siteName: z.string().max(1000).optional(), status: z.enum(['pending', 'ok', 'error']).optional() }) }),
