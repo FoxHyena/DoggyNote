@@ -1,7 +1,7 @@
 name: Release
 
-# Every merge to main: test, deploy the Worker + web app, then build, sign and
-# publish the Mac app. Installed apps pick the new version up via the updater.
+# Every merge to main: test, stage compatible Mac artifacts, then deploy
+# the Worker + web app and publish the release. APP_VERSION selects its updater.
 on:
   push:
     branches: [main]
@@ -34,9 +34,11 @@ jobs:
           echo "version=0.$(jq -r .minor version.json).${{ github.run_number }}" >> "$GITHUB_OUTPUT"
           echo "notes=$(git log -1 --pretty=%s | tr -d '\r' | head -c 300)" >> "$GITHUB_OUTPUT"
 
+  # The compatible bundle and its versioned manifest exist before MIN_CLIENT
+  # changes. Deploying APP_VERSION exposes that already-staged updater atomically.
   deploy:
     name: Deploy Worker + web app
-    needs: [ci, version]
+    needs: [ci, version, desktop]
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.version.outputs.version }}
@@ -60,8 +62,8 @@ jobs:
         run: pnpm exec wrangler deploy --var APP_VERSION:$VERSION
 
   desktop:
-    name: Build + publish Mac app
-    needs: [version, deploy]
+    name: Build + stage Mac app
+    needs: [version, ci]
     runs-on: macos-14 # Apple silicon
     env:
       VERSION: ${{ needs.version.outputs.version }}
@@ -118,20 +120,55 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: OUT=release sh scripts/release-desktop.sh
 
-      - name: Upload to R2 (latest.json last)
+      - name: Stage versioned files in R2 (manifest last)
         working-directory: apps/server
         run: |
           R=../desktop/release
           put() { pnpm exec wrangler r2 object put "doggynote-assets/desktop/$1" --file "$2" --content-type "$3" --remote; }
           put "$VERSION/DoggyNote.app.tar.gz" "$R/$VERSION/DoggyNote.app.tar.gz" application/gzip
           put "$VERSION/DoggyNote_${VERSION}_aarch64.dmg" "$R/$VERSION/DoggyNote_${VERSION}_aarch64.dmg" application/x-apple-diskimage
-          put latest.json "$R/latest.json" application/json
+          put "$VERSION/latest.json" "$R/latest.json" application/json
 
-      - name: GitHub release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release create "v$VERSION" "apps/desktop/release/$VERSION/DoggyNote_${VERSION}_aarch64.dmg" --title "DoggyNote $VERSION" --notes "$NOTES"
+      - name: Retain manifest and disk image for publication
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-release-${{ env.VERSION }}
+          path: |
+            apps/desktop/release/latest.json
+            apps/desktop/release/${{ env.VERSION }}/DoggyNote_${{ env.VERSION }}_aarch64.dmg
+          compression-level: 0
+          retention-days: 3
+          if-no-files-found: error
 
       - name: Remove signing keychain
         if: always()
         run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
+
+  publish:
+    name: Publish updater and GitHub release
+    needs: [version, desktop, deploy]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      NOTES: ${{ needs.version.outputs.notes }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: desktop-release-${{ env.VERSION }}
+          path: apps/desktop/release
+      - name: Publish fallback manifest
+        working-directory: apps/server
+        run: pnpm exec wrangler r2 object put doggynote-assets/desktop/latest.json --file ../desktop/release/latest.json --content-type application/json --remote
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "v$VERSION" "apps/desktop/release/$VERSION/DoggyNote_${VERSION}_aarch64.dmg" --title "DoggyNote $VERSION" --notes "$NOTES"
