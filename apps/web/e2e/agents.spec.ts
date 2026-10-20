@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { freshBoard, cardByText, addNote, MOD, waitForSync, postSync } from './helpers.ts'
+import { freshBoard, cardByText, addNote, MOD, waitForSync, postSync, pullAllObjects } from './helpers.ts'
 const appRoot = fileURLToPath(new URL('../../../', import.meta.url))
 async function openProposals(page: Page) {
   await page.getByTestId('board-more').click()
@@ -268,4 +268,25 @@ test('a preview spans boards, keeps remote edits underneath, flags a stale propo
   await expect(banner).toBeVisible()
   await page.getByTestId('proposal-reject').click()
   await expect(banner).toHaveCount(0)
+})
+
+test('a card re-measured since the agent read it can still be approved, keeping its new height', async ({ page }) => {
+  await freshBoard(page, 'Re-measured')
+  await waitForSync(page)
+  const boardId = new URL(page.url()).hash.split('/').at(-1)!
+  const id = crypto.randomUUID()
+  const note = { id, kind: 'card', type: 'note', boardId, x: 0, y: 0, w: 240, h: 60, z: 1, color: 'none', content: { md: 'Walk at noon' }, createdAt: Date.now() }
+  expect((await page.request.post('/api/sync', { data: { changes: [{ id, patch: note }] } })).ok()).toBe(true)
+  const { token } = await (await page.request.post('/api/agent-connections', { data: { name: 'Mover', mode: 'propose', boardIds: [boardId] } })).json()
+  const headers = { authorization: `Bearer ${token}` }
+  const read = await (await page.request.get(`/api/agent/boards/${boardId}`, { headers })).json()
+  const row = read.objects.find((o: { object: { id: string } }) => o.object.id === id)
+  const staged = await page.request.post('/api/agent/proposals', { headers, data: { idempotencyKey: `move-${crypto.randomUUID()}`, label: 'Move it', operations: [{ action: 'replace', expectedRevision: row.revision, object: { ...row.object, x: 400 } }] } })
+  expect(staged.status(), await staged.text()).toBe(201)
+  // Another device measures the card: only its height changes.
+  expect((await page.request.post('/api/sync', { data: { changes: [{ id, patch: { h: 74 } }] } })).ok()).toBe(true)
+  const approved = await page.request.post(`/api/agent-proposals/${(await staged.json()).id}/approve`, { data: {} })
+  expect(approved.status(), await approved.text()).toBe(200)
+  const { objects } = await pullAllObjects(page.request)
+  expect(objects.find((o: { id: string }) => o.id === id)).toMatchObject({ x: 400, h: 74 })
 })

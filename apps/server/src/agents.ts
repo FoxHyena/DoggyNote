@@ -320,7 +320,15 @@ async function applyProposal(c: Context<AgentEnv>, reverse: boolean) {
     const row = current.get(ch.id)!
     const after = ch.before ?? { ...ch.after, deletedAt: now }
     return { id: ch.id, before: row.object, after: after.kind === 'card' && row.object.kind === 'card' ? { ...after, h: row.object.h } : after, expectedRevision: row.revision ?? revisions[ch.id] }
-  }) : original
+  }) : original.map((ch) => {
+    // A device re-measuring a card's height since the agent read it isn't an
+    // edit: approve against the newer revision and keep the newer height.
+    const row = current.get(ch.id)
+    if (!ch.before || !row || row.revision === ch.expectedRevision || !sameAgentState(row.object, ch.before)) return ch
+    const live = row.object
+    const after = ch.after.kind === 'card' && live.kind === 'card' && ch.before.kind === 'card' && ch.after.h === ch.before.h ? { ...ch.after, h: live.h } : ch.after
+    return { ...ch, before: live, after, expectedRevision: row.revision }
+  })
   if (changes.some((ch) => !SAFE_ID.test(ch.id) || !SAFE_ID.test(String(onBoard(ch.after))))) return c.json({ error: 'Invalid object identifier' }, 409)
   let dependencyGuard = '1'
   // Reversal cannot silently strand content subsequently attached to objects
