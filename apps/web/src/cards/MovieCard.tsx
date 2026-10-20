@@ -230,7 +230,8 @@ export function MovieCard(props: CardProps<'movie'>) {
             <Show when={c().assetId} fallback={<span class="movie-poster-empty"><Icon>{ToolIcons.film()}</Icon></span>}>
               <Poster assetId={c().assetId!} title={c().title} width={inColumn() ? ROW_POSTER_W : props.card.w - PAD * 2} />
             </Show>
-            <Show when={c().watched}>
+            {/* Where there's no Watched button to show it (share links, view-only boards). */}
+            <Show when={c().watched && props.readOnly}>
               <span class="movie-watched-badge" aria-hidden="true"><Icon>{ToolIcons.check()}</Icon></span>
             </Show>
           </div>
@@ -242,7 +243,6 @@ export function MovieCard(props: CardProps<'movie'>) {
                     {c().title || COPY.loading}
                   </a>
                 </Show>
-                <div class="movie-sub" data-testid="movie-sub">{movieSubtitle(c())}</div>
               </div>
               <Show when={!props.readOnly}>
                 <div class="movie-icons">
@@ -275,6 +275,7 @@ export function MovieCard(props: CardProps<'movie'>) {
                 </div>
               </Show>
             </div>
+            <div class="movie-sub" data-testid="movie-sub">{movieSubtitle(c())}</div>
             <Show when={c().status === 'pending'}>
               <div class="movie-note" role="status">{COPY.loading}</div>
             </Show>

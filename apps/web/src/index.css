@@ -1911,7 +1911,7 @@ html[data-input="mouse"] a.file-name:hover {
 
 .movie-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
 }
 
@@ -1972,7 +1972,9 @@ html[data-input="mouse"] a.movie-title:hover {
   gap: 4px;
 }
 
+/* In a column the icons go to the foot of the text. */
 .movie-row .movie-icons {
+  order: 9;
   margin-top: auto;
   padding-top: 8px;
 }
