@@ -16,11 +16,13 @@ const posterLoaded = (page: Page, title: string) =>
 /** The card as the server has it, once the fetched details have synced. */
 async function serverMovie(page: Page, title: string) {
   await waitForSync(page)
-  type M = { type?: string; content?: { title?: string; status?: string } }
+  type M = { type?: string; boardId?: string; content?: { title?: string; status?: string } }
   let found: M | undefined
+  // Other tests make Interstellar cards too: look on this test's board only.
+  const board = boardOf(page)
   await expect.poll(async () => {
     const { objects } = await pullAllObjects(page.request)
-    found = objects.find((o: M) => o.type === 'movie' && o.content?.title === title)
+    found = objects.find((o: M) => o.type === 'movie' && o.boardId === board && o.content?.title === title)
     return found?.content?.status
   }, { timeout: 10_000 }).toBe('ok')
   return found as M & { content: Record<string, unknown> & { assetId: string } }
@@ -218,7 +220,10 @@ test('on the board the poster leads with the title under it; in a column the car
   // In a column: a small poster with the title beside it.
   const small = await box('Severance', 'movie-poster')
   expect(small.width).toBeLessThan(80)
-  expect((await box('Severance', 'movie-title')).x).toBeGreaterThan(small.x + small.width)
+  const title = await box('Severance', 'movie-title')
+  expect(title.x).toBeGreaterThan(small.x + small.width)
+  // The year line sits right under the title, not down by the buttons.
+  expect((await box('Severance', 'movie-sub')).y - (title.y + title.height)).toBeLessThan(8)
   // Icons, labelled for screen readers.
   await expect(movie(page, 'Severance').getByRole('button', { name: 'Watched' })).toBeVisible()
   await expect(movie(page, 'Severance').getByRole('button', { name: 'Details' })).toBeVisible()

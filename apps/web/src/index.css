@@ -1925,6 +1925,11 @@ html[data-input="mouse"] a.file-name:hover {
   min-width: 0;
 }
 
+/* In a column (head flattened into the body), the title takes only its own height. */
+.movie-row .movie-head-text {
+  flex: none;
+}
+
 .movie-title {
   font-weight: 600;
   font-size: 15px;

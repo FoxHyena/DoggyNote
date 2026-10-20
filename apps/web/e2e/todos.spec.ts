@@ -108,3 +108,13 @@ test('with done tasks folded away, a tick stays in view until it settles', async
   await expect.poll(() => texts(page)).toEqual(['Dishes'])
   await expect(page.getByTestId('todo-done-toggle')).toHaveText('2 done')
 })
+
+test('a list that arrives out of order shows its done tasks below the open ones when sorting is on', async ({ page }) => {
+  await seedCards(page, [{ type: 'todo', w: 260, content: { title: 'Arrived mixed', items: [
+    { id: 'a', text: 'Done first', done: true, doneAt: Date.now() },
+    { id: 'b', text: 'Still to do', done: false },
+    { id: 'c', text: 'Done too', done: true, doneAt: Date.now() },
+    { id: 'd', text: 'Also to do', done: false },
+  ] } }])
+  await expect(page.locator('[data-type=todo] .todo-item')).toHaveText([/Still to do/, /Also to do/, /Done first/, /Done too/])
+})

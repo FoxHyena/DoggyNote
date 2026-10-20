@@ -55,7 +55,15 @@ export function TodoCard(props: CardProps<'todo'>) {
   const setContent = (next: Content) => doc.transient(id, { content: next } as Partial<Card>)
   const done = () => content().items.filter((i) => i.done).length
   const folded = () => !!content().hideDone && done() > 0 && !expanded().has(id)
-  const shown = () => (folded() ? content().items.filter((i) => !i.done || recentlyTicked(id, i.id)) : content().items)
+  // With sorting on, done tasks show below the open ones even if the list arrived
+  // unsorted (synced, from an agent, older lists). While a tick waits its beat,
+  // the list stays as stored, so the ticked task sinks when its settle lands.
+  const ordered = () => {
+    const items = content().items
+    if (!sortsDone(props.card) || items.some((i) => recentlyTicked(id, i.id))) return items
+    return settleItems(items)
+  }
+  const shown = () => (folded() ? ordered().filter((i) => !i.done || recentlyTicked(id, i.id)) : ordered())
   let list: HTMLUListElement | undefined
   glide(() => list, () => shown().map((i) => i.id).join())
 
