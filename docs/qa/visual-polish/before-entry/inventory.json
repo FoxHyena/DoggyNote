@@ -1,0 +1,290 @@
+[
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "width": 720,
+    "height": 480,
+    "state": "login",
+    "file": "chromium-light-720-login.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "width": 720,
+    "height": 480,
+    "state": "signup",
+    "file": "chromium-light-720-signup.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "width": 720,
+    "height": 480,
+    "state": "password-reset",
+    "file": "chromium-light-720-password-reset.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "width": 720,
+    "height": 480,
+    "state": "invitation",
+    "file": "chromium-light-720-invitation.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "width": 360,
+    "height": 480,
+    "state": "login",
+    "file": "chromium-light-360-login.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "width": 360,
+    "height": 480,
+    "state": "signup",
+    "file": "chromium-light-360-signup.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "width": 360,
+    "height": 480,
+    "state": "password-reset",
+    "file": "chromium-light-360-password-reset.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "width": 360,
+    "height": 480,
+    "state": "invitation",
+    "file": "chromium-light-360-invitation.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "width": 720,
+    "height": 480,
+    "state": "login",
+    "file": "chromium-dark-720-login.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "width": 720,
+    "height": 480,
+    "state": "signup",
+    "file": "chromium-dark-720-signup.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "width": 720,
+    "height": 480,
+    "state": "password-reset",
+    "file": "chromium-dark-720-password-reset.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "width": 720,
+    "height": 480,
+    "state": "invitation",
+    "file": "chromium-dark-720-invitation.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "width": 360,
+    "height": 480,
+    "state": "login",
+    "file": "chromium-dark-360-login.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "width": 360,
+    "height": 480,
+    "state": "signup",
+    "file": "chromium-dark-360-signup.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "width": 360,
+    "height": 480,
+    "state": "password-reset",
+    "file": "chromium-dark-360-password-reset.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "width": 360,
+    "height": 480,
+    "state": "invitation",
+    "file": "chromium-dark-360-invitation.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "width": 720,
+    "height": 480,
+    "state": "login",
+    "file": "webkit-light-720-login.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "width": 720,
+    "height": 480,
+    "state": "signup",
+    "file": "webkit-light-720-signup.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "width": 720,
+    "height": 480,
+    "state": "password-reset",
+    "file": "webkit-light-720-password-reset.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "width": 720,
+    "height": 480,
+    "state": "invitation",
+    "file": "webkit-light-720-invitation.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "width": 360,
+    "height": 480,
+    "state": "login",
+    "file": "webkit-light-360-login.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "width": 360,
+    "height": 480,
+    "state": "signup",
+    "file": "webkit-light-360-signup.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "width": 360,
+    "height": 480,
+    "state": "password-reset",
+    "file": "webkit-light-360-password-reset.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "width": 360,
+    "height": 480,
+    "state": "invitation",
+    "file": "webkit-light-360-invitation.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "width": 720,
+    "height": 480,
+    "state": "login",
+    "file": "webkit-dark-720-login.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "width": 720,
+    "height": 480,
+    "state": "signup",
+    "file": "webkit-dark-720-signup.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "width": 720,
+    "height": 480,
+    "state": "password-reset",
+    "file": "webkit-dark-720-password-reset.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "width": 720,
+    "height": 480,
+    "state": "invitation",
+    "file": "webkit-dark-720-invitation.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "width": 360,
+    "height": 480,
+    "state": "login",
+    "file": "webkit-dark-360-login.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "width": 360,
+    "height": 480,
+    "state": "signup",
+    "file": "webkit-dark-360-signup.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "width": 360,
+    "height": 480,
+    "state": "password-reset",
+    "file": "webkit-dark-360-password-reset.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "width": 360,
+    "height": 480,
+    "state": "invitation",
+    "file": "webkit-dark-360-invitation.png",
+    "reconstruction": "Current entry content with original pre-task CSS restored; invitation introduction returned to its original sibling position."
+  }
+]

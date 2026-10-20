@@ -1,0 +1,16 @@
+{
+  "result": "passed",
+  "widths": [
+    1440,
+    360
+  ],
+  "checks": [
+    "filters",
+    "image loading",
+    "dialog",
+    "arrow navigation",
+    "Escape dismissal",
+    "no horizontal overflow",
+    "no JavaScript errors"
+  ]
+}

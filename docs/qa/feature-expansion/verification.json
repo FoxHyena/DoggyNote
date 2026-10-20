@@ -1,0 +1,53 @@
+{
+  "fullBrowserSuite": {
+    "passed": 253,
+    "failed": 0,
+    "skipped": 3,
+    "flaky": 0,
+    "durationSeconds": 240.56,
+    "startedAt": "2026-10-20T04:05:16.343Z"
+  },
+  "unitTests": {
+    "passed": 122,
+    "files": 8
+  },
+  "targetedRepeatedChecks": {
+    "passed": 66,
+    "repeats": 3,
+    "browsers": [
+      "Chromium",
+      "WebKit"
+    ]
+  },
+  "performance": {
+    "loadMs": 257,
+    "fitCards": 0,
+    "bigImages": 0,
+    "mountedAt100": 35,
+    "pan": {
+      "frames": 241,
+      "p50": 16.699999999999818,
+      "p95": 16.700000000000728,
+      "max": 16.800000000000182
+    },
+    "zoomOut": {
+      "frames": 162,
+      "p50": 16.699999999999818,
+      "p95": 16.700000000000728,
+      "max": 16.800000000000182
+    },
+    "panFar": {
+      "p95": 16.799999999999272,
+      "worst": 16.80000000000109
+    },
+    "heapMB": 11,
+    "nodes": 575
+  },
+  "checks": [
+    "Workspace typecheck",
+    "Production web build",
+    "Native cargo check --offline",
+    "Release workflow YAML and dependency validation",
+    "git diff --check"
+  ]
+}

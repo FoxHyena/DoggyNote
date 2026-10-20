@@ -1,0 +1,19 @@
+{
+  "browser": {
+    "startTime": "2026-10-20T06:00:15.744Z",
+    "duration": 176172.878,
+    "expected": 301,
+    "skipped": 3,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "unitTests": 125,
+  "unitFiles": 9,
+  "typecheck": "passed",
+  "productionBuild": "passed, including macOS DMG",
+  "native": "Passed: final rebuilt native app, fullsize light/dark, zero pending, Escape focus; actual720x480 walkthrough passed",
+  "visualReview": "independent round2 approved; review/README.md",
+  "touch": "20 coarse-pointer engine/theme/width combinations passed >=44px targets and header collision checks",
+  "gallery": "passed at1440/360: filters, image loading, dialog, keyboard and overflow",
+  "whitespace": "passed"
+}

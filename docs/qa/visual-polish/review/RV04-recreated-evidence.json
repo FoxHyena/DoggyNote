@@ -1,0 +1,11 @@
+{
+  "width": 360,
+  "height": 480,
+  "theme": "light",
+  "engine": "chromium",
+  "before": "Recreated comparison on final build: temporary CSS forced optional update display:flex!important during recovery details. This is not the original first failing screenshot.",
+  "after": "Removed temporary style; final app CSS hides optional notification while recovery details are open.",
+  "downloadActionable": true,
+  "toastHiddenInDetails": true,
+  "toastReturnedAfterEscape": true
+}

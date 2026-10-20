@@ -1,0 +1,258 @@
+[
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 720,
+    "surface": "populated-preview",
+    "file": "chromium-light-720-populated-proposal-preview.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 720,
+    "surface": "invitation-statuses",
+    "file": "chromium-light-720-invitation-statuses.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 720,
+    "surface": "agent-long-names",
+    "file": "chromium-light-720-agent-long-names.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 720,
+    "surface": "error-contrast-fixed",
+    "file": "chromium-light-720-agent-error.png",
+    "colors": {
+      "foreground": "rgb(107, 97, 88)",
+      "background": "rgb(242, 178, 162)"
+    }
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 360,
+    "surface": "populated-preview",
+    "file": "chromium-light-360-populated-proposal-preview.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 360,
+    "surface": "invitation-statuses",
+    "file": "chromium-light-360-invitation-statuses.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 360,
+    "surface": "agent-long-names",
+    "file": "chromium-light-360-agent-long-names.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Light",
+    "width": 360,
+    "surface": "error-contrast-fixed",
+    "file": "chromium-light-360-agent-error.png",
+    "colors": {
+      "foreground": "rgb(107, 97, 88)",
+      "background": "rgb(242, 178, 162)"
+    }
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 720,
+    "surface": "populated-preview",
+    "file": "chromium-dark-720-populated-proposal-preview.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 720,
+    "surface": "invitation-statuses",
+    "file": "chromium-dark-720-invitation-statuses.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 720,
+    "surface": "agent-long-names",
+    "file": "chromium-dark-720-agent-long-names.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 720,
+    "surface": "error-contrast-fixed",
+    "file": "chromium-dark-720-agent-error.png",
+    "colors": {
+      "foreground": "rgb(166, 157, 147)",
+      "background": "rgb(217, 118, 95)"
+    }
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 360,
+    "surface": "populated-preview",
+    "file": "chromium-dark-360-populated-proposal-preview.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 360,
+    "surface": "invitation-statuses",
+    "file": "chromium-dark-360-invitation-statuses.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 360,
+    "surface": "agent-long-names",
+    "file": "chromium-dark-360-agent-long-names.png"
+  },
+  {
+    "engine": "chromium",
+    "theme": "Dark",
+    "width": 360,
+    "surface": "error-contrast-fixed",
+    "file": "chromium-dark-360-agent-error.png",
+    "colors": {
+      "foreground": "rgb(166, 157, 147)",
+      "background": "rgb(217, 118, 95)"
+    }
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 720,
+    "surface": "populated-preview",
+    "file": "webkit-light-720-populated-proposal-preview.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 720,
+    "surface": "invitation-statuses",
+    "file": "webkit-light-720-invitation-statuses.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 720,
+    "surface": "agent-long-names",
+    "file": "webkit-light-720-agent-long-names.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 720,
+    "surface": "error-contrast-fixed",
+    "file": "webkit-light-720-agent-error.png",
+    "colors": {
+      "foreground": "rgb(107, 97, 88)",
+      "background": "rgb(242, 178, 162)"
+    }
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 360,
+    "surface": "populated-preview",
+    "file": "webkit-light-360-populated-proposal-preview.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 360,
+    "surface": "invitation-statuses",
+    "file": "webkit-light-360-invitation-statuses.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 360,
+    "surface": "agent-long-names",
+    "file": "webkit-light-360-agent-long-names.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Light",
+    "width": 360,
+    "surface": "error-contrast-fixed",
+    "file": "webkit-light-360-agent-error.png",
+    "colors": {
+      "foreground": "rgb(107, 97, 88)",
+      "background": "rgb(242, 178, 162)"
+    }
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 720,
+    "surface": "populated-preview",
+    "file": "webkit-dark-720-populated-proposal-preview.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 720,
+    "surface": "invitation-statuses",
+    "file": "webkit-dark-720-invitation-statuses.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 720,
+    "surface": "agent-long-names",
+    "file": "webkit-dark-720-agent-long-names.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 720,
+    "surface": "error-contrast-fixed",
+    "file": "webkit-dark-720-agent-error.png",
+    "colors": {
+      "foreground": "rgb(166, 157, 147)",
+      "background": "rgb(217, 118, 95)"
+    }
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 360,
+    "surface": "populated-preview",
+    "file": "webkit-dark-360-populated-proposal-preview.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 360,
+    "surface": "invitation-statuses",
+    "file": "webkit-dark-360-invitation-statuses.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 360,
+    "surface": "agent-long-names",
+    "file": "webkit-dark-360-agent-long-names.png"
+  },
+  {
+    "engine": "webkit",
+    "theme": "Dark",
+    "width": 360,
+    "surface": "error-contrast-fixed",
+    "file": "webkit-dark-360-agent-error.png",
+    "colors": {
+      "foreground": "rgb(166, 157, 147)",
+      "background": "rgb(217, 118, 95)"
+    }
+  }
+]
