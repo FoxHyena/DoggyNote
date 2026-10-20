@@ -129,7 +129,6 @@ describe('private-board migration and authorization', () => {
     const { sql, db } = fixture()
     try {
       const admin = await loadAccess(db, { id: 'admin', isAdmin: true })
-      expect(admin.canManage('private')).toBe(true)
       expect(admin.canRead('toybox:new')).toBe(false)
       expect(admin.canEdit('missing')).toBe(false)
       expect((await loadAccess(db, { id: 'new', isAdmin: false })).canEdit('toybox:new')).toBe(true)
@@ -186,6 +185,56 @@ describe('private-board migration and authorization', () => {
       const rootOnly = await resolveShare(db, 'new-view')
       expect([...rootOnly!.sharedBoards]).toEqual(['private'])
       expect(rootOnly?.objects.find((o) => o.id === 'inner')).toMatchObject({ title: 'Board' })
+    } finally { sql.close() }
+  })
+  it('gives admins no reach into boards other people own, only ownerless ones', async () => {
+    const { sql, db, board } = fixture()
+    try {
+      board('home:new', null, 'new')
+      board('orphan', null, null)
+      sql.exec("INSERT INTO users VALUES ('admin2','admin2','hash',1,4)")
+      // admin2 joined after the shared-space migration, so it isn't a legacy member.
+      const admin = await loadAccess(db, { id: 'admin2', isAdmin: true })
+      for (const id of ['private', 'inner', 'home:new']) {
+        expect(admin.canRead(id)).toBe(false)
+        expect(admin.canEdit(id)).toBe(false)
+        expect(admin.canManage(id)).toBe(false)
+      }
+      expect(admin.canManage('home')).toBe(true)
+      expect(admin.canEdit('legacy-child')).toBe(true)
+      expect(admin.canManage('orphan')).toBe(true)
+      expect(admin.legacyShared).toBe(true)
+      sql.exec("INSERT INTO board_grants(id,board_id,user_id,permission,include_children,created_by,created_at) VALUES ('to-admin','private','admin2','view',1,'new',1)")
+      const granted = await loadAccess(db, { id: 'admin2', isAdmin: true })
+      expect(granted.canRead('inner')).toBe(true)
+      expect(granted.canEdit('private')).toBe(false)
+      expect(granted.canManage('private')).toBe(false)
+      expect(await deniedChanges(db, admin, 'admin2', [{ id: 'private', patch: { title: 'Taken over' } }])).toEqual(['private'])
+    } finally { sql.close() }
+  })
+  it('turns a view link off once its creator no longer looks after the root', async () => {
+    const { sql, db } = fixture()
+    try {
+      sql.exec("INSERT INTO users VALUES ('admin2','admin2','hash',1,4)")
+      sql.exec("INSERT INTO shares(token,board_id,created_by,created_at,scope_version) VALUES ('by-admin','private','admin2',1,1),('by-member','home','old',1,1),('by-owner','private','new',1,1)")
+      expect(await resolveShare(db, 'by-admin')).toBeNull()
+      expect((await resolveShare(db, 'by-member'))?.root.id).toBe('home')
+      expect((await resolveShare(db, 'by-owner'))?.root.id).toBe('private')
+    } finally { sql.close() }
+  })
+  it('keeps legacy links from publishing boards that were only shared with their creator', async () => {
+    const { sql, db, board } = fixture()
+    try {
+      sql.exec("INSERT INTO users VALUES ('alice','alice','hash',0,4)")
+      board('alice-board', null, 'alice')
+      sql.prepare("INSERT INTO objects(id,kind,board_id,data,seq,updated_at) VALUES ('alice-secret','card','alice-board',?,1,1)").run(JSON.stringify({ id: 'alice-secret', kind: 'card', type: 'note', boardId: 'alice-board', content: { md: 'alice only shared this with new' } }))
+      sql.exec("INSERT INTO board_grants(id,board_id,user_id,permission,include_children,created_by,created_at) VALUES ('alice-to-new','alice-board','new','view',1,'alice',1)")
+      sql.prepare("INSERT INTO objects(id,kind,board_id,data,seq,updated_at) VALUES ('ref-alice','card','private',?,1,1)").run(JSON.stringify({ id: 'ref-alice', kind: 'card', type: 'board', boardId: 'private', content: { boardId: 'alice-board' } }))
+      sql.exec("INSERT INTO shares(token,board_id,created_by,created_at,scope_version) VALUES ('old-view','private','new',1,0)")
+      const legacy = await resolveShare(db, 'old-view')
+      expect(legacy?.sharedBoards.has('alice-board')).toBe(false)
+      expect(JSON.stringify(legacy?.objects)).not.toContain('alice only shared this')
+      expect(legacy?.objects.some((o) => o.id === 'ref-alice')).toBe(false)
     } finally { sql.close() }
   })
   it('atomically refuses revoked/expired link redemption and stale authorized writes', async () => {

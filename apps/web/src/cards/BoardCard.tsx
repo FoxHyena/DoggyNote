@@ -1,6 +1,6 @@
 import { Show, createMemo, onMount } from 'solid-js'
 import type { Card, Id } from '@doggynote/core'
-import { boardDisplayTitle } from '@doggynote/theme'
+import { boardDisplayTitle, cardColor } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { endEdit, onEndEdit } from '../state/ui.ts'
 import { BoardIconSvg } from '../ui/icons.tsx'
@@ -40,7 +40,7 @@ export function BoardCard(props: CardProps<'board'>) {
 
   return (
     <div class="board-card" data-open-board={props.card.content.boardId} title={props.readOnly ? 'Open board' : 'Double-click to open · Enter to rename'}>
-      <div class="board-tile" style={{ '--tile-bg': `var(--dn-card-${board()?.color ?? 'gold'}-bg)`, '--tile-fg': `var(--dn-card-${board()?.color ?? 'gold'}-text)` }}>
+      <div class="board-tile" style={{ '--tile-bg': `var(--dn-card-${cardColor(board()?.color, 'gold')}-bg)`, '--tile-fg': `var(--dn-card-${cardColor(board()?.color, 'gold')}-text)` }}>
         <BoardIconSvg icon={board()?.icon ?? 'paw'} size={30} />
       </div>
       <Show

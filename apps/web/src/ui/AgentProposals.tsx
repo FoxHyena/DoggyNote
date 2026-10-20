@@ -1,7 +1,7 @@
 import { For, Show, createMemo, createResource, createSignal, onCleanup, onMount, type Accessor, type JSX } from 'solid-js'
 import type { AgentChange, AgentObject } from '@doggynote/core/agent'
 import { parseMarkdown } from '@doggynote/core'
-import { boardDisplayTitle } from '@doggynote/theme'
+import { boardDisplayTitle, cardColor } from '@doggynote/theme'
 import { RichText } from '../editor/RichText.tsx'
 import { api, assetUrl } from '../state/api.ts'
 import { syncNow } from '../state/sync.ts'
@@ -103,11 +103,20 @@ export function AgentBoardPreview(props: { objects: AgentObject[]; boardId?: str
   const connections = () => props.objects.filter((o): o is Extract<AgentObject, { kind: 'connection' }> => o.kind === 'connection' && o.boardId === props.boardId && !o.deletedAt && !o.purged)
   return <div class="agents-preview" ref={viewport} data-testid="agent-board-preview"><Show when={cards().length} fallback={<p class="agents-hint">This board has no cards.</p>}><div style={{ position: 'relative', height: `${scene().height * scale()}px` }}><div class="agents-preview-world" inert style={{ width: `${scene().width}px`, height: `${scene().height}px`, transform: `scale(${scale()})` }}>
     <svg class="agents-preview-lines" width={scene().width} height={scene().height} aria-hidden="true"><For each={connections()}>{(c) => { const from = () => scene().rects.get(c.from), to = () => scene().rects.get(c.to); return <Show when={from() && to()}><line x1={from()!.x + from()!.w / 2 - scene().x} y1={from()!.y + from()!.h / 2 - scene().y} x2={to()!.x + to()!.w / 2 - scene().x} y2={to()!.y + to()!.h / 2 - scene().y} /></Show> }}</For></svg>
-    <For each={cards().sort((a, b) => (a.type === 'column' ? -1 : 0) - (b.type === 'column' ? -1 : 0) || a.z - b.z)}>{(c) => { const rect = () => scene().rects.get(c.id); return <Show when={rect()}><div class="agents-preview-card" classList={{ 'agents-preview-column': c.type === 'column' }} style={{ left: `${rect()!.x - scene().x}px`, top: `${rect()!.y - scene().y}px`, width: `${rect()!.w}px`, 'min-height': `${rect()!.h}px`, '--agent-card-bg': `var(--dn-card-${c.color}-bg)`, '--agent-card-text': `var(--dn-card-${c.color}-text)` }}><small>{c.type}</small><Show when={c.type === 'image'}><PreviewImage assetId={(c.content as { assetId: string }).assetId} /></Show><div class="agents-preview-text"><Show when={c.type === 'note'} fallback={cardText(c, props.objects)}><RichText doc={parseMarkdown((c.content as { md: string }).md ?? '')} /></Show></div></div></Show> }}</For>
+    <For each={cards().sort((a, b) => (a.type === 'column' ? -1 : 0) - (b.type === 'column' ? -1 : 0) || a.z - b.z)}>{(c) => { const rect = () => scene().rects.get(c.id); return <Show when={rect()}><div class="agents-preview-card" classList={{ 'agents-preview-column': c.type === 'column' }} style={{ left: `${rect()!.x - scene().x}px`, top: `${rect()!.y - scene().y}px`, width: `${rect()!.w}px`, 'min-height': `${rect()!.h}px`, '--agent-card-bg': `var(--dn-card-${cardColor(c.color)}-bg)`, '--agent-card-text': `var(--dn-card-${cardColor(c.color)}-text)` }}><small>{c.type}</small><Show when={c.type === 'image'}><PreviewImage assetId={(c.content as { assetId: string }).assetId} /></Show><div class="agents-preview-text"><Show when={c.type === 'note'} fallback={cardText(c, props.objects)}><RichText doc={parseMarkdown((c.content as { md: string }).md ?? '')} /></Show></div></div></Show> }}</For>
   </div></div></Show></div>
 }
 function PreviewImage(props: { assetId: string }) { const [src] = createResource(() => props.assetId, (id) => assetUrl(id, 'thumb')); return <Show when={src()}><img alt="Proposed image" src={src()} /></Show> }
 function cardText(card: Extract<AgentObject, { kind: 'card' }>, objects: AgentObject[]): string {
+  // The "before" side is live synced data and may be malformed.
+  try {
+    const text = rawCardText(card, objects)
+    return typeof text === 'string' ? text : ''
+  } catch {
+    return ''
+  }
+}
+function rawCardText(card: Extract<AgentObject, { kind: 'card' }>, objects: AgentObject[]): string {
   switch (card.type) {
     case 'note': return card.content.md
     case 'todo': return [card.content.title, ...card.content.items.map((i) => `${i.done ? '☑' : '☐'} ${i.text}`)].join('\n')

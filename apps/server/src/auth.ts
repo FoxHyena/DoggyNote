@@ -62,15 +62,43 @@ export async function establishSession(c: Context<AppEnv>, user: User, bearer = 
 
 export const auth = new Hono<AppEnv>()
 
+// Password guessing is throttled per username and per address. The limit is
+// checked before the password, so a right guess during a lockout still fails.
+export const LOGIN_WINDOW = 15 * 60_000
+export const LOGIN_LIMITS = { user: 10, ip: 50 }
+
+function loginKeys(c: Context<AppEnv>, username: string): { user: string; ip: string | null } {
+  const ip = c.req.header('cf-connecting-ip')
+  return { user: `user:${username.toLowerCase()}`, ip: ip ? `ip:${ip}` : null }
+}
+
+async function loginLocked(db: D1Database, keys: { user: string; ip: string | null }, now: number): Promise<boolean> {
+  const row = await db.prepare(`SELECT
+      (SELECT COUNT(*) FROM login_failures WHERE key = ?1 AND at > ?3) AS user_failures,
+      (SELECT COUNT(*) FROM login_failures WHERE key = ?2 AND at > ?3) AS ip_failures`)
+    .bind(keys.user, keys.ip ?? '', now - LOGIN_WINDOW).first<{ user_failures: number; ip_failures: number }>()
+  return (row?.user_failures ?? 0) >= LOGIN_LIMITS.user || (!!keys.ip && (row?.ip_failures ?? 0) >= LOGIN_LIMITS.ip)
+}
+
 auth.post('/login', async (c) => {
   const body = await c.req.json<{ username?: unknown; password?: unknown; bearer?: unknown }>().catch(() => ({}) as Record<string, unknown>)
   const { username, password } = body
   if (typeof username !== 'string' || typeof password !== 'string') return c.json({ error: 'Username and password required' }, 400)
-  const row = await c.env.DB.prepare('SELECT id, username, pw_hash, is_admin FROM users WHERE username = ?1').bind(username).first<UserRow>()
+  const db = c.env.DB
+  const now = Date.now()
+  const keys = loginKeys(c, username.slice(0, 64))
+  if (await loginLocked(db, keys, now)) return c.json({ error: 'Too many sign-in attempts. Try again in 15 minutes.' }, 429)
+  const row = await db.prepare('SELECT id, username, pw_hash, is_admin FROM users WHERE username = ?1').bind(username).first<UserRow>()
   // Verify against a dummy hash when the user doesn't exist so timing doesn't reveal usernames.
   const ok = await verifyPassword(password, row?.pw_hash ?? 'pbkdf2$100000$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-  if (!row || !ok) return c.json({ error: 'Wrong username or password' }, 401)
-
+  if (!row || !ok) {
+    await db.batch([
+      db.prepare('DELETE FROM login_failures WHERE at < ?1').bind(now - DAY),
+      ...[keys.user, keys.ip].filter((k): k is string => !!k).map((k) => db.prepare('INSERT INTO login_failures (key, at) VALUES (?1, ?2)').bind(k, now)),
+    ])
+    return c.json({ error: 'Wrong username or password' }, 401)
+  }
+  await db.prepare('DELETE FROM login_failures WHERE key = ?1').bind(keys.user).run()
   return establishSession(c, toUser(row), body.bearer === true)
 })
 

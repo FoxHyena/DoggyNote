@@ -69,7 +69,7 @@ export function Icon(props: { children: JSX.Element; size?: number; class?: stri
 }
 
 export function BoardIconSvg(props: { icon: BoardIcon; size?: number }) {
-  return <Icon size={props.size}>{(BOARD_ICON_PATHS[props.icon] ?? BOARD_ICON_PATHS.paw)()}</Icon>
+  return <Icon size={props.size}>{(Object.hasOwn(BOARD_ICON_PATHS, props.icon) ? BOARD_ICON_PATHS[props.icon] : BOARD_ICON_PATHS.paw)()}</Icon>
 }
 
 /** Friendly line drawing shared by loading and missing-board states. */

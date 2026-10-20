@@ -44,6 +44,9 @@ export async function loadAccess(db: D1Database, user: AccessUser): Promise<Acce
     direct.set(g.board_id, Math.max(direct.get(g.board_id) ?? 0, score))
     if (g.include_children) inherited.set(g.board_id, Math.max(inherited.get(g.board_id) ?? 0, score))
   }
+  // Admins look after accounts and ownerless boards (legacy, or left behind by
+  // a removed account). Someone else's board needs a grant, as for anyone.
+  const owns = (b: BoardAccess) => b.ownerId === user.id || (user.isAdmin && b.ownerId == null)
   const level = (id: string): number => {
     const seen = new Set<string>()
     let score = 0
@@ -54,7 +57,7 @@ export async function loadAccess(db: D1Database, user: AccessUser): Promise<Acce
       if (current.startsWith('toybox:')) return current === `toybox:${user.id}` ? 2 : 0
       const b = boards.get(current)
       if (!b) return score
-      if (user.isAdmin || b.ownerId === user.id || (b.legacy && member)) score = 2
+      if (owns(b) || (b.legacy && member)) score = 2
       score = Math.max(score, (current === id ? direct : inherited).get(current) ?? 0)
       current = b.parentId
     }
@@ -64,7 +67,7 @@ export async function loadAccess(db: D1Database, user: AccessUser): Promise<Acce
     boards, revision: String(rev?.value ?? 1), homeBoardId: personalHome(user.id), legacyShared: !!member || user.isAdmin,
     canRead: (id) => level(id) > 0,
     canEdit: (id) => level(id) === 2,
-    canManage: (id) => !!boards.get(id) && !isToyboxTree(boards, id) && (user.isAdmin || boards.get(id)?.ownerId === user.id),
+    canManage: (id) => !!boards.get(id) && !isToyboxTree(boards, id) && owns(boards.get(id)!),
   }
 }
 export function isToyboxTree(boards: Map<string, BoardAccess>, id: string): boolean {

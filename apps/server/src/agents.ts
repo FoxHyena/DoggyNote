@@ -13,6 +13,8 @@ type Row = { id: string; data: string; seq: number; owner_id: string | null }
 type Proposal = { id: string; credential_id: string; user_id: string; label: string; status: string; changes: string; applied_revisions: string | null; created_at: number; applied_at: number | null; request_hash: string }
 type RecordObject = { object: AgentObject; revision: number; owner: string | null }
 const DAY = 86_400_000
+/** The guard SQL in applyProposal quotes ids inline, so they are re-checked right before. */
+const SAFE_ID = /^[a-zA-Z0-9_:-]{1,64}$/
 const active = (o: AgentObject) => !o.deletedAt && !o.purged
 const onBoard = (o: AgentObject) => o.kind === 'board' ? o.id : o.boardId
 const error = (message: string) => { throw new Error(message) }
@@ -313,6 +315,7 @@ async function applyProposal(c: Context<AgentEnv>, reverse: boolean) {
     const after = ch.before ?? { ...ch.after, deletedAt: now }
     return { id: ch.id, before: row.object, after: after.kind === 'card' && row.object.kind === 'card' ? { ...after, h: row.object.h } : after, expectedRevision: row.revision ?? revisions[ch.id] }
   }) : original
+  if (changes.some((ch) => !SAFE_ID.test(ch.id) || !SAFE_ID.test(String(onBoard(ch.after))))) return c.json({ error: 'Invalid object identifier' }, 409)
   let dependencyGuard = '1'
   // Reversal cannot silently strand content subsequently attached to objects
   // this proposal created or moved.

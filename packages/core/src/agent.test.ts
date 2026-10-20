@@ -12,6 +12,8 @@ it('rejects unknown metadata, malformed nested contents and unsafe link schemes'
   expect(agentObjectSchema.safeParse({ ...note, type: 'todo', content: { title: '', items: [{ id: 'task', text: 'bad', done: 'yes' }] } }).success).toBe(false)
   expect(agentObjectSchema.safeParse({ ...note, type: 'link', content: { url: 'javascript:alert(1)' } }).success).toBe(false)
   expect(agentObjectSchema.safeParse({ ...note, x: Infinity }).success).toBe(false)
+  expect(agentObjectSchema.safeParse({ ...note, id: 'constructor' }).success).toBe(false)
+  expect(agentObjectSchema.safeParse({ ...note, boardId: '__proto__' }).success).toBe(false)
   expect(agentObjectSchema.safeParse({ ...note, type: 'column', columnId: 'other-column', content: { title: 'Invalid nesting' } }).success).toBe(false)
 })
 it('requires revisions for replacements and caps atomic proposal size', () => {

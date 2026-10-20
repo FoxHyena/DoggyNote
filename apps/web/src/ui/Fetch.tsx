@@ -13,7 +13,18 @@ import { BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
 
 type Hit = { kind: 'board' | 'card'; id: Id; boardId: Id; title: string; snippet: string; score: number }
 
+// Cards are synced from everyone's devices: one malformed card must not break
+// search for the whole workspace, so it just contributes no text.
 function cardText(c: Card): string {
+  try {
+    const text = rawCardText(c)
+    return typeof text === 'string' ? text : ''
+  } catch {
+    return ''
+  }
+}
+
+function rawCardText(c: Card): string {
   switch (c.type) {
     case 'note':
       return mdToText(noteMarkdown(c as Card<'note'>))

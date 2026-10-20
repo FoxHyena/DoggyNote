@@ -15,6 +15,9 @@ const BY_EXT: Record<string, FileKind> = {
 }
 
 export function fileKind(mime: string, name: string): FileKind {
+  // Synced values: never trust their type.
+  mime = typeof mime === 'string' ? mime : ''
+  name = typeof name === 'string' ? name : ''
   const ext = name.includes('.') ? name.split('.').pop()!.toLowerCase() : ''
   if (BY_EXT[ext]) return BY_EXT[ext]
   if (mime === 'application/pdf') return 'pdf'

@@ -259,3 +259,28 @@ test('view-only collaborators can capture privately while board placement stays 
     expect(JSON.stringify(await pull(alice))).not.toContain('My private reminder')
   } finally { await alice.context.close(); await bob.context.close() }
 })
+
+test('admins manage accounts, not other people’s private boards', async ({ page, browser }) => {
+  const alice = await person(page, browser, 'adminproof')
+  try {
+    const privateBoard = await board(alice)
+    // page is signed in as rex, an admin.
+    const body = await (await page.request.get('/api/sync?since=0', { headers: { 'x-doggynote-protocol': '2' } })).json()
+    expect(JSON.stringify(body)).not.toContain(`Secret ${privateBoard.id}`)
+    const access = await (await page.request.get('/api/access')).json()
+    expect(access.boards.some((b: { id: string }) => b.id === privateBoard.id || b.id === alice.home)).toBe(false)
+    expect((await page.request.get(`/api/shares?boardId=${privateBoard.id}`)).status()).toBe(403)
+    expect((await page.request.post('/api/shares', { data: { boardId: privateBoard.id, permission: 'view' } })).status()).toBe(403)
+    expect((await page.request.post(`/api/boards/${privateBoard.id}/members`, { data: { username: 'rex' } })).status()).toBe(403)
+    const write = await page.request.post('/api/sync', { headers: { 'x-doggynote-protocol': '2' }, data: { changes: [{ id: privateBoard.note, patch: { content: { md: 'admin edit' } } }] } })
+    expect(write.status()).toBe(403)
+    // Opening it by URL shows nothing of it.
+    await page.goto(`/#/b/${privateBoard.id}`)
+    await expect(page.getByTestId('canvas')).toBeVisible()
+    await expect(page.getByText(`Secret ${privateBoard.id}`)).toHaveCount(0)
+    // Once alice shares it, rex sees it like anyone else.
+    expect((await alice.api.post(`/api/boards/${privateBoard.id}/members`, { data: { username: 'rex', permission: 'view' } })).status()).toBe(201)
+    const after = await (await page.request.get('/api/access')).json()
+    expect(after.boards.find((b: { id: string }) => b.id === privateBoard.id)).toMatchObject({ canEdit: false, canManage: false })
+  } finally { await alice.context.close() }
+})

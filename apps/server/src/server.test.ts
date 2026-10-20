@@ -41,6 +41,7 @@ describe('sync validation', () => {
   })
   it('rejects bad ids, keys, kinds and oversize batches', () => {
     expect(parseChanges({ changes: [{ id: "x'; drop", patch: { x: 1 } }] })).toBe('bad id')
+    for (const id of ['__proto__', 'constructor', 'prototype', 'toString', 'valueOf', 'hasOwnProperty']) expect(parseChanges({ changes: [{ id, patch: { x: 1 } }] })).toBe('bad id')
     expect(parseChanges({ changes: [{ id: 'a', patch: { "x') --": 1 } }] })).toBe('bad keys for a')
     expect(parseChanges({ changes: [{ id: 'a', patch: { kind: 'user' } }] })).toBe('bad kind for a')
     expect(parseChanges({ changes: [{ id: 'a', patch: { id: 'b' } }] })).toBe('id mismatch for a')

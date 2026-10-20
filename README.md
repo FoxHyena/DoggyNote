@@ -97,4 +97,6 @@ Every pull request runs typecheck, unit tests, the full end-to-end suite on WebK
 
 For this access-control migration, deploy migrations `0005`–`0008` with the new Worker and web app. Desktop versions below `0.2.0`, and clients without sync protocol 2, are prompted to update; their pending local changes are retained. Migration, QA evidence and implementation progress are recorded in [the feature tracker](docs/feature-expansion-progress.md).
 
+The Worker needs one secret, `ASSET_TOKEN_SECRET`, which signs image and file URLs for the desktop app. `deploy:all` generates it if it's missing. To set it by hand, run `openssl rand -base64 32 | pnpm --filter server exec wrangler secret put ASSET_TOKEN_SECRET`. The security review and its open items are in [`docs/security-review-2026-10.md`](docs/security-review-2026-10.md).
+
 The screenshots above come from a seeded demo board. To regenerate them, run `SHOTS=1 pnpm --filter web exec playwright test readme-shots --project=chromium`.

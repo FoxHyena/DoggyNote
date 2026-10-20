@@ -166,7 +166,7 @@ function blocks(tokens: Token[]): RichNode[] {
 
 /** Markdown → sanitized tree for rendering. Task items carry their source line for toggling. */
 export function parseMarkdown(source: string): RichDoc {
-  return sanitizeDoc({ type: 'doc', content: blocks(md.parse(source ?? '', {})) })
+  return sanitizeDoc({ type: 'doc', content: blocks(md.parse(typeof source === 'string' ? source : '', {})) })
 }
 
 /** Plain text of a markdown note, for search, previews and trash labels. */
@@ -237,6 +237,6 @@ export function docToMarkdown(doc: RichDoc | undefined): string {
 
 /** A note's markdown, converting legacy content on the fly. */
 export function noteMarkdown(card: Card<'note'>): string {
-  const c = card.content as { md?: string; doc?: RichDoc }
+  const c = (card.content ?? {}) as { md?: string; doc?: RichDoc }
   return typeof c.md === 'string' ? c.md : docToMarkdown(c.doc)
 }
