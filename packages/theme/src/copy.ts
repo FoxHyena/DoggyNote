@@ -23,6 +23,9 @@ export const COPY = {
   /** A card made by a newer DoggyNote than this one. */
   unknownCard: 'This card needs a newer DoggyNote. Update to see it.',
   fetchHint: 'Sniff out any board, note, to-do or link by a word in it.',
+  /** Movie cards. */
+  movieSearch: 'Sniff out a movie or show…',
+  movieNoMatch: 'No scent of that one. Try another title?',
 } as const
 
 /** Reserved personal inboxes keep their IDs and legacy stored titles across upgrades. */

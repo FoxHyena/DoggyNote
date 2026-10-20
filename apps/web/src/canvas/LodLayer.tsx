@@ -181,6 +181,50 @@ export function LodLayer() {
         }
         return
       }
+      const film = c.type === 'movie' ? (c as Card<'movie'>).content : null
+      // A movie card with a title picked (an unpicked one draws like a text card).
+      if (film && (film.tmdbId || film.imdbId)) {
+        // Like the card: a tall poster with a caption under it, or a row (poster left) in a column.
+        ctx.fillStyle = bg
+        roundRect(ctx, x, y, w, h, 3 * z * 4)
+        ctx.fill()
+        const pad = 10 * z
+        const tall = !c.columnId
+        const pw = tall ? Math.max(1, w - pad * 2) : Math.max(1, Math.min(72 * z, w / 3))
+        // Leave room for the caption under a tall poster.
+        const ph = Math.max(1, Math.min(pw * 1.5, h - pad * 2 - (tall ? 26 * z : 0)))
+        const assetId = film.assetId
+        const t = typeof assetId === 'string' ? thumb(assetId) : null
+        if (t && atlas) ctx.drawImage(atlas, t.sx, t.sy, t.sw, t.sh, x + pad, y + pad, pw, ph)
+        else {
+          ctx.fillStyle = pal.border
+          ctx.fillRect(x + pad, y + pad, pw, ph)
+        }
+        // Watched posters step back into greys, as on the card. Blend modes, not
+        // ctx.filter: WebKit (the Mac app, iOS) ignores canvas filters.
+        if (film.watched) {
+          // Any colourless fill takes the saturation out; a pixel wider, for the poster's soft edge.
+          ctx.globalCompositeOperation = 'saturation'
+          ctx.fillStyle = 'black'
+          ctx.fillRect(x + pad - 1, y + pad - 1, pw + 2, ph + 2)
+          ctx.globalCompositeOperation = 'source-over'
+          // Light: faded into the card. Dark: lifted, so a dark poster doesn't melt into it.
+          const dark = document.documentElement.dataset.theme !== 'light'
+          ctx.globalAlpha = dark ? 0.15 : 0.2
+          ctx.fillStyle = dark ? pal['none-text'] : bg
+          ctx.fillRect(x + pad, y + pad, pw, ph)
+          ctx.globalAlpha = 1
+        }
+        ctx.fillStyle = pal.muted
+        ctx.globalAlpha = 0.35
+        const tx = tall ? x + pad : x + pad * 2 + pw
+        const ty = tall ? y + pad + ph + 8 * z : y + pad
+        const tw = Math.max(1, tall ? pw * 0.8 : w - (tx - x) - pad)
+        ctx.fillRect(tx, ty, tw, Math.max(1, 8 * z))
+        ctx.fillRect(tx, ty + 14 * z, tw * 0.6, Math.max(1, 7 * z))
+        ctx.globalAlpha = 1
+        return
+      }
       ctx.fillStyle = c.type === 'column' ? pal.panel : bg
       roundRect(ctx, x, y, w, h, 3 * z * 4)
       ctx.fill()

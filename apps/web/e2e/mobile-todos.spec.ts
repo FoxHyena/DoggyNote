@@ -34,6 +34,21 @@ test('quick taps down a list tick the rows under the finger, then they settle', 
   await expect(page.getByTestId('todo-item-input')).toHaveCount(0)
 })
 
+test('a tap just after the rows swap is ignored, so it cannot hit the row that slid under the finger', async ({ page }) => {
+  const dishes = (await list(page).getByRole('checkbox', { name: 'Dishes' }).boundingBox())!
+  await tapGutter(page, 'Vacuum')
+  await expect.poll(() => texts(page)).toEqual(['Dishes', 'Laundry', 'Bins', 'Vacuum'])
+  // A reaction time after the swap, a tap aimed at where Dishes was lands on Laundry.
+  await page.waitForTimeout(250)
+  await tap(page, { x: dishes.x + dishes.width / 2 + 10, y: dishes.y + dishes.height / 2 + 4 })
+  await expect(list(page).getByRole('checkbox', { name: 'Laundry' })).not.toBeChecked()
+  await expect(list(page).getByRole('checkbox', { name: 'Vacuum' })).toBeChecked()
+  // Once settled, taps count again.
+  await page.waitForTimeout(500)
+  await tapGutter(page, 'Dishes')
+  await expect(list(page).getByRole('checkbox', { name: 'Dishes' })).toBeChecked()
+})
+
 test('list options open as a sheet from the selection bar', async ({ page }) => {
   await tapOn(page, list(page).locator('.todo-title'))
   await page.getByTestId('todo-options').tap()

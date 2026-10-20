@@ -64,6 +64,8 @@ test('Fetch aligns supporting text and keeps keyboard results visible in short v
     await withinViewport(page, fetch)
     await captureAppearance(page, info, 'fetch-populated')
     const first = page.getByTestId('fetch-hit').first()
+    // Measure once the results have rendered, not mid-search.
+    await expect(first.locator('.fetch-snippet')).toBeVisible()
     const title = await first.locator('.fetch-title').boundingBox()
     const supporting = await first.locator('.fetch-snippet').boundingBox()
     expect(Math.abs(title!.x - supporting!.x)).toBeLessThan(1)

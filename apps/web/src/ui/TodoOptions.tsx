@@ -2,6 +2,7 @@ import { Show } from 'solid-js'
 import { clearDone, settleItems, type Card } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
 import { showToast } from '../state/toast.ts'
+import { editingId, endEdit } from '../state/ui.ts'
 import { BarMenu } from './BarMenu.tsx'
 import { Icon, ToolIcons } from './icons.tsx'
 
@@ -12,12 +13,17 @@ export function TodoOptions(props: { card: Card<'todo'> }) {
   const content = () => props.card.content
   const sorting = () => content().sortDone !== false
   const done = () => content().items.filter((i) => i.done).length
-  const set = (next: Partial<Card<'todo'>['content']>) => doc.update({ [props.card.id]: { content: { ...content(), ...next } } as Partial<Card> })
+  const set = (next: Partial<Card<'todo'>['content']>, finishTyping = false) => {
+    // Folding or clearing while typing in the list: finish typing first, so the
+    // change shows at once and ⌘Z undoes it.
+    if (finishTyping && editingId() === props.card.id) endEdit()
+    doc.update({ [props.card.id]: { content: { ...content(), ...next } } as Partial<Card> })
+  }
   // Turning sorting on tidies the list in the same step.
   const toggleSort = () => set(sorting() ? { sortDone: false } : { sortDone: true, items: settleItems(content().items) })
   const clear = () => {
     const n = done()
-    set({ items: clearDone(content().items) })
+    set({ items: clearDone(content().items) }, true)
     showToast(`Cleared ${n} done ${n === 1 ? 'task' : 'tasks'}`, 5000, { label: 'Undo', run: () => doc.undo() })
   }
   const check = (on: boolean) => <span class="menu-check" aria-hidden="true"><Show when={on}><Icon size={16}>{ToolIcons.check()}</Icon></Show></span>
@@ -30,7 +36,7 @@ export function TodoOptions(props: { card: Card<'todo'> }) {
             {check(sorting())}
             Sort done to the bottom
           </button>
-          <button class="menu-item" role="menuitemcheckbox" aria-checked={!!content().hideDone} data-testid="todo-hide-done" onClick={() => set({ hideDone: !content().hideDone })}>
+          <button class="menu-item" role="menuitemcheckbox" aria-checked={!!content().hideDone} data-testid="todo-hide-done" onClick={() => set({ hideDone: !content().hideDone }, true)}>
             {check(!!content().hideDone)}
             Fold away done tasks
           </button>

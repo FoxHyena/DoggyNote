@@ -16,6 +16,19 @@ const card = {
 }
 const safeUrl = z.string().max(4096).refine((v) => { try { return ['https:', 'http:'].includes(new URL(v).protocol) } catch { return false } }, 'Use an http or https URL')
 const rendition = z.enum(['thumb', 'small', 'medium', 'full'])
+const count = z.number().int().nonnegative().max(100_000)
+const names = z.array(z.string().max(200)).max(50)
+const movieInfo = z.strictObject({
+  runtime: count.optional(), seasons: count.optional(), episodes: count.optional(), genres: names.optional(), overview: z.string().max(10_000).optional(),
+  providers: z.strictObject({ region: z.string().regex(/^[A-Z]{2}$/), link: safeUrl.optional(), stream: names.optional(), rent: names.optional(), buy: names.optional() }).optional(),
+  fetchedAt: stamp,
+})
+/** An agent names the title (TMDB or IMDb id); the app fetches the poster and details. */
+const movieContent = z.strictObject({
+  tmdbId: z.number().int().positive().optional(), kind: z.enum(['movie', 'tv']), title: z.string().max(1000), year: z.number().int().min(1800).max(3000).optional(),
+  imdbId: z.string().regex(/^tt\d{5,10}$/).optional(), assetId: id.optional(), watched: z.boolean().optional(), watchedAt: stamp.nullable().optional(),
+  details: z.boolean().optional(), status: z.enum(['pending', 'ok', 'error']).optional(), info: movieInfo.optional(),
+}).refine((m) => m.tmdbId !== undefined || m.imdbId !== undefined, 'Give the title’s tmdbId (with kind) or imdbId')
 export const agentObjectSchema = z.discriminatedUnion('kind', [
   z.strictObject({ ...common, kind: z.literal('board'), parentId: id.nullable(), title: z.string().max(200), icon: z.enum(['paw', 'bone', 'ball', 'collar', 'kennel', 'bowl', 'star', 'heart']), color }),
   z.discriminatedUnion('type', [
@@ -26,6 +39,7 @@ export const agentObjectSchema = z.discriminatedUnion('kind', [
     z.strictObject({ ...card, type: z.literal('link'), content: z.strictObject({ url: safeUrl, title: z.string().max(1000).optional(), description: z.string().max(10_000).optional(), image: safeUrl.optional(), siteName: z.string().max(1000).optional(), status: z.enum(['pending', 'ok', 'error']).optional() }) }),
     z.strictObject({ ...card, type: z.literal('image'), content: z.strictObject({ assetId: id, width: z.number().positive().finite(), height: z.number().positive().finite(), caption: z.string().max(10_000).optional(), sizes: z.array(rendition).max(4).optional() }) }),
     z.strictObject({ ...card, type: z.literal('file'), content: z.strictObject({ assetId: id, name: z.string().min(1).max(200), size: stamp.max(50 * 1024 * 1024), mime: z.string().max(200), status: z.enum(['ok']).optional(), thumb: z.strictObject({ width: z.number().positive().finite(), height: z.number().positive().finite() }).optional() }) }),
+    z.strictObject({ ...card, type: z.literal('movie'), content: movieContent }),
   ]),
   z.strictObject({ ...common, kind: z.literal('connection'), boardId: id, from: id, to: id, fromSide: z.enum(['top', 'right', 'bottom', 'left']).nullable().optional(), toSide: z.enum(['top', 'right', 'bottom', 'left']).nullable().optional(), arrow: z.enum(['end', 'none']) }),
   z.strictObject({ ...common, kind: z.literal('comment'), boardId: id, cardId: id, authorId: id, author: z.string().max(32), text: z.string().max(20_000), editedAt: stamp.nullable().optional(), resolvedAt: stamp.nullable().optional() }),

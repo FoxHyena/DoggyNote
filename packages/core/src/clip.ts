@@ -7,6 +7,7 @@
 import type { Board, Card, Connection, Id, Obj } from './model.ts'
 import type { Rect, Vec } from './geometry.ts'
 import { cardText } from './cardtext.ts'
+import { tmdbPage } from './movie.ts'
 
 export const CLIP_MIME = 'application/x-doggynote+json'
 export const CLIP_LIMIT = 500
@@ -160,6 +161,13 @@ export function clipText(clip: ClipPayload, boardTitle: (id: Id) => string = () 
       case 'board': {
         const b = byId.get((c as Card<'board'>).content.boardId) as Board | undefined
         return b?.title || boardTitle((c as Card<'board'>).content.boardId)
+      }
+      case 'movie': {
+        const m = (c as Card<'movie'>).content
+        if (!m.title) return ''
+        const name = m.year ? `${m.title} (${m.year})` : m.title
+        const page = tmdbPage(m)
+        return `${page ? `[${name}](${page})` : name}${m.watched ? ' ✓ watched' : ''}`
       }
       default:
         return cardText(c)

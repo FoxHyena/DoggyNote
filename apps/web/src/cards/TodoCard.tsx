@@ -1,5 +1,5 @@
 import { For, Index, Show, createEffect, createSignal, on, onMount } from 'solid-js'
-import { doneLabel, newId, settleItems, toggleItem, type Card, type Id, type TodoItem } from '@doggynote/core'
+import { doneLabel, newId, sameOrder, settleItems, toggleItem, type Card, type Id, type TodoItem } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { editIsNewCard, endEdit, onEndEdit } from '../state/ui.ts'
@@ -36,14 +36,27 @@ function glide(list: () => HTMLElement | undefined, order: () => string) {
     return m
   }
   onMount(() => (last = measure()))
+  let lastEl: HTMLElement | undefined
+  onMount(() => (lastEl = list()))
   createEffect(on(order, () => {
     const now = measure()
-    if (!reducedMotion.matches) {
+    // A new list (back from editing) has nothing to glide from: just remember it.
+    const same = list() === lastEl
+    lastEl = list()
+    if (same && !reducedMotion.matches) {
+      let moved = false
       list()?.querySelectorAll<HTMLElement>('[data-item-id]').forEach((el) => {
         const was = last.get(el.dataset.itemId!)
         const dy = was === undefined ? 0 : was - now.get(el.dataset.itemId!)!
-        if (Math.abs(dy) > 1) el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' })
+        if (Math.abs(dy) > 1) {
+          moved = true
+          el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' })
+        }
       })
+      // While rows slide, and for a reaction time after, a tap aimed at the old spot
+      // would land on another task.
+      const el = list()
+      if (el && moved) el.dataset.glideUntil = String(Date.now() + 600)
     }
     last = now
   }, { defer: true }))
@@ -55,11 +68,21 @@ export function TodoCard(props: CardProps<'todo'>) {
   const setContent = (next: Content) => doc.transient(id, { content: next } as Partial<Card>)
   const done = () => content().items.filter((i) => i.done).length
   const folded = () => !!content().hideDone && done() > 0 && !expanded().has(id)
+  // A list that arrives out of order (synced, from an agent, older lists) is
+  // tidied once when shown, if sorting is on: not an undo step.
+  onMount(() => {
+    const items = content().items
+    if (props.readOnly || props.editing || !sortsDone(props.card)) return
+    const settled = settleItems(items)
+    if (!sameOrder(items, settled)) doc.silent({ [id]: { content: { ...content(), items: settled } } as Partial<Card> })
+  })
   const shown = () => (folded() ? content().items.filter((i) => !i.done || recentlyTicked(id, i.id)) : content().items)
   let list: HTMLUListElement | undefined
   glide(() => list, () => shown().map((i) => i.id).join())
 
   function toggle(item: TodoItem) {
+    // Ignore taps while the rows are still sliding into their new order.
+    if (!props.editing && Number(list?.dataset.glideUntil ?? 0) > Date.now()) return
     const items = toggleItem(content().items, item.id, Date.now())
     const next = { ...content(), items }
     if (props.editing) setContent(next)

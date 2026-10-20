@@ -3,6 +3,7 @@ import { postSync } from './helpers.ts'
 import { waitForSync } from './helpers.ts'
 import { expect, test, type Page } from '@playwright/test'
 import { MOD, at, cardByText, clickEmpty, freshBoard } from './helpers.ts'
+import { seedCards } from './touch.ts'
 
 test.beforeEach(async ({ page }) => {
   await freshBoard(page)
@@ -173,6 +174,54 @@ test('ticking a task in the rendered note edits its markdown, undoably', async (
   await waitForSync(page)
   await page.reload()
   await expect(cardByText(page, 'Chores').locator('li.task.done')).toHaveText('brush fur')
+})
+
+test('a ticked task stays readable (4.5:1) on plain and coloured notes, in both themes', async ({ page }) => {
+  await seedCards(page, [
+    { type: 'note', x: 0, y: 0, w: 260, content: { md: 'Plain\n- [x] Charge the speaker' } },
+    ...['gold', 'collar', 'sky'].map((color, i) => ({ type: 'note' as const, x: 280 * (i + 1), y: 0, w: 260, color, content: { md: `${color} note\n- [x] Charge the speaker` } })),
+  ])
+  await expect(page.locator('li.task.done')).toHaveCount(4)
+  for (const theme of ['dark', 'light']) {
+    await page.evaluate((t) => (document.documentElement.dataset.theme = t), theme)
+    const ratios = await page.locator('li.task.done > p').evaluateAll((els) => els.map((p) => {
+      const rgb = (c: string) => c.match(/[\d.]+/g)!.map(Number)
+      const lum = (c: number[]) => {
+        const [r, g, b] = c.slice(0, 3).map((v) => (v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+      }
+      const card = p.closest('.card')!
+      let opacity = 1
+      for (let e: Element | null = p; e && e !== card; e = e.parentElement) opacity *= Number(getComputedStyle(e).opacity)
+      const fg = rgb(getComputedStyle(p).color)
+      const bg = rgb(getComputedStyle(card).backgroundColor)
+      const a = opacity * (fg[3] ?? 1)
+      const [hi, lo] = [lum(fg.map((v, i) => v * a + bg[i] * (1 - a))), lum(bg)].sort((x, y) => y - x)
+      return (hi + 0.05) / (lo + 0.05)
+    }))
+    for (const r of ratios) expect(r, theme).toBeGreaterThanOrEqual(4.5)
+  }
+})
+
+test('ticked and open task boxes sit on their text line, reading and editing', async ({ page }) => {
+  await seedCards(page, [{ type: 'note', x: 0, y: 0, w: 280, content: { md: 'Walkies\n- leash\n- [ ] Text Fido the time\n- [x] Charge the speaker' } }])
+  const note = cardByText(page, 'Walkies')
+  // How far each box's centre sits from the centre of the text beside it.
+  const offsets = (box: string) => note.evaluate((n, box) => [...n.querySelectorAll(box)].map((b) => {
+    const r = b.getBoundingClientRect()
+    const text = document.createTreeWalker(b.closest('li, .cm-line')!, NodeFilter.SHOW_TEXT).nextNode()!
+    const range = document.createRange()
+    range.selectNodeContents(text)
+    const t = range.getClientRects()[0]
+    return r.top + r.height / 2 - (t.top + t.height / 2)
+  }), box)
+  for (const [box, open] of [['.task-check', () => {}], ['.cm-md-task', () => note.locator('.rich p', { hasText: 'Walkies' }).click()]] as const) {
+    await open()
+    await expect(note.locator(box)).toHaveCount(2)
+    const [unticked, ticked] = await offsets(box)
+    expect(Math.abs(unticked)).toBeLessThan(1.5)
+    expect(Math.abs(ticked - unticked)).toBeLessThan(0.5)
+  }
 })
 
 test('format bar inserts markdown', async ({ page }) => {

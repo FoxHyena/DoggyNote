@@ -40,6 +40,10 @@ function rawCardText(c: Card): string {
       return (c as Card<'image'>).content.caption ?? ''
     case 'file':
       return (c as Card<'file'>).content.name
+    case 'movie': {
+      const m = (c as Card<'movie'>).content
+      return [m.title, m.year, m.info?.genres?.join(', '), m.info?.overview].filter(Boolean).join('\n')
+    }
     default:
       return ''
   }
@@ -65,6 +69,10 @@ function rawCardLabel(c: Card, boardTitle: (boardId: Id) => string): string {
       return (c as Card<'column'>).content.title || 'Column'
     case 'file':
       return (c as Card<'file'>).content.name || 'File'
+    case 'movie': {
+      const m = (c as Card<'movie'>).content
+      return m.title ? (m.year ? `${m.title} (${m.year})` : m.title) : 'Movie or show'
+    }
     default:
       return 'Card'
   }

@@ -105,11 +105,13 @@ export const takePlainPaste = () => {
   return p
 }
 
-/** Can the asset behind this card be used here? Only if a card on this device already shows it. */
+const assetOf = (o: Obj) => (o.kind === 'card' ? (o.content as { assetId?: string } | undefined)?.assetId : undefined)
+
+/** Can the asset behind this card (image, file, poster) be used here? Only if a card on this device already shows it. */
 function assetReachable(c: Obj): boolean {
-  if (c.kind !== 'card' || (c.type !== 'image' && c.type !== 'file')) return true
-  const assetId = (c.content as { assetId?: string }).assetId
-  return Object.values(doc.objs).some((o) => o.kind === 'card' && !o.purged && (o.content as { assetId?: string })?.assetId === assetId)
+  const assetId = assetOf(c)
+  if (!assetId) return true
+  return Object.values(doc.objs).some((o) => o.kind === 'card' && !o.purged && assetOf(o) === assetId)
 }
 
 /** Paste a clip at a world point (or into a column). One undo step; the new cards end up selected. */

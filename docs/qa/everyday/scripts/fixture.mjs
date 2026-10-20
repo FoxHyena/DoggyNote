@@ -33,6 +33,10 @@ export async function seed(request, { title = 'Movie night and chores' } = {}) {
   const kids = [
     card(board, 'note', 0, 0, 264, { md: 'The Iron Giant' }, { columnId: column.id, order: 1 }),
     card(board, 'note', 0, 0, 264, { md: 'Paddington 2' }, { columnId: column.id, order: 2 }),
+    // Movie cards resolve against TMDB (the fixture server's stand-in) when they first mount.
+    card(board, 'movie', 0, 0, 264, { kind: 'movie', tmdbId: 999, title: '', status: 'pending' }, { columnId: column.id, order: 3 }),
+    card(board, 'movie', 960, 0, 220, { kind: 'movie', tmdbId: 157336, title: '', status: 'pending', watched: true, watchedAt: now - DAY }),
+    card(board, 'movie', 1210, 0, 220, { kind: 'tv', tmdbId: 95396, title: '', status: 'pending', details: true }),
   ]
   const a = card(board, 'note', 0, 380, 220, { md: 'Order pizza at 6' }, { color: 'peach' })
   const b = card(board, 'note', 300, 380, 220, { md: 'Movie starts at 7' })

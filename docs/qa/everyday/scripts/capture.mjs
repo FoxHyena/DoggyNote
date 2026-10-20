@@ -81,7 +81,11 @@ const STATES = {
       await pressId(page, 'agent-proposals')
       const pick = page.getByTestId('agent-review').getByRole('button', { name: /Tidy movie night/ })
       if (await pick.count()) await press(page, pick.first())
-      if (await exists(page, '[data-testid=preview-on-board]')) await pressId(page, 'preview-on-board')
+      // The sheet slides up: let it settle before tapping, then wait for the banner.
+      await page.getByTestId('preview-on-board').waitFor({ timeout: 5000 })
+      await page.waitForTimeout(500)
+      await pressId(page, 'preview-on-board')
+      await page.getByTestId('proposal-banner').waitFor({ timeout: 5000 })
     }
     await page.waitForTimeout(900)
   },
@@ -98,6 +102,19 @@ const STATES = {
     const pick = page.getByTestId('agent-review').getByRole('button', { name: /Tidy movie night/ })
     if (await pick.count()) await press(page, pick.first())
     await page.waitForTimeout(800)
+  },
+  movies: async (page) => {
+    await page.getByText('Severance').first().waitFor({ timeout: 8000 })
+  },
+  'movie-search': async (page, touch) => {
+    // Phones add from the dock's +; tablets and desktops have the toolbar.
+    if (await exists(page, '[data-testid=dock-add]')) {
+      await pressId(page, 'dock-add')
+      await pressId(page, 'add-movie')
+    } else await pressId(page, 'tool-movie')
+    await page.getByTestId('movie-search').fill('s')
+    await page.keyboard.type('e')
+    await page.getByTestId('movie-result').first().waitFor({ timeout: 5000 })
   },
   overview: async () => {},
 }
@@ -120,7 +137,7 @@ for (const { key, engine, d } of DEVICES) {
       if (stateFilter && !stateFilter.split(',').includes(state)) continue
       await page.goto(`/#/b/${fixture.board}`)
       const cam = state === 'board' ? null : state === 'overview' ? { x: -200, y: -300, zoom: 0.3 } : { x: -16, y: -40, zoom: 1 }
-      const camFor = state === 'todo' || state === 'todo-select' || state === 'todo-options' ? { x: 300, y: -40, zoom: 1 } : state === 'column-click' ? { x: 600, y: -40, zoom: 1 } : cam
+      const camFor = state === 'todo' || state === 'todo-select' || state === 'todo-options' ? { x: 300, y: -40, zoom: 1 } : state === 'column-click' ? { x: 600, y: -40, zoom: 1 } : state === 'movies' ? { x: 940, y: -40, zoom: 1 } : cam
       await page.evaluate(({ board, cam }) => {
         localStorage.removeItem(`doggynote.cam.${board}`)
         if (cam) localStorage.setItem(`doggynote.cam.${board}`, JSON.stringify(cam))

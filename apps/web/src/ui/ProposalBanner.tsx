@@ -1,8 +1,8 @@
-import { For, Show, createSignal, onCleanup, onMount } from 'solid-js'
+import { For, Show, createEffect, createSignal, on, onCleanup, onMount } from 'solid-js'
 import { boardDisplayTitle } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { boardId } from '../state/ui.ts'
-import { decidePreview, exitPreview, frameChanges, preview, setPreviewMode, showBoard, type Badge } from '../state/preview.ts'
+import { decidePreview, exitPreview, frameChanges, preview, previewStep, setPreviewMode, showBoard, type Badge } from '../state/preview.ts'
 import { BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
 import './agents.css'
 import './export.css'
@@ -21,6 +21,9 @@ export function ProposalBanner() {
     setError(await decidePreview(action))
     setBusy(null)
   }
+  let banner: HTMLElement | undefined
+  // Opening a preview moves focus to its banner, so the keyboard starts there.
+  createEffect(on(() => preview()?.id, (id) => id && queueMicrotask(() => banner?.focus({ preventScroll: true }))))
   onMount(() => {
     const key = (e: KeyboardEvent) => {
       // Escape that closed a popup (it prevents the default) isn't for us.
@@ -35,7 +38,7 @@ export function ProposalBanner() {
   return (
     <Show when={preview()}>
       {(p) => (
-        <section class="proposal-banner" role="region" aria-label="Previewing agent proposal" data-testid="proposal-banner">
+        <section ref={banner} tabindex="-1" class="proposal-banner" role="region" aria-label="Previewing agent proposal" data-testid="proposal-banner">
           <div class="proposal-banner-head">
             <span class="proposal-banner-icon" aria-hidden="true"><BoardIconSvg icon="paw" size={18} /></span>
             <div class="proposal-banner-text">
@@ -46,6 +49,9 @@ export function ProposalBanner() {
                 </For>
               </span>
             </div>
+            <Show when={previewStep()}>
+              {(s) => <span class="proposal-step proposal-step-phone" data-testid="proposal-step-phone">{s().n}/{s().of}</span>}
+            </Show>
             <button class="icon-btn proposal-next-icon" data-testid="proposal-next-icon" aria-label="Next change" title="Next change" onClick={() => frameChanges(true)}>
               <Icon>{ToolIcons.open()}</Icon>
             </button>
@@ -72,6 +78,9 @@ export function ProposalBanner() {
             <button class="bar-btn proposal-next" data-testid="proposal-next" onClick={() => frameChanges(true)}>
               Next change
             </button>
+            <Show when={previewStep()}>
+              {(s) => <span class="proposal-step" data-testid="proposal-step" aria-live="polite">{s().n} of {s().of}</span>}
+            </Show>
             <span class="proposal-banner-spacer" />
             <Show when={p().status === 'pending'}>
               <button class="bar-btn" data-testid="proposal-reject" disabled={!!busy()} onClick={() => void decide('reject')}>{busy() === 'reject' ? 'Rejecting…' : 'Reject'}</button>

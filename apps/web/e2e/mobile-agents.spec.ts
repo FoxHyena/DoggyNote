@@ -42,7 +42,31 @@ test('changes far apart: the phone frames one as a real card, and › steps to t
   const right = page.locator('[data-preview=added]', { hasText: 'Right kennel' })
   await expect(left).toBeInViewport()
   await expect(right).not.toBeInViewport()
+  await expect(page.getByTestId('proposal-step-phone')).toHaveText('1/2')
   await page.getByTestId('proposal-next-icon').tap()
   await expect(right).toBeInViewport()
   await expect(left).not.toBeInViewport()
+  await expect(page.getByTestId('proposal-step-phone')).toHaveText('2/2')
+  // The change it's on is marked, and readable (not shrunk to a thumbnail).
+  await expect(right).toHaveAttribute('data-preview-current', 'true')
+  expect((await right.boundingBox())!.width).toBeGreaterThan(200)
+})
+
+test('on a phone on its side, Preview on the board is in reach without scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 852, height: 393 })
+  await freshBoard(page, 'Sideways review')
+  await waitForSync(page)
+  const boardId = new URL(page.url()).hash.split('/').at(-1)!
+  const { token } = await (await page.request.post('/api/agent-connections', { data: { name: 'Pocket agent', mode: 'propose', boardIds: [boardId] } })).json()
+  const operations = ['Snacks', 'Drinks', 'Blankets', 'Projector', 'Popcorn', 'Pillows'].map((md, i) => ({ action: 'create', object: { id: crypto.randomUUID(), kind: 'card', type: 'note', boardId, x: 20, y: 20 + i * 100, w: 240, h: 60, z: 1, color: 'none', content: { md }, createdAt: Date.now() } }))
+  expect((await page.request.post('/api/agent/proposals', { headers: { authorization: `Bearer ${token}` }, data: { idempotencyKey: `side-${crypto.randomUUID()}`, label: 'Movie night', operations } })).status()).toBe(201)
+  await page.getByTestId('board-more').tap()
+  await page.getByTestId('agent-proposals').tap()
+  const preview = page.getByTestId('preview-on-board')
+  await expect(preview).toBeVisible()
+  await page.waitForTimeout(400)
+  const box = (await preview.boundingBox())!
+  expect(box.y + box.height).toBeLessThanOrEqual(393)
+  await preview.tap()
+  await expect(page.getByTestId('proposal-banner')).toBeVisible()
 })

@@ -544,6 +544,13 @@ export function Canvas(props: { readOnly: boolean }) {
         const c = doc.getCard(g.id)
         if (!c) break
         if (g.shift) {
+          // Shift-clicking another card while typing: stop typing, and keep the
+          // card you were in as part of the selection.
+          const typing = editingId()
+          if (typing && typing !== g.id) {
+            endEdit()
+            select([...new Set([...selection(), typing])])
+          }
           toggle(g.id)
           break
         }
@@ -1169,6 +1176,23 @@ let anim = 0
 export function cancelCameraAnimation() {
   cancelAnimationFrame(anim)
   anim = 0
+}
+
+/**
+ * Pan (never zoom) so a card's whole height is on screen, clear of the phone's
+ * bottom bars. A card taller than the room shows its top.
+ */
+/** Pan so a card clears the bars. `from` (board units below the card's top) is the
+ *  part that matters most, for a card taller than the room. */
+export function revealCard(id: Id, from = 0) {
+  const r = rectOf(id)
+  if (!r) return
+  const cam = camera()
+  const room = viewport().height - (phone() ? 150 : 24)
+  const top = (r.y + from - cam.y) * cam.zoom
+  const bottom = (r.y + r.h - cam.y) * cam.zoom
+  const dy = bottom > room ? Math.min(bottom - room, top - 16) : top < 16 ? top - 16 : 0
+  if (Math.abs(dy) >= 2) animateCamera({ ...cam, y: cam.y + dy / cam.zoom }, 260)
 }
 
 /** Ease the camera to a target. Short and springy: it should feel physical, not slow. */

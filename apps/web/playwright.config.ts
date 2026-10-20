@@ -33,7 +33,7 @@ export default defineConfig({
     // The real Worker on a fresh local D1 + R2, seeded with users rex (admin) and fido.
     {
       // Never reused: every run gets a fresh database.
-      command: `PORT=${API_PORT} DESKTOP_PORT=${DESKTOP_PORT} pnpm --filter server e2e:serve`,
+      command: `PORT=${API_PORT} DESKTOP_PORT=${DESKTOP_PORT} FIXTURE_PORT=${FIXTURE_PORT} pnpm --filter server e2e:serve`,
       url: `http://localhost:${API_PORT}/api/health`,
       reuseExistingServer: false,
       timeout: 120_000,

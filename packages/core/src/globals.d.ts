@@ -5,5 +5,7 @@ declare class URL {
   constructor(url: string, base?: string)
   readonly href: string
   readonly protocol: string
+  readonly hostname: string
+  readonly pathname: string
 }
 declare function structuredClone<T>(v: T): T

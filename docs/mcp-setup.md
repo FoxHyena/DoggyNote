@@ -25,7 +25,7 @@ The connector works with local MCP clients that launch a stdio command. The desk
 
 Use the configuration format supported by your MCP client. The executable and environment values above are the connector's complete setup contract. A local development server may use `http://localhost:8787`; other servers require HTTPS.
 
-The tools are `list_boards`, `read_board`, `propose_board`, `propose_changes`, and `proposal_status`. A board read includes revisions and a pagination cursor. A proposal supports notes/markdown, todo lists, columns, links, nested boards, connectors, comments, layout changes, trash/restore, and reuse of existing scoped image/file asset IDs. Uploading new image/file bytes is not part of this version.
+The tools are `list_boards`, `read_board`, `propose_board`, `propose_changes`, and `proposal_status`. A board read includes revisions and a pagination cursor. A proposal supports notes/markdown, todo lists, columns, links, nested boards, connectors, comments, layout changes, trash/restore, movie and show cards (name the title by `tmdbId` and `kind`, or `imdbId`, with `status: 'pending'`; DoggyNote fetches the poster and details after approval), and reuse of existing scoped image/file asset IDs. Uploading new image/file bytes is not part of this version.
 
 Agent changes stay pending until you open **Agent proposals** on the affected board. Inspect the proposed layout and individual changes, then approve or reject. Proposals apply atomically through normal synchronization. An object edited since the proposal was prepared causes a conflict instead of an overwrite; ask the agent to read the latest board and stage a fresh proposal. Reuse the exact same idempotency key and request when retrying an interrupted request.
 

@@ -34,7 +34,16 @@ export function SyncStatus() {
   const retry = () => void syncNow()
   // The details button says what sync is doing: busy while a run is in flight,
   // then a short "Synced" once it lands, rather than a greyed-out "Sync now".
-  const busy = () => syncState() === 'syncing'
+  // A sync is often quicker than the eye: "Syncing…" holds for a moment so it reads.
+  const [held, setHeld] = createSignal(false)
+  let heldTimer: ReturnType<typeof setTimeout> | undefined
+  createEffect(() => {
+    if (syncState() !== 'syncing') return
+    setHeld(true)
+    clearTimeout(heldTimer)
+    heldTimer = setTimeout(() => setHeld(false), 500)
+  })
+  const busy = () => syncState() === 'syncing' || held()
   const [justSynced, setJustSynced] = createSignal(false)
   let syncedTimer: ReturnType<typeof setTimeout> | undefined
   createEffect((was: string | undefined) => {
@@ -42,7 +51,7 @@ export function SyncStatus() {
     if (was === 'syncing' && now === 'idle' && open()) {
       setJustSynced(true)
       clearTimeout(syncedTimer)
-      syncedTimer = setTimeout(() => setJustSynced(false), 1500)
+      syncedTimer = setTimeout(() => setJustSynced(false), 2000)
     } else if (now !== 'idle') setJustSynced(false)
     return now
   })
@@ -59,7 +68,7 @@ export function SyncStatus() {
   return <div class="save-status-wrap">
     <button ref={trigger} class="sync-status" classList={{ attention: attention() }} data-testid="sync-status" data-state={visualState()}
       data-sync-state={syncState()} data-pending={pendingCount()} data-uploads={pendingUploadsCount()}
-      aria-expanded={open()} aria-label={`Save status: ${label()}`} data-tooltip="Save and sync details"
+      aria-expanded={open()} aria-label={label() === 'Save status' ? 'Save status' : `Save status: ${label()}`} data-tooltip="Save and sync details"
       onClick={() => { position(); setOpen(!open()); retry() }}>
       <Show when={attention()} fallback={<Icon size={16}>{ToolIcons.check()}</Icon>}><Icon size={16}><Show when={failure() || recoverableChanges().length} fallback={<path d="M20 7v5h-5M20 12a8 8 0 1 0-2 6" />}><path d="M12 3 2 21h20ZM12 9v5M12 17v.5" /></Show></Icon></Show><span classList={{ 'save-label-quiet': !attention() }}>{label()}</span>
     </button>

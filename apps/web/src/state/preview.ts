@@ -40,7 +40,12 @@ const [decisionTick, setDecisionTick] = createSignal(0)
 /** Bumps when a proposal is approved or rejected from the preview (the list refreshes). */
 export const proposalsChanged = decisionTick
 
-export const previewBadge = (id: Id): Badge | undefined => preview()?.badges.get(id)
+/** The card's change marker; none in the Current view, which shows the board as it is. */
+export const previewBadge = (id: Id): Badge | undefined => (preview()?.mode === 'after' ? preview()!.badges.get(id) : undefined)
+const [step, setStep] = createSignal<{ id: Id; n: number; of: number } | null>(null)
+/** Which change Next change is on ("2 of 4"), and the card it highlights. */
+export const previewStep = step
+export const isPreviewCurrent = (id: Id) => step()?.id === id
 export const isPreviewBoard = (id: Id) => !!preview()?.boards.includes(id)
 
 const MOVE_KEYS = new Set(['x', 'y', 'columnId', 'order', 'boardId'])
@@ -109,6 +114,7 @@ export function setPreviewMode(mode: 'after' | 'before') {
   const p = preview()
   if (!p || p.mode === mode) return
   setPreview({ ...p, mode })
+  setStep(null)
   doc.setPreviewObjects(mode === 'after' ? p.after : p.beforeObjs)
 }
 
@@ -120,22 +126,44 @@ export function showBoard(id: Id) {
 
 let nextIndex = 0
 /** Frame every change on this board, or (step) the next one in turn. */
-export function frameChanges(step = false) {
+export function frameChanges(stepping = false) {
   const p = preview()
   if (!p) return
   const ids = [...p.badges.keys()].filter((id) => doc.getCard(id)?.boardId === boardId() && rectOf(id))
   if (!ids.length) return
   const v = viewport()
-  // Leave room for the banner.
-  const fit = (box: Rect) => fitCamera({ x: box.x, y: box.y - 40, w: box.w, h: box.h + 40 }, v.width, v.height, step ? 160 : 80)
-  let to = fit(union(step ? [rectOf(ids[nextIndex++ % ids.length])!] : ids.map((id) => rectOf(id)!))!)
-  // Too spread out to show them all as real cards (a small screen): start with the
-  // first one, and Next change steps through the rest.
-  if (to.zoom < MIN_ZOOM) {
-    if (!step) nextIndex = 1
-    const one = fit(rectOf(ids[step ? (nextIndex - 1) % ids.length : 0])!)
-    to = one.zoom >= MIN_ZOOM ? one : zoomAround(one, MIN_ZOOM, v.width, v.height)
+  // The banner covers the top of the canvas (desktop) or its bottom (phone): fit
+  // the changes into the rest.
+  let top = 0
+  let bottom = v.height
+  const banner = document.querySelector('.proposal-banner')?.getBoundingClientRect()
+  if (banner) {
+    if (banner.top - v.top < v.height / 2) top = Math.min(v.height / 2, banner.bottom - v.top + 8)
+    else bottom = Math.max(v.height / 2, banner.top - v.top - 8)
   }
+  const pad = Math.min(stepping ? 160 : 80, v.width * 0.08)
+  const fit = (box: Rect): Camera => {
+    const cam = fitCamera(box, v.width, bottom - top, pad)
+    return { ...cam, y: cam.y - top / cam.zoom }
+  }
+  const show = (i: number) => {
+    const id = ids[i % ids.length]
+    setStep({ id, n: (i % ids.length) + 1, of: ids.length })
+    return fit(rectOf(id)!)
+  }
+  let to: Camera
+  if (stepping) to = show(nextIndex++)
+  else {
+    setStep(null)
+    to = fit(union(ids.map((id) => rectOf(id)!))!)
+    // Too spread out to show them all as real cards (a small screen): start with
+    // the first one, and Next change steps through the rest.
+    if (to.zoom < MIN_ZOOM) {
+      nextIndex = 1
+      to = show(0)
+    }
+  }
+  if (to.zoom < MIN_ZOOM) to = zoomAround(to, MIN_ZOOM, v.width, v.height)
   animateCamera(to, 320)
 }
 
@@ -153,6 +181,7 @@ export function exitPreview() {
   if (!p) return
   doc.setPreviewObjects(null)
   setPreview(null)
+  setStep(null)
   nextIndex = 0
   if (boardId() !== p.returnTo.board) setBoardIdSignal(p.returnTo.board)
   setCamera(p.returnTo.camera)

@@ -1,7 +1,7 @@
 import { ErrorBoundary, For, Match, Show, Switch, onCleanup, onMount, type JSX } from 'solid-js'
 import { SIDES, type Card } from '@doggynote/core'
 import { COPY, cardColor } from '@doggynote/theme'
-import { previewBadge, type Badge } from '../state/preview.ts'
+import { isPreviewCurrent, previewBadge, type Badge } from '../state/preview.ts'
 
 const PREVIEW_CHIP: Record<Badge, string> = { added: 'New', changed: 'Edited', moved: 'Moved', removed: 'Buried' }
 import { camera, editingId, isSelected, selection } from '../state/ui.ts'
@@ -19,6 +19,7 @@ import { ImageCard } from '../cards/ImageCard.tsx'
 import { LinkCard } from '../cards/LinkCard.tsx'
 import { ColumnCard } from '../cards/ColumnCard.tsx'
 import { FileCard } from '../cards/FileCard.tsx'
+import { MovieCard } from '../cards/MovieCard.tsx'
 
 export type CardProps<T extends Card['type'] = Card['type']> = {
   card: Card<T>
@@ -78,6 +79,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
       data-testid="card"
       data-type={props.card.type}
       data-preview={previewBadge(props.card.id)}
+      data-preview-current={isPreviewCurrent(props.card.id) || undefined}
       style={style()}
     >
       <Show when={!props.lod && previewBadge(props.card.id)}>
@@ -111,6 +113,9 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         </Match>
         <Match when={props.card.type === 'file'}>
           <FileCard {...(props2() as CardProps<'file'>)} />
+        </Match>
+        <Match when={props.card.type === 'movie'}>
+          <MovieCard {...(props2() as CardProps<'movie'>)} />
         </Match>
         <Match when={props.card.type === 'column'}>
           <ColumnCard {...(props2() as CardProps<'column'>)} />

@@ -24,3 +24,5 @@
 .sync-spinner { flex-shrink: 0; animation: sync-spin 0.9s linear infinite; }
 @keyframes sync-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .sync-spinner { animation: none; } }
+/* Done is quiet: not a call to action. */
+.save-details .sync-now[data-state='synced'] { background: transparent; border: 1px solid var(--dn-border); color: var(--dn-text); }

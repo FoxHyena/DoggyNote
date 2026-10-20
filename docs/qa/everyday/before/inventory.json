@@ -1,0 +1,1546 @@
+[
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "board",
+    "file": "before-jpg/webkit-light-mac1440-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo",
+    "file": "before-jpg/webkit-light-mac1440-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo-select",
+    "file": "before-jpg/webkit-light-mac1440-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "column-click",
+    "file": "before-jpg/webkit-light-mac1440-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "sync",
+    "file": "before-jpg/webkit-light-mac1440-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "note-edit",
+    "file": "before-jpg/webkit-light-mac1440-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "note-edit-list",
+    "file": "before-jpg/webkit-light-mac1440-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "proposals",
+    "file": "before-jpg/webkit-light-mac1440-proposals.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "overview",
+    "file": "before-jpg/webkit-light-mac1440-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "board",
+    "file": "before-jpg/webkit-dark-mac1440-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo",
+    "file": "before-jpg/webkit-dark-mac1440-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo-select",
+    "file": "before-jpg/webkit-dark-mac1440-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "column-click",
+    "file": "before-jpg/webkit-dark-mac1440-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "sync",
+    "file": "before-jpg/webkit-dark-mac1440-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "note-edit",
+    "file": "before-jpg/webkit-dark-mac1440-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "note-edit-list",
+    "file": "before-jpg/webkit-dark-mac1440-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "proposals",
+    "file": "before-jpg/webkit-dark-mac1440-proposals.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "overview",
+    "file": "before-jpg/webkit-dark-mac1440-overview.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "board",
+    "file": "before-jpg/chromium-light-chrome1440-board.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo",
+    "file": "before-jpg/chromium-light-chrome1440-todo.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo-select",
+    "file": "before-jpg/chromium-light-chrome1440-todo-select.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "column-click",
+    "file": "before-jpg/chromium-light-chrome1440-column-click.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "sync",
+    "file": "before-jpg/chromium-light-chrome1440-sync.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "note-edit",
+    "file": "before-jpg/chromium-light-chrome1440-note-edit.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "note-edit-list",
+    "file": "before-jpg/chromium-light-chrome1440-note-edit-list.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "proposals",
+    "file": "before-jpg/chromium-light-chrome1440-proposals.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "overview",
+    "file": "before-jpg/chromium-light-chrome1440-overview.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "board",
+    "file": "before-jpg/chromium-dark-chrome1440-board.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo",
+    "file": "before-jpg/chromium-dark-chrome1440-todo.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo-select",
+    "file": "before-jpg/chromium-dark-chrome1440-todo-select.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "column-click",
+    "file": "before-jpg/chromium-dark-chrome1440-column-click.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "sync",
+    "file": "before-jpg/chromium-dark-chrome1440-sync.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "note-edit",
+    "file": "before-jpg/chromium-dark-chrome1440-note-edit.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "note-edit-list",
+    "file": "before-jpg/chromium-dark-chrome1440-note-edit-list.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "proposals",
+    "file": "before-jpg/chromium-dark-chrome1440-proposals.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "overview",
+    "file": "before-jpg/chromium-dark-chrome1440-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "board",
+    "file": "before-jpg/webkit-light-mac1024-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "todo",
+    "file": "before-jpg/webkit-light-mac1024-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "todo-select",
+    "file": "before-jpg/webkit-light-mac1024-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "column-click",
+    "file": "before-jpg/webkit-light-mac1024-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "sync",
+    "file": "before-jpg/webkit-light-mac1024-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "note-edit",
+    "file": "before-jpg/webkit-light-mac1024-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "note-edit-list",
+    "file": "before-jpg/webkit-light-mac1024-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "proposals",
+    "file": "before-jpg/webkit-light-mac1024-proposals.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "overview",
+    "file": "before-jpg/webkit-light-mac1024-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "board",
+    "file": "before-jpg/webkit-dark-mac1024-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "todo",
+    "file": "before-jpg/webkit-dark-mac1024-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "todo-select",
+    "file": "before-jpg/webkit-dark-mac1024-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "column-click",
+    "file": "before-jpg/webkit-dark-mac1024-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "sync",
+    "file": "before-jpg/webkit-dark-mac1024-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "note-edit",
+    "file": "before-jpg/webkit-dark-mac1024-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "note-edit-list",
+    "file": "before-jpg/webkit-dark-mac1024-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "proposals",
+    "file": "before-jpg/webkit-dark-mac1024-proposals.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "overview",
+    "file": "before-jpg/webkit-dark-mac1024-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "board",
+    "file": "before-jpg/webkit-light-ipad-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "todo",
+    "file": "before-jpg/webkit-light-ipad-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "todo-select",
+    "file": "before-jpg/webkit-light-ipad-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "column-click",
+    "file": "before-jpg/webkit-light-ipad-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "sync",
+    "file": "before-jpg/webkit-light-ipad-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "note-edit",
+    "file": "before-jpg/webkit-light-ipad-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "note-edit-list",
+    "file": "before-jpg/webkit-light-ipad-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "state": "proposals",
+    "skipped": "TimeoutError: locator.tap: Timeout 30000ms exceeded."
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "overview",
+    "file": "before-jpg/webkit-light-ipad-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "board",
+    "file": "before-jpg/webkit-dark-ipad-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "todo",
+    "file": "before-jpg/webkit-dark-ipad-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "todo-select",
+    "file": "before-jpg/webkit-dark-ipad-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "column-click",
+    "file": "before-jpg/webkit-dark-ipad-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "sync",
+    "file": "before-jpg/webkit-dark-ipad-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "note-edit",
+    "file": "before-jpg/webkit-dark-ipad-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "note-edit-list",
+    "file": "before-jpg/webkit-dark-ipad-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "state": "proposals",
+    "skipped": "TimeoutError: locator.tap: Timeout 30000ms exceeded."
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "overview",
+    "file": "before-jpg/webkit-dark-ipad-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "board",
+    "file": "before-jpg/webkit-light-se-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "todo",
+    "file": "before-jpg/webkit-light-se-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "todo-select",
+    "file": "before-jpg/webkit-light-se-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "column-click",
+    "file": "before-jpg/webkit-light-se-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "sync",
+    "file": "before-jpg/webkit-light-se-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "note-edit",
+    "file": "before-jpg/webkit-light-se-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "note-edit-list",
+    "file": "before-jpg/webkit-light-se-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "state": "proposals",
+    "skipped": "TimeoutError: locator.tap: Timeout 30000ms exceeded."
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "overview",
+    "file": "before-jpg/webkit-light-se-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "board",
+    "file": "before-jpg/webkit-dark-se-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "todo",
+    "file": "before-jpg/webkit-dark-se-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "todo-select",
+    "file": "before-jpg/webkit-dark-se-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "column-click",
+    "file": "before-jpg/webkit-dark-se-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "sync",
+    "file": "before-jpg/webkit-dark-se-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "note-edit",
+    "file": "before-jpg/webkit-dark-se-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "note-edit-list",
+    "file": "before-jpg/webkit-dark-se-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "state": "proposals",
+    "skipped": "TimeoutError: locator.tap: Timeout 30000ms exceeded."
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "overview",
+    "file": "before-jpg/webkit-dark-se-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "board",
+    "file": "before-jpg/webkit-light-iphone15-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "todo",
+    "file": "before-jpg/webkit-light-iphone15-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "todo-select",
+    "file": "before-jpg/webkit-light-iphone15-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "column-click",
+    "file": "before-jpg/webkit-light-iphone15-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "sync",
+    "file": "before-jpg/webkit-light-iphone15-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "note-edit",
+    "file": "before-jpg/webkit-light-iphone15-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "note-edit-list",
+    "file": "before-jpg/webkit-light-iphone15-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "state": "proposals",
+    "skipped": "TimeoutError: locator.tap: Timeout 30000ms exceeded."
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "overview",
+    "file": "before-jpg/webkit-light-iphone15-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "board",
+    "file": "before-jpg/webkit-dark-iphone15-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "todo",
+    "file": "before-jpg/webkit-dark-iphone15-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "todo-select",
+    "file": "before-jpg/webkit-dark-iphone15-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "column-click",
+    "file": "before-jpg/webkit-dark-iphone15-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "sync",
+    "file": "before-jpg/webkit-dark-iphone15-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "note-edit",
+    "file": "before-jpg/webkit-dark-iphone15-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "note-edit-list",
+    "file": "before-jpg/webkit-dark-iphone15-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "state": "proposals",
+    "skipped": "TimeoutError: locator.tap: Timeout 30000ms exceeded."
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "overview",
+    "file": "before-jpg/webkit-dark-iphone15-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "board",
+    "file": "before-jpg/webkit-light-landscape-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "todo",
+    "file": "before-jpg/webkit-light-landscape-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "todo-select",
+    "file": "before-jpg/webkit-light-landscape-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "column-click",
+    "file": "before-jpg/webkit-light-landscape-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "sync",
+    "file": "before-jpg/webkit-light-landscape-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "note-edit",
+    "file": "before-jpg/webkit-light-landscape-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "note-edit-list",
+    "file": "before-jpg/webkit-light-landscape-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "state": "proposals",
+    "skipped": "TimeoutError: locator.tap: Timeout 30000ms exceeded."
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "overview",
+    "file": "before-jpg/webkit-light-landscape-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "board",
+    "file": "before-jpg/webkit-dark-landscape-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "todo",
+    "file": "before-jpg/webkit-dark-landscape-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "todo-select",
+    "file": "before-jpg/webkit-dark-landscape-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "column-click",
+    "file": "before-jpg/webkit-dark-landscape-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "sync",
+    "file": "before-jpg/webkit-dark-landscape-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "note-edit",
+    "file": "before-jpg/webkit-dark-landscape-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "note-edit-list",
+    "file": "before-jpg/webkit-dark-landscape-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "state": "proposals",
+    "skipped": "TimeoutError: locator.tap: Timeout 30000ms exceeded."
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "overview",
+    "file": "before-jpg/webkit-dark-landscape-overview.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "board",
+    "file": "before-jpg/chromium-light-pixel7-board.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "todo",
+    "file": "before-jpg/chromium-light-pixel7-todo.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "todo-select",
+    "file": "before-jpg/chromium-light-pixel7-todo-select.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "column-click",
+    "file": "before-jpg/chromium-light-pixel7-column-click.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "sync",
+    "file": "before-jpg/chromium-light-pixel7-sync.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "note-edit",
+    "file": "before-jpg/chromium-light-pixel7-note-edit.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "note-edit-list",
+    "file": "before-jpg/chromium-light-pixel7-note-edit-list.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "state": "proposals",
+    "skipped": "TimeoutError: locator.tap: Timeout 30000ms exceeded."
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "overview",
+    "file": "before-jpg/chromium-light-pixel7-overview.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "board",
+    "file": "before-jpg/chromium-dark-pixel7-board.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "todo",
+    "file": "before-jpg/chromium-dark-pixel7-todo.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "todo-select",
+    "file": "before-jpg/chromium-dark-pixel7-todo-select.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "column-click",
+    "file": "before-jpg/chromium-dark-pixel7-column-click.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "sync",
+    "file": "before-jpg/chromium-dark-pixel7-sync.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "note-edit",
+    "file": "before-jpg/chromium-dark-pixel7-note-edit.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "note-edit-list",
+    "file": "before-jpg/chromium-dark-pixel7-note-edit-list.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "state": "proposals",
+    "skipped": "TimeoutError: locator.tap: Timeout 30000ms exceeded."
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "overview",
+    "file": "before-jpg/chromium-dark-pixel7-overview.jpg"
+  }
+]
