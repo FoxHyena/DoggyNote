@@ -1,5 +1,7 @@
+import './ui/canvas-entry.css'
 import { Match, Switch, createSignal, onMount } from 'solid-js'
 import { DEFAULT_SIZE, newId, safeHref, type Board, type Card } from '@doggynote/core'
+import { BoardIconSvg } from './ui/icons.tsx'
 import { COPY } from '@doggynote/theme'
 import { api } from './state/api.ts'
 import { checkSession, user } from './state/session.ts'
@@ -9,7 +11,7 @@ import { createTheme } from './theme.ts'
 import { IMAGE_TYPES } from './canvas/paste.ts'
 
 // Quick capture (#/capture): a tiny window that drops a note, link or image
-// into your Toy box. The Mac app opens it with ⌃⌥Space from anywhere. It
+// into your Inbox. The Mac app opens it with ⌃⌥Space from anywhere. It
 // writes straight to the server (no local board state), then tells the main
 // window to sync.
 
@@ -155,7 +157,7 @@ export function Capture() {
             }}
           />
           <div class="capture-status" data-testid="capture-status" data-state={state()}>
-            {state() === 'saved' ? `🐾 Saved to your ${COPY.unsorted}` : state() === 'error' ? message() : 'Enter to save · Esc to close'}
+            {state() === 'saved' ? <><BoardIconSvg icon="paw" size={16} /> Saved to your {COPY.unsorted}</> : state() === 'error' ? message() : 'Enter to save · Esc to close'}
           </div>
         </Match>
       </Switch>

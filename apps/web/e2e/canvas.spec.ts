@@ -1,3 +1,5 @@
+import { openParentBoard } from './helpers.ts'
+import { waitForSync } from './helpers.ts'
 import { expect, test } from '@playwright/test'
 import { MOD, addNote, at, camera, canvasBox, cardByText, cards, clickEmpty, dragBy, freshBoard } from './helpers.ts'
 
@@ -127,7 +129,7 @@ test.describe('zoomed out (canvas overview)', () => {
     expect(dx).toBeCloseTo(30 / zoom, -1)
   })
 
-  test('clicking a board tile opens it', async ({ page }) => {
+  test('double-clicking a board tile opens it', async ({ page }) => {
     await page.getByTestId('tool-board').click()
     await page.keyboard.type('Far kennel')
     await page.keyboard.press('Enter')
@@ -136,7 +138,7 @@ test.describe('zoomed out (canvas overview)', () => {
     const cam0 = await camera(page)
     await zoomOutFar(page)
     const c = await cardCentre(page, box, cam0)
-    await page.mouse.click(c.x, c.y)
+    await page.mouse.dblclick(c.x, c.y)
     await expect(page.getByTestId('board-name')).toHaveText('Far kennel')
   })
 })
@@ -299,9 +301,9 @@ test.describe('Fetch (⌘K)', () => {
     await page.getByTestId('tool-board').click()
     await page.keyboard.type('Toy chest')
     await page.keyboard.press('Enter')
-    await cardByText(page, 'Toy chest').locator('.board-tile').click()
+    await cardByText(page, 'Toy chest').locator('.board-tile').dblclick()
     await addNote(page, `the ${unique} duck`, 0.8, 0.8)
-    await page.getByTestId('crumb').first().click()
+    await openParentBoard(page, 'first')
     await expect(page.getByTestId('board-name')).not.toHaveText('Toy chest')
 
     await page.keyboard.press(`${MOD}+k`)
@@ -330,10 +332,10 @@ test.describe('Fetch (⌘K)', () => {
 
 test('reopening the app returns to the last board', async ({ page }) => {
   const name = await page.getByTestId('board-name').textContent()
-  await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
+  await waitForSync(page)
   await page.goto('/') // no hash: like relaunching the desktop app
   await expect(page.getByTestId('board-name')).toHaveText(name!)
-  await page.getByTestId('crumb').first().click()
+  await openParentBoard(page, 'first')
   await page.goto('/')
   await expect(page.getByTestId('board-name')).toHaveText('Doghouse')
 })

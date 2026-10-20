@@ -1,10 +1,10 @@
+import './navigation.css'
 import { For, Show, createMemo, createSignal, type JSX } from 'solid-js'
 import { HOME_BOARD_ID, type Board, type Id } from '@doggynote/core'
-import { COPY } from '@doggynote/theme'
+import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
-import { boardId, camera, openBoard } from '../state/ui.ts'
-import { zoomBy, zoomTo, zoomToFit } from '../canvas/Canvas.tsx'
-import { Icon, ToolIcons } from './icons.tsx'
+import { boardId, openBoard } from '../state/ui.ts'
+import { installMenu } from './menu.ts'
 
 export function breadcrumbs(id: Id, root: Id = HOME_BOARD_ID): Board[] {
   const out: Board[] = []
@@ -19,12 +19,15 @@ export function breadcrumbs(id: Id, root: Id = HOME_BOARD_ID): Board[] {
   return out
 }
 
-const titleOf = (b: Board) => (b.id === HOME_BOARD_ID ? b.title || COPY.home : b.title || 'Untitled board')
+const titleOf = (b: Board) => boardDisplayTitle(b, b.id === HOME_BOARD_ID ? COPY.home : 'Untitled board')
 
-export function TopBar(props: { readOnly: boolean; root?: Id; right?: JSX.Element }) {
+export function TopBar(props: { readOnly: boolean; root?: Id; left?: JSX.Element; status?: JSX.Element; permission?: JSX.Element; right?: JSX.Element }) {
   const crumbs = createMemo(() => breadcrumbs(boardId(), props.root))
   const current = () => doc.getBoard(boardId())
   const [renaming, setRenaming] = createSignal(false)
+  const [ancestorsOpen, setAncestorsOpen] = createSignal(false)
+  let ancestorRoot!: HTMLDivElement, ancestorTrigger!: HTMLButtonElement
+  installMenu(ancestorsOpen, () => setAncestorsOpen(false), () => ancestorRoot, () => ancestorTrigger)
 
   function rename(value: string) {
     setRenaming(false)
@@ -35,8 +38,13 @@ export function TopBar(props: { readOnly: boolean; root?: Id; right?: JSX.Elemen
 
   return (
     <header class="topbar" data-tauri-drag-region>
-      <nav class="crumbs" aria-label="Breadcrumbs" data-testid="breadcrumbs">
-        <For each={crumbs().slice(0, -1)}>
+      <div class="topbar-left">{props.left}<div class="board-heading">
+      <nav class="crumbs" classList={{ 'deep-crumbs': crumbs().length > 2 }} aria-label="Breadcrumbs" data-testid="breadcrumbs">
+        <Show when={crumbs().length > 1}><div class="ancestor-menu zoom" ref={ancestorRoot}>
+          <button ref={ancestorTrigger} class="crumb" aria-label="Parent boards" data-testid="parent-boards" aria-expanded={ancestorsOpen()} onClick={() => setAncestorsOpen(!ancestorsOpen())}>…</button>
+          <Show when={ancestorsOpen()}><div class="menu nav-menu" aria-label="Parent boards"><For each={crumbs().slice(0,-1)}>{(b) => <button class="menu-item" onClick={() => { openBoard(b.id); setAncestorsOpen(false); queueMicrotask(() => (ancestorTrigger.isConnected ? ancestorTrigger : document.querySelector<HTMLButtonElement>('[data-testid=board-name]'))?.focus()) }}>{titleOf(b)}</button>}</For></div></Show>
+        </div><span class="crumb-sep ancestor-menu">/</span></Show>
+        <div class="ancestor-crumbs"><For each={crumbs().slice(0, -1)}>
           {(b) => (
             <>
               <button class="crumb" data-testid="crumb" onClick={() => openBoard(b.id)}>
@@ -45,7 +53,7 @@ export function TopBar(props: { readOnly: boolean; root?: Id; right?: JSX.Elemen
               <span class="crumb-sep">/</span>
             </>
           )}
-        </For>
+        </For></div>
         <Show when={current()}>
           <Show
             when={renaming()}
@@ -53,8 +61,8 @@ export function TopBar(props: { readOnly: boolean; root?: Id; right?: JSX.Elemen
               <button
                 class="crumb current"
                 data-testid="board-name"
-                title={props.readOnly ? undefined : 'Rename board'}
-                onClick={() => !props.readOnly && setRenaming(true)}
+                title={props.readOnly || current()!.id.startsWith('toybox:') ? undefined : 'Rename board'}
+                onClick={() => !props.readOnly && !current()!.id.startsWith('toybox:') && setRenaming(true)}
               >
                 {titleOf(current()!)}
               </button>
@@ -73,51 +81,10 @@ export function TopBar(props: { readOnly: boolean; root?: Id; right?: JSX.Elemen
             />
           </Show>
         </Show>
-      </nav>
+      </nav>{props.status}{props.permission}</div></div>
       <div class="topbar-right">
-        <Show when={!props.readOnly}>
-          <button class="icon-btn" data-testid="undo" title="Undo (⌘Z)" disabled={!doc.canUndo()} onClick={() => doc.undo()}>
-            <Icon>{ToolIcons.undo()}</Icon>
-          </button>
-          <button class="icon-btn" data-testid="redo" title="Redo (⇧⌘Z)" disabled={!doc.canRedo()} onClick={() => doc.redo()}>
-            <Icon>{ToolIcons.redo()}</Icon>
-          </button>
-        </Show>
-        <ZoomControl />
         {props.right}
       </div>
     </header>
-  )
-}
-
-function ZoomControl() {
-  const [open, setOpen] = createSignal(false)
-  const pct = () => `${Math.round(camera().zoom * 100)}%`
-  const item = (label: string, kbd: string, fn: () => void) => (
-    <button
-      class="menu-item"
-      onClick={() => {
-        fn()
-        setOpen(false)
-      }}
-    >
-      <span>{label}</span>
-      <kbd>{kbd}</kbd>
-    </button>
-  )
-  return (
-    <div class="zoom">
-      <button class="icon-btn" data-testid="zoom" onClick={() => setOpen(!open())} aria-expanded={open()}>
-        {pct()}
-      </button>
-      <Show when={open()}>
-        <div class="menu" onPointerLeave={() => setOpen(false)}>
-          {item('Zoom in', '⌘=', () => zoomBy(1.25))}
-          {item('Zoom out', '⌘−', () => zoomBy(0.8))}
-          {item('Zoom to 100%', '⌘0', () => zoomTo(1))}
-          {item('Zoom to fit', '⌘1', zoomToFit)}
-        </div>
-      </Show>
-    </div>
   )
 }

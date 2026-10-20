@@ -1,8 +1,11 @@
+import { installCanvasPanel } from './canvasPanel.ts'
+import './canvas-entry.css'
 import { For, Show, createSignal } from 'solid-js'
 import { type Card, type Vec } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { moveCardTo } from '../state/actions.ts'
+import { canEditBoard } from '../state/access.ts'
 import { boardId, camera, viewport } from '../state/ui.ts'
 import { toyboxCards, toyboxId } from '../state/toybox.ts'
 import { addAnyFiles, addText } from '../canvas/paste.ts'
@@ -13,14 +16,15 @@ import { screenToWorld } from '@doggynote/core'
 
 export const [toyboxOpen, setToyboxOpen] = createSignal(false)
 
-/** Top-bar button: "Toy box · 3". */
+/** Top-bar button: "Inbox · 3". */
 export function ToyboxButton() {
   return (
     <button
       class="icon-btn"
       classList={{ on: toyboxOpen() }}
       data-testid="toybox-button"
-      title={`${COPY.unsorted}: your private inbox (⌃⌥Space to capture from anywhere in the Mac app)`}
+      aria-expanded={toyboxOpen()}
+      data-tooltip={`Your private ${COPY.unsorted}`}
       onClick={() => setToyboxOpen(!toyboxOpen())}
     >
       <Icon>{ToolIcons.inbox()}</Icon>
@@ -38,8 +42,11 @@ const centre = (): Vec => {
 }
 
 export function ToyboxPanel() {
+  let panel: HTMLElement | undefined
+  installCanvasPanel(toyboxOpen, () => setToyboxOpen(false), () => panel, () => document.querySelector('[data-testid="toybox-button"]'))
   const [draft, setDraft] = createSignal('')
   const [ghost, setGhost] = createSignal<{ card: Card; at: Vec } | null>(null)
+  const canPlace = () => canEditBoard(boardId())
 
   const add = () => {
     const tb = toyboxId()
@@ -70,7 +77,7 @@ export function ToyboxPanel() {
 
   /** Drag an item out of the panel onto the board (or into a column). */
   function startDrag(e: PointerEvent, card: Card) {
-    if (e.button !== 0) return
+    if (e.button !== 0 || !canPlace()) return
     const start = { x: e.clientX, y: e.clientY }
     let dragging = false
     const el = e.currentTarget as HTMLElement
@@ -83,7 +90,7 @@ export function ToyboxPanel() {
       el.removeEventListener('pointermove', move)
       el.removeEventListener('pointerup', up)
       setGhost(null)
-      if (!dragging) return
+      if (!dragging || !canPlace()) return
       // Dropped back on the panel: nothing to do.
       if ((document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement | null)?.closest('.toybox')) return
       const place = placementAt(ev.clientX, ev.clientY)
@@ -96,7 +103,7 @@ export function ToyboxPanel() {
 
   return (
     <Show when={toyboxOpen()}>
-      <aside class="trash toybox" data-testid="toybox-panel" aria-label={COPY.unsorted} onPaste={onPaste} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
+      <aside ref={panel} class="trash toybox" data-testid="toybox-panel" aria-label={COPY.unsorted} onPaste={onPaste} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
         <header class="trash-head">
           <h2>{COPY.unsorted}</h2>
           <button class="icon-btn" title="Close" onClick={() => setToyboxOpen(false)}>
@@ -104,6 +111,7 @@ export function ToyboxPanel() {
           </button>
         </header>
         <p class="toybox-sub">Only you can see this. Drag things onto a board when you're ready.</p>
+        <Show when={!canPlace()}><p class="toybox-sub" id="toybox-move-hint">You need editing access to place items on this board. You can still add to your {COPY.unsorted}.</p></Show>
         <div class="toybox-add">
           <textarea
             data-testid="toybox-input"
@@ -123,13 +131,15 @@ export function ToyboxPanel() {
           <ul class="trash-list">
             <For each={toyboxCards()}>
               {(c) => (
-                <li class="trash-item toybox-item" data-testid="toybox-item" onPointerDown={(e) => startDrag(e, c)} title="Drag onto the board">
+                <li class="trash-item toybox-item" data-testid="toybox-item" onPointerDown={(e) => startDrag(e, c)} title={canPlace() ? 'Drag onto the board' : 'You need editing access to place items on this board'} style={{ cursor: canPlace() ? 'grab' : 'default' }}>
                   <span class="trash-type">{c.type}</span>
                   <span class="trash-text">{describeCard(c)}</span>
                   <button
                     class="bar-btn"
                     data-testid="toybox-place"
-                    title="Put it in the middle of this board"
+                    disabled={!canPlace()}
+                    aria-describedby={!canPlace() ? 'toybox-move-hint' : undefined}
+                    title={canPlace() ? 'Put it in the middle of this board' : 'You need editing access to this board'}
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={() => moveCardTo(c.id, boardId(), { at: centre() })}
                   >

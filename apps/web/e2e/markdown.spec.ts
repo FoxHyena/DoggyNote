@@ -1,3 +1,6 @@
+import { pullAllObjects } from './helpers.ts'
+import { postSync } from './helpers.ts'
+import { waitForSync } from './helpers.ts'
 import { expect, test, type Page } from '@playwright/test'
 import { MOD, at, cardByText, clickEmpty, freshBoard } from './helpers.ts'
 
@@ -9,8 +12,8 @@ const boardOf = (page: Page) => decodeURIComponent(page.url().split('#/b/')[1])
 
 /** The markdown the server holds for the note on this board containing `text`. */
 async function serverMarkdown(page: Page, text: string): Promise<string> {
-  await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
-  const { objects } = (await (await page.request.get('/api/sync?since=0')).json()) as {
+  await waitForSync(page)
+  const { objects } = (await pullAllObjects(page.request)) as {
     objects: { boardId?: string; type?: string; content?: { md?: string } }[]
   }
   const note = objects.find((o) => o.boardId === boardOf(page) && o.type === 'note' && o.content?.md?.includes(text))
@@ -74,7 +77,7 @@ test('ticking a task in the rendered note edits its markdown, undoably', async (
 
   // And it survives a reload.
   await note.getByTestId('task-check').nth(1).check()
-  await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
+  await waitForSync(page)
   await page.reload()
   await expect(cardByText(page, 'Chores').locator('li.task.done')).toHaveText('brush fur')
 })
@@ -125,7 +128,7 @@ test('old-format notes still show, and get converted to markdown', async ({ page
       },
     },
   }
-  expect((await page.request.post('/api/sync', { data: { changes: [{ id, patch: legacy }] } })).ok()).toBe(true)
+  expect((await postSync(page.request, { data: { changes: [{ id, patch: legacy }] } })).ok()).toBe(true)
   await page.reload()
   await expect(page.getByTestId('canvas')).toBeVisible()
   // The pull can take several pages on a busy server; re-fit until the card has arrived.

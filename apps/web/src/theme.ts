@@ -23,7 +23,7 @@ export function installThemeCss() {
 
 /** Theme mode signal. Applies `data-theme` on <html> and follows the OS while on "system". */
 export function createTheme() {
-  const [mode, setMode] = createSignal<ThemeMode>(readStored())
+  const [mode, setModeSignal] = createSignal<ThemeMode>(readStored())
 
   const apply = () => {
     const t = resolveTheme(mode(), media().matches)
@@ -36,16 +36,16 @@ export function createTheme() {
   mq.addEventListener('change', apply)
   onCleanup(() => mq.removeEventListener('change', apply))
 
-  const cycle = () => {
-    const m = nextMode(mode())
-    setMode(m)
+  const setMode = (next: ThemeMode) => {
+    setModeSignal(next)
     try {
-      localStorage.setItem(THEME_STORAGE_KEY, m)
+      localStorage.setItem(THEME_STORAGE_KEY, next)
     } catch {
       // Private mode or blocked storage: the toggle still works for this session.
     }
     apply()
   }
+  const cycle = () => setMode(nextMode(mode()))
 
-  return { mode, cycle }
+  return { mode, setMode, cycle }
 }

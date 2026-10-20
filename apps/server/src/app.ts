@@ -4,6 +4,8 @@ import { auth, requireUser, users } from './auth.ts'
 import { sync } from './sync.ts'
 import { assets } from './assets.ts'
 import { shares } from './shares.ts'
+import { agents } from './agents.ts'
+import { accessRoutes } from './access.ts'
 import { desktop } from './desktop.ts'
 import { isFetchableUrl, proxyImage, unfurl } from './unfurl.ts'
 
@@ -34,7 +36,7 @@ app.use('*', async (c, next) => {
       headers: {
         'access-control-allow-origin': origin,
         'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'access-control-allow-headers': 'authorization, content-type',
+        'access-control-allow-headers': 'authorization, content-type, x-doggynote-protocol',
         'access-control-max-age': '86400',
         vary: 'origin',
       },
@@ -71,10 +73,16 @@ app.post('/diag', async (c) => {
 app.route('/auth', auth)
 app.route('/', assets)
 app.route('/', shares)
+app.route('/', accessRoutes)
+app.route('/', agents)
 app.route('/', desktop)
 
 const authed = new Hono<AppEnv>()
 authed.use('*', requireUser)
+authed.use('/sync', async (c, next) => {
+  if (c.req.header('x-doggynote-protocol') !== '2') return c.json({ error: 'Update DoggyNote to use private boards. Your local changes are preserved.', updateRequired: true }, 426)
+  await next()
+})
 authed.route('/', users)
 authed.route('/', sync)
 authed.get('/unfurl', async (c) => {

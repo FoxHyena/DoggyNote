@@ -1,0 +1,58 @@
+.agents-dialog { --agents-padding: 24px; width: min(680px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; padding: var(--agents-padding); overscroll-behavior: contain; }
+.agents-dialog p:not(.form-error) { color: var(--dn-text-muted); line-height: 1.5; }
+.agents-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; position: sticky; top: calc(0px - var(--agents-padding)); z-index: 1; background: var(--dn-panel); margin: calc(0px - var(--agents-padding)) calc(0px - var(--agents-padding)) 0; padding: calc(var(--agents-padding) + 4px) var(--agents-padding) 12px; }
+.agents-heading h2 { min-width: 0; margin: 0; font-size: 16px; overflow-wrap: anywhere; }
+.agents-heading .icon-btn { flex-shrink: 0; }
+.agents-form { display: grid; gap: 16px; margin: 20px 0; }
+.agents-form > label, .agents-preview-controls label { display: grid; gap: 6px; }
+.agents-form input:not([type=checkbox]), .agents-form select, .agents-preview-controls select, .agents-secret textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--dn-border); background: var(--dn-card); color: var(--dn-text); border-radius: 8px; padding: 10px; font: inherit; }
+.agents-form fieldset { min-width: 0; margin: 0; border: 1px solid var(--dn-border); border-radius: 10px; padding: 12px; }
+.agents-board-options { display: grid; gap: 10px; max-height: 160px; overflow: auto; }
+.agents-board-options label { display: flex; align-items: center; min-height: 36px; gap: 8px; overflow-wrap: anywhere; font-size: 13px; line-height: 1.5; }
+.agents-board-options input { flex-shrink: 0; accent-color: var(--dn-accent); }
+.agents-hint, .agents-connection small, .agents-proposal-choice small { font-size: 12px; color: var(--dn-text-muted); }
+.agents-secret { background: var(--dn-card-hover); border: 1px solid var(--dn-border); padding: 16px; border-radius: 12px; }
+.agents-secret textarea { resize: vertical; font-family: monospace; }
+.agents-connection { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--dn-border); }
+.agents-connection > div { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.agents-connection > button { flex-shrink: 0; }
+.agents-connection small { display: block; margin-top: 5px; }
+.agents-setup { margin-top: 20px; }
+.agents-setup summary, .agents-changes summary { cursor: pointer; }
+.agents-setup pre { overflow: auto; font-size: 12px; }
+.agents-review { width: min(1100px, calc(100vw - 32px)); }
+.agents-review-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 20px; }
+.agents-proposal-list { display: grid; align-content: start; gap: 8px; }
+.agents-proposal-choice { display: grid; gap: 6px; width: 100%; text-align: left; overflow-wrap: anywhere; background: var(--dn-card); color: var(--dn-text); border: 1px solid var(--dn-border); border-radius: 8px; padding: 12px; cursor: pointer; }
+.agents-proposal-choice.on { border-color: var(--dn-accent); }
+.agents-proposal-detail { min-width: 0; }
+.agents-proposal-detail h3 { margin-top: 0; font-size: 15px; line-height: 1.4; overflow-wrap: anywhere; }
+.agents-preview-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.agents-preview-controls [aria-pressed=true] { outline: 1px solid var(--dn-accent); }
+.agents-preview { box-sizing: border-box; width: 100%; border: 1px solid var(--dn-border); border-radius: 12px; background: var(--dn-bg); min-height: 200px; max-height: 48vh; overflow: auto; }
+.agents-preview > div { width: 100%; overflow: hidden; }
+.agents-preview > p { padding: 16px; }
+.agents-preview-world { position: relative; transform-origin: top left; pointer-events: none; }
+.agents-preview-lines { position: absolute; inset: 0; }
+.agents-preview-lines line { stroke: var(--dn-text-muted); stroke-width: 2; }
+.agents-preview-card { position: absolute; box-sizing: border-box; background: var(--agent-card-bg); color: var(--agent-card-text); border: 1px solid var(--dn-border); border-radius: 8px; padding: 12px; overflow: hidden; max-height: 600px; }
+.agents-preview-card small { font-size: 10px; text-transform: uppercase; opacity: .75; }
+.agents-preview-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.4; }
+.agents-preview-card .rich p { color: inherit; }
+.agents-preview-card img { max-width: 100%; max-height: 180px; object-fit: contain; }
+.agents-preview-column { background: var(--dn-panel); }
+.agents-preview-column > .agents-preview-text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.agents-changes { margin: 16px 0; }
+.agents-changes pre { max-height: 200px; overflow: auto; white-space: pre-wrap; font-size: 11px; background: var(--dn-bg); padding: 12px; border-radius: 8px; }
+.agents-decisions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin: 16px 0 0; }
+@media (max-width: 700px) { .agents-review-layout { grid-template-columns: 1fr; } .agents-proposal-list { max-height: 140px; overflow: auto; } .agents-dialog { --agents-padding: 16px; } }
+
+.agents-dialog :is(button, input:not([type=checkbox]), select, summary) { min-height: 36px; }
+.agents-dialog summary { padding-block: 8px; line-height: 20px; }
+.agents-dialog p { font-size: 13px; overflow-wrap: anywhere; }
+.agents-preview-controls label { flex: 1 1 180px; min-width: 0; font-size: 12px; }
+.agents-decisions .agents-hint { flex: 1 1 200px; line-height: 1.5; }
+.agents-secret > button { margin-top: 8px; }
+@media (pointer: coarse) {
+  .agents-dialog :is(button, input:not([type=checkbox]), select, summary), .agents-board-options label { min-height: 44px; }
+}

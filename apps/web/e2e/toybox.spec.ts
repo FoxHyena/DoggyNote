@@ -1,5 +1,18 @@
+import { pullAllObjects } from './helpers.ts'
+import { postSync } from './helpers.ts'
+import { waitForSync } from './helpers.ts'
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test'
 import { MOD, addNote, at, cardByText, freshBoard } from './helpers.ts'
+
+// Extra devices are outside Playwright's context fixture; close them after
+// every test so old pages cannot keep polling in later tests.
+const toyboxContexts = new Set<BrowserContext>()
+test.afterEach(async () => {
+  const contexts = [...toyboxContexts]
+  toyboxContexts.clear()
+  await Promise.all(contexts.map((context) => context.close()))
+})
+
 
 // The Toy box is a personal inbox. These tests check privacy at the server:
 // what another signed-in person (fido) actually receives, not just what the UI shows.
@@ -8,6 +21,7 @@ const uniq = (s: string) => `${s} ${Math.random().toString(36).slice(2, 7)}`
 
 async function fido(browser: Browser): Promise<BrowserContext> {
   const ctx = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+  toyboxContexts.add(ctx)
   const res = await ctx.request.post('/api/auth/login', { data: { username: 'fido', password: 'fetchfetch' } })
   expect(res.ok()).toBe(true)
   return ctx
@@ -22,7 +36,7 @@ async function addToToybox(page: Page, text: string) {
   await page.getByTestId('toybox-input').fill(text)
   await page.getByTestId('toybox-input').press('Enter')
   await expect(page.getByTestId('toybox-item').filter({ hasText: text })).toBeVisible()
-  await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
+  await waitForSync(page)
 }
 
 async function pngBytes(page: Page): Promise<Buffer> {
@@ -50,14 +64,14 @@ test('nobody else ever receives your Toy box', async ({ page, browser }) => {
   expect(body, 'raw sync data must not contain the text').not.toContain(secret)
   const { objects } = JSON.parse(body) as { objects: { id: string; hidden?: boolean; boardId?: string }[] }
   const mine = objects.filter((o) => o.id === `toybox:${me}`)
-  expect(mine.length && mine.every((o) => o.hidden && Object.keys(o).length === 2), 'only stubs').toBe(true)
+  expect(mine.every((o) => o.hidden && Object.keys(o).length === 2), 'omitted from snapshots, or only privacy stubs in deltas').toBe(true)
   expect(objects.some((o) => o.boardId === `toybox:${me}`), 'no card bodies').toBe(false)
 
   // fido can't write into rex's Toy box, edit something in it, or share it.
-  const card = (await (await page.request.get('/api/sync?since=0')).json()).objects.find((o: { boardId?: string }) => o.boardId === `toybox:${me}`)
-  expect((await other.request.post('/api/sync', { data: { changes: [{ id: card.id, patch: { x: 5 } }] } })).status()).toBe(403)
+  const card = (await pullAllObjects(page.request)).objects.find((o: { boardId?: string }) => o.boardId === `toybox:${me}`)
+  expect((await postSync(other.request, { data: { changes: [{ id: card.id, patch: { x: 5 } }] } })).status()).toBe(403)
   expect(
-    (await other.request.post('/api/sync', { data: { changes: [{ id: crypto.randomUUID(), patch: { kind: 'card', boardId: `toybox:${me}`, type: 'note', content: { md: 'sneaky' } } }] } })).status(),
+    (await postSync(other.request, { data: { changes: [{ id: crypto.randomUUID(), patch: { kind: 'card', boardId: `toybox:${me}`, type: 'note', content: { md: 'sneaky' } } }] } })).status(),
   ).toBe(403)
   expect((await other.request.post('/api/shares', { data: { boardId: `toybox:${me}` } })).status()).toBe(400)
 })
@@ -71,7 +85,7 @@ test('images in a Toy box are private too', async ({ page, browser }) => {
     expect((await page.request.put(`/api/assets/${assetId}/${size}`, { data: png, headers: { 'content-type': 'image/png' } })).ok()).toBe(true)
   }
   const id = crypto.randomUUID()
-  await page.request.post('/api/sync', {
+  await postSync(page.request, {
     data: { changes: [{ id, patch: { id, kind: 'card', type: 'image', boardId: `toybox:${me}`, x: 0, y: 0, w: 260, h: 195, z: 1, color: 'none', content: { assetId, width: 64, height: 48 }, createdAt: Date.now() } }] },
   })
   expect((await page.request.get(`/api/assets/${assetId}/thumb`)).status(), 'owner').toBe(200)
@@ -84,16 +98,17 @@ test('a card moved into a Toy box vanishes from other devices', async ({ page, b
   await freshBoard(page)
   const url = page.url()
   await addNote(page, goingPrivate)
-  await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
+  await waitForSync(page)
   const me = await rexId(page)
 
   const other = await fido(browser)
   const p2 = await other.newPage()
   await p2.goto(url)
+  await expect(p2.getByTestId('canvas')).toBeVisible({ timeout: 15_000 })
   await expect(cardByText(p2, goingPrivate)).toBeVisible()
 
-  const card = (await (await page.request.get('/api/sync?since=0')).json()).objects.find((o: { content?: { md?: string } }) => o.content?.md === goingPrivate)
-  expect((await page.request.post('/api/sync', { data: { changes: [{ id: card.id, patch: { boardId: `toybox:${me}` } }] } })).ok()).toBe(true)
+  const card = (await pullAllObjects(page.request)).objects.find((o: { content?: { md?: string } }) => o.content?.md === goingPrivate)
+  expect((await postSync(page.request, { data: { changes: [{ id: card.id, patch: { boardId: `toybox:${me}` } }] } })).ok()).toBe(true)
 
   // Keep syncing until a pull that started after the move has landed.
   await expect(async () => {
@@ -165,6 +180,7 @@ test('quick capture saves into the Toy box', async ({ page }) => {
 
 test('quick capture notices you signed in after it opened', async ({ browser }) => {
   const ctx = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+  toyboxContexts.add(ctx)
   const page = await ctx.newPage()
   await page.goto('/#/capture')
   await expect(page.getByTestId('capture')).toContainText('Sign in')
@@ -181,7 +197,7 @@ test('comments on Toy box cards are private too', async ({ page, browser }) => {
   const card = crypto.randomUUID()
   const msg = crypto.randomUUID()
   const secret = uniq('private remark')
-  const r = await page.request.post('/api/sync', {
+  const r = await postSync(page.request, {
     data: {
       changes: [
         { id: card, patch: { id: card, kind: 'card', type: 'note', boardId: `toybox:${me}`, x: 0, y: 0, w: 260, h: 60, z: 1, color: 'none', content: { md: 'mine' }, createdAt: Date.now() } },
@@ -193,5 +209,6 @@ test('comments on Toy box cards are private too', async ({ page, browser }) => {
   const other = await fido(browser)
   const body = await (await other.request.get('/api/sync?since=0')).text()
   expect(body).not.toContain(secret)
-  expect(JSON.parse(body).objects.find((o: { id: string }) => o.id === msg)).toEqual({ id: msg, hidden: true })
+  const received = JSON.parse(body).objects.find((o: { id: string }) => o.id === msg)
+  expect(received === undefined || (received.hidden === true && Object.keys(received).length === 2)).toBe(true)
 })

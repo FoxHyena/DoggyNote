@@ -7,6 +7,44 @@
 const SERVICE: &str = "dog.doggynote.app";
 const ACCOUNT: &str = "session";
 
+use std::sync::atomic::{AtomicBool, Ordering};
+use tauri::{Emitter, Manager};
+
+#[derive(Default)]
+struct SaveBeforeExit {
+  ready: AtomicBool,
+  pending: AtomicBool,
+  listening: AtomicBool,
+}
+
+#[tauri::command]
+fn exit_save_ready(app: tauri::AppHandle) {
+  app.state::<SaveBeforeExit>().listening.store(true, Ordering::SeqCst);
+}
+
+#[tauri::command]
+fn finish_exit_save(app: tauri::AppHandle, allow: bool) {
+  let state = app.state::<SaveBeforeExit>();
+  state.pending.store(false, Ordering::SeqCst);
+  if allow {
+    state.ready.store(true, Ordering::SeqCst);
+    app.exit(0);
+  }
+}
+
+fn request_exit_save(app: &tauri::AppHandle) {
+  let state = app.state::<SaveBeforeExit>();
+  if !state.pending.swap(true, Ordering::SeqCst) {
+    if let Some(window) = app.get_webview_window("main") {
+      let _ = window.show();
+      let _ = window.set_focus();
+      if window.emit("save-before-exit", ()).is_err() {
+        state.pending.store(false, Ordering::SeqCst);
+      }
+    }
+  }
+}
+
 fn entry() -> Result<keyring::Entry, String> {
   keyring::Entry::new(SERVICE, ACCOUNT).map_err(|e| e.to_string())
 }
@@ -67,14 +105,35 @@ async fn save_png(app: tauri::AppHandle, request: tauri::ipc::Request<'_>) -> Re
   Ok(Some(path.display().to_string()))
 }
 
+#[tauri::command]
+async fn save_recovery(app: tauri::AppHandle, json: String) -> Result<Option<String>, String> {
+  use tauri_plugin_dialog::DialogExt;
+  let Some(path) = app.dialog().file().add_filter("JSON recovery copy", &["json"])
+    .set_file_name("doggynote-unsynced-changes.json").blocking_save_file() else { return Ok(None); };
+  let path = path.into_path().map_err(|e| e.to_string())?;
+  std::fs::write(&path, json.as_bytes()).map_err(|e| e.to_string())?;
+  Ok(Some(path.display().to_string()))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
+    .manage(SaveBeforeExit::default())
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_updater::Builder::new().build())
     .plugin(tauri_plugin_process::init())
     .plugin(tauri_plugin_dialog::init())
-    .invoke_handler(tauri::generate_handler![get_token, set_token, clear_token, haptic, save_png])
+    .invoke_handler(tauri::generate_handler![get_token, set_token, clear_token, haptic, save_png, save_recovery, exit_save_ready, finish_exit_save])
+    .on_window_event(|window, event| {
+      if window.label() != "main" { return; }
+      if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+        let state = window.state::<SaveBeforeExit>();
+        if state.listening.load(Ordering::SeqCst) && !state.ready.load(Ordering::SeqCst) {
+          api.prevent_close();
+          request_exit_save(window.app_handle());
+        }
+      }
+    })
     .setup(|app| {
       // ⌃⌥Space from anywhere: toggle the quick-capture window (Toy box).
       #[cfg(desktop)]
@@ -114,6 +173,16 @@ pub fn run() {
       }
       Ok(())
     })
-    .run(tauri::generate_context!())
-    .expect("error while building tauri application");
+    .build(tauri::generate_context!())
+    .expect("error while building tauri application")
+    .run(|app, event| {
+      if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
+        let state = app.state::<SaveBeforeExit>();
+        // Updater restarts explicitly save before requesting a coded exit.
+        if code.is_none() && state.listening.load(Ordering::SeqCst) && !state.ready.load(Ordering::SeqCst) {
+          api.prevent_exit();
+          request_exit_save(app);
+        }
+      }
+    });
 }

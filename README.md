@@ -29,16 +29,21 @@ It's designed to stay fast on big boards. The Mac app is a small native app (abo
 - **Dot grid and snap to grid** (⌘'): cards land on the grid when you move or resize them, with a trackpad tick in the Mac app.
 - **Colours**, multi-select, undo/redo, and **Buried bones** (trash) to dig things back up.
 - **Fetch** (⌘K) searches every board.
+- **Select before opening**: click a board to select it, Enter to rename, and double-click or choose Open to go inside. View-only links open boards with one click.
 
 **Working together**
 - **Live sync** between people and devices, merged field by field, so two people editing different parts of a card don't overwrite each other.
 - **Works offline.** Edits wait on your device and sync when you're back.
 - **Comment threads** on any card: replies, resolve/reopen, and edit or delete your own messages.
 - **View-only share links**: anyone can look, nobody can edit. Turn a link off at any time.
+- **Private personal boards**, with inherited access for nested boards. Share view or edit access by username, or send a seven-day editing invitation that requires sign-in. Link revocation removes access granted through that link.
+- **Account invitations** from the admin People dashboard: single-use signup links, password recovery and session revocation. New accounts start with their own personal home.
+- **Quiet save status**: changes save locally and sync quickly without flashing on every edit. Open Save status for pending work, retry and recovery copies if board access changes.
+- **Agent connections**: a scoped, revocable [local MCP connector](docs/mcp-setup.md) lets agents read boards and propose changes. Preview, approve, reject or reverse their edits inside the app.
 
 **Just for you**
-- **Toy box**: a private inbox only you can see. Jot something down now and drag it onto a board later. Privacy is enforced by the server, not just hidden in the app.
-- **Quick capture** (⌃⌥Space in the Mac app): a little window from anywhere that drops a thought, link or image into your Toy box.
+- **Inbox**: a private place only you can see. Jot something down now and drag it onto a board later. Privacy is enforced by the server, not just hidden in the app.
+- **Quick capture** (⌃⌥Space in the Mac app): a little window from anywhere that drops a thought, link or image into your Inbox.
 
 **Getting things out**
 - **Export as PNG**: the whole board or a selection, at 1× or 2×, on the canvas colour or a transparent background.
@@ -54,14 +59,16 @@ It's designed to stay fast on big boards. The Mac app is a small native app (abo
 |---|---|
 | <img src="docs/screenshots/board-light.png" alt="The same board in the light theme"> | <img src="docs/screenshots/comments.png" alt="A comment thread open beside a card"> |
 | **Light theme** | **Comment threads** on any card |
-| <img src="docs/screenshots/toybox.png" alt="The Toy box panel listing private notes and a link"> | <img src="docs/screenshots/export.png" alt="The Export as PNG menu"> |
-| **Toy box**, your private inbox | **Export** a board or selection as PNG |
+| <img src="docs/screenshots/toybox.png" alt="The Inbox panel listing private notes and a link"> | <img src="docs/screenshots/export.png" alt="The Export as PNG menu"> |
+| **Inbox**, your private capture space | **Export** a board or selection as PNG |
 
 ## Getting it
 
 - **Mac app:** [download the latest version](https://notepad.dog/api/desktop/download), open the disk image and drag DoggyNote to Applications. It's signed with our own certificate rather than an Apple one, so the first launch needs right-click → **Open**. After that it updates itself.
 - **Browser:** sign in at [notepad.dog](https://notepad.dog).
-- **Accounts:** there's no public sign-up. An admin adds people from the account menu.
+- **Accounts:** ask an admin for a signup invitation. Admins create and revoke invitations under **Account → Manage people**; public signup is disabled.
+
+Personal boards are private by default; nested boards inherit access from their parents. Server admins can administer ordinary boards, while each person's Inbox remains private even from other admins. Existing installations keep their shared home and current members when migrated; new accounts are not added to that legacy space automatically. Editing links can optionally offer signup when their owner enables it.
 
 ## How it's built
 
@@ -70,6 +77,7 @@ It's designed to stay fast on big boards. The Mac app is a small native app (abo
 | `apps/web` | The canvas app and the read-only share viewer. SolidJS + Vite, plain DOM cards, a canvas overview when zoomed far out |
 | `apps/desktop` | The Mac app: a Tauri 2 shell around the web app (Keychain sign-in, global shortcut, native save dialog, auto-update) |
 | `apps/server` | A Cloudflare Worker (Hono) with D1 (SQLite) for boards and R2 for images and files. Runs on the free tier |
+| `apps/mcp` | Local stdio MCP adapter using scoped DoggyNote credentials; changes require in-app approval |
 | `packages/core` | Pure TypeScript shared by app and server: geometry, connectors, undo, Markdown parsing |
 | `packages/theme` | Colour tokens for both themes, contrast tests, and the dog-themed wording |
 
@@ -85,6 +93,8 @@ pnpm test                         # unit tests
 pnpm test:e2e                     # Playwright end-to-end tests, WebKit + Chromium
 ```
 
-Every pull request runs typecheck, unit tests, the full end-to-end suite on WebKit and Chromium, and a performance check. Merging to `main` deploys the server and web app and publishes a signed Mac build that installed apps pick up on their own. [`CLAUDE.md`](CLAUDE.md) holds the project's rules: colours, performance, privacy and API compatibility.
+Every pull request runs typecheck, unit tests, the full end-to-end suite on WebKit and Chromium, and a performance check. Merging to `main` stages signed Mac artifacts, then deploys the server and web app. Each Worker advertises the staged updater matching its own version, so a new desktop is exposed together with its compatible server. The fallback updater and GitHub release publish after deployment. [`CLAUDE.md`](CLAUDE.md) holds the project's rules: colours, performance, privacy and API compatibility.
+
+For this access-control migration, deploy migrations `0005`–`0008` with the new Worker and web app. Desktop versions below `0.2.0`, and clients without sync protocol 2, are prompted to update; their pending local changes are retained. Migration, QA evidence and implementation progress are recorded in [the feature tracker](docs/feature-expansion-progress.md).
 
 The screenshots above come from a seeded demo board. To regenerate them, run `SHOTS=1 pnpm --filter web exec playwright test readme-shots --project=chromium`.

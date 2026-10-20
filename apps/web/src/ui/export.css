@@ -1,0 +1,31 @@
+.export-panel {
+  width: min(380px, calc(100vw - 24px));
+  max-height: calc(100dvh - 72px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.export-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.export-head strong { font-size: 14px; }
+.export-head .icon-btn { flex-shrink: 0; }
+.export-panel button { min-height: 36px; }
+.export-row { display: grid; grid-template-columns: 84px minmax(0, 1fr); align-items: center; gap: 12px; }
+.export-label { font-size: 13px; color: var(--dn-text-muted); }
+.export-panel .segmented { display: flex; min-width: 0; }
+.export-panel .segmented button { flex: 1; padding-inline: 8px; overflow-wrap: anywhere; }
+.export-error { margin: 0; font-size: 13px; line-height: 1.5; color: var(--dn-text); overflow-wrap: anywhere; }
+@media (max-width: 400px) {
+  .export-row { grid-template-columns: 1fr; gap: 8px; }
+}
+@media (pointer: coarse) {
+  .export-panel button { min-height: 44px; }
+}
+
+.segmented { display: inline-flex; border: 1px solid var(--dn-border); border-radius: 8px; overflow: hidden; }
+.segmented button { padding: 8px 10px; border: 0; background: transparent; color: var(--dn-text); font-size: 13px; }
+.segmented button + button { border-left: 1px solid var(--dn-border); }
+.segmented button.on { background: var(--dn-accent); color: var(--dn-accent-text); }
+.segmented button:disabled { color: var(--dn-text-muted); }

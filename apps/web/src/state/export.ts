@@ -1,5 +1,6 @@
 import { createSignal } from 'solid-js'
 import { union, type Id, type Rect } from '@doggynote/core'
+import { boardDisplayTitle } from '@doggynote/theme'
 import * as doc from './doc.ts'
 import { API_BASE, apiRaw, hasBearer } from './api.ts'
 import { isTauri } from './platform.ts'
@@ -141,7 +142,7 @@ export async function renderPng(opts: ExportOptions): Promise<Rendered> {
   }
 }
 
-const fileName = () => `${(doc.getBoard(boardId())?.title || 'board').replace(/[\\/:*?"<>|]+/g, '-').trim() || 'board'}.png`
+const fileName = () => `${boardDisplayTitle(doc.getBoard(boardId()), 'board').replace(/[\\/:*?"<>|]+/g, '-').trim() || 'board'}.png`
 
 /** Renders and saves: the native Save dialog in the Mac app, a download in the browser. */
 export async function exportPng(opts: ExportOptions): Promise<Rendered> {

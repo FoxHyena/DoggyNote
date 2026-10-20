@@ -1,0 +1,135 @@
+import { expect, test } from '@playwright/test'
+import { addNote, cardByText, waitForSync } from './helpers.ts'
+
+const name = () => `pup${Math.random().toString(36).slice(2, 10)}`
+const path = (url: string) => new URL(url).pathname
+
+async function dashboard(page: import('@playwright/test').Page) {
+  await page.goto('/')
+  await expect(page.getByTestId('canvas')).toBeVisible()
+  await page.getByTestId('account').click()
+  await page.getByTestId('manage-people').click()
+  await expect(page.getByRole('dialog', { name: 'Admin dashboard' })).toBeVisible()
+}
+
+test('admin invitation lets a recipient choose credentials, signs in, and cannot be reused', async ({ page, browser }) => {
+  const username = name()
+  await dashboard(page)
+  await page.getByRole('tab', { name: 'Invitations' }).click()
+  await page.getByRole('button', { name: 'Create invitation', exact: true }).click()
+  const url = await page.getByTestId('generated-account-link').inputValue()
+  const recipient = await browser.newContext({ baseURL: test.info().project.use.baseURL, storageState: { cookies: [], origins: [] } })
+  try {
+    const p = await recipient.newPage()
+    expect((await recipient.request.post('/api/auth/login', { data: { username: 'rex', password: 'goodboy123' } })).ok()).toBe(true)
+    await p.goto('/')
+    await expect(p.getByTestId('canvas')).toBeVisible()
+    const privateMarker = `previous-account-${username}`
+    await addNote(p, privateMarker)
+    await waitForSync(p)
+    await p.goto(path(url))
+    const form = p.getByTestId('signup-form')
+    await form.getByLabel('Username', { exact: true }).fill(username)
+    await form.getByLabel('Password', { exact: true }).fill('new-pup-password')
+    await form.getByLabel('Confirm password').fill('mismatched-password')
+    await form.getByRole('button', { name: 'Create account' }).click()
+    await expect(p.getByRole('alert')).toContainText('passwords do not match')
+    await form.getByLabel('Confirm password').fill('new-pup-password')
+    await form.getByRole('button', { name: 'Create account' }).click()
+    await expect(p.getByTestId('canvas')).toBeVisible()
+    await p.getByTestId('account').click()
+    await expect(p.locator('.account-menu-identity')).toHaveText(username)
+    await p.keyboard.press('Escape')
+    await expect(cardByText(p, privateMarker)).toHaveCount(0)
+    await p.goto(path(url))
+    await expect(p.getByRole('alert')).toContainText('already been used')
+    await page.getByRole('tab', { name: 'People', exact: true }).click()
+    await page.getByRole('tab', { name: 'Invitations', exact: true }).click()
+    // Dashboard refresh after reopening reflects redemption.
+    await page.getByRole('button', { name: 'Close', exact: true }).click()
+    await page.getByTestId('account').click()
+    await page.getByTestId('manage-people').click()
+    await page.getByRole('tab', { name: 'Invitations' }).click()
+    await expect(page.getByTestId('account-invitation').filter({ hasText: username })).toContainText('Accepted')
+  } finally { await recipient.close() }
+})
+
+test('revoked invitations and concurrent redemption cannot create extra accounts; username errors do not consume links', async ({ request, browser }) => {
+  const created = await request.post('/api/admin/invites', { data: {} })
+  expect(created.status()).toBe(201)
+  const { url, invitation } = await created.json()
+  const token = path(url).split('/').pop()
+  const anon = await browser.newContext({ baseURL: test.info().project.use.baseURL, storageState: { cookies: [], origins: [] } })
+  try {
+    expect((await anon.request.get('/api/admin/invites')).status()).toBe(401)
+    expect((await anon.request.post('/api/auth/signup', { data: { token, username: 'rex', password: 'another-password' } })).status()).toBe(409)
+    const attempts = await Promise.all([name(), name()].map((username) => anon.request.post('/api/auth/signup', { data: { token, username, password: 'another-password' } })))
+    expect(attempts.map((r) => r.status()).sort()).toEqual([200, 410])
+    expect((await anon.request.get('/api/admin/invites')).status()).toBe(403)
+    const revoked = await (await request.post('/api/admin/invites', { data: {} })).json()
+    expect((await request.delete(`/api/admin/invites/${revoked.invitation.id}`)).ok()).toBe(true)
+    const p = await anon.newPage()
+    await p.goto(path(revoked.url))
+    await expect(p.getByRole('alert')).toContainText('revoked')
+    expect((await anon.request.post('/api/auth/signup', { data: { token: path(revoked.url).split('/').pop(), username: name(), password: 'another-password' } })).status()).toBe(410)
+    expect((await request.get('/api/admin/invites')).ok()).toBe(true)
+    expect(invitation.id).toBeTruthy()
+  } finally { await anon.close() }
+})
+
+test('admin recovery resets password once, disconnects sessions and agent credentials, and session management revokes a device', async ({ page, request, browser }) => {
+  const username = name()
+  const created = await request.post('/api/users', { data: { username, password: 'original-password' } })
+  const { user } = await created.json()
+  const recipient = await browser.newContext({ baseURL: test.info().project.use.baseURL, storageState: { cookies: [], origins: [] } })
+  try {
+    expect((await recipient.request.post('/api/auth/login', { data: { username, password: 'original-password' } })).ok()).toBe(true)
+    const bearerLogin = await (await recipient.request.post('/api/auth/login', { data: { username, password: 'original-password', bearer: true } })).json()
+    const boardId = `recovery-${name()}`
+    expect((await recipient.request.post('/api/sync', { data: { changes: [{ id: boardId, patch: { kind: 'board', title: 'Recovery scope', parentId: null, icon: 'paw', color: 'none', createdAt: Date.now() } }] } })).ok()).toBe(true)
+    const credentialResponse = await recipient.request.post('/api/agent-connections', { data: { name: 'Recovery test', mode: 'propose', boardIds: [boardId], expiresInDays: 90 } })
+    expect(credentialResponse.status()).toBe(201)
+    const credential = await credentialResponse.json()
+    expect((await request.get('/api/agent/boards', { headers: { authorization: `Bearer ${credential.token}` } })).status()).toBe(200)
+    await dashboard(page)
+    const person = page.getByRole('tabpanel', { name: 'People' }).locator('li').filter({ hasText: username }).first()
+    await person.getByRole('button', { name: 'Reset password' }).click()
+    const resetUrl = await page.getByTestId('generated-account-link').inputValue()
+    const p = await recipient.newPage()
+    await p.goto(path(resetUrl))
+    const form = p.getByTestId('reset-form')
+    await form.getByLabel('New password', { exact: true }).fill('replacement-password')
+    await form.getByLabel('Confirm password').fill('replacement-password')
+    await form.getByRole('button', { name: 'Update password' }).click()
+    await expect(p.getByRole('heading', { name: 'Password updated' })).toBeVisible()
+    expect((await recipient.request.get('/api/admin/invites')).status()).toBe(401)
+    expect((await request.get('/api/me', { headers: { authorization: `Bearer ${bearerLogin.token}` } })).status()).toBe(401)
+    expect((await recipient.request.post('/api/auth/login', { data: { username, password: 'original-password' } })).status()).toBe(401)
+    expect((await recipient.request.post('/api/auth/login', { data: { username, password: 'replacement-password' } })).ok()).toBe(true)
+    expect((await recipient.request.post('/api/auth/reset', { data: { token: path(resetUrl).split('/').pop(), password: 'yet-another-password' } })).status()).toBe(410)
+    await person.getByRole('button', { name: 'Sessions', exact: true }).click()
+    const sessions = page.getByRole('region', { name: `Sessions for ${username}` })
+    await expect(sessions.getByRole('button', { name: 'Revoke session', exact: true })).toBeVisible()
+    page.once('dialog', (dialog) => dialog.accept())
+    await sessions.getByRole('button', { name: 'Revoke session', exact: true }).click()
+    await expect(sessions).toContainText('No active sessions')
+    expect((await recipient.request.get('/api/me')).status()).toBe(401)
+    expect((await request.get('/api/agent/boards', { headers: { authorization: `Bearer ${credential.token}` } })).status()).toBe(401)
+    expect(user.id).toBeTruthy()
+  } finally { await recipient.close() }
+})
+
+
+test('admin dashboard retains keyboard navigation and handles failed list requests without crashing', async ({ page }) => {
+  await page.route('**/api/users', (route) => route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Temporarily unavailable' }) }))
+  await dashboard(page)
+  await expect(page.getByRole('alert')).toContainText('Could not load people')
+  await page.getByRole('tab', { name: 'People', exact: true }).focus()
+  await page.keyboard.press('ArrowRight')
+  await expect(page.getByRole('tab', { name: 'Invitations' })).toBeFocused()
+  await expect(page.getByRole('tab', { name: 'Invitations' })).toHaveAttribute('aria-selected', 'true')
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog', { name: 'Admin dashboard' })).toHaveCount(0)
+  await expect(page.getByTestId('account')).toBeFocused()
+  await expect(page.getByTestId('canvas')).toBeVisible()
+})

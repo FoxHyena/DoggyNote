@@ -1,6 +1,7 @@
-import { For, Show, createMemo, createSignal, onMount } from 'solid-js'
+import './canvas-entry.css'
+import { For, Show, createMemo, createSignal, createEffect, onCleanup, onMount } from 'solid-js'
 import { HOME_BOARD_ID, mdToText, noteMarkdown, type Card, type Id } from '@doggynote/core'
-import { COPY } from '@doggynote/theme'
+import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { openBoard, select, setPaletteOpen, viewport } from '../state/ui.ts'
 import { animateCamera } from '../canvas/Canvas.tsx'
@@ -30,7 +31,7 @@ function cardText(c: Card): string {
   }
 }
 
-const boardTitle = (id: Id) => (id === HOME_BOARD_ID ? COPY.home : doc.getBoard(id)?.title || 'Untitled board')
+const boardTitle = (id: Id) => (id === HOME_BOARD_ID ? COPY.home : boardDisplayTitle(doc.getBoard(id)))
 
 export function search(query: string, limit = 30): Hit[] {
   const q = query.trim().toLowerCase()
@@ -38,7 +39,7 @@ export function search(query: string, limit = 30): Hit[] {
   const hits: Hit[] = []
   const idx = doc.index()
   for (const b of idx.boards) {
-    const t = (b.id === HOME_BOARD_ID ? COPY.home : b.title).toLowerCase()
+    const t = (b.id === HOME_BOARD_ID ? COPY.home : boardDisplayTitle(b)).toLowerCase()
     const at = t.indexOf(q)
     if (at >= 0) hits.push({ kind: 'board', id: b.id, boardId: b.id, title: boardTitle(b.id), snippet: b.parentId ? `in ${boardTitle(b.parentId)}` : '', score: at === 0 ? 3 : 2 })
   }
@@ -77,17 +78,26 @@ export function FetchPalette() {
   const [active, setActive] = createSignal(0)
   const hits = createMemo(() => search(q()))
   let input!: HTMLInputElement
+  const previousFocus = (document.activeElement && document.activeElement !== document.body ? document.activeElement : document.querySelector('[data-testid="open-fetch"]')) as HTMLElement | null
+  let results: HTMLUListElement | undefined
   onMount(() => input.focus())
+  onCleanup(() => queueMicrotask(() => { if (previousFocus?.isConnected) previousFocus.focus() }))
+  createEffect(() => {
+    const index = active()
+    queueMicrotask(() => results?.querySelectorAll('[role="option"]')[index]?.scrollIntoView({ block: 'nearest' }))
+  })
 
   const onKey = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') setPaletteOpen(false)
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setPaletteOpen(false) }
     else if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setActive((i) => Math.min(hits().length - 1, i + 1))
+      setActive((i) => Math.max(0, Math.min(hits().length - 1, i + 1)))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
       setActive((i) => Math.max(0, i - 1))
     } else if (e.key === 'Enter') {
+      e.preventDefault()
+      e.stopPropagation()
       const h = hits()[active()]
       if (h) jumpTo(h)
     }
@@ -95,12 +105,17 @@ export function FetchPalette() {
 
   return (
     <div class="dialog-backdrop fetch-backdrop" onPointerDown={(e) => e.target === e.currentTarget && setPaletteOpen(false)}>
-      <div class="fetch" role="dialog" aria-label={COPY.search} data-testid="fetch">
+      <div class="fetch" role="dialog" aria-modal="true" aria-label={COPY.search} data-testid="fetch" onKeyDown={(e) => { if (e.key === 'Escape') onKey(e) }}>
         <div class="fetch-input-row">
           <Icon size={18}>{ToolIcons.search()}</Icon>
           <input
             ref={input}
             class="fetch-input"
+            role="combobox"
+            aria-label={COPY.search}
+            aria-expanded={!!q().trim()}
+            aria-controls="fetch-results"
+            aria-activedescendant={hits()[active()] ? `fetch-hit-${active()}` : undefined}
             data-testid="fetch-input"
             placeholder={`${COPY.search}… boards, notes, to-dos, links`}
             value={q()}
@@ -110,14 +125,15 @@ export function FetchPalette() {
             }}
             onKeyDown={onKey}
           />
-          <kbd>esc</kbd>
+          <button class="fetch-close" aria-label="Close search" onClick={() => setPaletteOpen(false)}><kbd>esc</kbd></button>
         </div>
         <Show when={q().trim()}>
-          <ul class="fetch-results" role="listbox">
+          <ul ref={results} id="fetch-results" class="fetch-results" role="listbox" aria-label="Search results">
             <For each={hits()} fallback={<li class="fetch-empty">No bones found for “{q()}”.</li>}>
               {(h, i) => (
                 <li
                   role="option"
+                  id={`fetch-hit-${i()}`}
                   aria-selected={i() === active()}
                   class="fetch-hit"
                   classList={{ active: i() === active() }}

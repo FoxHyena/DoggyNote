@@ -11,7 +11,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'list',
   globalSetup: './e2e/global-setup.ts',
-  use: { baseURL: `http://localhost:${WEB_PORT}`, storageState: AUTH_FILE },
+  use: { baseURL: `http://localhost:${WEB_PORT}`, storageState: AUTH_FILE, extraHTTPHeaders: { 'x-doggynote-protocol': '2' } },
   // WebKit is what Tauri runs on macOS; Chromium is what most share-link viewers use.
   projects: [
     { name: 'webkit', use: { ...devices['Desktop Safari'], storageState: AUTH_FILE } },

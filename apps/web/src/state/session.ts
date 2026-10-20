@@ -55,19 +55,25 @@ export async function checkSession(): Promise<'ok' | 'offline' | 'anon'> {
 
 export async function login(username: string, password: string): Promise<User> {
   const res = await api<{ user: User; token?: string }>('/api/auth/login', { method: 'POST', json: { username, password, bearer: isTauri } })
+  return acceptSession(res)
+}
+
+/** Install a login or signup session and isolate any previous account's local cache. */
+export async function acceptSession(res: { user: User; token?: string }): Promise<User> {
+  clearAssetToken()
   if (res.token) {
     await tokenStore.set(res.token)
     setBearer(res.token)
   }
   // Another account's local copy must not leak into this one.
-  let last: string | null = null
+  let last: string | null = user()?.id ?? cachedUser()?.id ?? null
   try {
-    last = localStorage.getItem(LAST_USER_KEY)
+    last = localStorage.getItem(LAST_USER_KEY) ?? last
     localStorage.setItem(LAST_USER_KEY, res.user.id)
   } catch {
-    last = null
+    // Without a trustworthy previous identity, clear before opening this account.
   }
-  if (last && last !== res.user.id) await doc.resetLocal()
+  if (last !== res.user.id) await doc.resetLocal()
   setUser(res.user)
   cacheUser(res.user)
   return res.user

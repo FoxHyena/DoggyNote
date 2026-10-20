@@ -86,11 +86,13 @@ async function seed(page: Page): Promise<string> {
         }
       }
       for (let i = 0; i < objs.length; i += 200) {
-        const r = await fetch('/api/sync', {
+        const write = () => fetch('/api/sync', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ changes: objs.slice(i, i + 200).map((o) => ({ id: o.id, patch: o })) }),
         })
+        let r = await write()
+        for (let attempt = 0; r.status === 409 && attempt < 10; attempt++) r = await write()
         if (!r.ok) throw new Error(`seed ${r.status} ${await r.text()}`)
       }
       return boardId

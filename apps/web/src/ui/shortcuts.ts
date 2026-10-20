@@ -20,8 +20,19 @@ const isTyping = (t: EventTarget | null) => !!(t as HTMLElement | null)?.closest
 
 export function installShortcuts(opts: { readOnly: boolean }) {
   const onKey = (e: KeyboardEvent) => {
+    // Dialog buttons and selects must never rename or bury a selected canvas card.
+    if (document.querySelector('[role="dialog"], [role="alertdialog"]')) {
+      if (e.key === 'Backspace' && !isTyping(e.target)) e.preventDefault()
+      return
+    }
     const mod = e.metaKey || e.ctrlKey
     const typing = isTyping(e.target)
+
+    // Menu and toolbar buttons keep ordinary typing keys away from canvas edits.
+    if ((e.target as Element)?.closest?.('.menu, .topbar, .canvas-controls') && !mod) {
+      if (e.key === 'Backspace') e.preventDefault()
+      return
+    }
 
     // Zoom works everywhere, including the read-only viewer.
     if (mod && (e.key === '=' || e.key === '+')) return void (e.preventDefault(), zoomBy(1.25))

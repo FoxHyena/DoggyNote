@@ -66,7 +66,7 @@ function Message(props: { m: Comment; readOnly: boolean }) {
           data-testid="comment-edit-input"
           rows={3}
           value={draft()}
-          ref={(el) => queueMicrotask(() => el.focus())}
+          ref={(el) => queueMicrotask(() => el.focus({ preventScroll: true }))}
           onInput={(e) => setDraft(e.currentTarget.value)}
           onKeyDown={(e) => {
             if (isSend(e)) save()
@@ -147,7 +147,7 @@ export function CommentsPanel(props: { readOnly?: boolean }) {
               rows={3}
               placeholder={messages().length ? 'Reply… (⌘Enter to send)' : 'Start a thread… (⌘Enter to send)'}
               value={draft()}
-              ref={(el) => queueMicrotask(() => el.focus())}
+              ref={(el) => queueMicrotask(() => el.focus({ preventScroll: true }))}
               onInput={(e) => setDraft(e.currentTarget.value)}
               onKeyDown={(e) => {
                 if (isSend(e)) {

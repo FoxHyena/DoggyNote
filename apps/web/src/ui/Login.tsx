@@ -1,10 +1,11 @@
-import { Show, createSignal } from 'solid-js'
+import './canvas-entry.css'
+import { Show, createSignal, type JSX } from 'solid-js'
 import { COPY } from '@doggynote/theme'
 import { login, type User } from '../state/session.ts'
 import { ApiError } from '../state/api.ts'
 import { BoardIconSvg } from './icons.tsx'
 
-export function Login(props: { onLogin: (u: User) => void }) {
+export function Login(props: { onLogin: (u: User) => void; introduction?: JSX.Element }) {
   const [username, setUsername] = createSignal('')
   const [password, setPassword] = createSignal('')
   const [error, setError] = createSignal<string | null>(null)
@@ -31,6 +32,7 @@ export function Login(props: { onLogin: (u: User) => void }) {
         </div>
         <h1>{COPY.appName}</h1>
         <p class="login-sub">Sign in to fetch your boards.</p>
+        {props.introduction}
         <label>
           Username
           <input name="username" ref={(el) => queueMicrotask(() => el.focus())} autocomplete="username" autocapitalize="off" required value={username()} onInput={(e) => setUsername(e.currentTarget.value)} />

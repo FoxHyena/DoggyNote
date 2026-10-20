@@ -1,6 +1,8 @@
+import { installCanvasPanel } from './canvasPanel.ts'
+import './canvas-entry.css'
 import { For, Show, createMemo } from 'solid-js'
 import { mdToText, noteMarkdown, type Card } from '@doggynote/core'
-import { COPY } from '@doggynote/theme'
+import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { emptyTrash, restoreCard } from '../state/actions.ts'
 import { purgeComments, restoreComment } from '../state/comments.ts'
@@ -16,7 +18,7 @@ export function describeCard(c: Card): string {
       return t.title || t.items[0]?.text || 'To-do list'
     }
     case 'board':
-      return doc.getBoard((c as Card<'board'>).content.boardId)?.title || 'Board'
+      return boardDisplayTitle(doc.getBoard((c as Card<'board'>).content.boardId), 'Board')
     case 'image':
       return 'Image'
     case 'link': {
@@ -31,12 +33,14 @@ export function describeCard(c: Card): string {
 }
 
 export function TrashPanel() {
+  let panel: HTMLElement | undefined
+  installCanvasPanel(trashOpen, () => setTrashOpen(false), () => panel, () => document.querySelector('[data-testid="tool-trash"]'))
   // Re-read whenever the document index changes (a restore, a new burial).
   const items = createMemo(() => (doc.index(), trashOpen() ? doc.trashedOn(boardId()) : []))
   const comments = createMemo(() => (doc.index(), trashOpen() ? doc.trashedCommentsOn(boardId()) : []))
   return (
     <Show when={trashOpen()}>
-      <aside class="trash" data-testid="trash-panel" aria-label={COPY.trash}>
+      <aside ref={panel} class="trash" data-testid="trash-panel" aria-label={COPY.trash}>
         <header class="trash-head">
           <h2>{COPY.trash}</h2>
           <button class="icon-btn" title="Close" onClick={() => setTrashOpen(false)}>

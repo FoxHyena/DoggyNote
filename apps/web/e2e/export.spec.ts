@@ -1,6 +1,7 @@
+import { postSync } from './helpers.ts'
 import { readFile } from 'node:fs/promises'
 import { expect, test, type Page } from '@playwright/test'
-import { cardByText, dragBy, freshBoard } from './helpers.ts'
+import { cardByText, dragBy, freshBoard, waitForSync } from './helpers.ts'
 
 // PNG export: the picture is the board's bounds (+32 px padding) times the
 // scale, and has the cards' colours, the image, the link preview (fetched
@@ -46,10 +47,14 @@ async function seed(page: Page) {
     },
     { id: ids.conn, kind: 'connection', boardId: board, from: ids.a, to: ids.b, arrow: 'end', createdAt: Date.now() },
   ]
-  expect((await page.request.post('/api/sync', { data: { changes: objs.map((o) => ({ id: o.id, patch: o })) } })).ok()).toBe(true)
+  expect((await postSync(page.request, { data: { changes: objs.map((o) => ({ id: o.id, patch: o })) } })).ok()).toBe(true)
   await page.reload()
   await expect(cardByText(page, 'Sky note')).toBeVisible({ timeout: 15_000 })
   await expect(page.getByTestId('card-image')).toBeVisible()
+  await expect.poll(() => page.locator('.link-image').evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true)
+  // Expected bounds must include loaded previews and their measured heights.
+  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+  await waitForSync(page)
   return ids
 }
 
@@ -64,6 +69,7 @@ const worldRects = (page: Page) =>
   })
 
 async function exportWith(page: Page, opts: { scope?: string; scale?: string; background?: string } = {}) {
+  await page.getByTestId('board-more').click()
   await page.getByTestId('export').click()
   for (const [k, v] of Object.entries(opts)) await page.getByTestId(`export-${k}-${v}`).click()
   const dl = page.waitForEvent('download')
@@ -159,6 +165,7 @@ test('export just the selection, at 1×, on a transparent background', async ({ 
 
 test('export is not offered for nothing', async ({ page }) => {
   await freshBoard(page)
+  await page.getByTestId('board-more').click()
   await page.getByTestId('export').click()
   await expect(page.getByTestId('export-scope-selection')).toBeDisabled()
   await page.getByTestId('export-go').click()

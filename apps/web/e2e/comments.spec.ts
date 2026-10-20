@@ -1,3 +1,6 @@
+import { pullAllObjects } from './helpers.ts'
+import { postSync } from './helpers.ts'
+import { waitForSync } from './helpers.ts'
 import { expect, test, type APIRequestContext, type Browser, type Page } from '@playwright/test'
 import { MOD, addNote, cardByText, dragBy, freshBoard } from './helpers.ts'
 
@@ -35,7 +38,7 @@ async function pullAll(req: APIRequestContext): Promise<{ id: string; [k: string
 }
 
 async function synced(page: Page) {
-  await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
+  await waitForSync(page)
 }
 
 test('start a thread, reply, resolve and reopen; the badge keeps count', async ({ page }) => {
@@ -104,14 +107,14 @@ test('edit your message; delete takes it back from everyone, restorable until th
   await expect(page.getByTestId('comment')).toHaveCount(0)
   await expect(page.getByTestId('toast')).toContainText('Buried bones')
   await expect(cardByText(page, note).getByTestId('comment-badge')).toHaveCount(0)
-  await expect.poll(fidoSees, { timeout: 10_000 }).toEqual({ id, hidden: true })
+  await expect.poll(fidoSees, { timeout: 10_000 }).toBeUndefined()
 
   // It was a slip: restore from Buried bones, and everyone has it again.
   await page.getByTestId('comments-close').click()
   await page.getByTestId('tool-trash').click()
   await page.getByTestId('trash-comment').filter({ hasText: secret }).getByTestId('restore-comment').click()
   await expect(cardByText(page, note).getByTestId('comment-badge')).toHaveText('1')
-  await expect.poll(async () => (await fidoSees()).text, { timeout: 10_000 }).toBe(secret)
+  await expect.poll(async () => (await fidoSees())?.text, { timeout: 10_000 }).toBe(secret)
 
   // Delete again and empty the trash: the words are wiped on the server.
   await cardByText(page, note).getByTestId('comment-badge').click()
@@ -122,7 +125,7 @@ test('edit your message; delete takes it back from everyone, restorable until th
   await page.getByTestId('empty-trash').click()
   const mine = async () => (await pullAll(page.request)).find((o) => o.id === id)
   await expect.poll(mine, { timeout: 10_000 }).toMatchObject({ purged: true, text: '' })
-  expect(await fidoSees()).toEqual({ id, hidden: true })
+  expect(await fidoSees()).toBeUndefined()
   await ctx.close()
 })
 
@@ -157,15 +160,17 @@ test('two people replying at once both land, under their own names', async ({ pa
   const rexMsg = p2.getByTestId('comment').filter({ hasText: 'rex says woof' })
   await expect(rexMsg.getByTestId('comment-edit')).toHaveCount(0)
   await expect(p2.getByTestId('comment').filter({ hasText: 'fido says arf' }).getByTestId('comment-edit')).toBeVisible()
-  const { objects } = await (await page.request.get('/api/sync?since=0')).json()
+  const { objects } = await pullAllObjects(page.request)
   const rexId = objects.find((o: { kind: string; text?: string }) => o.kind === 'comment' && o.text === 'rex says woof').id
-  expect((await ctx.request.post('/api/sync', { data: { changes: [{ id: rexId, patch: { text: 'rex is a cat' } }] } })).status()).toBe(403)
+  expect((await postSync(ctx.request, { data: { changes: [{ id: rexId, patch: { text: 'rex is a cat' } }] } })).status()).toBe(403)
   // ...and can't forge one under rex's name: the server stamps the real author.
   const forged = crypto.randomUUID()
-  await ctx.request.post('/api/sync', {
-    data: { changes: [{ id: forged, patch: { id: forged, kind: 'comment', boardId: boardOf(page), cardId: rexId, authorId: 'nope', author: 'rex', text: 'forged', createdAt: 1 } }] },
+  const actualCardId = await cardByText(page, note).getAttribute('data-card-id')
+  const forgedResponse = await postSync(ctx.request, {
+    data: { changes: [{ id: forged, patch: { id: forged, kind: 'comment', boardId: boardOf(page), cardId: actualCardId, authorId: 'nope', author: 'rex', text: 'forged', createdAt: 1 } }] },
   })
-  const all = (await (await page.request.get('/api/sync?since=0')).json()).objects
+  expect(forgedResponse.ok(), await forgedResponse.text()).toBe(true)
+  const all = (await pullAllObjects(page.request)).objects
   expect(all.find((o: { id: string }) => o.id === forged).author).toBe('fido')
   await ctx.close()
 })

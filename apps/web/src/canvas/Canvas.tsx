@@ -70,6 +70,7 @@ export function Canvas(props: { readOnly: boolean }) {
   const [spaceHeld, setSpaceHeld] = createSignal(false)
   const [panning, setPanning] = createSignal(false)
   let gesture: Gesture | null = null
+  let lastPress: { id: Id; board: Id; at: number } | null = null
 
   // An export needs every card in full, whatever the zoom.
   const lod = createMemo(() => camera().zoom < LOD_ZOOM && !exporting())
@@ -202,6 +203,7 @@ export function Canvas(props: { readOnly: boolean }) {
   function onPointerDown(e: PointerEvent) {
     if (e.button === 2) return
     const target = e.target as HTMLElement
+    lastPress = null
     const editing = editingId()
 
     if (target.closest('[data-nodrag]')) return
@@ -405,7 +407,9 @@ export function Canvas(props: { readOnly: boolean }) {
           break
         }
         if (c.type === 'board') {
-          openBoard((c as Card<'board'>).content.boardId)
+          endEdit()
+          select([g.id])
+          if (e.type !== 'pointercancel') lastPress = { id: g.id, board: boardId(), at: performance.now() }
           break
         }
         const isTitle = !!g.target.closest('[data-edit-title]')
@@ -449,7 +453,18 @@ export function Canvas(props: { readOnly: boolean }) {
 
   function onDblClick(e: MouseEvent) {
     if (props.readOnly) return
+    if (e.shiftKey || e.metaKey || e.ctrlKey || e.altKey || spaceHeld() || connectMode() || editingId()) return
     const target = e.target as HTMLElement
+    const pressed = lastPress
+    if (pressed && pressed.board === boardId() && performance.now() - pressed.at < 500) {
+      const card = doc.getCard(pressed.id)
+      if (card?.type === 'board') {
+        e.preventDefault()
+        lastPress = null
+        openBoard((card as Card<'board'>).content.boardId)
+        return
+      }
+    }
     if (target.closest('[data-card-id],[data-connection-id]')) return
     if (lod() && cardAtWorld(toWorld(e))) return
     createCard('note', { at: toWorld(e) })

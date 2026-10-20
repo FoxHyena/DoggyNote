@@ -2,7 +2,6 @@ import { Match, Show, Switch, createSignal, onCleanup, onMount } from 'solid-js'
 import { COPY } from '@doggynote/theme'
 import * as doc from './state/doc.ts'
 import { createTheme } from './theme.ts'
-import { ThemeToggle } from './ThemeToggle.tsx'
 import { Canvas } from './canvas/Canvas.tsx'
 import { Toolbar } from './ui/Toolbar.tsx'
 import { TopBar } from './ui/TopBar.tsx'
@@ -12,10 +11,11 @@ import { Loader } from './ui/Loader.tsx'
 import { Login } from './ui/Login.tsx'
 import { AccountMenu, SyncStatus } from './ui/AccountMenu.tsx'
 import { ShareButton } from './ui/ShareDialog.tsx'
-import { ExportButton } from './ui/ExportMenu.tsx'
+import { BoardActions } from './ui/BoardActions.tsx'
+import { CanvasControls } from './ui/CanvasControls.tsx'
 import { installShortcuts } from './ui/shortcuts.ts'
 import { boardId, endEdit, openBoard } from './state/ui.ts'
-import { HOME_BOARD_ID, noteMarkdown, type Card, type Id, type Obj } from '@doggynote/core'
+import { noteMarkdown, type Card, type Id, type Obj } from '@doggynote/core'
 import { checkSession } from './state/session.ts'
 import { startSync } from './state/sync.ts'
 import { installLinkHandler } from './state/platform.ts'
@@ -30,13 +30,24 @@ import { ToyboxButton, ToyboxPanel } from './ui/ToyboxPanel.tsx'
 import { CommentsPanel } from './ui/CommentsPanel.tsx'
 import { Toast } from './ui/Toast.tsx'
 import { ensureToybox } from './state/toybox.ts'
-import { snapToGrid, toggleSnap } from './state/grid.ts'
 import { startUpdateChecks } from './state/updates.ts'
 import { paletteOpen, setPaletteOpen } from './state/ui.ts'
 import { Icon, ToolIcons } from './ui/icons.tsx'
+import { Signup } from './ui/Signup.tsx'
+import { EditInvite } from './ui/EditInvite.tsx'
+import { BoardNavigation } from './ui/BoardNavigation.tsx'
+import { canEditBoard, canManageBoard, canReadBoard, homeBoardId } from './state/access.ts'
+import { installNativeSave } from './state/lifecycle.ts'
+import { ExitSaveDialog } from './ui/ExitSaveDialog.tsx'
 
 export default function Root() {
   installLinkHandler()
+  const invitation = location.pathname.match(/^\/(signup|reset)\/([^/]+)/)
+  if (invitation) return <Signup token={decodeURIComponent(invitation[2])} mode={invitation[1] === 'reset' ? 'reset' : 'signup'} />
+  const join = location.pathname.match(/^\/join\/([^/]+)/)
+  if (join) return <EditInvite token={decodeURIComponent(join[1])} />
+  const joinQuery = new URLSearchParams(location.search).get('join')
+  if (joinQuery) return <EditInvite token={joinQuery} />
   const share = location.pathname.match(/^\/s\/([^/]+)/)
   if (share) return <Viewer token={decodeURIComponent(share[1])} />
   if (location.hash.startsWith('#/capture')) return <Capture />
@@ -59,16 +70,17 @@ function EditorApp() {
       // editable offline (the chunk can't be fetched then). Viewers never load it.
       void import('./editor/codemirror.ts')
       await doc.load({ persist: true, readOnly: false })
-      const { first, fresh } = await startSync({ onSignedOut: () => setSignedOut(true) })
+      const { first } = await startSync({ onSignedOut: () => setSignedOut(true) })
       // Quick captures land on the server; pull them in right away.
       if (isTauri) void import('@tauri-apps/api/event').then(({ listen }) => listen('toybox-captured', () => void syncNow()))
-      // A new device pulls before creating the home board, so it doesn't clobber the real one.
-      if (fresh) await first
-      doc.ensureHome(COPY.home)
+      // Permissions and the personal home are established before showing cached content.
+      await first
+      doc.setWriteGuard((object) => canEditBoard(object.kind === 'board' ? object.id : object.boardId))
+      if (!location.hash && boardId() === 'home' && !localStorage.getItem('doggynote.lastBoard')) openBoard(homeBoardId())
       // The remembered board may have been deleted. Only decide once the first
       // sync has had its say, or a slow pull would bounce us home.
       void first.then(() => {
-        if (!doc.getBoard(boardId())) openBoard(HOME_BOARD_ID)
+        if (!doc.getBoard(boardId()) || !canReadBoard(boardId())) openBoard(homeBoardId())
         migrateNotesToMarkdown()
         ensureToybox()
       })
@@ -85,16 +97,21 @@ function EditorApp() {
   })
 
   onMount(() => {
-    const off = installShortcuts({ readOnly: false })
+    const off = installShortcuts({ get readOnly() { return !canEditBoard(boardId()) } })
+    let nativeOff: (() => void) | undefined
+    let disposed = false
+    void installNativeSave().then((cleanup) => { if (disposed) cleanup(); else nativeOff = cleanup }).catch(console.warn)
     // Don't lose an in-progress edit when the window goes away.
     const save = () => {
       endEdit()
-      void doc.flush()
+      void doc.flush().catch(() => {})
     }
     const onVis = () => document.visibilityState === 'hidden' && save()
     window.addEventListener('pagehide', save)
     document.addEventListener('visibilitychange', onVis)
     onCleanup(() => {
+      disposed = true
+      nativeOff?.()
       off()
       window.removeEventListener('pagehide', save)
       document.removeEventListener('visibilitychange', onVis)
@@ -110,47 +127,37 @@ function EditorApp() {
         <Login onLogin={() => void boot()} />
       </Match>
       <Match when={phase() === 'ready'}>
-        <div class="app">
+        <div class="app" classList={{ 'read-only': !canEditBoard(boardId()) }}>
           <TopBar
-            readOnly={false}
+            readOnly={!canEditBoard(boardId())}
+            left={<BoardNavigation />}
+            status={<SyncStatus />}
+            permission={<Show when={!canManageBoard(boardId())}><span class="share-permission" data-testid="board-permission">{canEditBoard(boardId()) ? 'Can edit' : 'View only'}</span></Show>}
             right={
               <>
-                <button class="icon-btn" data-testid="open-fetch" title={`${COPY.search} (⌘K)`} onClick={() => setPaletteOpen(true)}>
-                  <Icon>{ToolIcons.search()}</Icon>
-                  <span class="icon-btn-label">{COPY.search}</span>
-                </button>
-                <button
-                  class="icon-btn"
-                  classList={{ on: snapToGrid() }}
-                  data-testid="snap-toggle"
-                  aria-pressed={snapToGrid()}
-                  title={`Snap to grid: ${snapToGrid() ? 'on' : 'off'} (⌘')`}
-                  onClick={toggleSnap}
-                >
-                  <Icon>{ToolIcons.grid()}</Icon>
-                </button>
+                <button class="icon-btn" data-testid="open-fetch" aria-label={`${COPY.search} (⌘K)`} data-tooltip={`${COPY.search} (⌘K)`} onClick={() => setPaletteOpen(true)}><Icon>{ToolIcons.search()}</Icon></button>
                 <ToyboxButton />
-                <SyncStatus />
-                <ShareButton boardId={boardId()} />
-                <ExportButton />
-                <ThemeToggle mode={theme.mode()} onCycle={theme.cycle} />
-                <AccountMenu />
+                <BoardActions boardId={boardId()} primary={<ShareButton boardId={boardId()} />} />
+                <AccountMenu mode={theme.mode()} onThemeChange={theme.setMode} />
               </>
             }
           />
-          <Toolbar />
+          <Show when={canEditBoard(boardId())}><Toolbar /></Show>
           <main class="stage">
-            <Canvas readOnly={false} />
-            <SelectionBar />
-            <TrashPanel />
+            <Show when={canReadBoard(boardId()) && doc.getBoard(boardId())} fallback={<div class="gone"><h1>This board is unavailable</h1><p>Your access may have changed. Your other boards are still available.</p><button class="primary-btn" onClick={() => openBoard(homeBoardId())}>My Doghouse</button></div>}>
+              <Canvas readOnly={!canEditBoard(boardId())} />
+            </Show>
+            <Show when={canEditBoard(boardId())}><SelectionBar /><TrashPanel /></Show>
+            <CanvasControls readOnly={!canEditBoard(boardId())} />
             <ToyboxPanel />
-            <CommentsPanel />
+            <CommentsPanel readOnly={!canEditBoard(boardId())} />
             <Toast />
           </main>
         </div>
         <Show when={paletteOpen()}>
           <FetchPalette />
         </Show>
+        <ExitSaveDialog />
         <Diagnostics />
         <UpdateToast />
         <Show when={signedOut()}>
