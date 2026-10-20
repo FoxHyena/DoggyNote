@@ -41,6 +41,8 @@ export const FORMAT: { cmd: FormatCommand; label: string; title: string }[] = [
   { cmd: 'bullets', label: '•', title: 'Bulleted list: - ' },
   { cmd: 'numbers', label: '1.', title: 'Numbered list: 1. ' },
   { cmd: 'task', label: '☐', title: 'Task: - [ ] ' },
+  { cmd: 'outdent', label: '⇤', title: 'Outdent: move a list item out (⇧Tab)' },
+  { cmd: 'indent', label: '⇥', title: 'Indent: nest a list item (Tab)' },
 ]
 
 function NoteEditor(props: { card: Card<'note'> }) {
@@ -52,13 +54,13 @@ function NoteEditor(props: { card: Card<'note'> }) {
   // Keys that arrive before ProseMirror has mounted land in this buffer as a
   // list of actions, replayed in order once the editor exists.
   let buffer!: HTMLTextAreaElement
-  type Early = { text: string } | 'selectAll' | 'enter' | 'backspace' | 'exit'
+  type Early = { text: string } | 'selectAll' | 'enter' | 'backspace' | 'exit' | 'indent' | 'outdent'
   const early: Early[] = []
 
   const onBufferKey = (e: KeyboardEvent) => {
     const mod = e.metaKey || e.ctrlKey
     const act: Early | null =
-      mod && e.key.toLowerCase() === 'a' ? 'selectAll' : e.key === 'Enter' ? 'enter' : e.key === 'Backspace' ? 'backspace' : e.key === 'Escape' ? 'exit' : null
+      mod && e.key.toLowerCase() === 'a' ? 'selectAll' : e.key === 'Enter' ? 'enter' : e.key === 'Backspace' ? 'backspace' : e.key === 'Escape' ? 'exit' : e.key === 'Tab' ? (e.shiftKey ? 'outdent' : 'indent') : null
     if (!act) return
     e.preventDefault()
     early.push(act)
@@ -96,6 +98,7 @@ function NoteEditor(props: { card: Card<'note'> }) {
       else if (a === 'selectAll') editor.selectAll()
       else if (a === 'enter') editor.typeText('\n')
       else if (a === 'backspace') editor.backspace()
+      else if (a === 'indent' || a === 'outdent') editor.run(a)
       else editor.typeText(a.text)
     }
     if (exit) endEdit()
@@ -114,6 +117,7 @@ function NoteEditor(props: { card: Card<'note'> }) {
           {(f) => (
             <button
               class={`fmt fmt-${f.cmd}`}
+              data-testid={`fmt-${f.cmd}`}
               title={f.title}
               onPointerDown={(e) => {
                 e.preventDefault()

@@ -33,7 +33,7 @@ test('tap, tap, type, Done: the note glides into view and back', async ({ page }
   await page.keyboard.press('End')
   await page.keyboard.type(' list')
   await page.getByTestId('dock-fmt-heading').tap()
-  await expect(editor).toContainText('## Shopping list')
+  await expect(editor.locator('.cm-md-h2')).toHaveText('Shopping list')
   await page.getByTestId('edit-done').tap()
   await expect(editor).toHaveCount(0)
   await expect(cardByText(page, 'Shopping list').locator('h2')).toBeVisible()
@@ -146,4 +146,23 @@ test('bolding a whole heading line keeps it a heading', async ({ page }) => {
   await page.getByTestId('dock-fmt-bold').tap()
   await page.getByTestId('edit-done').tap()
   await expect(cardByText(page, 'Hike plan').locator('h1 strong')).toHaveText('Hike plan')
+})
+
+test('the edit dock nests and un-nests list items (phones have no Tab key)', async ({ page }) => {
+  await seedCards(page, [note('- kibble\n- treats', 0, 0)])
+  const card = cardByText(page, 'kibble')
+  await tapOn(page, card)
+  await tapOn(page, card.getByText('treats'))
+  const editor = page.getByTestId('note-editor')
+  await expect(editor).toBeVisible()
+  // Indent and outdent sit in view, not scrolled off behind Done.
+  const tools = (await page.locator('.edit-dock-tools').boundingBox())!
+  for (const id of ['dock-fmt-outdent', 'dock-fmt-indent']) {
+    const b = (await page.getByTestId(id).boundingBox())!
+    expect(b.x + b.width).toBeLessThanOrEqual(tools.x + tools.width + 1)
+  }
+  await page.getByTestId('dock-fmt-indent').tap()
+  await expect(editor.locator('.cm-md-li[style*="--li-depth: 2"]')).toHaveText('◦treats')
+  await page.getByTestId('dock-fmt-outdent').tap()
+  await expect(editor.locator('.cm-md-li[style*="--li-depth: 2"]')).toHaveCount(0)
 })
