@@ -40,6 +40,9 @@ import { canEditBoard, canManageBoard, canReadBoard, homeBoardId } from './state
 import { installNativeSave } from './state/lifecycle.ts'
 import { ExitSaveDialog } from './ui/ExitSaveDialog.tsx'
 import { EditDock } from './ui/EditDock.tsx'
+import { MobileDock } from './ui/MobileDock.tsx'
+import { installSheetDrag } from './ui/sheet.ts'
+import { phone } from './state/device.ts'
 
 export default function Root() {
   installLinkHandler()
@@ -97,6 +100,8 @@ function EditorApp() {
     else await boot()
   })
 
+  onMount(() => onCleanup(installSheetDrag()))
+
   onMount(() => {
     const off = installShortcuts({ get readOnly() { return !canEditBoard(boardId()) } })
     let nativeOff: (() => void) | undefined
@@ -128,22 +133,24 @@ function EditorApp() {
         <Login onLogin={() => void boot()} />
       </Match>
       <Match when={phase() === 'ready'}>
-        <div class="app" classList={{ 'read-only': !canEditBoard(boardId()) }}>
+        <div class="app" classList={{ 'read-only': !canEditBoard(boardId()), phone: phone() }}>
           <TopBar
             readOnly={!canEditBoard(boardId())}
-            left={<BoardNavigation />}
+            left={<Show when={!phone()}><BoardNavigation /></Show>}
             status={<SyncStatus />}
             permission={<Show when={!canManageBoard(boardId())}><span class="share-permission" data-testid="board-permission">{canEditBoard(boardId()) ? 'Can edit' : 'View only'}</span></Show>}
             right={
               <>
-                <button class="icon-btn" data-testid="open-fetch" aria-label={`${COPY.search} (⌘K)`} data-tooltip={`${COPY.search} (⌘K)`} onClick={() => setPaletteOpen(true)}><Icon>{ToolIcons.search()}</Icon></button>
-                <ToyboxButton />
+                <Show when={!phone()}>
+                  <button class="icon-btn" data-testid="open-fetch" aria-label={`${COPY.search} (⌘K)`} data-tooltip={`${COPY.search} (⌘K)`} onClick={() => setPaletteOpen(true)}><Icon>{ToolIcons.search()}</Icon></button>
+                  <ToyboxButton />
+                </Show>
                 <BoardActions boardId={boardId()} primary={<ShareButton boardId={boardId()} />} />
                 <AccountMenu mode={theme.mode()} onThemeChange={theme.setMode} />
               </>
             }
           />
-          <Show when={canEditBoard(boardId())}><Toolbar /></Show>
+          <Show when={canEditBoard(boardId()) && !phone()}><Toolbar /></Show>
           <main class="stage">
             <Show when={canReadBoard(boardId()) && doc.getBoard(boardId())} fallback={<div class="gone"><h1>This board is unavailable</h1><p>Your access may have changed. Your other boards are still available.</p><button class="primary-btn" onClick={() => openBoard(homeBoardId())}>My Doghouse</button></div>}>
               <Canvas readOnly={!canEditBoard(boardId())} />
@@ -154,6 +161,7 @@ function EditorApp() {
             <CommentsPanel readOnly={!canEditBoard(boardId())} />
             <Toast />
           </main>
+          <Show when={phone()}><MobileDock readOnly={!canEditBoard(boardId())} /></Show>
         </div>
         <Show when={paletteOpen()}>
           <FetchPalette />

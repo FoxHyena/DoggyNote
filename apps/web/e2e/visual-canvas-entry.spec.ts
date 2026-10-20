@@ -123,8 +123,13 @@ test('selection controls retain their dimensions and stay clear of floating canv
   expect(box!.x).toBeGreaterThanOrEqual(canvas!.x)
   expect(box!.x + box!.width).toBeLessThanOrEqual(canvas!.x + canvas!.width)
   expect((await bar.locator('.swatch').first().boundingBox())!.width).toBe(22)
-  const controls = await page.getByTestId('canvas-controls').boundingBox()
-  expect(box!.x + box!.width <= controls!.x || controls!.x + controls!.width <= box!.x || box!.y + box!.height <= controls!.y || controls!.y + controls!.height <= box!.y).toBe(true)
+  if (await bar.evaluate((el) => el.classList.contains('docked'))) {
+    // Phone width: the bar docks along the bottom and the canvas controls step aside.
+    await expect(page.getByTestId('canvas-controls')).toBeHidden()
+  } else {
+    const controls = await page.getByTestId('canvas-controls').boundingBox()
+    expect(box!.x + box!.width <= controls!.x || controls!.x + controls!.width <= box!.x || box!.y + box!.height <= controls!.y || controls!.y + controls!.height <= box!.y).toBe(true)
+  }
   await page.getByTestId('bury').scrollIntoViewIfNeeded()
   await expect(page.getByTestId('bury')).toBeInViewport()
 })

@@ -15,6 +15,7 @@ export const SURFACE_TOKENS = [
   'accentText', // text drawn on top of `accent`
   'selection',
   'gridDot', // background dots: quiet, but visible
+  'scrim', // dims the app behind a phone sheet (translucent)
 ] as const
 
 export type SurfaceToken = (typeof SURFACE_TOKENS)[number]
@@ -32,6 +33,7 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     accentText: '#1c1b1a',
     selection: '#e8a849',
     gridDot: '#3d3934',
+    scrim: '#0b0a0999',
   },
   light: {
     bg: '#f3efe9',
@@ -45,6 +47,7 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     accentText: '#ffffff',
     selection: '#b06c10',
     gridDot: '#d3cabe',
+    scrim: '#2a252159',
   },
 }
 

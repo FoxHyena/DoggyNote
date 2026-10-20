@@ -1,5 +1,6 @@
 import { For, Show, createEffect, createMemo, createSignal } from 'solid-js'
 import { isAlive, parseMarkdown, type Comment } from '@doggynote/core'
+import { touch } from '../state/device.ts'
 import * as doc from '../state/doc.ts'
 import { user } from '../state/session.ts'
 import { setTrashOpen } from '../state/ui.ts'
@@ -145,7 +146,7 @@ export function CommentsPanel(props: { readOnly?: boolean }) {
               class="comment-input"
               data-testid="comment-input"
               rows={3}
-              placeholder={messages().length ? 'Reply… (⌘Enter to send)' : 'Start a thread… (⌘Enter to send)'}
+              placeholder={`${messages().length ? 'Reply…' : 'Start a thread…'}${touch() ? '' : ' (⌘Enter to send)'}`}
               value={draft()}
               ref={(el) => queueMicrotask(() => el.focus({ preventScroll: true }))}
               onInput={(e) => setDraft(e.currentTarget.value)}

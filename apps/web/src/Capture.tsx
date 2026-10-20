@@ -135,6 +135,7 @@ export function Capture() {
         </Match>
         <Match when={state() === 'anon'}>
           <p class="capture-hint">Sign in to {COPY.appName} first, then try again.</p>
+          {!isTauri && <a class="primary-btn capture-open" href="/">Open {COPY.appName}</a>}
         </Match>
         <Match when={true}>
           <textarea
@@ -156,8 +157,12 @@ export function Capture() {
               }
             }}
           />
-          <div class="capture-status" data-testid="capture-status" data-state={state()}>
-            {state() === 'saved' ? <><BoardIconSvg icon="paw" size={16} /> Saved to your {COPY.unsorted}</> : state() === 'error' ? message() : 'Enter to save · Esc to close'}
+          <div class="capture-foot">
+            <div class="capture-status" data-testid="capture-status" data-state={state()}>
+              {state() === 'saved' ? <><BoardIconSvg icon="paw" size={16} /> Saved to your {COPY.unsorted}</> : state() === 'error' ? message() : isTauri ? 'Enter to save · Esc to close' : 'Enter to save'}
+            </div>
+            {!isTauri && state() === 'saved' && <a class="bar-btn" data-testid="capture-open" href="/">Open {COPY.appName}</a>}
+            <button class="primary-btn" data-testid="capture-save" disabled={!text().trim() || state() === 'saving'} onClick={saveText}>Save</button>
           </div>
         </Match>
       </Switch>

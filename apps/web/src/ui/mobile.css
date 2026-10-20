@@ -173,3 +173,317 @@ html[data-input='touch'] .card > .resize-handle::before {
 html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type='range']), textarea, select):not(.card *) {
   font-size: max(16px, 1em);
 }
+
+/* ---- phone shell ---------------------------------------------------------------
+   One row of header, the canvas, and a thumb dock. Menus and panels become
+   sheets from the bottom. Safe areas keep everything off the notch and the
+   home indicator. Same query as phone() in state/device.ts. */
+
+.mobile-dock,
+.count-badge { display: none; }
+
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  .app,
+  .app.read-only {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+
+  /* Header: parent boards, the board's name and save state; sharing and account on the right. */
+  .topbar,
+  .tauri .topbar {
+    display: flex;
+    gap: 4px;
+    min-height: 52px;
+    padding: env(safe-area-inset-top) max(6px, env(safe-area-inset-right)) 0 max(6px, env(safe-area-inset-left));
+    z-index: 90;
+  }
+  .topbar-left,
+  .tauri .topbar-left { flex: 1; width: auto; min-width: 0; padding-left: 0; }
+  .topbar-right { flex: 0 0 auto; width: auto; gap: 0; }
+  .topbar .icon-btn-label { display: none; }
+  .topbar .crumb.current,
+  .tauri .topbar .crumb.current { max-width: none; font-size: 16px; font-weight: 650; }
+  .topbar .board-heading { gap: 0; }
+  .topbar .crumbs { flex: 1; min-width: 0; display: flex; align-items: center; }
+  .topbar .crumb.current { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .topbar .share-permission { flex-shrink: 0; font-size: 11px; }
+  .topbar .board-actions-review { display: none; }
+
+  /* The dock. */
+  .mobile-dock {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: center;
+    padding: 4px max(6px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(6px, env(safe-area-inset-left));
+    background: var(--dn-panel);
+    border-top: 1px solid var(--dn-border);
+    /* No stacking context: its sheets (Boards, Add) must rise above the header. */
+  }
+  .mobile-dock > .icon-btn,
+  .mobile-dock .board-navigation > .icon-btn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+    min-height: 54px;
+    padding: 4px 2px;
+    border-radius: 12px;
+    color: var(--dn-text-muted);
+  }
+  .mobile-dock .icon-btn.on,
+  .mobile-dock .icon-btn[aria-expanded='true'] { color: var(--dn-accent); background: var(--dn-card-hover); }
+  .mobile-dock .icon-btn-label { display: block; font-size: 11px; line-height: 14px; }
+  .mobile-dock .board-navigation { display: flex; justify-content: center; }
+  .mobile-dock .boards-caret,
+  .mobile-dock .count-inline { display: none; }
+  .mobile-dock .count-badge {
+    display: block;
+    position: absolute;
+    top: 3px;
+    left: calc(50% + 6px);
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--dn-accent);
+    color: var(--dn-accent-text);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+  }
+  .dock-add-wrap { display: flex; justify-content: center; }
+  .dock-add {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    margin-top: -14px;
+    border: 3px solid var(--dn-panel);
+    border-radius: 50%;
+    background: var(--dn-accent);
+    color: var(--dn-accent-text);
+    box-shadow: 0 6px 18px rgb(0 0 0 / 0.22);
+    transition: transform 160ms cubic-bezier(0.3, 1.4, 0.5, 1);
+  }
+  .dock-add[aria-expanded='true'] { transform: rotate(45deg); }
+  .dock-add:active { transform: scale(0.92); }
+
+  /* ---- sheets: menus, popovers and dialogs rise from the bottom ---- */
+  .menu,
+  .nav-menu,
+  .share-panel,
+  .export-panel,
+  .save-details {
+    position: fixed !important;
+    inset: auto 0 var(--vv-bottom, 0px) 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    max-height: min(86dvh, calc(var(--vv-height, 100dvh) - 48px)) !important;
+    padding: 22px max(12px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)) !important;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-width: 1px 0 0;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 0 0 100vmax var(--dn-scrim), 0 -8px 30px rgb(0 0 0 / 0.2);
+    z-index: 95;
+    animation: sheet-up 240ms cubic-bezier(0.2, 0.9, 0.25, 1.08);
+  }
+  .menu::before,
+  .share-panel::before,
+  .export-panel::before,
+  .save-details::before,
+  .trash::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 40px;
+    height: 5px;
+    margin-left: -20px;
+    border-radius: 3px;
+    background: var(--dn-border);
+  }
+  .menu-item,
+  .nav-menu .menu-item { min-height: 48px; font-size: 15px; }
+  .nav-menu-description,
+  .nav-menu-section-label { font-size: 13px; }
+  /* Boards keeps its header in place; only the list scrolls. */
+  .board-nav-menu { display: flex; overflow: hidden !important; }
+
+  /* Canvas panels (Inbox, comments, Buried bones): a sheet that leaves the top of the board in view. */
+  .trash {
+    position: fixed;
+    inset: auto 0 var(--vv-bottom, 0px) 0;
+    width: auto;
+    height: auto;
+    max-height: min(64dvh, calc(var(--vv-height, 100dvh) - 72px));
+    padding-top: 14px;
+    padding-bottom: env(safe-area-inset-bottom);
+    border-left: 0;
+    border-top: 1px solid var(--dn-border);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -10px 32px rgb(0 0 0 / 0.22);
+    z-index: 80;
+    animation: sheet-up 240ms cubic-bezier(0.2, 0.9, 0.25, 1.08);
+  }
+  .trash .trash-list { overscroll-behavior: contain; }
+
+  /* Dialogs (people, agents, saving): full-width sheets. Sign-in stays centred. */
+  .dialog-backdrop:has(> .dialog) { place-items: end stretch; padding: 0; }
+  .dialog {
+    position: relative;
+    width: 100%;
+    max-height: calc(var(--vv-height, 100dvh) - 24px);
+    margin-bottom: var(--vv-bottom, 0px);
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    border-width: 1px 0 0;
+    border-radius: 20px 20px 0 0;
+    animation: sheet-up 240ms cubic-bezier(0.2, 0.9, 0.25, 1.08);
+  }
+
+  /* Fetch: the whole screen, above the keyboard. */
+  .fetch-backdrop { inset: 0 0 var(--vv-bottom, 0px) 0; padding: 0; place-items: stretch; }
+  .fetch {
+    width: 100%;
+    max-height: none;
+    height: 100%;
+    padding-top: env(safe-area-inset-top);
+    border: 0;
+    border-radius: 0;
+    animation: none;
+  }
+
+  /* Floating canvas pieces keep clear of the notch and the docked bars. */
+  .canvas-controls { left: max(10px, env(safe-area-inset-left)); bottom: 10px; }
+  .app:has(.trash) .canvas-controls { visibility: hidden; }
+  .toast { bottom: 64px; max-width: calc(100% - 24px); }
+  .update-toast,
+  .diagnostics {
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
+    max-width: none;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+  .made-with { bottom: calc(12px + env(safe-area-inset-bottom)); right: max(12px, env(safe-area-inset-right)); }
+}
+
+/* A phone on its side: every vertical pixel counts. */
+@media (pointer: coarse) and (max-height: 500px) {
+  .topbar, .tauri .topbar { min-height: 44px; }
+  .mobile-dock > .icon-btn,
+  .mobile-dock .board-navigation > .icon-btn { min-height: 44px; flex-direction: row; gap: 6px; }
+  .dock-add { width: 48px; height: 48px; margin-top: 0; }
+  .menu, .nav-menu, .share-panel, .export-panel, .save-details { max-height: calc(var(--vv-height, 100dvh) - 16px) !important; }
+  .trash { max-height: calc(var(--vv-height, 100dvh) - 56px); left: auto; width: min(420px, 60vw); border-left: 1px solid var(--dn-border); }
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(40%); opacity: 0; }
+}
+
+/* The Add sheet: big friendly tiles. */
+.add-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 8px;
+}
+.add-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 84px;
+  padding: 10px 4px;
+  border: 1px solid var(--dn-border);
+  border-radius: 14px;
+  background: var(--dn-card);
+  color: var(--dn-text);
+  font: inherit;
+  font-size: 13px;
+  transition: transform 120ms ease-out;
+}
+.add-tile:active { transform: scale(0.94); background: var(--dn-card-hover); }
+.add-tile-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--dn-card-hover);
+  color: var(--dn-accent);
+}
+
+/* Inbox list scrolls by touch; items are placed with their buttons. */
+html[data-input='touch'] .toybox-item { touch-action: pan-y; cursor: default; }
+
+/* Chrome reacts to taps at once (no double-tap-to-zoom wait). */
+.topbar, .mobile-dock, .selection-bar, .canvas-controls, .trash, .menu, .dialog, .edit-dock { touch-action: manipulation; }
+
+@media (prefers-reduced-motion: reduce) {
+  .menu, .nav-menu, .share-panel, .export-panel, .save-details, .trash, .dialog, .selection-bar.docked { animation: none !important; }
+}
+
+/* ---- round 1 visual fixes ---------------------------------------------------- */
+
+.parent-back { display: none; }
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  /* Up one level reads as "back" on a phone. */
+  .topbar .parent-dots, .topbar .crumb-sep.ancestor-menu { display: none; }
+  .topbar .parent-back { display: block; }
+}
+/* No keyboard on a phone: shortcut hints are noise. */
+html[data-input='touch'] .nav-menu kbd.nav-menu-meta { display: none; }
+html[data-input='touch'] .fetch-close { min-width: 64px; padding: 0 12px; color: var(--dn-accent); font: inherit; font-weight: 600; }
+/* While typing, only the card and the edit dock. */
+body:has(.edit-dock) .canvas-controls { visibility: hidden; }
+.edit-dock .fmt { min-width: 40px; }
+.edit-dock-tools { mask-image: linear-gradient(to right, black calc(100% - 28px), transparent); }
+.connect-banner { left: 12px; right: 12px; width: fit-content; margin-inline: auto; transform: none; }
+.connect-banner { animation: banner-in 160ms ease-out; }
+@keyframes banner-in { from { opacity: 0; transform: translateY(-6px); } }
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  /* Give the board's name the room: compact header buttons, a small save mark. */
+  .topbar .icon-btn { min-width: 40px; padding-inline: 8px; }
+  .topbar .save-status-wrap .sync-status { min-width: 32px; padding-inline: 4px; }
+}
+@media (pointer: coarse) and (max-height: 500px) {
+  /* Side-by-side dock labels: the count goes inline, not on the icon. */
+  .mobile-dock .count-badge { display: none; }
+  .mobile-dock .count-inline { display: inline; }
+}
+
+.app:has(.selection-bar.docked) .canvas-controls { visibility: hidden; }
+
+/* Tablets and touch laptops: the docked bar floats above the bottom edge, one row. */
+@media (min-width: 600px) and (min-height: 501px) {
+  .selection-bar.docked {
+    left: 50%;
+    right: auto;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: calc(100% - 32px);
+    flex-direction: row;
+    align-items: center;
+    padding: 8px;
+    border: 1px solid var(--dn-border);
+    border-radius: 18px;
+    overflow-x: auto;
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.22);
+    animation: pop-in 140ms ease-out;
+  }
+  .selection-bar.docked .bar-sep { display: block; }
+  .selection-bar.docked .bar-group { overflow: visible; }
+  .selection-bar.docked .bar-actions .bar-btn { flex: 0 0 auto; min-width: 64px; }
+}
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  /* Sticky sheet headers line up with the sheet's own padding; the grip stays on top. */
+  .share-head { top: -22px; margin: -22px -12px 0; padding: 22px 12px 4px; }
+  .menu::before, .share-panel::before, .export-panel::before, .save-details::before, .trash::before { z-index: 3; }
+}

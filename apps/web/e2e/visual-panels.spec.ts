@@ -7,8 +7,19 @@ const longName = 'A-board-with-a-very-long-unbroken-name-and-a-readable-ending'
 
 async function contained(panel: Locator, page: Page) {
   await expect(panel).toBeVisible()
+  // Phone sheets rise into place; measure where they come to rest.
+  await panel.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished.catch(() => undefined))))
   const box = (await panel.boundingBox())!
   const viewport = page.viewportSize()!
+  if (viewport.width < 600) {
+    // Phones: a sheet across the bottom edge, below the top of the screen.
+    expect(Math.abs(box.x)).toBeLessThanOrEqual(1)
+    expect(Math.abs(box.x + box.width - viewport.width)).toBeLessThanOrEqual(1)
+    expect(Math.abs(box.y + box.height - viewport.height)).toBeLessThanOrEqual(1)
+    expect(box.y).toBeGreaterThanOrEqual(11)
+    expect(await panel.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true)
+    return
+  }
   expect(box.x).toBeGreaterThanOrEqual(11)
   expect(box.y).toBeGreaterThanOrEqual(11)
   expect(box.x + box.width).toBeLessThanOrEqual(viewport.width - 11)

@@ -3,6 +3,8 @@ export const COPY = {
   appName: 'DoggyNote',
   home: 'Doghouse',
   trash: 'Buried bones',
+  /** Where there's only room for a word (the phone dock). */
+  trashShort: 'Bones',
   unsorted: 'Inbox',
   search: 'Fetch',
   loading: 'Fetching…',

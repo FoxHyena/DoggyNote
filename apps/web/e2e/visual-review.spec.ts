@@ -10,6 +10,8 @@ async function appearance(page: Page, theme: 'Light' | 'Dark') {
 }
 async function shot(page: Page, info: TestInfo, name: string, surface: Locator) {
   await expect(surface).toBeVisible()
+  // Phone sheets rise into place; measure where they come to rest.
+  await surface.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished.catch(() => undefined))))
   const box = (await surface.boundingBox())!, viewport = page.viewportSize()!
   expect(box.x).toBeGreaterThanOrEqual(0)
   expect(box.y).toBeGreaterThanOrEqual(0)

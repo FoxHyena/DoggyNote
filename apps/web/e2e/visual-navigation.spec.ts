@@ -11,6 +11,8 @@ async function setAppearance(page: Page, appearance: 'Light' | 'Dark') {
 }
 
 async function contained(locator: Locator, width: number, height: number) {
+  // Phone sheets rise into place; measure where they come to rest.
+  await locator.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished.catch(() => undefined))))
   const box = await locator.boundingBox()
   expect(box).not.toBeNull()
   expect(box!.x).toBeGreaterThanOrEqual(0)

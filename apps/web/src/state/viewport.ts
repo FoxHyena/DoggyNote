@@ -23,6 +23,7 @@ function update() {
   const v = read()
   setVisible(v)
   document.documentElement.style.setProperty('--vv-bottom', `${Math.round(v.bottom)}px`)
+  document.documentElement.style.setProperty('--vv-height', `${Math.round(v.height)}px`)
 }
 const schedule = () => (frame ||= requestAnimationFrame(update))
 vv?.addEventListener('resize', schedule)

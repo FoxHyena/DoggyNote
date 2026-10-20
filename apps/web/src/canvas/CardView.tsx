@@ -33,7 +33,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
   const single = () => selected() && selection().size === 1
   // On touch, handles only exist on the one selected card, at a fingertip size
   // that stays constant on screen (only this card follows the zoom).
-  const touchHandles = () => touch() && single() && !props.readOnly && !props.lod
+  const touchHandles = () => touch() && single() && !editing() && !props.readOnly && !props.lod
 
   const style = (): JSX.CSSProperties => {
     const c = props.card

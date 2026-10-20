@@ -22,6 +22,8 @@ export function SelectionBar() {
   const cards = createMemo(() => [...selection()].map((id) => doc.getCard(id)).filter((c): c is Card => !!c))
   const conns = createMemo(() => [...selection()].filter((id) => doc.get(id)?.kind === 'connection'))
   const show = () => (cards().length || conns().length) && !draggingIds().size && !editingId() && !connectMode()
+  // Touch screens get a bar along the bottom: thumbs reach it, and it never covers the card.
+  const docked = () => phone() || touch()
   const sole = () => (cards().length === 1 && selection().size === 1 ? cards()[0] : undefined)
   const editable = () => {
     const c = sole()
@@ -71,8 +73,8 @@ export function SelectionBar() {
         class="selection-bar"
         data-testid="selection-bar"
         onKeyDown={(e) => { if (!e.metaKey && !e.ctrlKey && ['Enter', ' ', 'Delete', 'Backspace'].includes(e.key)) { e.stopPropagation(); if (e.key === 'Backspace') e.preventDefault() } }}
-        classList={{ docked: phone() }}
-        style={phone() ? undefined : { left: `${pos().left}px`, top: `${pos().top}px` }}
+        classList={{ docked: docked() }}
+        style={docked() ? undefined : { left: `${pos().left}px`, top: `${pos().top}px` }}
         onPointerDown={(e) => e.stopPropagation()}
       >
         <div class="bar-group bar-style">

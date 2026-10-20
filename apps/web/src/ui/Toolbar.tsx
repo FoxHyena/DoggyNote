@@ -9,9 +9,9 @@ import { boardId, camera, connectMode, setConnectMode, setTrashOpen, trashOpen, 
 import { addAnyFiles, addImages } from '../canvas/paste.ts'
 import { Icon, ToolIcons } from './icons.tsx'
 
-type Tool = { id: CardType | 'line'; label: string; icon: () => JSX.Element }
+export type Tool = { id: CardType | 'line'; label: string; icon: () => JSX.Element }
 
-const TOOLS: Tool[] = [
+export const TOOLS: Tool[] = [
   { id: 'note', label: 'Note', icon: ToolIcons.note },
   { id: 'link', label: 'Link', icon: ToolIcons.link },
   { id: 'todo', label: 'To-do', icon: ToolIcons.todo },
@@ -21,7 +21,7 @@ const TOOLS: Tool[] = [
 ]
 
 /** A click on a tool drops the card near the viewport centre, in free space. */
-function centrePlacement(type: CardType = 'note'): Placement {
+export function centrePlacement(type: CardType = 'note'): Placement {
   const v = viewport()
   const c = screenToWorld(camera(), { x: v.width / 2, y: v.height / 2.6 })
   const size = DEFAULT_SIZE[type]

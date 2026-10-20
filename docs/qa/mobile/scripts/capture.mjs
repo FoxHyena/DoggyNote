@@ -10,7 +10,7 @@ const out = `docs/qa/mobile/${phase}`
 await mkdir(out, { recursive: true })
 
 const DEVICES = [
-  { key: 'se', engine: 'webkit', d: devices['iPhone SE'] },
+  { key: 'se', engine: 'webkit', d: devices['iPhone SE (3rd gen)'] },
   { key: 'iphone15', engine: 'webkit', d: devices['iPhone 15 Pro'] },
   { key: 'landscape', engine: 'webkit', d: devices['iPhone 15 Pro landscape'] },
   { key: 'pixel7', engine: 'chromium', d: devices['Pixel 7'] },
@@ -36,6 +36,11 @@ const STATES = {
     await page.getByTestId('note-editor').waitFor({ timeout: 5000 })
   },
   'tap-todo': async (page) => { await cardWith(page, 'Packing list').tap() },
+  connect: async (page) => {
+    await cardWith(page, 'Hike plan').tap()
+    if (!(await exists(page, '[data-testid=connect-card]'))) return false
+    await tapId(page, 'connect-card')
+  },
   add: async (page) => { if (await exists(page, '[data-testid=dock-add]')) await tapId(page, 'dock-add') },
   boards: async (page) => tapId(page, 'board-navigation'),
   account: async (page) => tapId(page, 'account'),
@@ -80,11 +85,19 @@ for (const { key, engine, d } of DEVICES) {
         localStorage.removeItem(`doggynote.cam.${board}`)
         if (cam) localStorage.setItem(`doggynote.cam.${board}`, JSON.stringify(cam))
       }, { board: fixture.board, cam })
-      await page.reload()
-      await page.getByTestId('canvas').waitFor()
+      for (let attempt = 0; ; attempt++) {
+        try {
+          await page.reload({ waitUntil: 'domcontentloaded' })
+          await page.getByTestId('canvas').waitFor({ timeout: 15000 })
+          break
+        } catch (e) {
+          if (attempt > 2) throw e
+          await page.waitForTimeout(500)
+        }
+      }
       await page.waitForTimeout(600)
       try {
-        await run(page)
+        if ((await run(page)) === false) continue
         await settle(page)
         await shoot(state)
       } catch (e) {

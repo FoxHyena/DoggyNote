@@ -1,4 +1,5 @@
 import './canvas-entry.css'
+import { touch } from '../state/device.ts'
 import { For, Show, createMemo, createSignal, createEffect, onCleanup, onMount } from 'solid-js'
 import { HOME_BOARD_ID, mdToText, noteMarkdown, type Card, type Id } from '@doggynote/core'
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
@@ -125,7 +126,7 @@ export function FetchPalette() {
             }}
             onKeyDown={onKey}
           />
-          <button class="fetch-close" aria-label="Close search" onClick={() => setPaletteOpen(false)}><kbd>esc</kbd></button>
+          <button class="fetch-close" aria-label="Close search" onClick={() => setPaletteOpen(false)}>{touch() ? 'Cancel' : <kbd>esc</kbd>}</button>
         </div>
         <Show when={q().trim()}>
           <ul ref={results} id="fetch-results" class="fetch-results" role="listbox" aria-label="Search results">
