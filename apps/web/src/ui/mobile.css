@@ -182,6 +182,13 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
 .mobile-dock,
 .count-badge { display: none; }
 
+/* iOS 27 draws a system blur below the status bar even when it reserves the
+   status bar outside the web view (safe-area-inset-top can then be zero).
+   Keep the phone header's controls below that fade; landscape needs no gap. */
+@media (orientation: portrait) {
+  html.ios-status-bar-blur { --ios-header-clearance: 15px; }
+}
+
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .app,
   .app.read-only {
@@ -194,9 +201,9 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   .tauri .topbar {
     display: flex;
     gap: 4px;
-    /* 52px of row below the notch (border-box would fold the inset into it). */
-    min-height: calc(52px + env(safe-area-inset-top));
-    padding: env(safe-area-inset-top) max(6px, env(safe-area-inset-right)) 0 max(6px, env(safe-area-inset-left));
+    /* Keep a 52px control row below the safe area and any iOS blur clearance. */
+    min-height: calc(52px + env(safe-area-inset-top) + var(--ios-header-clearance, 0px));
+    padding: calc(env(safe-area-inset-top) + var(--ios-header-clearance, 0px)) max(6px, env(safe-area-inset-right)) 0 max(6px, env(safe-area-inset-left));
     z-index: 90;
   }
   .topbar-left,
@@ -616,7 +623,7 @@ html[data-input='touch'] .card > .connect-handle { border-color: var(--dn-select
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .toast {
     position: fixed;
-    top: calc(env(safe-area-inset-top) + 60px);
+    top: calc(env(safe-area-inset-top) + var(--ios-header-clearance, 0px) + 60px);
     bottom: auto;
     z-index: 120;
     width: max-content;

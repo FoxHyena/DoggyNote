@@ -13,15 +13,12 @@ body,
   margin: 0;
 }
 
-/* iOS home-screen apps size 100% to the screen minus the status bar, though the
-   page draws under it (black-translucent), leaving a strip below the dock. */
-@media (display-mode: standalone) {
-  html,
-  body,
-  #root {
-    height: 100vh;
-  }
-}
+/* Installed iOS apps can reserve the status bar or draw below it, depending on
+   their install-time settings. Use the host's layout height for both modes;
+   the visual viewport is reserved for keyboard positioning. */
+html.ios-standalone,
+.ios-standalone body,
+.ios-standalone #root { height: var(--app-height, 100%); }
 
 body {
   background: var(--dn-bg);

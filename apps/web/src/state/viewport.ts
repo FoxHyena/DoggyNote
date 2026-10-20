@@ -22,6 +22,9 @@ function update() {
   frame = 0
   const v = read()
   setVisible(v)
+  if (document.documentElement.classList.contains('ios-standalone')) {
+    document.documentElement.style.setProperty('--app-height', `${Math.round(innerHeight)}px`)
+  }
   document.documentElement.style.setProperty('--vv-bottom', `${Math.round(v.bottom)}px`)
   document.documentElement.style.setProperty('--vv-height', `${Math.round(v.height)}px`)
 }
@@ -29,6 +32,7 @@ const schedule = () => (frame ||= requestAnimationFrame(update))
 vv?.addEventListener('resize', schedule)
 vv?.addEventListener('scroll', schedule)
 window.addEventListener('resize', schedule)
+window.addEventListener('pageshow', schedule)
 update()
 
 /** iOS sometimes scrolls the page to show a focused field; the app never scrolls, so undo it. */
