@@ -75,7 +75,7 @@ Legend: [x] done + tested · [~] in progress · [ ] not started
 - [x] Copy, cut, paste, duplicate; ⌘⇧V pastes plain text (#27)
 - [~] Note lists: Tab/Shift-Tab nesting, live formatting on the caret's line (#26, awaiting review)
 - [~] Agent proposals previewed on the real board (#28, awaiting review)
-- [~] Movie and show cards from TMDB, watched toggle, details (#29, awaiting review). **Needs your `TMDB_TOKEN` secret**
+- [~] Movie and show cards from TMDB, watched toggle, details (#29, awaiting review). TMDB_TOKEN is set on the live Worker
 - [~] Connector handles only near their own edge (feat/connector-hover, awaiting review)
 - [x] QA rounds: docs/qa/everyday
 - [ ] Phone edit dock for non-note cards is an empty bar with Done (VT-6). Redesign it for to-dos, links, titles and movie search together
