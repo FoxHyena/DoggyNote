@@ -54,7 +54,8 @@ export function BoardCard(props: CardProps<'board'>) {
         <input
           ref={(el) => {
             input = el
-            queueMicrotask(() => el.focus())
+            // On mount, still inside the tap: iOS only raises the keyboard then.
+            onMount(() => el.focus())
           }}
           class="board-title-input"
           data-testid="board-title-input"

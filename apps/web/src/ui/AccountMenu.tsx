@@ -5,6 +5,10 @@ import { Icon, ToolIcons } from './icons.tsx'
 import { AdminDashboard } from './AdminDashboard.tsx'
 import { AgentConnections } from './AgentConnections.tsx'
 import { ThemeChoices, type ThemeChoicesProps } from './ThemeChoices.tsx'
+import { COPY } from '@doggynote/theme'
+import { canPrompt, installed, isIOS, promptInstall } from '../state/install.ts'
+import { isTauri } from '../state/platform.ts'
+import { touch } from '../state/device.ts'
 
 export { SyncStatus } from './SyncStatus.tsx'
 
@@ -12,6 +16,8 @@ export function AccountMenu(props: ThemeChoicesProps) {
   const [open, setOpen] = createSignal(false)
   const [people, setPeople] = createSignal(false)
   const [agents, setAgents] = createSignal(false)
+  const [installHelp, setInstallHelp] = createSignal(false)
+  const offerInstall = () => !isTauri && !installed() && (canPrompt() || (touch() && isIOS))
   const menuId = createUniqueId()
   let container!: HTMLDivElement
   let trigger!: HTMLButtonElement
@@ -84,6 +90,21 @@ export function AccountMenu(props: ThemeChoicesProps) {
             >
               Manage people
             </button>
+          </Show>
+          <Show when={offerInstall()}>
+            <button
+              class="menu-item"
+              data-testid="install-app"
+              aria-expanded={canPrompt() ? undefined : installHelp()}
+              onClick={() => (canPrompt() ? void promptInstall().then(() => close()) : setInstallHelp(!installHelp()))}
+            >
+              {COPY.installTitle}
+            </button>
+            <Show when={installHelp()}>
+              <p class="nav-menu-description install-help" data-testid="install-help">
+                In Safari, tap Share, then Add to Home Screen. It opens full screen like an app. You'll sign in once more there.
+              </p>
+            </Show>
           </Show>
           <button class="menu-item" data-testid="manage-agents" onClick={() => { close(); setAgents(true) }}>Agent connections</button>
           <button class="menu-item" data-testid="sign-out" onClick={() => { close(); void logout() }}>

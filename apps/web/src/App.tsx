@@ -26,10 +26,13 @@ import { syncNow } from './state/sync.ts'
 import { FetchPalette } from './ui/Fetch.tsx'
 import { Diagnostics } from './ui/Diagnostics.tsx'
 import { UpdateToast } from './ui/UpdateToast.tsx'
-import { ToyboxButton, ToyboxPanel } from './ui/ToyboxPanel.tsx'
+import { ToyboxButton, ToyboxPanel, setToyboxOpen } from './ui/ToyboxPanel.tsx'
 import { CommentsPanel } from './ui/CommentsPanel.tsx'
 import { Toast } from './ui/Toast.tsx'
-import { ensureToybox } from './state/toybox.ts'
+import { ensureToybox, toyboxId } from './state/toybox.ts'
+import { captureLaunch, takeLaunch } from './state/launch.ts'
+import { addText } from './canvas/paste.ts'
+import { showToast } from './state/toast.ts'
 import { startUpdateChecks } from './state/updates.ts'
 import { paletteOpen, setPaletteOpen } from './state/ui.ts'
 import { Icon, ToolIcons } from './ui/icons.tsx'
@@ -46,6 +49,7 @@ import { phone } from './state/device.ts'
 
 export default function Root() {
   installLinkHandler()
+  captureLaunch()
   const invitation = location.pathname.match(/^\/(signup|reset)\/([^/]+)/)
   if (invitation) return <Signup token={decodeURIComponent(invitation[2])} mode={invitation[1] === 'reset' ? 'reset' : 'signup'} />
   const join = location.pathname.match(/^\/join\/([^/]+)/)
@@ -87,6 +91,7 @@ function EditorApp() {
         if (!doc.getBoard(boardId()) || !canReadBoard(boardId())) openBoard(homeBoardId())
         migrateNotesToMarkdown()
         ensureToybox()
+        openLaunchIntent()
       })
     }
     setSignedOut(false)
@@ -178,6 +183,17 @@ function EditorApp() {
       </Match>
     </Switch>
   )
+}
+
+/** A share from another app goes in the Inbox; the home-screen shortcut opens it. */
+function openLaunchIntent() {
+  const launch = takeLaunch()
+  const inbox = toyboxId()
+  if (launch.share && inbox) {
+    addText(launch.share, { x: 0, y: 0 }, inbox)
+    showToast(COPY.fetchedToInbox)
+  }
+  if (launch.inbox) setToyboxOpen(true)
 }
 
 /**

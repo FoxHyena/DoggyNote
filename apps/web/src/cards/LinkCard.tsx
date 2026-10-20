@@ -41,7 +41,7 @@ export function LinkCard(props: CardProps<'link'>) {
         when={!props.editing}
         fallback={
           <input
-            ref={(el) => queueMicrotask(() => el.focus())}
+            ref={(el) => onMount(() => el.focus())}
             class="link-input"
             data-testid="link-input"
             placeholder="Paste a link…"

@@ -1,5 +1,5 @@
 import { createSignal, onCleanup } from 'solid-js'
-import { THEME_STORAGE_KEY, nextMode, parseMode, resolveTheme, themeCss, type ThemeMode } from '@doggynote/theme'
+import { THEME_STORAGE_KEY, nextMode, parseMode, resolveTheme, surfaces, themeCss, type ThemeMode } from '@doggynote/theme'
 
 /** The resolved theme in use ('light' | 'dark'), for code that reads colours directly (canvas drawing). */
 export const [theme, setTheme] = createSignal<'light' | 'dark'>('dark')
@@ -29,6 +29,8 @@ export function createTheme() {
     const t = resolveTheme(mode(), media().matches)
     document.documentElement.dataset.theme = t
     setTheme(t)
+    // Phone status bar and browser chrome follow the app's theme, not just the system's.
+    for (const m of document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) m.content = surfaces[t].panel
   }
   apply()
 

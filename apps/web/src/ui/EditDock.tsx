@@ -1,6 +1,6 @@
 import { For, Show } from 'solid-js'
 import * as doc from '../state/doc.ts'
-import { editingId, endEdit } from '../state/ui.ts'
+import { clearSelection, editingId, endEdit } from '../state/ui.ts'
 import { touch } from '../state/device.ts'
 import { FORMAT, activeNoteEditor } from '../cards/NoteCard.tsx'
 import { Icon, ToolIcons } from './icons.tsx'
@@ -32,7 +32,8 @@ export function EditDock() {
             </For>
           </div>
         </Show>
-        <button class="edit-done" data-testid="edit-done" onClick={() => endEdit()}>
+        {/* Done means done with this card: back to the board, dock and all. */}
+        <button class="edit-done" data-testid="edit-done" onClick={() => { endEdit(); clearSelection() }}>
           <Icon size={18}>{ToolIcons.check()}</Icon>
           Done
         </button>

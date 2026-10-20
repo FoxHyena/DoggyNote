@@ -487,3 +487,4 @@ body:has(.edit-dock) .canvas-controls { visibility: hidden; }
   .share-head { top: -22px; margin: -22px -12px 0; padding: 22px 12px 4px; }
   .menu::before, .share-panel::before, .export-panel::before, .save-details::before, .trash::before { z-index: 3; }
 }
+.install-help { padding-left: 12px; }
