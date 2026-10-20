@@ -78,3 +78,28 @@ Duplicates are merged under the first id.
 | VT-12, VT-14, VP-9, VP-10, VP-13, UXM-13 | Low | Various | Smaller nits: preview row gap, dialog meta order, landscape banner height, buried vs. peach outline, tall cards on phones, preview pending movie. | Deferred. |
 
 **Not app bugs:** a seed with stale heights (UXD-1 also reproduces in real use, so it was fixed); a scripting artefact (Pixel momentum); and several shots taken mid-rebuild (VD-8). Round 2 is shot from a single build.
+
+## Round 2: findings
+
+Round 2 checked every round-1 fix, then looked again. Shots came from one build (`2ee753c`).
+All round-1 fixes passed except the dark watched posters (VD-3, now V2-1).
+
+**Sources:** V2 (visual review), UXD2 (desktop UX), UXM2 (mobile UX), U (the maintainer).
+
+| # | Sev | Area | Finding | Status |
+|---|---|---|---|---|
+| U-1 | Med | Notes | In a note, a ticked task's box sat ~4px below an open one's, reading and editing. | **Fixed.** The tick inside the box moved its baseline; boxes now centre on the line. e2e test added. |
+| V2-1 | Med-High | Movies | Watched dark posters still vanished on dark cards. Same as UXD2-1. | **Fixed.** On dark cards the grey poster is lifted and not faded, with an outline. |
+| V2-2 | Med | Proposals | Phone shots of the preview showed the sheet instead (the script tapped while it slid in). | **Fixed** in `capture.mjs`. |
+| V2-3 | Med | Columns | The "3 cards" count was 4.0:1 light, 3.4:1 dark. | **Fixed.** Less faded. |
+| V2-7 | Low | Notes | The phone Done tick was a 43×39 ellipse. | **Fixed.** A 44px circle. |
+| V2-8 | Low | Proposals | Buried text was 4.4:1 in dark. | **Fixed.** Faded less. |
+| V2-10 | Low | Movies | An open ⓘ looked like the filled ✓, so the card read as watched. | **Fixed.** Open Details is an outline. |
+| V2-4 | Low | Overview | Watched posters were tinted in the overview but grey on the card. | **Fixed.** Grey in both. |
+| UXD2-2 | Low | Proposals | The card Next change lands on was barely marked. | **Fixed.** A heavier outline with a tinted band. |
+| UXD2-3 | Low | Movies | "Refreshing…" flashes for 20–50ms on a local stack. | Deferred. Real TMDB calls take longer. |
+| UXD2-4 | Low | Notes | Backspace twice on a top-level bullet merges it into the line above; unbulleting one item restyles the next. | Deferred. Plain-line Backspace merges, as in any editor. |
+| UXD2-5 | Low | To-dos | One ⌘Z after leaving a list undoes the whole editing session. | Deferred. Matches note editing: a session is one step. |
+| UXD2-6 | Low | Proposals | A proposal made before a board was first opened conflicts once the board tidies its lists or resolves movies. | Deferred. The banner warns first; asking the agent again fixes it. |
+| UXD2-7 | Low | Sync | The popover can say "Synced" for 1.6s after a background sync. | Deferred. |
+| V2-5, V2-6, V2-9 | Low | Docks | H/S scroll off the phone dock; dock icon alignment; the format bar's top corners clip under the top bar. | Deferred. Existing dock design, worth one pass on all docks. |
