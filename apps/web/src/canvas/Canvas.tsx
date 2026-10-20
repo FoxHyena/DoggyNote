@@ -550,9 +550,11 @@ export function Canvas(props: { readOnly: boolean }) {
           if (e.type !== 'pointercancel') lastPress = { id: g.id, board: boardId(), at: performance.now() }
           break
         }
-        const isTitle = !!g.target.closest('[data-edit-title]')
+        // A column's first click selects it, so its colour and actions are reachable;
+        // a click on the title of the selected column renames it.
+        const renames = c.type === 'column' && !!g.target.closest('[data-edit-title]') && selection().size === 1 && selection().has(g.id)
         // Zoomed out, cards are shapes on a canvas: a click selects, it can't edit.
-        if (!lod() && (c.type === 'note' || c.type === 'todo' || (c.type === 'column' && isTitle))) {
+        if (!lod() && (c.type === 'note' || c.type === 'todo' || renames)) {
           queueEditCaret(g.client)
           beginEdit(g.id)
         } else select([g.id])

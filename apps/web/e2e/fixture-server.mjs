@@ -1,5 +1,5 @@
 // Tiny static server for e2e fixtures (link previews), so tests never touch the
-// real internet. Port 5180.
+// real internet. Port 5180, or FIXTURE_PORT (see ports.ts).
 import { createServer } from 'node:http'
 import { crc32, deflateSync } from 'node:zlib'
 
@@ -46,4 +46,4 @@ createServer((req, res) => {
   const path = new URL(req.url, 'http://x').pathname
   const type = path.endsWith('.svg') ? 'image/svg+xml' : path.endsWith('.png') ? 'image/png' : 'text/html; charset=utf-8'
   res.writeHead(200, { 'content-type': type }).end(body)
-}).listen(5180, () => console.log('fixtures on :5180'))
+}).listen(Number(process.env.FIXTURE_PORT ?? 5180), () => console.log(`fixtures on :${process.env.FIXTURE_PORT ?? 5180}`))

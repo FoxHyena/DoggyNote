@@ -1,6 +1,7 @@
 #!/bin/sh
 # Fresh local D1 + R2 for each e2e run, with a test user, then wrangler dev.
-# PORT picks the port (default 8787; Playwright uses its own).
+# PORT picks the port (default 8787; Playwright uses its own). DESKTOP_PORT is the
+# origin the desktop-flavour test build is served from.
 set -e
 cd "$(dirname "$0")/.."
 DIR=${E2E_PERSIST_DIR:-.wrangler/e2e}
@@ -19,4 +20,4 @@ VALUES ('home', 'board', NULL,
   (SELECT value FROM counters WHERE name = 'seq'), CAST(strftime('%s','now') AS INTEGER) * 1000, NULL);
 INSERT INTO board_access (board_id, owner_id, legacy) VALUES ('home', NULL, 1);
 " > /dev/null
-exec pnpm exec wrangler dev --port "${PORT:-8787}" --persist-to "$DIR" --var ALLOWED_ORIGINS:tauri://localhost,http://localhost:4174 --var DEV_DIAG:1 --var MIN_CLIENT:0.0.0 --var ASSET_TOKEN_SECRET:e2e-only-not-a-real-secret
+exec pnpm exec wrangler dev --port "${PORT:-8787}" --persist-to "$DIR" --var ALLOWED_ORIGINS:tauri://localhost,http://localhost:${DESKTOP_PORT:-4174} --var DEV_DIAG:1 --var MIN_CLIENT:0.0.0 --var ASSET_TOKEN_SECRET:e2e-only-not-a-real-secret

@@ -97,6 +97,28 @@ test('slow outgoing changes show progress then settle without hiding failures', 
   await expect(page.getByTestId('sync-status')).toHaveText('Save status')
 })
 
+test('Sync now says it is syncing while busy, then confirms, never a greyed-out button', async ({ page }) => {
+  await freshBoard(page)
+  await waitForSync(page)
+  await page.route('**/api/sync*', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 400))
+    await route.continue()
+  })
+  await page.getByTestId('sync-status').click()
+  const button = page.getByTestId('sync-now')
+  await expect(button).toHaveText('Syncing…')
+  await expect(button).toHaveAttribute('aria-disabled', 'true')
+  await expect(button.locator('.sync-spinner')).toBeVisible()
+  expect(await button.evaluate((el) => getComputedStyle(el).opacity)).toBe('1')
+  await expect(button).toHaveText('Synced', { timeout: 10_000 })
+  await expect(button).toHaveText('Sync now')
+  await expect(button).toHaveAttribute('aria-disabled', 'false')
+  // A manual run goes through the same states.
+  await button.click()
+  await expect(button).toHaveText('Syncing…')
+  await expect(button).toHaveText('Synced', { timeout: 10_000 })
+})
+
 test('unfinished text is checkpointed locally and survives offline reload', async ({ page, context }) => {
   await freshBoard(page)
   const note = await addNote(page, 'Original text')

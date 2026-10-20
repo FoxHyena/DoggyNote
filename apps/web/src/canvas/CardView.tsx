@@ -1,6 +1,6 @@
 import { ErrorBoundary, For, Match, Show, Switch, onCleanup, onMount, type JSX } from 'solid-js'
 import { SIDES, type Card } from '@doggynote/core'
-import { cardColor } from '@doggynote/theme'
+import { COPY, cardColor } from '@doggynote/theme'
 import { camera, editingId, isSelected, selection } from '../state/ui.ts'
 import { touch } from '../state/device.ts'
 import { registerCardEl } from './layout.ts'
@@ -78,7 +78,15 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
     >
       {/* Cards are synced data from other people: one malformed card must not take the board down. */}
       <ErrorBoundary fallback={<p class="card-unreadable" data-testid="card-unreadable">This card can't be shown.</p>}>
-      <Switch>
+      <Switch
+        fallback={
+          // A card type from a newer app. Fixed at its stored height, so this app
+          // never overwrites the real height the newer one measured.
+          <div class="unknown-card" data-testid="unknown-card" style={{ height: `${Math.max(60, props.card.h)}px` }}>
+            {COPY.unknownCard}
+          </div>
+        }
+      >
         <Match when={props.card.type === 'note'}>
           <NoteCard {...(props2() as CardProps<'note'>)} />
         </Match>

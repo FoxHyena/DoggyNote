@@ -17,3 +17,10 @@
   .save-status-wrap .sync-status { min-width: 44px; min-height: 44px; }
   .save-details button { min-height: 44px; }
 }
+
+/* Sync now: always legible. Busy shows a spinner and "Syncing…" instead of a greyed button. */
+.save-details .sync-now { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 132px; }
+.save-details .sync-now[aria-disabled='true'] { cursor: progress; }
+.sync-spinner { flex-shrink: 0; animation: sync-spin 0.9s linear infinite; }
+@keyframes sync-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .sync-spinner { animation: none; } }

@@ -1,7 +1,7 @@
 import { installCanvasPanel } from './canvasPanel.ts'
 import './canvas-entry.css'
 import { For, Show, createMemo } from 'solid-js'
-import { mdToText, noteMarkdown, type Card } from '@doggynote/core'
+import { cardLabel, type Card } from '@doggynote/core'
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { emptyTrash, restoreCard } from '../state/actions.ts'
@@ -9,38 +9,7 @@ import { purgeComments, restoreComment } from '../state/comments.ts'
 import { boardId, setTrashOpen, trashOpen } from '../state/ui.ts'
 import { Icon, ToolIcons } from './icons.tsx'
 
-/** A short label; a malformed (synced) card gets a generic one instead of an error. */
-export function describeCard(c: Card): string {
-  try {
-    const label = rawDescribeCard(c)
-    return typeof label === 'string' && label ? label : 'Card'
-  } catch {
-    return 'Card'
-  }
-}
-
-function rawDescribeCard(c: Card): string {
-  switch (c.type) {
-    case 'note':
-      return mdToText(noteMarkdown(c as Card<'note'>)).split('\n')[0] || 'Empty note'
-    case 'todo': {
-      const t = (c as Card<'todo'>).content
-      return t.title || t.items[0]?.text || 'To-do list'
-    }
-    case 'board':
-      return boardDisplayTitle(doc.getBoard((c as Card<'board'>).content.boardId), 'Board')
-    case 'image':
-      return 'Image'
-    case 'link': {
-      const l = (c as Card<'link'>).content
-      return l.title || l.url
-    }
-    case 'column':
-      return (c as Card<'column'>).content.title || 'Column'
-    case 'file':
-      return (c as Card<'file'>).content.name || 'File'
-  }
-}
+export const describeCard = (c: Card): string => cardLabel(c, (id) => boardDisplayTitle(doc.getBoard(id), 'Board'))
 
 export function TrashPanel() {
   let panel: HTMLElement | undefined

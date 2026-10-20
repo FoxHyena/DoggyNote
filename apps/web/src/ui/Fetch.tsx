@@ -1,7 +1,7 @@
 import './canvas-entry.css'
 import { touch } from '../state/device.ts'
 import { For, Show, createMemo, createSignal, createEffect, onCleanup, onMount } from 'solid-js'
-import { HOME_BOARD_ID, mdToText, noteMarkdown, type Card, type Id } from '@doggynote/core'
+import { HOME_BOARD_ID, cardText, type Id } from '@doggynote/core'
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { openBoard, select, setPaletteOpen, viewport } from '../state/ui.ts'
@@ -12,36 +12,6 @@ import { BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
 // ⌘K "Fetch": search every board title and card text, jump to the result.
 
 type Hit = { kind: 'board' | 'card'; id: Id; boardId: Id; title: string; snippet: string; score: number }
-
-// Cards are synced from everyone's devices: one malformed card must not break
-// search for the whole workspace, so it just contributes no text.
-function cardText(c: Card): string {
-  try {
-    const text = rawCardText(c)
-    return typeof text === 'string' ? text : ''
-  } catch {
-    return ''
-  }
-}
-
-function rawCardText(c: Card): string {
-  switch (c.type) {
-    case 'note':
-      return mdToText(noteMarkdown(c as Card<'note'>))
-    case 'todo': {
-      const t = (c as Card<'todo'>).content
-      return [t.title, ...t.items.map((i) => i.text)].join('\n')
-    }
-    case 'link': {
-      const l = (c as Card<'link'>).content
-      return [l.title, l.description, l.url].filter(Boolean).join('\n')
-    }
-    case 'column':
-      return (c as Card<'column'>).content.title
-    default:
-      return ''
-  }
-}
 
 const boardTitle = (id: Id) => (id === HOME_BOARD_ID ? COPY.home : boardDisplayTitle(doc.getBoard(id)))
 
