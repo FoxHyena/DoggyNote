@@ -401,12 +401,12 @@ button:disabled {
   margin-top: -7px;
 }
 
-.card:hover > .connect-handle,
+html[data-input='mouse'] .card:hover > .connect-handle,
 .card.selected > .connect-handle {
   opacity: 1;
 }
 
-.connect-handle:hover {
+html[data-input='mouse'] .connect-handle:hover {
   transform: scale(1.25);
   border-color: var(--dn-selection);
 }
@@ -1698,7 +1698,7 @@ a.file-name:hover {
 .diagnostics { bottom: 76px; }
 [data-tooltip] { position: relative; }
 [data-tooltip]::after { content: attr(data-tooltip); position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); padding: 7px 9px; border: 1px solid var(--dn-border); border-radius: 7px; background: var(--dn-panel); color: var(--dn-text); box-shadow: 0 3px 12px rgb(0 0 0 / .12); font-size: 12px; font-weight: 400; white-space: normal; width: max-content; max-width: min(280px, calc(100vw - 32px)); overflow-wrap: anywhere; pointer-events: none; z-index: 200; opacity: 0; visibility: hidden; transition: opacity 120ms; }
-[data-tooltip]:hover::after, [data-tooltip]:focus-visible::after { opacity: 1; visibility: visible; transition-delay: 400ms; }
+html[data-input='mouse'] [data-tooltip]:hover::after, [data-tooltip]:focus-visible::after { opacity: 1; visibility: visible; transition-delay: 400ms; }
 [data-tooltip][aria-expanded='true']::after { display: none; }
 .canvas-controls [data-tooltip]::after { top: auto; bottom: calc(100% + 10px); left: 0; transform: none; }
 @media (max-width: 1200px) {

@@ -55,3 +55,56 @@ export function fitCamera(bounds: Rect, width: number, height: number, pad = 80)
     y: bounds.y + bounds.h / 2 - height / 2 / zoom,
   }
 }
+
+// ---- touch ---------------------------------------------------------------------
+
+const mid = (a: Vec, b: Vec): Vec => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 })
+
+/**
+ * Two-finger pinch and pan. The world point under the fingers' starting
+ * midpoint follows their current midpoint; zoom scales with their spread.
+ */
+export function pinchCamera(start: Camera, a0: Vec, b0: Vec, a1: Vec, b1: Vec): Camera {
+  const m0 = mid(a0, b0)
+  const m1 = mid(a1, b1)
+  const zoom = clampZoom((start.zoom * Math.hypot(a1.x - b1.x, a1.y - b1.y)) / Math.max(1, Math.hypot(a0.x - b0.x, a0.y - b0.y)))
+  const w = screenToWorld(start, m0)
+  return { x: w.x - m1.x / zoom, y: w.y - m1.y / zoom, zoom }
+}
+
+/** One step of a flick: screen distance to pan over `dt` ms, and the slowed velocity (px/ms). */
+export function momentumStep(v: Vec, dt: number, friction = 0.92): { delta: Vec; v: Vec } {
+  const k = Math.pow(friction, dt / 16)
+  return { delta: { x: v.x * dt, y: v.y * dt }, v: { x: v.x * k, y: v.y * k } }
+}
+
+export type Tap = { x: number; y: number; t: number }
+
+/** Whether `next` completes a double-tap after `prev` (close in time and place). */
+export function isDoubleTap(prev: Tap | null, next: Tap, ms = 300, px = 24): boolean {
+  return !!prev && next.t - prev.t <= ms && Math.hypot(next.x - prev.x, next.y - prev.y) <= px
+}
+
+/**
+ * Camera for editing `card` on a small touch screen: readable zoom, the card's
+ * top just below the visible top, centred if it fits across.
+ * `top`/`bottom` bound the part of the viewport the keyboard leaves visible.
+ */
+export function editCamera(card: Rect, view: { width: number; top: number }, current: Camera, opts: { min?: number; max?: number; pad?: number } = {}): Camera {
+  const { min = 0.9, max = 1.4, pad = 12 } = opts
+  const room = view.width - pad * 2
+  const keep = current.zoom >= min && current.zoom <= max && card.w * current.zoom <= room
+  const zoom = keep ? current.zoom : Math.min(max, Math.max(min, room / card.w))
+  const x = card.w * zoom <= room ? card.x + card.w / 2 - view.width / 2 / zoom : card.x - pad / zoom
+  return { x, y: card.y - (view.top + pad) / zoom, zoom }
+}
+
+/**
+ * Opening a board on a phone: fit it if that stays readable, otherwise start
+ * at `minZoom` from the content's top-left, like reading a page.
+ */
+export function readableCamera(bounds: Rect, width: number, height: number, minZoom: number, pad = 16): Camera {
+  const fit = fitCamera(bounds, width, height, pad)
+  if (fit.zoom >= minZoom) return fit
+  return { zoom: minZoom, x: bounds.x - pad / minZoom, y: bounds.y - pad / minZoom }
+}

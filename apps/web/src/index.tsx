@@ -2,6 +2,8 @@
 import { render } from 'solid-js/web'
 import './index.css'
 import App from './App.tsx'
+// After every component's CSS: phone and touch rules override desktop ones.
+import './ui/mobile.css'
 import { installThemeCss } from './theme.ts'
 
 installThemeCss()

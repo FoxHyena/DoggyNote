@@ -43,14 +43,17 @@ class CheckboxWidget extends WidgetType {
     box.type = 'checkbox'
     box.className = 'cm-md-task'
     box.checked = this.checked
-    box.addEventListener('mousedown', (e) => {
+    // pointerdown, not mousedown: touch sends mouse events late or not at all.
+    box.addEventListener('pointerdown', (e) => {
       e.preventDefault()
       view.dispatch({ changes: { from: this.pos, to: this.pos + 3, insert: this.checked ? '[ ]' : '[x]' } })
     })
+    // The change above already toggled it; the click must not toggle the box back.
+    box.addEventListener('click', (e) => e.preventDefault())
     return box
   }
   ignoreEvent() {
-    return false
+    return true
   }
 }
 

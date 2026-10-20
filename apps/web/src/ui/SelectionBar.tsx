@@ -4,7 +4,8 @@ import type { BoardIcon, Card } from '@doggynote/core'
 import { CARD_COLORS, COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { setColor, trashSelection } from '../state/actions.ts'
-import { beginEdit, camera, editingId, openBoard, selection, viewport } from '../state/ui.ts'
+import { beginEdit, camera, clearSelection, connectMode, editingId, openBoard, selectMore, selection, setConnectMode, setSelectMore, viewport } from '../state/ui.ts'
+import { phone, touch } from '../state/device.ts'
 import { draggingIds } from '../canvas/dnd.ts'
 import { layoutTick, rectOf } from '../canvas/layout.ts'
 import { union, worldToScreen } from '@doggynote/core'
@@ -13,12 +14,24 @@ import { canvasControlsSize } from './CanvasControls.tsx'
 import { openThread } from './CommentsPanel.tsx'
 
 // Floating bar for the current selection: colour, board icon, bury (trash).
+// On touch it also offers what a mouse does with clicks and modifier keys
+// (edit, connect, add to the selection). On phones it docks to the bottom.
 
 export function SelectionBar() {
   const [barSize, setBarSize] = createSignal({ width: 400, height: 46 })
   const cards = createMemo(() => [...selection()].map((id) => doc.getCard(id)).filter((c): c is Card => !!c))
   const conns = createMemo(() => [...selection()].filter((id) => doc.get(id)?.kind === 'connection'))
-  const show = () => (cards().length || conns().length) && !draggingIds().size && !editingId()
+  const show = () => (cards().length || conns().length) && !draggingIds().size && !editingId() && !connectMode()
+  const sole = () => (cards().length === 1 && selection().size === 1 ? cards()[0] : undefined)
+  const editable = () => {
+    const c = sole()
+    return !!c && (c.type === 'note' || c.type === 'todo' || c.type === 'column') && doc.canWriteObject(c)
+  }
+  const startConnect = () => {
+    const c = sole()
+    if (!c) return
+    setConnectMode({ from: c.id })
+  }
   const soleBoard = () => {
     const c = cards()
     return c.length === 1 && c[0].type === 'board' ? doc.getBoard((c[0] as Card<'board'>).content.boardId) : undefined
@@ -58,9 +71,11 @@ export function SelectionBar() {
         class="selection-bar"
         data-testid="selection-bar"
         onKeyDown={(e) => { if (!e.metaKey && !e.ctrlKey && ['Enter', ' ', 'Delete', 'Backspace'].includes(e.key)) { e.stopPropagation(); if (e.key === 'Backspace') e.preventDefault() } }}
-        style={{ left: `${pos().left}px`, top: `${pos().top}px` }}
+        classList={{ docked: phone() }}
+        style={phone() ? undefined : { left: `${pos().left}px`, top: `${pos().top}px` }}
         onPointerDown={(e) => e.stopPropagation()}
       >
+        <div class="bar-group bar-style">
         <Show when={cards().length}>
           <div class="swatches" role="group" aria-label="Colour">
             <For each={CARD_COLORS}>
@@ -102,17 +117,56 @@ export function SelectionBar() {
             </For>
           </div>
         </Show>
+        </div>
         <div class="bar-sep" />
+        <div class="bar-group bar-actions">
+        <Show when={touch() && editable()}>
+          <button class="bar-btn" data-testid="edit-card" onClick={() => beginEdit(sole()!.id)}>
+            <Icon size={18}>{ToolIcons.edit()}</Icon>
+            Edit
+          </button>
+        </Show>
         <Show when={cards().length === 1 && cards()[0].type !== 'board'}>
           <button class="bar-btn" data-testid="comment-button" title="Comment on this card" onClick={() => openThread(cards()[0].id)}>
             <Icon size={18}>{ToolIcons.comment()}</Icon>
             Comment
           </button>
         </Show>
+        <Show when={touch() && sole()}>
+          <button class="bar-btn" data-testid="connect-card" onClick={startConnect}>
+            <Icon size={18}>{ToolIcons.line()}</Icon>
+            Connect
+          </button>
+        </Show>
+        <Show when={touch()}>
+          <button class="bar-btn" data-testid="select-more" aria-pressed={selectMore()} classList={{ on: selectMore() }} onClick={() => setSelectMore(!selectMore())}>
+            <Icon size={18}>{ToolIcons.multi()}</Icon>
+            {selection().size > 1 ? `${selection().size} picked` : 'Select more'}
+          </button>
+        </Show>
         <button class="bar-btn" data-testid="bury" title={`Move to ${COPY.trash} (Delete)`} onClick={trashSelection}>
           <Icon size={18}>{ToolIcons.trash()}</Icon>
           Bury
         </button>
+        <Show when={phone()}>
+          <button class="icon-btn bar-done" data-testid="selection-done" aria-label="Done" onClick={clearSelection}>
+            <Icon size={18}>{ToolIcons.close()}</Icon>
+          </button>
+        </Show>
+        </div>
+      </div>
+    </Show>
+  )
+}
+
+/** Touch: what to do next while connecting cards, and a way out. */
+export function ConnectBanner() {
+  return (
+    <Show when={touch() && connectMode()}>
+      <div class="connect-banner" data-testid="connect-banner" role="status">
+        <Icon size={18}>{ToolIcons.line()}</Icon>
+        <span>{connectMode()!.from ? COPY.connectHint : 'Tap two cards to tie them together.'}</span>
+        <button class="bar-btn" data-testid="connect-cancel" onClick={() => setConnectMode(null)}>Cancel</button>
       </div>
     </Show>
   )

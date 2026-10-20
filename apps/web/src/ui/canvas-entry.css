@@ -527,7 +527,7 @@
 .toybox-item > .icon-btn { grid-column: 3; }
 .trash-head .icon-btn { flex-shrink: 0; }
 .trash > .danger-btn { flex-shrink: 0; min-height: 36px; }
-.selection-bar > .bar-btn { flex: 0 0 auto; min-height: 28px; }
+.selection-bar .bar-btn { flex: 0 0 auto; min-height: 28px; }
 .login-card form { display: grid; gap: 12px; min-width: 0; }
 .login-card h1, .login-card h2, .login-card p { overflow-wrap: anywhere; }
 .login-card .primary-btn { min-height: 44px; text-align: center; }
@@ -542,7 +542,7 @@
 .column-head .column-title { overflow-wrap: anywhere; }
 .capture .capture-input:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 0; }
 @media (pointer: coarse) {
-  .selection-bar > .bar-btn, .selection-bar .icon-choice { min-width: 44px; min-height: 44px; }
+  .selection-bar .bar-btn, .selection-bar .icon-choice { min-width: 44px; min-height: 44px; }
   .selection-bar .swatch { width: 44px; height: 44px; }
   .trash-item > .bar-btn, .trash-item > .icon-btn, .trash-head .icon-btn, .trash > .danger-btn { min-height: 44px; min-width: 44px; }
 }

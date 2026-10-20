@@ -8,6 +8,12 @@
     location.replace('https://notepad.dog' + location.pathname + location.search + location.hash)
     return
   }
+  // iOS zooms the page into any focused field with text under 16px (card text is
+  // 14px and sized to sync across devices). Pinch zoom stays available.
+  if (/iP(hone|ad|od)/.test(navigator.platform) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+    var vp = document.querySelector('meta[name=viewport]')
+    if (vp) vp.setAttribute('content', vp.getAttribute('content') + ', maximum-scale=1')
+  }
   var m = 'dark'
   try {
     m = localStorage.getItem('doggynote.theme') || 'dark'

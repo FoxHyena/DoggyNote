@@ -5,7 +5,7 @@ import { createTheme } from './theme.ts'
 import { Canvas } from './canvas/Canvas.tsx'
 import { Toolbar } from './ui/Toolbar.tsx'
 import { TopBar } from './ui/TopBar.tsx'
-import { SelectionBar } from './ui/SelectionBar.tsx'
+import { ConnectBanner, SelectionBar } from './ui/SelectionBar.tsx'
 import { TrashPanel } from './ui/TrashPanel.tsx'
 import { Loader } from './ui/Loader.tsx'
 import { Login } from './ui/Login.tsx'
@@ -39,6 +39,7 @@ import { BoardNavigation } from './ui/BoardNavigation.tsx'
 import { canEditBoard, canManageBoard, canReadBoard, homeBoardId } from './state/access.ts'
 import { installNativeSave } from './state/lifecycle.ts'
 import { ExitSaveDialog } from './ui/ExitSaveDialog.tsx'
+import { EditDock } from './ui/EditDock.tsx'
 
 export default function Root() {
   installLinkHandler()
@@ -147,7 +148,7 @@ function EditorApp() {
             <Show when={canReadBoard(boardId()) && doc.getBoard(boardId())} fallback={<div class="gone"><h1>This board is unavailable</h1><p>Your access may have changed. Your other boards are still available.</p><button class="primary-btn" onClick={() => openBoard(homeBoardId())}>My Doghouse</button></div>}>
               <Canvas readOnly={!canEditBoard(boardId())} />
             </Show>
-            <Show when={canEditBoard(boardId())}><SelectionBar /><TrashPanel /></Show>
+            <Show when={canEditBoard(boardId())}><SelectionBar /><ConnectBanner /><TrashPanel /></Show>
             <CanvasControls readOnly={!canEditBoard(boardId())} />
             <ToyboxPanel />
             <CommentsPanel readOnly={!canEditBoard(boardId())} />
@@ -157,6 +158,7 @@ function EditorApp() {
         <Show when={paletteOpen()}>
           <FetchPalette />
         </Show>
+        <EditDock />
         <ExitSaveDialog />
         <Diagnostics />
         <UpdateToast />

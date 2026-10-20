@@ -72,7 +72,8 @@ export function rectOf(id: Id): Rect | null {
     const colRect = { x: col.x, y: col.y, w: col.w, h: cardHeight(col) }
     const el = els.get(id)
     const colEl = els.get(col.id)
-    if (!el || !colEl) return colRect
+    // Zoomed out, children aren't DOM: use the same stacking the overview draws.
+    if (!el || !colEl) return stackedChildRect(col, id) ?? colRect
     // offsetTop/Left are relative to the column (it's the offsetParent) and unscaled.
     let x = 0
     let y = 0
@@ -85,4 +86,22 @@ export function rectOf(id: Id): Rect | null {
     return { x: col.x + x, y: col.y + y, w: el.offsetWidth, h: el.offsetHeight }
   }
   return { x: c.x, y: c.y, w: c.w, h: cardHeight(c) }
+}
+
+/** Column layout as drawn zoomed out: a header strip, then children stacked with an 8px inset and gap. */
+export const COLUMN_HEADER = 58
+export const COLUMN_INSET = 8
+
+export function stackedChildRect(col: Card, id: Id): Rect | null {
+  const kids = doc
+    .cardsOn(col.boardId)
+    .filter((c) => c.columnId === col.id)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+  let y = col.y + COLUMN_HEADER
+  for (const k of kids) {
+    const h = cardHeight(k)
+    if (k.id === id) return { x: col.x + COLUMN_INSET, y, w: col.w - COLUMN_INSET * 2, h }
+    y += h + COLUMN_INSET
+  }
+  return null
 }

@@ -1,5 +1,6 @@
 import { createSignal } from 'solid-js'
 import { isTauri } from './platform.ts'
+import { haptic } from './device.ts'
 
 // Snap-to-grid: a per-device preference, like the theme.
 
@@ -26,12 +27,12 @@ export function toggleSnap() {
 }
 
 let lastTick = 0
-/** A light trackpad "tick" when a dragged edge lands on a new grid point (desktop only). */
+/** A light "tick" when a dragged edge lands on a new grid point: the trackpad on desktop, a buzz on phones. */
 export function snapTick() {
-  if (!isTauri) return
   const now = performance.now()
   if (now - lastTick < 35) return
   lastTick = now
+  if (!isTauri) return haptic('tick')
   const internals = (window as unknown as { __TAURI_INTERNALS__?: { invoke(cmd: string): Promise<unknown> } }).__TAURI_INTERNALS__
   void internals?.invoke('haptic').catch(() => undefined)
 }

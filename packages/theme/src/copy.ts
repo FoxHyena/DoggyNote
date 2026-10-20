@@ -7,6 +7,14 @@ export const COPY = {
   search: 'Fetch',
   loading: 'Fetching…',
   allDone: 'Good dog!',
+  /** Touch hints and moments. */
+  connectHint: 'Tap another card to tie them together.',
+  emptyTouch: 'Double-tap anywhere for a note, or tap + below.',
+  emptyHintTouch: 'Pinch to zoom, drag to look around. Tap a card to pick it up.',
+  fetchedToInbox: "Fetched! It's in your Inbox.",
+  inboxEmpty: 'Nothing to chew on yet. Jot something down, or share a link here from another app.',
+  buriedEmpty: 'No bones buried. Good dog.',
+  installTitle: 'Keep DoggyNote on your phone',
 } as const
 
 /** Reserved personal inboxes keep their IDs and legacy stored titles across upgrades. */

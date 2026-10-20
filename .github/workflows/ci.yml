@@ -27,16 +27,18 @@ jobs:
   # Parallel jobs: each installs only its own browser and gets the runner's
   # workers to itself. WebKit is about twice as slow, so it's split in two.
   e2e:
-    name: End-to-end (${{ matrix.browser }} ${{ matrix.shard }})
+    name: End-to-end (${{ matrix.name }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { browser: webkit, shard: 1/2 }
-          - { browser: webkit, shard: 2/2 }
-          - { browser: chromium, shard: 1/1 }
+          - { name: webkit 1/2, browser: webkit, projects: --project=webkit, shard: 1/2 }
+          - { name: webkit 2/2, browser: webkit, projects: --project=webkit, shard: 2/2 }
+          - { name: chromium, browser: chromium, projects: --project=chromium, shard: 1/1 }
+          # Phones and tablets: touch emulation in both engines.
+          - { name: touch, browser: webkit chromium, projects: --project=mobile-webkit --project=mobile-chromium --project=tablet-webkit, shard: 1/1 }
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -49,11 +51,11 @@ jobs:
         run: pnpm --filter web exec playwright install --with-deps ${{ matrix.browser }}
       # Starts the prod build, the Worker on a fresh local D1/R2, the desktop
       # flavour of the build and the link-preview fixtures (see playwright.config.ts).
-      - run: pnpm test:e2e --project=${{ matrix.browser }} --shard=${{ matrix.shard }}
+      - run: pnpm test:e2e ${{ matrix.projects }} --shard=${{ matrix.shard }}
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-${{ matrix.browser }}-${{ strategy.job-index }}
+          name: playwright-report-${{ strategy.job-index }}
           path: |
             apps/web/playwright-report
             apps/web/test-results

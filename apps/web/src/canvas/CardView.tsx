@@ -1,6 +1,7 @@
 import { For, Match, Show, Switch, onCleanup, onMount, type JSX } from 'solid-js'
 import { SIDES, type Card } from '@doggynote/core'
-import { editingId, isSelected, selection } from '../state/ui.ts'
+import { camera, editingId, isSelected, selection } from '../state/ui.ts'
+import { touch } from '../state/device.ts'
 import { registerCardEl } from './layout.ts'
 import * as doc from '../state/doc.ts'
 import { isResolved } from '../state/comments.ts'
@@ -30,6 +31,9 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
   const selected = () => isSelected(props.card.id)
   const free = () => !props.card.columnId
   const single = () => selected() && selection().size === 1
+  // On touch, handles only exist on the one selected card, at a fingertip size
+  // that stays constant on screen (only this card follows the zoom).
+  const touchHandles = () => touch() && single() && !props.readOnly && !props.lod
 
   const style = (): JSX.CSSProperties => {
     const c = props.card
@@ -45,6 +49,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
       s.width = `${c.w}px`
       s['z-index'] = String(c.z ?? 0)
     }
+    if (touchHandles()) s['--hs'] = String(Math.round(Math.min(c.w / 3 / 18, 1 / camera().zoom) * 100) / 100)
     return s
   }
 
@@ -112,7 +117,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
       <Show when={!props.readOnly && single() && free() && props.card.type !== 'board' && !props.lod}>
         <div class="resize-handle" data-resize data-testid="resize-handle" title="Resize" />
       </Show>
-      <Show when={!props.readOnly && !props.lod}>
+      <Show when={!props.readOnly && !props.lod && (!touch() || touchHandles())}>
         <For each={SIDES}>
           {(side) => <div class={`connect-handle ${side}`} data-connect-handle={side} data-testid={`connect-handle-${side}`} title="Drag to connect" />}
         </For>

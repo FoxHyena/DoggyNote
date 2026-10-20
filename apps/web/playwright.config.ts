@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test'
 import { API_PORT, WEB_PORT } from './e2e/ports.ts'
 
 export const AUTH_FILE = 'e2e/.auth/rex.json'
+const TOUCH_SPECS = /(mobile|tablet)-.*\.spec\.ts/
 
 export default defineConfig({
   testDir: './e2e',
@@ -13,9 +14,13 @@ export default defineConfig({
   globalSetup: './e2e/global-setup.ts',
   use: { baseURL: `http://localhost:${WEB_PORT}`, storageState: AUTH_FILE, extraHTTPHeaders: { 'x-doggynote-protocol': '2' } },
   // WebKit is what Tauri runs on macOS; Chromium is what most share-link viewers use.
+  // Phones and tablets run their own specs (mobile-*.spec.ts, tablet-*.spec.ts) with real touch emulation.
   projects: [
-    { name: 'webkit', use: { ...devices['Desktop Safari'], storageState: AUTH_FILE } },
-    { name: 'chromium', use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE } },
+    { name: 'webkit', testIgnore: TOUCH_SPECS, use: { ...devices['Desktop Safari'], storageState: AUTH_FILE } },
+    { name: 'chromium', testIgnore: TOUCH_SPECS, use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE } },
+    { name: 'mobile-webkit', testMatch: /mobile-.*\.spec\.ts/, use: { ...devices['iPhone 15 Pro'], storageState: AUTH_FILE } },
+    { name: 'mobile-chromium', testMatch: /mobile-.*\.spec\.ts/, use: { ...devices['Pixel 7'], storageState: AUTH_FILE } },
+    { name: 'tablet-webkit', testMatch: /tablet-.*\.spec\.ts/, use: { ...devices['iPad Pro 11'], storageState: AUTH_FILE } },
   ],
   webServer: [
     // The production build: same chunks and timing users get. Proxies /api to the Worker.

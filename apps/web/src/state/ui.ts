@@ -13,9 +13,15 @@ export const [connectMode, setConnectMode] = createSignal<{ from: Id | null } | 
 export const [trashOpen, setTrashOpen] = createSignal(false)
 export const [paletteOpen, setPaletteOpen] = createSignal(false)
 
+/** Touch: taps add cards to the selection (or take them out) instead of replacing it. */
+export const [selectMore, setSelectMore] = createSignal(false)
+
 export const isSelected = (id: Id) => selection().has(id)
 export const select = (ids: Iterable<Id>) => setSelection(new Set(ids))
-export const clearSelection = () => setSelection(new Set<Id>())
+export const clearSelection = () => {
+  setSelection(new Set<Id>())
+  setSelectMore(false)
+}
 
 // ---- edit sessions ----------------------------------------------------------
 // Editing a card applies keystrokes transiently; leaving edit mode commits the

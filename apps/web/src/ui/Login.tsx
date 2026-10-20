@@ -35,11 +35,11 @@ export function Login(props: { onLogin: (u: User) => void; introduction?: JSX.El
         {props.introduction}
         <label>
           Username
-          <input name="username" ref={(el) => queueMicrotask(() => el.focus())} autocomplete="username" autocapitalize="off" required value={username()} onInput={(e) => setUsername(e.currentTarget.value)} />
+          <input name="username" ref={(el) => queueMicrotask(() => el.focus())} autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck={false} enterkeyhint="next" required value={username()} onInput={(e) => setUsername(e.currentTarget.value)} />
         </label>
         <label>
           Password
-          <input name="password" type="password" autocomplete="current-password" required value={password()} onInput={(e) => setPassword(e.currentTarget.value)} />
+          <input name="password" type="password" autocomplete="current-password" enterkeyhint="go" required value={password()} onInput={(e) => setPassword(e.currentTarget.value)} />
         </label>
         <Show when={error()}>
           <p class="form-error" role="alert" data-testid="login-error">

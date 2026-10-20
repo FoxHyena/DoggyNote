@@ -6,7 +6,7 @@ import { boardId, camera, selection, viewport } from '../state/ui.ts'
 import { columnChildren } from '../state/actions.ts'
 import { assetUrl } from '../state/api.ts'
 import { acquireUrl, releaseUrl } from '../state/assets.ts'
-import { cardHeight } from './layout.ts'
+import { COLUMN_HEADER, COLUMN_INSET, cardHeight } from './layout.ts'
 
 // Zoomed out, a board can put a thousand cards on screen. As DOM that costs
 // ~60 ms a frame (the browser re-layerizes every card); drawn into one canvas
@@ -191,11 +191,11 @@ export function LodLayer() {
           ctx.fillStyle = bg
           ctx.fillRect(x, y, w, Math.min(h, 50 * z))
         }
-        let cy = y + 58 * z
+        let cy = y + COLUMN_HEADER * z
         for (const k of columnChildren(c.id)) {
           const kh = cardHeight(k) * z
-          drawCard(k, x + 8 * z, cy, w - 16 * z, kh)
-          cy += kh + 8 * z
+          drawCard(k, x + COLUMN_INSET * z, cy, w - COLUMN_INSET * 2 * z, kh)
+          cy += kh + COLUMN_INSET * z
         }
         return
       }
