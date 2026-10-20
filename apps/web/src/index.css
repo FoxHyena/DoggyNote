@@ -554,6 +554,15 @@ html[data-input='mouse'] .connect-handle:hover {
   margin: 0;
 }
 
+.rich li > :is(ul, ol) {
+  margin: 0;
+}
+
+/* A sub-list under a task sits under the task's text, not its box. */
+.rich li.task > :is(ul, ol) {
+  padding-left: 2.6em;
+}
+
 .rich blockquote {
   margin: 0 0 0.4em;
   padding-left: 10px;
@@ -673,7 +682,12 @@ html[data-input='mouse'] .connect-handle:hover {
   padding: 0 6px !important;
 }
 .note-editor .cm-md-hr { border-bottom: 1px solid var(--dn-border); }
-.note-editor .cm-md-bullet { display: inline-block; width: 1.1em; }
+.note-editor .cm-md-bullet,
+.note-editor .cm-md-num,
+.note-editor .cm-md-taskslot { display: inline-block; min-width: 1.3em; text-indent: 0; }
+.note-editor .cm-md-taskslot .cm-md-task { margin: 0; }
+/* List lines indent by depth, as .rich lists do, with a hanging indent for wraps. */
+.note-editor .cm-md-li { padding-left: calc(var(--li-depth) * 1.3em) !important; text-indent: -1.3em; }
 .note-editor .cm-md-task {
   margin: 0 6px 0 0;
   vertical-align: -2px;

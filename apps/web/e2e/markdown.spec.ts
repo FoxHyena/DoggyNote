@@ -20,8 +20,20 @@ async function serverMarkdown(page: Page, text: string): Promise<string> {
   return note?.content?.md ?? ''
 }
 
-async function typeNote(page: Page, lines: string[]) {
-  const p = await at(page, 0.45, 0.45)
+/** Markdown of this board's note containing `text`, from the device's store (edits are checkpointed while typing). */
+async function localMarkdown(page: Page, text: string): Promise<string> {
+  const board = boardOf(page)
+  return page.evaluate(({ board, text }) => new Promise<string>((resolve) => {
+    const request = indexedDB.open('doggynote')
+    request.onsuccess = () => {
+      const query = request.result.transaction('objects', 'readonly').objectStore('objects').getAll()
+      query.onsuccess = () => resolve(query.result.find((o) => o.boardId === board && o.type === 'note' && !o.purged && o.content?.md?.includes(text))?.content.md ?? '')
+    }
+  }), { board, text })
+}
+
+async function typeNote(page: Page, lines: string[], fx = 0.45, fy = 0.45) {
+  const p = await at(page, fx, fy)
   await page.mouse.dblclick(p.x, p.y)
   await expect(page.getByTestId('note-editor')).toBeVisible()
   for (let i = 0; i < lines.length; i++) {
@@ -50,17 +62,84 @@ test('notes are stored as the markdown you typed and rendered formatted', async 
   expect(md).toContain('**good** dog')
 })
 
-test('live preview hides markers except on the line being edited', async ({ page }) => {
+test('live preview shows markers only for the syntax under the caret', async ({ page }) => {
   await typeNote(page, ['# Heading here', 'some **bold** text'])
   const editor = page.getByTestId('note-editor')
-  // Cursor is on line 2: the heading's "# " is hidden, the bold markers show faded.
+  const line = (n: number) => editor.locator('.cm-line').nth(n)
+  // The caret ends line 2, clear of the bold word: the line reads formatted.
   await expect(editor.locator('.cm-md-h1')).toHaveText('Heading here')
-  await expect(editor.locator('.cm-md-strong')).toContainText('bold')
+  await expect(line(1)).toHaveText('some bold text')
+  await expect(editor.locator('.cm-md-strong')).toHaveText('bold')
+  await expect(editor.locator('.cm-md-mark')).toHaveCount(0)
+  // Step back onto the bold word: its markers show, faded, ready to edit.
+  for (let i = 0; i < 5; i++) await page.keyboard.press('ArrowLeft')
+  await expect(line(1)).toHaveText('some **bold** text')
   await expect(editor.locator('.cm-md-mark').first()).toBeVisible()
-  // Move to line 1: now the heading marker shows and the bold markers hide.
+  // On the heading line, "# " shows only once the caret reaches the start of the text.
   await page.keyboard.press('ArrowUp')
+  await expect(editor.locator('.cm-md-h1')).toHaveText('Heading here')
+  await page.keyboard.press('Home')
   await expect(editor.locator('.cm-md-h1')).toHaveText('# Heading here')
-  await expect(editor.locator('.cm-line').nth(1)).toHaveText('some bold text')
+  // Backspace there turns the heading back into a paragraph.
+  await page.keyboard.press('Backspace')
+  await expect(editor.locator('.cm-md-h1')).toHaveCount(0)
+  await expect(line(0)).toHaveText('Heading here')
+})
+
+test('bullets and task boxes stay drawn on the line being typed', async ({ page }) => {
+  await typeNote(page, ['- walk', 'feed', ''])
+  const editor = page.getByTestId('note-editor')
+  await page.keyboard.type('[ ] brush')
+  await expect(editor.locator('.cm-md-bullet')).toHaveCount(2)
+  await expect(editor.locator('.cm-md-task')).toHaveCount(1)
+  await expect(editor.locator('.cm-line').nth(1)).toHaveText('•feed')
+})
+
+test('Tab nests list items and Shift-Tab brings them back', async ({ page }) => {
+  await typeNote(page, ['Walk plan', '- park', 'river'])
+  const editor = page.getByTestId('note-editor')
+  await page.keyboard.press('Tab')
+  await expect(editor).toBeFocused()
+  await page.keyboard.press('Enter')
+  await page.keyboard.type('bridge')
+  await expect.poll(() => localMarkdown(page, 'Walk plan')).toBe('Walk plan\n- park\n  - river\n  - bridge')
+  await page.keyboard.press('Shift+Tab')
+  await expect.poll(() => localMarkdown(page, 'Walk plan')).toBe('Walk plan\n- park\n  - river\n- bridge')
+  // A first sub-item has nothing above it to nest under: Tab leaves it be.
+  await page.keyboard.press('ArrowUp')
+  await page.keyboard.press('Tab')
+  await page.waitForTimeout(700)
+  expect(await localMarkdown(page, 'Walk plan')).toBe('Walk plan\n- park\n  - river\n- bridge')
+  await page.keyboard.press('Escape')
+  const note = cardByText(page, 'Walk plan')
+  await expect(note.locator('li li')).toHaveText('river')
+  // Nested items sit one step right of their parent, as in the editor.
+  const parent = (await note.locator('li', { hasText: 'park' }).first().locator('> p').boundingBox())!
+  const child = (await note.locator('li li', { hasText: 'river' }).first().boundingBox())!
+  expect(child.x).toBeGreaterThan(parent.x + 10)
+})
+
+test('Tab renumbers ordered lists, and outside a list it keeps the caret in the note', async ({ page }) => {
+  await typeNote(page, ['1. wake', 'walk', 'breakfast'])
+  await page.keyboard.press('ArrowUp')
+  await page.keyboard.press('Tab')
+  await expect.poll(() => localMarkdown(page, 'wake')).toBe('1. wake\n   1. walk\n2. breakfast')
+  await page.keyboard.press('Escape')
+
+  await typeNote(page, ['just words'], 0.7, 0.7)
+  await page.keyboard.press('Tab')
+  await expect(page.getByTestId('note-editor')).toBeFocused()
+  await page.keyboard.type('!')
+  await page.keyboard.press('Escape')
+  await expect(cardByText(page, 'just words!')).toBeVisible()
+})
+
+test('the format bar indents and outdents list items', async ({ page }) => {
+  await typeNote(page, ['- treats', 'toys'])
+  await page.getByTestId('fmt-indent').click()
+  await expect.poll(() => localMarkdown(page, 'treats')).toBe('- treats\n  - toys')
+  await page.getByTestId('fmt-outdent').click()
+  await expect.poll(() => localMarkdown(page, 'treats')).toBe('- treats\n- toys')
 })
 
 test('ticking a task in the rendered note edits its markdown, undoably', async ({ page }) => {

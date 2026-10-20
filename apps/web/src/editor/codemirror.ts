@@ -3,26 +3,38 @@
 // mode, so people who are just looking never download it.
 //
 // Live preview: headings, bold, italic, strikethrough, code, links and quotes
-// are styled in place. Their markdown markers are hidden everywhere except on
-// the line(s) the cursor is on, where they show faded so you can edit them.
-// Bullets render as dots and "[ ]" as a clickable checkbox off the active line.
+// are styled in place, on every line. Their markdown markers stay hidden unless
+// the caret or selection touches that exact piece of syntax (the bold word, the
+// link, the "# "), where they show faded so you can edit them. Bullets, task
+// boxes and rules always render; nested list items indent by depth. Hidden
+// ranges are atomic, so Backspace can't silently eat a marker.
 
-import { EditorSelection, EditorState, type Extension, type Range, type SelectionRange, type StateCommand } from '@codemirror/state'
+import { EditorSelection, EditorState, RangeSetBuilder, type Extension, type Range, type SelectionRange, type StateCommand } from '@codemirror/state'
 import { Decoration, EditorView, ViewPlugin, WidgetType, keymap, type DecorationSet, type ViewUpdate } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap, insertNewline } from '@codemirror/commands'
 import { syntaxTree } from '@codemirror/language'
 import { insertNewlineContinueMarkup, markdown, markdownKeymap, markdownLanguage } from '@codemirror/lang-markdown'
+import { indentListItems } from '@doggynote/core'
 
 // ---- live preview ------------------------------------------------------------
 
+type SyntaxNode = ReturnType<ReturnType<typeof syntaxTree>['resolveInner']>
+
+const BULLETS = ['•', '◦', '▪']
+
 class BulletWidget extends WidgetType {
-  eq() {
-    return true
+  readonly depth: number
+  constructor(depth: number) {
+    super()
+    this.depth = depth
+  }
+  eq(o: BulletWidget) {
+    return o.depth === this.depth
   }
   toDOM() {
     const s = document.createElement('span')
     s.className = 'cm-md-bullet'
-    s.textContent = '•'
+    s.textContent = BULLETS[this.depth % BULLETS.length]
     return s
   }
 }
@@ -39,7 +51,11 @@ class CheckboxWidget extends WidgetType {
     return o.checked === this.checked && o.pos === this.pos
   }
   toDOM(view: EditorView) {
+    // In a fixed-width slot, where a bullet would be, so wrapped lines line up.
+    const slot = document.createElement('span')
+    slot.className = 'cm-md-taskslot'
     const box = document.createElement('input')
+    slot.append(box)
     box.type = 'checkbox'
     box.className = 'cm-md-task'
     box.checked = this.checked
@@ -50,7 +66,7 @@ class CheckboxWidget extends WidgetType {
     })
     // The change above already toggled it; the click must not toggle the box back.
     box.addEventListener('click', (e) => e.preventDefault())
-    return box
+    return slot
   }
   ignoreEvent() {
     return true
@@ -66,33 +82,32 @@ const MARK_CLASS: Record<string, string> = {
   InlineCode: 'cm-md-code',
   Link: 'cm-md-link',
 }
-const MARKERS = new Set(['EmphasisMark', 'CodeMark', 'StrikethroughMark', 'LinkMark', 'URL', 'HeaderMark', 'QuoteMark'])
+const INLINE_MARKS = new Set(['EmphasisMark', 'CodeMark', 'StrikethroughMark', 'LinkMark', 'URL'])
+const LINE_MARKS = new Set(['HeaderMark', 'QuoteMark'])
 
-function activeLines(view: EditorView): Set<number> {
-  const lines = new Set<number>()
-  if (!view.hasFocus) return lines
-  for (const r of view.state.selection.ranges) {
-    const a = view.state.doc.lineAt(r.from).number
-    const b = view.state.doc.lineAt(r.to).number
-    for (let n = a; n <= b; n++) lines.add(n)
-  }
-  return lines
+/** List nesting depth of a node: 0 for a top-level item. */
+function listDepth(node: SyntaxNode | null): number {
+  let depth = -1
+  for (let n = node; n; n = n.parent) if (n.name === 'ListItem') depth++
+  return Math.max(0, depth)
 }
 
-function buildDecorations(view: EditorView): DecorationSet {
+function buildDecorations(view: EditorView): { decorations: DecorationSet; atomic: DecorationSet } {
   const { state } = view
-  const active = activeLines(view)
+  const ranges = view.hasFocus ? state.selection.ranges : []
+  /** Does the caret or selection touch [from, to]? */
+  const touched = (from: number, to: number) => ranges.some((r) => r.from <= to && r.to >= from)
   const out: Range<Decoration>[] = []
   const lineOf = (pos: number) => state.doc.lineAt(pos)
+  const tree = syntaxTree(state)
 
   for (const { from, to } of view.visibleRanges) {
-    syntaxTree(state).iterate({
+    tree.iterate({
       from,
       to,
       enter: (node) => {
         const name = node.name
         const line = lineOf(node.from)
-        const isActive = active.has(line.number)
 
         const heading = /^(?:ATX|Setext)Heading(\d)$/.exec(name)
         if (heading) {
@@ -109,7 +124,7 @@ function buildDecorations(view: EditorView): DecorationSet {
         }
         if (name === 'HorizontalRule') {
           out.push(Decoration.line({ class: 'cm-md-hr' }).range(line.from))
-          if (!isActive) out.push(hidden.range(node.from, node.to))
+          if (!touched(node.from, node.to)) out.push(hidden.range(node.from, node.to))
           return
         }
         if (MARK_CLASS[name]) {
@@ -118,53 +133,74 @@ function buildDecorations(view: EditorView): DecorationSet {
         }
         if (name === 'ListMark') {
           const text = state.sliceDoc(node.from, node.to)
-          const bullet = /^[-*+]$/.test(text)
           // Task list items hide their bullet; the checkbox stands in for it.
-          const next = node.node.nextSibling
-          const isTask = next?.name === 'Task'
-          if (isActive) out.push(faded.range(node.from, node.to))
-          else if (isTask) out.push(hidden.range(node.from, Math.min(node.to + 1, line.to)))
-          else if (bullet) out.push(Decoration.replace({ widget: new BulletWidget() }).range(node.from, node.to))
+          if (node.node.nextSibling?.name === 'Task') out.push(hidden.range(node.from, Math.min(node.to + 1, line.to)))
+          else if (/^[-*+]$/.test(text)) out.push(Decoration.replace({ widget: new BulletWidget(listDepth(node.node)) }).range(node.from, Math.min(node.to + 1, line.to)))
+          else out.push(Decoration.mark({ class: 'cm-md-num' }).range(node.from, Math.min(node.to + 1, line.to)))
           return
         }
         if (name === 'TaskMarker') {
-          if (isActive) out.push(faded.range(node.from, node.to))
-          else {
-            const checked = /x/i.test(state.sliceDoc(node.from, node.to))
-            out.push(Decoration.replace({ widget: new CheckboxWidget(checked, node.from) }).range(node.from, node.to))
-            if (checked) {
-              const end = lineOf(node.to).to
-              if (end > node.to) out.push(Decoration.mark({ class: 'cm-md-done' }).range(node.to, end))
-            }
-          }
+          const checked = /x/i.test(state.sliceDoc(node.from, node.to))
+          const end = Math.min(node.to + 1, lineOf(node.to).to)
+          out.push(Decoration.replace({ widget: new CheckboxWidget(checked, node.from) }).range(node.from, end))
+          if (checked && lineOf(node.to).to > end) out.push(Decoration.mark({ class: 'cm-md-done' }).range(end, lineOf(node.to).to))
           return
         }
-        if (MARKERS.has(name)) {
-          // Header and quote marks take their trailing space with them.
+        if (INLINE_MARKS.has(name)) {
+          // Revealed while the caret touches the bold word, the code span, the link…
+          const owner = node.node.parent ?? node.node
+          if (node.to > node.from) out.push((touched(owner.from, owner.to) ? faded : hidden).range(node.from, node.to))
+          return
+        }
+        if (LINE_MARKS.has(name)) {
+          // "# " and "> " take their trailing space with them, never across lines.
           let end = node.to
-          if ((name === 'HeaderMark' || name === 'QuoteMark') && state.sliceDoc(end, end + 1) === ' ') end++
-          if (end <= node.from) return
-          // Hiding a heading's trailing "#"s etc. is fine; never hide across lines.
+          if (state.sliceDoc(end, end + 1) === ' ') end++
           if (lineOf(end).number !== line.number) end = line.to
-          out.push((isActive ? faded : hidden).range(node.from, end))
+          if (end > node.from) out.push((touched(node.from, end) ? faded : hidden).range(node.from, end))
         }
       },
     })
+    // Nested list items: hide the leading spaces and indent by depth instead, with
+    // a hanging indent so wrapped lines line up with the text, as in the rendered note.
+    for (let pos = from; pos <= to; ) {
+      const line = lineOf(pos)
+      pos = line.to + 1
+      const lead = /^ */.exec(line.text)![0].length
+      if (lead === line.length) continue
+      let item: SyntaxNode | null = tree.resolveInner(line.from + lead, 1)
+      while (item && item.name !== 'ListItem') item = item.parent
+      if (!item) continue
+      const depth = listDepth(item)
+      const first = item.from === line.from + lead
+      if (lead) out.push(hidden.range(line.from, line.from + lead))
+      out.push(Decoration.line({ class: 'cm-md-li', attributes: { style: `--li-depth: ${depth + 1}` + (first ? '' : '; text-indent: 0') } }).range(line.from))
+    }
   }
-  return Decoration.set(out, true)
+  const decorations = Decoration.set(out, true)
+  // Everything replaced (hidden markers, bullets, boxes) is one unit to the caret.
+  const atomic = new RangeSetBuilder<Decoration>()
+  decorations.between(0, state.doc.length, (from, to, value) => {
+    if (to > from && (value.spec.widget || value === hidden)) atomic.add(from, to, value)
+  })
+  return { decorations, atomic: atomic.finish() }
 }
 
 const livePreview = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet
+    atomic: DecorationSet
     constructor(view: EditorView) {
-      this.decorations = buildDecorations(view)
+      ;({ decorations: this.decorations, atomic: this.atomic } = buildDecorations(view))
     }
     update(u: ViewUpdate) {
-      if (u.docChanged || u.selectionSet || u.viewportChanged || u.focusChanged) this.decorations = buildDecorations(u.view)
+      if (u.docChanged || u.selectionSet || u.viewportChanged || u.focusChanged) ({ decorations: this.decorations, atomic: this.atomic } = buildDecorations(u.view))
     }
   },
-  { decorations: (v) => v.decorations },
+  {
+    decorations: (v) => v.decorations,
+    provide: (plugin) => EditorView.atomicRanges.of((view) => view.plugin(plugin)?.atomic ?? Decoration.none),
+  },
 )
 
 // ---- formatting commands ----------------------------------------------------------
@@ -239,6 +275,51 @@ function linePrefix(prefix: string): StateCommand {
   }
 }
 
+/**
+ * Tab / Shift-Tab: nest or un-nest the list items under the selection. Inside
+ * a code block Tab indents; anywhere else it does nothing, but it never moves
+ * focus out of the note.
+ */
+function indentList(dir: 1 | -1): StateCommand {
+  return ({ state, dispatch }) => {
+    const doc = state.doc
+    const edits = new Map<number, { from: number; to: number; insert: string }>()
+    let inList = false
+    for (const r of state.selection.ranges) {
+      const a = doc.lineAt(r.from).number - 1
+      const b = doc.lineAt(r.to).number - 1
+      const found = indentListItems(doc.toString(), a, b, dir)
+      if (!found) continue
+      inList = true
+      for (const e of found) {
+        const line = doc.line(e.line + 1)
+        edits.set(e.line, { from: line.from + e.from, to: line.from + e.to, insert: e.insert })
+      }
+    }
+    if (inList) {
+      if (edits.size) dispatch(state.update({ changes: [...edits.values()], userEvent: 'input.indent' }))
+      return true
+    }
+    const inCode = state.selection.ranges.some((r) => {
+      for (let n: SyntaxNode | null = syntaxTree(state).resolveInner(r.head, -1); n; n = n.parent) if (n.name === 'FencedCode') return true
+      return false
+    })
+    if (inCode && dir === 1) dispatch(state.update(state.replaceSelection('  '), { userEvent: 'input' }))
+    return true
+  }
+}
+
+/** Backspace right after a heading's "# " turns it back into a paragraph. */
+const deleteHeadingMarkBackward: StateCommand = ({ state, dispatch }) => {
+  const r = state.selection.main
+  if (!r.empty || state.selection.ranges.length > 1) return false
+  const line = state.doc.lineAt(r.head)
+  const m = /^#{1,6} +/.exec(line.text)
+  if (!m || r.head !== line.from + m[0].length) return false
+  dispatch(state.update({ changes: { from: line.from, to: r.head }, userEvent: 'delete' }))
+  return true
+}
+
 export const commands = {
   bold: wrap('**'),
   italic: wrap('_'),
@@ -248,6 +329,8 @@ export const commands = {
   bullets: linePrefix('- '),
   numbers: linePrefix('1. '),
   task: linePrefix('- [ ] '),
+  indent: indentList(1),
+  outdent: indentList(-1),
 }
 export type FormatCommand = keyof typeof commands
 
@@ -291,6 +374,8 @@ export function createEditor(
       { key: 'Mod-i', run: run(commands.italic) },
       { key: 'Mod-Shift-x', run: run(commands.strike) },
       { key: 'Mod-e', run: run(commands.code) },
+      { key: 'Tab', run: run(commands.indent), shift: run(commands.outdent) },
+      { key: 'Backspace', run: run(deleteHeadingMarkBackward) },
       ...markdownKeymap,
       ...historyKeymap,
       ...defaultKeymap,
@@ -300,9 +385,10 @@ export function createEditor(
     }),
   ]
   const view = new EditorView({ parent: mount, state: EditorState.create({ doc: md, extensions }) })
-  view.focus()
-  // Put the caret where the user clicked, else at the end.
+  // Put the caret where the user clicked, else at the end. Measured before focus:
+  // unfocused, every marker is hidden, so the layout matches the note they tapped.
   const pos = opts.placeAt ? view.posAtCoords(opts.placeAt) : null
+  view.focus()
   view.dispatch({ selection: { anchor: pos ?? view.state.doc.length } })
 
   return {
