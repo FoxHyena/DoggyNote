@@ -10,7 +10,7 @@ ROUNDS = ['r2', 'r3', 'after']
 
 def index(folder):
     out = {}
-    for p in sorted((root / folder).glob('*.png')):
+    for p in sorted((root / folder).glob('*.jpg')):
         engine, theme, device, state = p.stem.split('-', 3)
         out[(engine, theme, device, state)] = f'../../docs/qa/mobile/{folder}/{p.name}'
     return out

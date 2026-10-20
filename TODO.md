@@ -66,6 +66,9 @@ Legend: [x] done + tested · [~] in progress · [ ] not started
 - [x] Phone shell: thumb dock with +, Add sheet (photo/camera/file), bottom sheets with grips, docked selection bar, one-row header with Back, recent boards, safe areas, landscape
 - [x] Installable: manifest + icons, Android share target and Inbox shortcut into the Inbox, Add to Home Screen row
 - [x] Mobile/tablet Playwright projects (WebKit iPhone, Chromium Pixel, iPad) in CI; QA record in docs/qa/mobile
+- [ ] Inbox Place on a phone: nudge the card into free space instead of on top of others (UX2-06)
+- [ ] Image shares from other apps (needs a service worker for POST share targets); iOS has no web share target at all
+- [ ] Drive the signed-in app in the iOS Simulator with a real keyboard (blocked on an accessibility prompt for scripted keystrokes)
 
 ## Still open
 1. [ ] Memory: busy boards still ~183–202 MB in the Mac app (target 150). The rest is WebKit graphics surfaces + JS heap; next lever is fewer GPU layers

@@ -8,7 +8,7 @@ ims = []
 for f in files:
     im = Image.open(f).convert('RGB')
     im = im.resize((max(1, int(im.width * height / im.height)), height))
-    ims.append((f.rsplit('/', 1)[-1].replace('.png', ''), im))
+    ims.append((f.rsplit('/', 1)[-1].replace('.jpg', '').replace('.png', ''), im))
 pad, label = 8, 18
 W = sum(i.width for _, i in ims) + pad * (len(ims) + 1)
 sheet = Image.new('RGB', (W, height + label + pad * 2), (128, 128, 128))
