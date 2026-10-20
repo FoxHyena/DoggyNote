@@ -86,7 +86,7 @@ button:disabled {
   max-width: 220px;
 }
 
-.crumb:hover {
+html[data-input="mouse"] .crumb:hover {
   background: var(--dn-card-hover);
   color: var(--dn-text);
 }
@@ -649,7 +649,7 @@ html[data-input='mouse'] .connect-handle:hover {
   font-size: 13px;
 }
 
-.fmt:hover {
+html[data-input="mouse"] .fmt:hover {
   background: var(--dn-card-hover);
 }
 
@@ -889,7 +889,7 @@ html[data-input='mouse'] .connect-handle:hover {
   flex-shrink: 0;
 }
 
-.board-card:hover .board-tile {
+html[data-input="mouse"] .board-card:hover .board-tile {
   transform: translateY(-2px) rotate(-3deg);
 }
 
@@ -957,7 +957,7 @@ html[data-input='mouse'] .connect-handle:hover {
   overflow-wrap: anywhere;
 }
 
-.link-title:hover {
+html[data-input="mouse"] .link-title:hover {
   text-decoration: underline;
 }
 
@@ -1123,7 +1123,7 @@ html[data-input="mouse"] .bar-btn:hover {
   color: var(--dn-text);
 }
 
-.danger-btn:hover {
+html[data-input="mouse"] .danger-btn:hover {
   background: var(--dn-card-collar-bg);
   color: var(--dn-card-collar-text);
 }
@@ -1200,7 +1200,7 @@ html[data-input="mouse"] .bar-btn:hover {
   font-weight: 600;
 }
 
-.primary-btn:hover:not(:disabled) {
+html[data-input="mouse"] .primary-btn:hover:not(:disabled) {
   filter: brightness(1.06);
 }
 
@@ -1245,7 +1245,7 @@ html[data-input="mouse"] .bar-btn:hover {
   white-space: nowrap;
 }
 
-.sync-status:hover {
+html[data-input="mouse"] .sync-status:hover {
   background: var(--dn-card-hover);
 }
 
@@ -1560,7 +1560,7 @@ body:has([role='dialog'], [role='alertdialog'], .nav-menu, .trash, .fetch) .upda
   text-decoration: underline;
 }
 
-.link-btn:hover {
+html[data-input="mouse"] .link-btn:hover {
   color: var(--dn-text);
 }
 
@@ -1683,7 +1683,7 @@ a.file-name {
   text-decoration: none;
 }
 
-a.file-name:hover {
+html[data-input="mouse"] a.file-name:hover {
   text-decoration: underline;
 }
 

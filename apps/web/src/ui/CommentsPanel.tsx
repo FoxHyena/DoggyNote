@@ -3,7 +3,7 @@ import { isAlive, parseMarkdown, type Comment } from '@doggynote/core'
 import { touch } from '../state/device.ts'
 import * as doc from '../state/doc.ts'
 import { user } from '../state/session.ts'
-import { setTrashOpen } from '../state/ui.ts'
+import { endEdit, setTrashOpen } from '../state/ui.ts'
 import { addComment, deleteComment, editComment, isResolved, relativeTime, setResolved, setThreadCardId, threadCardId } from '../state/comments.ts'
 import { RichText } from '../editor/RichText.tsx'
 import { describeCard } from './TrashPanel.tsx'
@@ -14,6 +14,8 @@ import { Icon, ToolIcons } from './icons.tsx'
 export function openThread(cardId: string) {
   setTrashOpen(false)
   setToyboxOpen(false)
+  // A phone sheet covers the note; leave no editor (and keyboard) hiding behind it.
+  if (touch()) endEdit()
   setThreadCardId(cardId)
 }
 

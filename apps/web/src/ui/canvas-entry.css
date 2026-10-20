@@ -137,7 +137,7 @@ html[data-input="mouse"] .tool:hover {
 }
 
 .icon-choice.on,
-.icon-choice:hover {
+html[data-input="mouse"] .icon-choice:hover {
   background: var(--dn-card-hover);
   color: var(--dn-text);
 }
@@ -218,7 +218,7 @@ html[data-input="mouse"] .tool:hover {
   border-radius: 8px;
 }
 
-.trash-item:hover {
+html[data-input="mouse"] .trash-item:hover {
   background: var(--dn-card-hover);
 }
 
@@ -572,7 +572,7 @@ html[data-input="mouse"] .tool:hover {
 }
 
 .fetch-close { display: grid; place-items: center; flex-shrink: 0; padding: 0; border: 0; border-radius: 6px; color: var(--dn-text-muted); background: transparent; }
-.fetch-close:hover { color: var(--dn-text); background: var(--dn-card-hover); }
+html[data-input="mouse"] .fetch-close:hover { color: var(--dn-text); background: var(--dn-card-hover); }
 @media (pointer: coarse) {
   .fetch-close { min-width: 44px; min-height: 44px; }
 }

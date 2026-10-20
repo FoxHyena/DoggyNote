@@ -35,18 +35,19 @@ export async function addImages(files: File[], at: Vec, onBoard?: Id): Promise<I
   return ids
 }
 
-export function addLink(url: string, place: Placement, onBoard?: Id): Id {
-  const id = createCard('link', place, { content: { url, status: 'pending' }, edit: false, boardId: onBoard })
+/** `title` shows until the preview arrives, and stays if the page has none. */
+export function addLink(url: string, place: Placement, onBoard?: Id, title?: string): Id {
+  const id = createCard('link', place, { content: { url, status: 'pending', ...(title ? { title } : {}) }, edit: false, boardId: onBoard })
   void unfurl(id)
   return id
 }
 
 /** A URL becomes a link card, anything else a note. */
-export function addText(text: string, at: Vec, onBoard?: Id) {
+export function addText(text: string, at: Vec, onBoard?: Id, title?: string) {
   const t = text.trim()
   if (!t) return
   const href = safeHref(t)
-  if (href && !/\s/.test(t)) addLink(href, { at }, onBoard)
+  if (href && !/\s/.test(t)) addLink(href, { at }, onBoard, title)
   else if (onBoard) createCard('note', { at }, { content: { md: t }, edit: false, boardId: onBoard })
   else createNoteWithText(t, { at })
 }

@@ -49,6 +49,14 @@ test('a link shared from another app lands in the Inbox', async ({ page }) => {
   await waitForSync(page)
 })
 
+test('a shared page keeps its title while the preview is missing', async ({ page }) => {
+  await freshBoard(page)
+  // .invalid never resolves, so the shared title is all there is.
+  await page.goto(`/share?title=${encodeURIComponent('Dog park map')}&url=${encodeURIComponent('https://walkies.invalid/map')}`)
+  await expect(page.getByTestId('toybox-item').filter({ hasText: 'Dog park map' }).first()).toBeVisible()
+  await waitForSync(page)
+})
+
 test('the home-screen shortcut opens the Inbox', async ({ page }) => {
   await freshBoard(page)
   await page.goto('/?inbox=1')

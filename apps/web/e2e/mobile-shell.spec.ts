@@ -184,3 +184,19 @@ test('the Boards sheet lists boards you were just on', async ({ page }) => {
   await page.getByTestId('recent-board').filter({ hasText: first }).tap()
   await expect(page.getByTestId('board-name')).toHaveText(first)
 })
+
+test('a comment thread closes when you leave its board', async ({ page }) => {
+  const parent = page.url().split('/').at(-1)!
+  const child = crypto.randomUUID()
+  expect((await page.request.post('/api/sync', { data: { changes: [{ id: child, patch: { id: child, kind: 'board', parentId: parent, title: 'Car pool', icon: 'bone', color: 'none', createdAt: Date.now() } }] } })).ok()).toBe(true)
+  await page.goto(`/#/b/${child}`)
+  await page.reload()
+  await expect(page.getByTestId('board-name')).toHaveText('Car pool')
+  await seedCards(page, [note('Who drives?', 0, 0)])
+  await tapOn(page, cardByText(page, 'Who drives?'))
+  await page.getByTestId('comment-button').tap()
+  await expect(page.getByTestId('comments-panel')).toBeVisible()
+  await page.goBack()
+  await expect(page.getByTestId('board-name')).not.toHaveText('Car pool')
+  await expect(page.getByTestId('comments-panel')).toHaveCount(0)
+})

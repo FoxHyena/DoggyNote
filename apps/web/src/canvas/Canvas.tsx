@@ -68,6 +68,7 @@ import { setToyboxOpen, toyboxOpen } from '../ui/ToyboxPanel.tsx'
 import { setThreadCardId, threadCardId } from '../state/comments.ts'
 import { haptic, phone, touch } from '../state/device.ts'
 import { resetPageScroll, visible } from '../state/viewport.ts'
+import { showToast } from '../state/toast.ts'
 
 type Gesture =
   | { kind: 'pan'; last: Vec; start: Vec; target: HTMLElement; samples?: Tap[] }
@@ -179,7 +180,13 @@ export function Canvas(props: { readOnly: boolean }) {
       setCamera(phone() ? readableCamera(b, v.width, v.height, PHONE_MIN_ZOOM) : fitCamera(b, v.width, v.height))
     }),
   )
-  createEffect(on(boardId, () => stopMomentum(), { defer: true }))
+  createEffect(
+    on(boardId, () => {
+      stopMomentum()
+      // A thread belongs to a card on the board you left.
+      setThreadCardId(null)
+    }, { defer: true }),
+  )
 
   // ---- editing on touch --------------------------------------------------------
   // Editing on a phone glides the card to a readable size near the top, keeps
@@ -563,8 +570,10 @@ export function Canvas(props: { readOnly: boolean }) {
           sorted.forEach((id, i) => doc.transient(id, { columnId: drop.columnId, order: orders[i] } as Partial<Card>))
           haptic('drop')
         }
-        doc.commitFrom(g.snap)
+        const moved = doc.commitFrom(g.snap)
         doc.unmarkBusy(g.ids)
+        // On touch the Undo button hides behind the selection bar: offer it here.
+        if (moved && e.pointerType === 'touch' && e.type !== 'pointercancel') showToast(drop ? 'Moved into the column' : 'Moved', 3000, { label: 'Undo', run: () => doc.undo() })
         break
       }
       case 'resize':
@@ -822,10 +831,16 @@ export function Canvas(props: { readOnly: boolean }) {
 
   function checkboxNear(id: Id, e: Client): HTMLInputElement | null {
     const boxes = cardEl(id)?.querySelectorAll<HTMLInputElement>('input.todo-check:not(:disabled), input.task-check:not(:disabled)')
+    // Only the gutter beside a box, on that item's first line: taps on the text or the
+    // title select the card. Zoomed out the rows are too thin to guess, so hit the box.
+    const reach = camera().zoom < 0.6 ? 4 : CHECK_REACH
     let best: HTMLInputElement | null = null
-    let bestD = CHECK_REACH
+    let bestD = Infinity
     for (const b of boxes ?? []) {
       const r = b.getBoundingClientRect()
+      const row = b.parentElement!.getBoundingClientRect()
+      const bottom = r.bottom + Math.max(4, r.top - row.top)
+      if (e.clientY < row.top || e.clientY > bottom || e.clientX < r.left - reach || e.clientX > r.right + 8) continue
       const d = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2))
       if (d <= bestD) {
         best = b

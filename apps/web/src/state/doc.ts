@@ -201,8 +201,8 @@ export function checkpoint(id: Id, patch: Partial<Obj>) {
   for (const listener of outboxListeners) listener()
 }
 
-/** Commit the difference between `snapshot` (values before the gesture) and the current store. */
-export function commitFrom(snapshot: Record<Id, Partial<Obj>>) {
+/** Commit the difference between `snapshot` (values before the gesture) and the current store. False if nothing changed. */
+export function commitFrom(snapshot: Record<Id, Partial<Obj>>): boolean {
   const tx: Change[] = []
   for (const [id, before] of Object.entries(snapshot)) {
     if (!canWriteObject(state.objs[id])) continue
@@ -219,12 +219,13 @@ export function commitFrom(snapshot: Record<Id, Partial<Obj>>) {
     }
     if (Object.keys(a).length) tx.push({ id, before: b as Partial<Obj>, after: a as Partial<Obj> })
   }
-  if (!tx.length) return
+  if (!tx.length) return false
   // Already in the store; persist + record undo.
   for (const c of tx) record(c.id, c.after)
   for (const l of outboxListeners) l()
   undoStack.push(tx)
   setUndoTick((n) => n + 1)
+  return true
 }
 
 /** Snapshot the given keys of an object (deep-cloned) for a later `commitFrom`. */

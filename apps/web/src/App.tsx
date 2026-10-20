@@ -190,7 +190,7 @@ function openLaunchIntent() {
   const launch = takeLaunch()
   const inbox = toyboxId()
   if (launch.share && inbox) {
-    addText(launch.share, { x: 0, y: 0 }, inbox)
+    addText(launch.share, { x: 0, y: 0 }, inbox, launch.title)
     showToast(COPY.fetchedToInbox)
   }
   if (launch.inbox) setToyboxOpen(true)

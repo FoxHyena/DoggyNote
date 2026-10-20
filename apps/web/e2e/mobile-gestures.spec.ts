@@ -58,6 +58,18 @@ test('a selected card follows the finger, and the move is saved', async ({ page 
   expect(await left(page, 'Fetch')).toBeGreaterThan(x0 + 60)
 })
 
+test('a move on touch offers Undo', async ({ page }) => {
+  await seedCards(page, [note('Stay', 0, 0)])
+  const card = cardByText(page, 'Stay')
+  await tapOn(page, card)
+  const x0 = await left(page, 'Stay')
+  const p = await center(card)
+  await touchDrag(page, p, { x: p.x + 80, y: p.y + 40 })
+  await expect(page.getByTestId('toast')).toContainText('Moved')
+  await page.getByTestId('toast-action').tap()
+  await expect.poll(() => left(page, 'Stay')).toBeLessThan(x0 + 2)
+})
+
 test('long-press lifts a card that was not selected', async ({ page }) => {
   await seedCards(page, [note('Lift me', 0, 0)])
   const x0 = await left(page, 'Lift me')
@@ -128,6 +140,24 @@ test('a tap near a to-do checkbox ticks it, without editing', async ({ page }) =
   await tap(page, { x: b.x + b.width / 2 + 12, y: b.y + b.height / 2 + 6 })
   await expect(box).toBeChecked()
   await expect(page.getByTestId('todo-item-input')).toHaveCount(0)
+})
+
+test('a tap on the to-do title selects it, it does not tick the first item', async ({ page }) => {
+  await seedCards(page, [{ type: 'todo', x: 0, y: 0, w: 240, content: { title: 'Walkies', items: [{ id: 'a', text: 'Leash', done: false }] } }])
+  const card = cardByText(page, 'Walkies')
+  const box = card.locator('.todo-check').first()
+  const title = (await card.locator('.todo-title').boundingBox())!
+  const b = (await box.boundingBox())!
+  // The bottom of the title, right above the first box.
+  await tap(page, { x: b.x + b.width / 2, y: title.y + title.height - 3 })
+  await expect(card).toHaveClass(/selected/)
+  await expect(box).not.toBeChecked()
+  // Nor does a tap on an item's words.
+  await page.getByTestId('selection-done').tap()
+  const text = (await card.locator('.todo-text').first().boundingBox())!
+  await tap(page, { x: text.x + text.width - 4, y: text.y + text.height / 2 })
+  await expect(card).toHaveClass(/selected/)
+  await expect(box).not.toBeChecked()
 })
 
 test('long-press on empty canvas, then drag, selects with a box', async ({ page }) => {
