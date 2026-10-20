@@ -89,17 +89,22 @@ All round-1 fixes passed except the dark watched posters (VD-3, now V2-1).
 | # | Sev | Area | Finding | Status |
 |---|---|---|---|---|
 | U-1 | Med | Notes | In a note, a ticked task's box sat ~4px below an open one's, reading and editing. | **Fixed.** The tick inside the box moved its baseline; boxes now centre on the line. e2e test added. |
-| V2-1 | Med-High | Movies | Watched dark posters still vanished on dark cards. Same as UXD2-1. | **Fixed.** On dark cards the grey poster is lifted and not faded, with an outline. |
+| UXM2-1 | Med-High | Toolbar (iPad) | A tapped Note, To-do or Movie tool lost the new card's focus to the tap's late mousedown, so the keyboard would drop. | **Fixed;** tablet e2e test added. Check on a real iPad. |
+| UXM2-2 | Med | Movies (iPhone) | Opening ⓘ on a card taller than the screen left the details under the bars. | **Fixed.** The details come into view; e2e test added. |
+| UXM2-3 | Med | To-dos | A tap 1.1–1.25s after a tick, aimed at a row that had just slid away, ticked the row that slid in. | **Fixed.** Taps wait 0.6s after rows swap (a reaction time); e2e test added. |
+| V2-1 | Med-High | Movies | Watched dark posters still vanished on dark cards. Same as UXD2-1, UXM2-7. | **Fixed.** On dark cards the grey poster is lifted and not faded, with an outline. |
 | V2-2 | Med | Proposals | Phone shots of the preview showed the sheet instead (the script tapped while it slid in). | **Fixed** in `capture.mjs`. |
 | V2-3 | Med | Columns | The "3 cards" count was 4.0:1 light, 3.4:1 dark. | **Fixed.** Less faded. |
 | V2-7 | Low | Notes | The phone Done tick was a 43×39 ellipse. | **Fixed.** A 44px circle. |
 | V2-8 | Low | Proposals | Buried text was 4.4:1 in dark. | **Fixed.** Faded less. |
 | V2-10 | Low | Movies | An open ⓘ looked like the filled ✓, so the card read as watched. | **Fixed.** Open Details is an outline. |
 | V2-4 | Low | Overview | Watched posters were tinted in the overview but grey on the card. | **Fixed.** Grey in both. |
-| UXD2-2 | Low | Proposals | The card Next change lands on was barely marked. | **Fixed.** A heavier outline with a tinted band. |
+| UXD2-2 | Low | Proposals | The card Next change lands on was barely marked. Same as UXM2-4. | **Fixed.** A heavier outline with a tinted band. |
 | UXD2-3 | Low | Movies | "Refreshing…" flashes for 20–50ms on a local stack. | Deferred. Real TMDB calls take longer. |
-| UXD2-4 | Low | Notes | Backspace twice on a top-level bullet merges it into the line above; unbulleting one item restyles the next. | Deferred. Plain-line Backspace merges, as in any editor. |
+| UXD2-4 | Low | Notes | Same as UXM2-6. Backspace twice on a top-level bullet merges it into the line above; unbulleting one item restyles the next. | Deferred. Plain-line Backspace merges, as in any editor. |
 | UXD2-5 | Low | To-dos | One ⌘Z after leaving a list undoes the whole editing session. | Deferred. Matches note editing: a session is one step. |
 | UXD2-6 | Low | Proposals | A proposal made before a board was first opened conflicts once the board tidies its lists or resolves movies. | Deferred. The banner warns first; asking the agent again fixes it. |
 | UXD2-7 | Low | Sync | The popover can say "Synced" for 1.6s after a background sync. | Deferred. |
-| V2-5, V2-6, V2-9 | Low | Docks | H/S scroll off the phone dock; dock icon alignment; the format bar's top corners clip under the top bar. | Deferred. Existing dock design, worth one pass on all docks. |
+| V2-5, V2-6, V2-9, UXM2-5 | Low | Docks | H/S scroll off the phone dock; dock icon alignment; the format bar's top corners clip under the top bar. | Deferred. Existing dock design, worth one pass on all docks. |
+| UXM2-4b | Low | Proposals | The iPad counter appears only after the first Next; the phone counter hides in Current. | Deferred. |
+| UXM2-1b | Low | Movies (iPad) | At the default 42% zoom a new movie's search box is small. | Deferred. Zoom in or use the phone dock. |
