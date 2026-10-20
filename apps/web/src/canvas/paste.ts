@@ -4,6 +4,7 @@ import { importImage } from '../state/assets.ts'
 import { unfurl } from '../state/unfurl.ts'
 import { select } from '../state/ui.ts'
 import { addFiles } from '../state/files.ts'
+import { pasteClip, readClip, takePlainPaste } from '../state/clipboard.ts'
 
 // Paste and drop onto the canvas: images become image cards, a URL becomes a
 // link card, other text becomes a note.
@@ -62,9 +63,21 @@ export function addAnyFiles(files: File[], at: Vec, onBoard?: Id): boolean {
   return true
 }
 
-export function handleCanvasPaste(e: ClipboardEvent, at: Vec): boolean {
+/** Paste onto the canvas: copied cards first, then files, then text. `columnId`: the column under the pointer. */
+export function handleCanvasPaste(e: ClipboardEvent, at: Vec, columnId?: Id): boolean {
   const dt = e.clipboardData
   if (!dt) return false
+  // ⌘⇧V: just the words, as a note (no copied cards, no link preview).
+  if (takePlainPaste()) {
+    const text = dt.getData('text/plain').trim()
+    if (text) createNoteWithText(text, { at })
+    return !!text
+  }
+  const clip = readClip(dt)
+  if (clip) {
+    pasteClip(clip, at, { columnId })
+    return true
+  }
   if (addAnyFiles([...dt.files], at)) return true
   const text = dt.getData('text/plain')
   if (text) {

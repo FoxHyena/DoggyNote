@@ -111,11 +111,11 @@ export function createNoteWithText(text: string, place: Placement): Id {
   return createCard('note', place, { content: { md: text }, edit: false })
 }
 
-export function trashSelection() {
+/** Bury the selection. `now` stamps the burial (a cut remembers it to bring the cards back). */
+export function trashSelection(now = Date.now()) {
   const ids = [...selection()]
   if (!ids.length) return
   if (editingId()) endEdit()
-  const now = Date.now()
   const patches: Record<Id, Partial<Obj>> = {}
   for (const id of ids) {
     const o = doc.get(id)
