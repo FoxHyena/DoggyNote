@@ -194,7 +194,8 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   .tauri .topbar {
     display: flex;
     gap: 4px;
-    min-height: 52px;
+    /* 52px of row below the notch (border-box would fold the inset into it). */
+    min-height: calc(52px + env(safe-area-inset-top));
     padding: env(safe-area-inset-top) max(6px, env(safe-area-inset-right)) 0 max(6px, env(safe-area-inset-left));
     z-index: 90;
   }

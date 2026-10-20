@@ -13,6 +13,16 @@ body,
   margin: 0;
 }
 
+/* iOS home-screen apps size 100% to the screen minus the status bar, though the
+   page draws under it (black-translucent), leaving a strip below the dock. */
+@media (display-mode: standalone) {
+  html,
+  body,
+  #root {
+    height: 100vh;
+  }
+}
+
 body {
   background: var(--dn-bg);
   color: var(--dn-text);

@@ -32,3 +32,31 @@ test('the status bar colour follows the app theme', async ({ page }) => {
     expect(colours.every((c) => c === surfaces[mode === 'Light' ? 'light' : 'dark'].panel)).toBe(true)
   }
 })
+
+test('the phone shell fills the screen, installed or not', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByTestId('canvas')).toBeVisible()
+  const fit = await page.evaluate(() => {
+    const top = document.querySelector('.topbar')!
+    return {
+      root: document.getElementById('root')!.getBoundingClientRect().height,
+      dock: document.querySelector('.mobile-dock')!.getBoundingClientRect().bottom,
+      row: top.getBoundingClientRect().height - parseFloat(getComputedStyle(top).paddingTop),
+      screen: innerHeight,
+    }
+  })
+  expect(fit.root).toBe(fit.screen)
+  expect(fit.dock).toBe(fit.screen)
+  expect(fit.row).toBeGreaterThanOrEqual(52)
+
+  // Home-screen app: iOS shrinks height:100% by the status bar, so standalone sizes the
+  // shell with 100vh. Browsers can't emulate display-mode, so check the shipped rule.
+  const standalone = await page.evaluate(() =>
+    [...document.styleSheets]
+      .flatMap((s) => [...s.cssRules])
+      .filter((r): r is CSSMediaRule => r instanceof CSSMediaRule && /display-mode:\s*standalone/.test(r.conditionText))
+      .flatMap((r) => [...r.cssRules] as CSSStyleRule[])
+      .some((r) => /#root/.test(r.selectorText) && r.style.height === '100vh'),
+  )
+  expect(standalone).toBe(true)
+})
