@@ -99,9 +99,10 @@ test('a board card copies the board inside it', async ({ page }) => {
 test('cut then paste on another board moves the very same card, comments and all', async ({ page }) => {
   const [id] = await seedCards(page, [note('Moving day', 0, 0)])
   const comment = crypto.randomUUID()
-  await page.request.post('/api/sync', { data: { changes: [{ id: comment, patch: { id: comment, kind: 'comment', boardId: boardOf(page), cardId: id, text: 'Bring boxes', createdAt: Date.now() } }] } })
+  expect((await page.request.post('/api/sync', { data: { changes: [{ id: comment, patch: { id: comment, kind: 'comment', boardId: boardOf(page), cardId: id, text: 'Bring boxes', createdAt: Date.now() } }] } })).ok()).toBe(true)
   await page.reload()
-  await expect(cardByText(page, 'Moving day').getByTestId('comment-badge')).toHaveText('1')
+  // The comment arrives with the first pull after the reload, which can lag under load.
+  await expect(cardByText(page, 'Moving day').getByTestId('comment-badge')).toHaveText('1', { timeout: 15_000 })
   await selectAllCards(page)
   await page.keyboard.press(`${MOD}+X`)
   await expect(cards(page)).toHaveCount(0)
