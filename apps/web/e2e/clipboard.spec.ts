@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { MOD, at, cardByText, cards, clickEmpty, freshBoard, pullAllObjects, waitForSync } from './helpers.ts'
+import { MOD, at, cardByText, cards, clickEmpty, freshBoard, postSync, pullAllObjects, waitForSync } from './helpers.ts'
 import { boardOf, note, seedCards } from './touch.ts'
 
 // Copy, cut, paste and duplicate cards with the real keys. Pastes land under the
@@ -27,7 +27,7 @@ async function pasteAt(page: Page, fx: number, fy: number, keys = `${MOD}+V`) {
 test('copy two connected cards and paste them under the mouse: new cards, same layout, one undo', async ({ page }) => {
   const [a] = await seedCards(page, [note('Fetch the ball', 0, 0), note('Bring it back', 300, 120)])
   const ids = await page.evaluate(() => [...document.querySelectorAll('[data-card-id]')].map((e) => (e as HTMLElement).dataset.cardId))
-  await page.request.post('/api/sync', { data: { changes: [{ id: 'conn-' + a, patch: { id: 'conn-' + a, kind: 'connection', boardId: boardOf(page), from: ids[0], to: ids[1], arrow: 'end', createdAt: Date.now() } }] } })
+  await postSync(page.request, { data: { changes: [{ id: 'conn-' + a, patch: { id: 'conn-' + a, kind: 'connection', boardId: boardOf(page), from: ids[0], to: ids[1], arrow: 'end', createdAt: Date.now() } }] } })
   await page.reload()
   await expect(connections(page)).toHaveCount(1)
   await selectAllCards(page)
@@ -57,7 +57,7 @@ test('⌘D duplicates beside the original; a column brings its cards', async ({ 
   await seedCards(page, [{ type: 'column', x: 0, y: 0, w: 280, content: { title: 'Snacks' } }, note('Biscuits', 0, 0)])
   const ids = await page.evaluate(() => [...document.querySelectorAll('[data-card-id]')].map((e) => (e as HTMLElement).dataset.cardId!))
   // Put the note in the column.
-  await page.request.post('/api/sync', { data: { changes: [{ id: ids[1], patch: { columnId: ids[0], order: 1 } }] } })
+  await postSync(page.request, { data: { changes: [{ id: ids[1], patch: { columnId: ids[0], order: 1 } }] } })
   await page.reload()
   await cardByText(page, 'Snacks').getByTestId('column-title').click()
   await page.keyboard.press(`${MOD}+D`)
@@ -79,7 +79,7 @@ test('a board card copies the board inside it', async ({ page }) => {
   const inner = crypto.randomUUID()
   const kennel = `Kennel ${inner.slice(0, 6)}`
   const innerNote = crypto.randomUUID()
-  await page.request.post('/api/sync', { data: { changes: [
+  await postSync(page.request, { data: { changes: [
     { id: inner, patch: { id: inner, kind: 'board', parentId: boardOf(page), title: kennel, icon: 'bone', color: 'gold', createdAt: Date.now() } },
     { id: innerNote, patch: { id: innerNote, kind: 'card', type: 'note', boardId: inner, x: 0, y: 0, w: 200, h: 60, z: 1, color: 'none', content: { md: 'Blanket inside' }, createdAt: Date.now() } },
   ] } })
@@ -99,7 +99,7 @@ test('a board card copies the board inside it', async ({ page }) => {
 test('cut then paste on another board moves the very same card, comments and all', async ({ page }) => {
   const [id] = await seedCards(page, [note('Moving day', 0, 0)])
   const comment = crypto.randomUUID()
-  expect((await page.request.post('/api/sync', { data: { changes: [{ id: comment, patch: { id: comment, kind: 'comment', boardId: boardOf(page), cardId: id, text: 'Bring boxes', createdAt: Date.now() } }] } })).ok()).toBe(true)
+  expect((await postSync(page.request, { data: { changes: [{ id: comment, patch: { id: comment, kind: 'comment', boardId: boardOf(page), cardId: id, text: 'Bring boxes', createdAt: Date.now() } }] } })).ok()).toBe(true)
   await page.reload()
   // The comment arrives with the first pull after the reload, which can lag under load.
   await expect(cardByText(page, 'Moving day').getByTestId('comment-badge')).toHaveText('1', { timeout: 15_000 })
