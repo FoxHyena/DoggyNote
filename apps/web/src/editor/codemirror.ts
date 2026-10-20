@@ -320,6 +320,25 @@ const deleteHeadingMarkBackward: StateCommand = ({ state, dispatch }) => {
   return true
 }
 
+/**
+ * Backspace at the start of a list item's text: a nested item moves out a level;
+ * a top-level one becomes a plain line of its own (a blank line before it keeps
+ * markdown from folding it into the line above).
+ */
+const deleteListMarkBackward: StateCommand = (target) => {
+  const { state, dispatch } = target
+  const r = state.selection.main
+  if (!r.empty || state.selection.ranges.length > 1) return false
+  const line = state.doc.lineAt(r.head)
+  const m = /^(\s*)(?:[-*+]|\d{1,9}[.)])(?: \[[ xX]\])? +/.exec(line.text)
+  if (!m || r.head !== line.from + m[0].length) return false
+  if (m[1].length) return indentList(-1)(target)
+  const prev = line.number > 1 ? state.doc.line(line.number - 1).text : ''
+  const gap = prev.trim() ? state.lineBreak : ''
+  dispatch(state.update({ changes: { from: line.from, to: r.head, insert: gap }, selection: { anchor: line.from + gap.length }, userEvent: 'delete' }))
+  return true
+}
+
 export const commands = {
   bold: wrap('**'),
   italic: wrap('_'),
@@ -376,6 +395,7 @@ export function createEditor(
       { key: 'Mod-e', run: run(commands.code) },
       { key: 'Tab', run: run(commands.indent), shift: run(commands.outdent) },
       { key: 'Backspace', run: run(deleteHeadingMarkBackward) },
+      { key: 'Backspace', run: run(deleteListMarkBackward) },
       ...markdownKeymap,
       ...historyKeymap,
       ...defaultKeymap,

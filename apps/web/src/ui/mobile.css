@@ -635,8 +635,8 @@ html[data-input='touch'] :is(.icon-btn, .bar-btn, .menu-item, .tool, .toast-acti
 
 /* ---- round 3 visual fixes ------------------------------------------------------ */
 
-/* V3-05: on the narrowest phones Done is a tick, so every format fits. */
-@media (max-width: 399px) {
+/* V3-05: on phones Done is a tick, so the list controls always fit beside it. */
+@media (max-width: 599px) {
   .edit-done { width: 48px; padding: 0; justify-content: center; }
   .edit-done-label { display: none; }
   .edit-dock-tools { mask-image: none; }

@@ -119,6 +119,20 @@ test('Tab nests list items and Shift-Tab brings them back', async ({ page }) => 
   expect(child.x).toBeGreaterThan(parent.x + 10)
 })
 
+test('Backspace at the start of a list item outdents it, then makes it a line of its own', async ({ page }) => {
+  await typeNote(page, ['Plan', '- snacks', 'drinks'])
+  for (let i = 0; i < 'drinks'.length; i++) await page.keyboard.press('ArrowLeft')
+  await page.keyboard.press('Tab')
+  await expect.poll(() => localMarkdown(page, 'Plan')).toBe('Plan\n- snacks\n  - drinks')
+  await page.keyboard.press('Backspace')
+  await expect.poll(() => localMarkdown(page, 'Plan')).toBe('Plan\n- snacks\n- drinks')
+  await page.keyboard.press('Backspace')
+  await expect.poll(() => localMarkdown(page, 'Plan')).toBe('Plan\n- snacks\n\ndrinks')
+  // Typing carries on where the bullet was.
+  await page.keyboard.type('!')
+  await expect.poll(() => localMarkdown(page, 'Plan')).toBe('Plan\n- snacks\n\n!drinks')
+})
+
 test('Tab renumbers ordered lists, and outside a list it keeps the caret in the note', async ({ page }) => {
   await typeNote(page, ['1. wake', 'walk', 'breakfast'])
   await page.keyboard.press('ArrowUp')

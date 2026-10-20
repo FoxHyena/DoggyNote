@@ -155,6 +155,12 @@ test('the edit dock nests and un-nests list items (phones have no Tab key)', asy
   await tapOn(page, card.getByText('treats'))
   const editor = page.getByTestId('note-editor')
   await expect(editor).toBeVisible()
+  // Indent and outdent sit in view, not scrolled off behind Done.
+  const tools = (await page.locator('.edit-dock-tools').boundingBox())!
+  for (const id of ['dock-fmt-outdent', 'dock-fmt-indent']) {
+    const b = (await page.getByTestId(id).boundingBox())!
+    expect(b.x + b.width).toBeLessThanOrEqual(tools.x + tools.width + 1)
+  }
   await page.getByTestId('dock-fmt-indent').tap()
   await expect(editor.locator('.cm-md-li[style*="--li-depth: 2"]')).toHaveText('◦treats')
   await page.getByTestId('dock-fmt-outdent').tap()
