@@ -544,6 +544,13 @@ export function Canvas(props: { readOnly: boolean }) {
         const c = doc.getCard(g.id)
         if (!c) break
         if (g.shift) {
+          // Shift-clicking another card while typing: stop typing, and keep the
+          // card you were in as part of the selection.
+          const typing = editingId()
+          if (typing && typing !== g.id) {
+            endEdit()
+            select([...new Set([...selection(), typing])])
+          }
           toggle(g.id)
           break
         }

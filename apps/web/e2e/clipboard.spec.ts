@@ -156,3 +156,14 @@ test('⌘⇧V pastes words as a plain note, without a link preview', async ({ pa
   await paste('https://example.com/cats')
   await expect(page.locator('[data-type=link]')).toHaveCount(1)
 })
+
+test('click into a note, shift-click another: both are selected and ⌘D duplicates them', async ({ page }) => {
+  await seedCards(page, [note('First bone', 0, 0), note('Second bone', 300, 0)])
+  await cardByText(page, 'First bone').click()
+  await expect(page.getByTestId('note-editor')).toBeVisible()
+  await cardByText(page, 'Second bone').click({ modifiers: ['Shift'] })
+  await expect(page.getByTestId('note-editor')).toHaveCount(0)
+  await expect(page.locator('.card.selected')).toHaveCount(2)
+  await page.keyboard.press(`${MOD}+D`)
+  await expect(cards(page)).toHaveCount(4)
+})
