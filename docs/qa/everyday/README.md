@@ -94,7 +94,7 @@ All round-1 fixes passed except the dark watched posters (VD-3, now V2-1).
 | UXM2-3 | Med | To-dos | A tap 1.1–1.25s after a tick, aimed at a row that had just slid away, ticked the row that slid in. | **Fixed.** Taps wait 0.6s after rows swap (a reaction time); e2e test added. |
 | V2-1 | Med-High | Movies | Watched dark posters still vanished on dark cards. Same as UXD2-1, UXM2-7. | **Fixed.** On dark cards the grey poster is lifted and not faded, with an outline. |
 | V2-2 | Med | Proposals | Phone shots of the preview showed the sheet instead (the script tapped while it slid in). | **Fixed** in `capture.mjs`. |
-| V2-3 | Med | Columns | The "3 cards" count was 4.0:1 light, 3.4:1 dark. | **Fixed.** Less faded. |
+| V2-3 | Med | Columns | The "3 cards" count was 4.0:1 light, 3.4:1 dark. | **Fixed.** Now 7.0:1 light, 5.3:1 dark. |
 | V2-7 | Low | Notes | The phone Done tick was a 43×39 ellipse. | **Fixed.** A 44px circle. |
 | V2-8 | Low | Proposals | Buried text was 4.4:1 in dark. | **Fixed.** Faded less. |
 | V2-10 | Low | Movies | An open ⓘ looked like the filled ✓, so the card read as watched. | **Fixed.** Open Details is an outline. |
