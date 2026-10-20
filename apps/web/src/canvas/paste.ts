@@ -3,6 +3,7 @@ import { createCard, createNoteWithText, type Placement } from '../state/actions
 import { importImage } from '../state/assets.ts'
 import { unfurl } from '../state/unfurl.ts'
 import { resolveMovie } from '../state/movies.ts'
+import { revealCard } from './Canvas.tsx'
 import { select } from '../state/ui.ts'
 import { addFiles } from '../state/files.ts'
 import { pasteClip, readClip, takePlainPaste } from '../state/clipboard.ts'
@@ -48,7 +49,8 @@ export function addLink(url: string, place: Placement, onBoard?: Id, title?: str
 export function addMovie(ref: MovieRef, place: Placement, onBoard?: Id): Id {
   const content = 'imdbId' in ref ? { kind: 'movie', title: '', imdbId: ref.imdbId, status: 'pending' } : { kind: ref.kind, tmdbId: ref.tmdbId, title: '', status: 'pending' }
   const id = createCard('movie', place, { content, edit: false, boardId: onBoard })
-  void resolveMovie(id)
+  // Once it has its poster (and its height), bring the whole card into view.
+  void resolveMovie(id).then(() => onBoard || requestAnimationFrame(() => requestAnimationFrame(() => revealCard(id))))
   return id
 }
 

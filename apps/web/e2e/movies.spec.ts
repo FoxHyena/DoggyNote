@@ -89,7 +89,7 @@ test('mark a show watched (one undo step), open its details, and both survive a 
   await page.reload()
   await expect(movie(page, 'Severance').getByTestId('movie-details')).toBeVisible()
   await expect(movie(page, 'Severance').getByTestId('movie-watched')).toHaveAttribute('aria-pressed', 'true')
-  await expect(movie(page, 'Severance').locator('.movie-poster-img')).toHaveCSS('opacity', '0.5')
+  await expect(movie(page, 'Severance').locator('.movie-poster-img')).toHaveCSS('filter', 'grayscale(1)')
 })
 
 test('pasting a TMDB or IMDb link makes a movie card; other links stay links', async ({ page }) => {
@@ -227,4 +227,11 @@ test('on the board the poster leads with the title under it; in a column the car
   // Icons, labelled for screen readers.
   await expect(movie(page, 'Severance').getByRole('button', { name: 'Watched' })).toBeVisible()
   await expect(movie(page, 'Severance').getByRole('button', { name: 'Details' })).toBeVisible()
+})
+
+test('an IMDb link TMDB doesn’t know still says what it was', async ({ page }) => {
+  await paste(page, 'https://www.imdb.com/title/tt0000001/')
+  const card = page.locator('[data-type=movie]')
+  await expect(card.getByTestId('movie-title')).toHaveText('IMDb tt0000001')
+  await expect(card).toContainText('Couldn’t fetch the details.')
 })

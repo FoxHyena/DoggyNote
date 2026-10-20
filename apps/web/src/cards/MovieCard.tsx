@@ -200,6 +200,13 @@ export function MovieCard(props: CardProps<'movie'>) {
     if (details) afterLayout(() => revealCard(id))
   }
   const page = () => tmdbPage(c())
+  // A title TMDB couldn't find still says what it was.
+  const name = () => c().title || (c().status === 'error' ? (c().imdbId ? `IMDb ${c().imdbId}` : 'Unknown title') : COPY.loading)
+  const [refreshing, setRefreshing] = createSignal(false)
+  const refresh = () => {
+    setRefreshing(true)
+    void resolveMovie(id).finally(() => setRefreshing(false))
+  }
   const inColumn = () => !!props.card.columnId
   const providers = () => c().info?.providers
   const anyProvider = () => !!(providers()?.stream?.length || providers()?.rent?.length || providers()?.buy?.length)
@@ -238,9 +245,9 @@ export function MovieCard(props: CardProps<'movie'>) {
           <div class="movie-body">
             <div class="movie-head">
               <div class="movie-head-text">
-                <Show when={page()} fallback={<span class="movie-title">{c().title || COPY.loading}</span>}>
+                <Show when={page()} fallback={<span class="movie-title" data-testid="movie-title">{name()}</span>}>
                   <a class="movie-title" href={page()!} target="_blank" rel="noopener noreferrer" data-nodrag data-testid="movie-title">
-                    {c().title || COPY.loading}
+                    {name()}
                   </a>
                 </Show>
               </div>
@@ -251,7 +258,7 @@ export function MovieCard(props: CardProps<'movie'>) {
                     classList={{ on: !!c().watched }}
                     aria-label="Watched"
                     aria-pressed={!!c().watched}
-                    title={c().watched ? 'Watched (tap to unmark)' : 'Mark watched'}
+                    title={c().watched ? 'Watched' : 'Mark watched'}
                     data-nodrag
                     data-testid="movie-watched"
                     onClick={toggleWatched}
@@ -320,7 +327,9 @@ export function MovieCard(props: CardProps<'movie'>) {
                     <a href={providers()!.link} target="_blank" rel="noopener noreferrer" data-nodrag>Streaming data from JustWatch</a>
                   </Show>
                   <Show when={!props.readOnly}>
-                    <button class="link-btn" data-nodrag data-testid="movie-refresh" title="Fetch the latest details" onClick={() => void resolveMovie(id)}>Refresh</button>
+                    <button class="link-btn" data-nodrag data-testid="movie-refresh" title="Fetch the latest details" disabled={refreshing()} onClick={refresh}>
+                      {refreshing() ? 'Refreshing…' : 'Refresh'}
+                    </button>
                   </Show>
                 </div>
               </div>

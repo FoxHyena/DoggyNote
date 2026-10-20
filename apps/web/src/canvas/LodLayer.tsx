@@ -181,7 +181,9 @@ export function LodLayer() {
         }
         return
       }
-      if (c.type === 'movie') {
+      const film = c.type === 'movie' ? (c as Card<'movie'>).content : null
+      // A movie card with a title picked (an unpicked one draws like a text card).
+      if (film && (film.tmdbId || film.imdbId)) {
         // Like the card: a tall poster with a caption under it, or a row (poster left) in a column.
         ctx.fillStyle = bg
         roundRect(ctx, x, y, w, h, 3 * z * 4)
@@ -189,14 +191,18 @@ export function LodLayer() {
         const pad = 10 * z
         const tall = !c.columnId
         const pw = tall ? Math.max(1, w - pad * 2) : Math.max(1, Math.min(72 * z, w / 3))
-        const ph = Math.max(1, Math.min(pw * 1.5, h - pad * 2))
-        const assetId = (c as Card<'movie'>).content?.assetId
+        // Leave room for the caption under a tall poster.
+        const ph = Math.max(1, Math.min(pw * 1.5, h - pad * 2 - (tall ? 26 * z : 0)))
+        const assetId = film.assetId
         const t = typeof assetId === 'string' ? thumb(assetId) : null
+        // Watched posters step back, as on the card.
+        if (film.watched) ctx.globalAlpha = 0.45
         if (t && atlas) ctx.drawImage(atlas, t.sx, t.sy, t.sw, t.sh, x + pad, y + pad, pw, ph)
         else {
           ctx.fillStyle = pal.border
           ctx.fillRect(x + pad, y + pad, pw, ph)
         }
+        ctx.globalAlpha = 1
         ctx.fillStyle = pal.muted
         ctx.globalAlpha = 0.35
         const tx = tall ? x + pad : x + pad * 2 + pw

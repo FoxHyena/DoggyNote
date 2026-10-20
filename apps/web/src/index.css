@@ -1870,10 +1870,10 @@ html[data-input="mouse"] a.file-name:hover {
   color: var(--dn-text-muted);
 }
 
-/* Watched: the poster steps back; the words stay readable. */
+/* Watched: the poster steps back into greys, but stays visible on dark cards too. */
 .movie-card.watched .movie-poster-img {
-  opacity: 0.5;
-  filter: grayscale(0.7);
+  opacity: 0.8;
+  filter: grayscale(1);
 }
 
 .movie-watched-badge {
