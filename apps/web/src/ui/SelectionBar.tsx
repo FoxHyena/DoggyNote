@@ -13,6 +13,7 @@ import { union, worldToScreen } from '@doggynote/core'
 import { BOARD_ICONS, BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
 import { canvasControlsSize } from './CanvasControls.tsx'
 import { openThread } from './CommentsPanel.tsx'
+import { TodoOptions } from './TodoOptions.tsx'
 
 // Floating bar for the current selection: colour, board icon, bury (trash).
 // On touch it also offers what a mouse does with clicks and modifier keys
@@ -22,9 +23,12 @@ export function SelectionBar() {
   const [barSize, setBarSize] = createSignal({ width: 400, height: 46 })
   const cards = createMemo(() => [...selection()].map((id) => doc.getCard(id)).filter((c): c is Card => !!c))
   const conns = createMemo(() => [...selection()].filter((id) => doc.get(id)?.kind === 'connection'))
-  const show = () => (cards().length || conns().length) && !draggingIds().size && !editingId() && !connectMode()
   // Touch screens get a bar along the bottom: thumbs reach it, and it never covers the card.
   const docked = () => phone() || touch()
+  // A click on a to-do list edits it straight away; its colour and list options
+  // stay within reach above it (touch selects first, so it has the docked bar).
+  const editingList = () => !docked() && doc.getCard(editingId() ?? '')?.type === 'todo'
+  const show = () => (cards().length || conns().length) && !draggingIds().size && (!editingId() || editingList()) && !connectMode()
   const sole = () => (cards().length === 1 && selection().size === 1 ? cards()[0] : undefined)
   const editable = () => {
     const c = sole()
@@ -134,6 +138,10 @@ export function SelectionBar() {
             Edit
           </button>
         </Show>
+        <Show when={sole()?.type === 'todo' && doc.canWriteObject(sole())}>
+          <TodoOptions card={sole() as Card<'todo'>} />
+        </Show>
+        <Show when={!editingList()}>
         <Show when={cards().length === 1 && cards()[0].type !== 'board'}>
           <button class="bar-btn" data-testid="comment-button" title="Comment on this card" onClick={() => openThread(cards()[0].id)}>
             <Icon size={18}>{ToolIcons.comment()}</Icon>
@@ -156,6 +164,7 @@ export function SelectionBar() {
           <Icon size={18}>{ToolIcons.trash()}</Icon>
           Bury
         </button>
+        </Show>
         <Show when={phone()}>
           <button class="icon-btn bar-done" data-testid="selection-done" aria-label="Done" title="Done" onClick={clearSelection}>
             <Icon size={18}>{ToolIcons.close()}</Icon>

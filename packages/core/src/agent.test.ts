@@ -22,3 +22,8 @@ it('requires revisions for replacements and caps atomic proposal size', () => {
   expect(agentProposalSchema.safeParse({ ...base, operations: [{ action: 'replace', object: note, expectedRevision: 10 }] }).success).toBe(true)
   expect(agentProposalSchema.safeParse({ ...base, operations: Array.from({ length: 201 }, () => ({ action: 'create', object: note })) }).success).toBe(false)
 })
+it('round-trips to-do lists with done times and list options', () => {
+  const todo = { ...note, type: 'todo', content: { title: 'Chores', sortDone: false, hideDone: true, items: [{ id: 'a', text: 'Walk', done: true, doneAt: 1_700_000_000_000 }, { id: 'b', text: 'Feed', done: false, doneAt: null }, { id: 'c', text: 'Old', done: true }] } }
+  expect(agentObjectSchema.safeParse(todo).success).toBe(true)
+  expect(agentObjectSchema.safeParse({ ...todo, content: { ...todo.content, items: [{ id: 'a', text: 'Walk', done: true, doneAt: 'yesterday' }] } }).success).toBe(false)
+})

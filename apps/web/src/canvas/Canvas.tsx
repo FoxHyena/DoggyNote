@@ -819,6 +819,8 @@ export function Canvas(props: { readOnly: boolean }) {
 
   function swallowNextClick() {
     const stop = (ev: Event) => {
+      // Our own box.click() for a quick next tap is not the browser's echo of this one.
+      if (!ev.isTrusted) return
       ev.preventDefault()
       ev.stopPropagation()
       off()

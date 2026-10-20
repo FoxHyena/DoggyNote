@@ -22,12 +22,17 @@ export type RichNode = {
   marks?: { type: string; attrs?: Record<string, unknown> }[]
 }
 
-export type TodoItem = { id: Id; text: string; done: boolean }
+/** `doneAt` is when the task was ticked (epoch ms); missing on tasks ticked before it existed. */
+export type TodoItem = { id: Id; text: string; done: boolean; doneAt?: number | null }
 
 export type CardContent = {
   /** Markdown source. `doc` is the pre-markdown format, migrated on load (see noteMarkdown). */
   note: { md: string; doc?: RichDoc }
-  todo: { title: string; items: TodoItem[] }
+  /**
+   * `sortDone` (default on) sinks ticked tasks below the open ones; `hideDone`
+   * folds done tasks into a "3 done" row.
+   */
+  todo: { title: string; items: TodoItem[]; sortDone?: boolean; hideDone?: boolean }
   board: { boardId: Id }
   /** `sizes` lists stored renditions; images from before the 640 px tier have none (thumb/medium/full). */
   image: { assetId: Id; width: number; height: number; caption?: string; sizes?: ('thumb' | 'small' | 'medium' | 'full')[] }
