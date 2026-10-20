@@ -264,6 +264,9 @@ function canReviewChanges(access: Access, userId: string, changes: AgentChange[]
 }
 agents.get('/agent-proposals', requireUser, async (c) => {
   const { results } = await c.env.DB.prepare('SELECT * FROM agent_proposals WHERE user_id=?1 ORDER BY created_at DESC LIMIT 100').bind(c.get('user').id).all<Proposal>()
+  c.header('cache-control', 'no-store')
+  // Every open board polls this; most people have no proposals, so skip reading the workspace.
+  if (!results.length) return c.json({ proposals: [] })
   const a = await loadAccess(c.env.DB, c.get('user')), current = await records(c.env.DB)
   const boardId = c.req.query('boardId')
   const proposals = results.flatMap((p) => {

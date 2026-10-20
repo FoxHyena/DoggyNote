@@ -219,7 +219,8 @@ export function Canvas(props: { readOnly: boolean }) {
     onCleanup(() => document.removeEventListener('selectionchange', onSelection))
     requestAnimationFrame(revealCaret)
   })
-  createEffect(() => saveCamera(boardId(), camera()))
+  // A proposal preview frames its changes; that camera isn't the board's own.
+  createEffect(() => { if (!doc.previewing()) saveCamera(boardId(), camera()) })
 
   // ---- helpers -----------------------------------------------------------------
   const local = (e: { clientX: number; clientY: number }): Vec => {

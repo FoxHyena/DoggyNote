@@ -96,18 +96,19 @@ test('legacy private Inbox titles display consistently without rewriting data', 
 })
 
 test('pending proposals move from Review to a More count and preserve a single dialog', async ({ page }) => {
-  await page.route('**/api/agent-proposals?*', (route) => route.fulfill({ json: { proposals: [{ id: 'qa-proposal', label: 'Organize the dog walk', status: 'pending', count: 2, createdAt: Date.now() }] } }))
+  // Two pending, so Review opens the list (a lone one goes straight to its preview).
+  await page.route('**/api/agent-proposals?*', (route) => route.fulfill({ json: { proposals: ['Organize the dog walk', 'Sort the treats'].map((label, i) => ({ id: `qa-proposal-${i}`, label, status: 'pending', count: 2, createdAt: Date.now() })) } }))
   await freshBoard(page)
   await page.setViewportSize({ width: 1440, height: 900 })
-  await expect(page.getByTestId('review-changes')).toHaveText('Review changes · 1')
+  await expect(page.getByTestId('review-changes')).toHaveText('Review changes · 2')
   await page.getByTestId('review-changes').click()
   await expect(page.getByTestId('agent-review')).toHaveCount(1)
   await page.keyboard.press('Escape')
   await page.setViewportSize({ width: 600, height: 900 })
   await expect(page.getByTestId('review-changes')).toBeHidden()
-  await expect(page.getByTestId('board-more')).toContainText('1')
+  await expect(page.getByTestId('board-more')).toContainText('2')
   await page.getByTestId('board-more').click()
-  await expect(page.getByTestId('board-actions-menu').getByRole('menuitem').first()).toContainText('Agent proposals · 1')
+  await expect(page.getByTestId('board-actions-menu').getByRole('menuitem').first()).toContainText('Agent proposals · 2')
   await page.getByTestId('agent-proposals').click()
   await expect(page.getByTestId('agent-review')).toHaveCount(1)
   await page.keyboard.press('Escape')

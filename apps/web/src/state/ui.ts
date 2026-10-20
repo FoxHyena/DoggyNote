@@ -161,6 +161,8 @@ export const [boardId, setBoardIdSignal] = createSignal<Id>(boardFromHash())
 if (location.hash.match(/^#\/b\//)) rememberBoard(boardId())
 
 export function openBoard(id: Id) {
+  // A proposal preview keeps you on its boards until you leave it.
+  if (doc.previewing()) return
   endEdit()
   clearSelection()
   // Switch now; hashchange fires later and would let a fast click land on the old board.

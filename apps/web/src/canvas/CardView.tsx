@@ -1,6 +1,9 @@
 import { ErrorBoundary, For, Match, Show, Switch, onCleanup, onMount, type JSX } from 'solid-js'
 import { SIDES, type Card } from '@doggynote/core'
 import { COPY, cardColor } from '@doggynote/theme'
+import { previewBadge, type Badge } from '../state/preview.ts'
+
+const PREVIEW_CHIP: Record<Badge, string> = { added: 'New', changed: 'Edited', moved: 'Moved', removed: 'Buried' }
 import { camera, editingId, isSelected, selection } from '../state/ui.ts'
 import { touch } from '../state/device.ts'
 import { registerCardEl } from './layout.ts'
@@ -74,8 +77,12 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
       data-card-id={props.card.id}
       data-testid="card"
       data-type={props.card.type}
+      data-preview={previewBadge(props.card.id)}
       style={style()}
     >
+      <Show when={!props.lod && previewBadge(props.card.id)}>
+        {(b) => <span class="preview-chip" data-testid="preview-chip">{PREVIEW_CHIP[b()]}</span>}
+      </Show>
       {/* Cards are synced data from other people: one malformed card must not take the board down. */}
       <ErrorBoundary fallback={<p class="card-unreadable" data-testid="card-unreadable">This card can't be shown.</p>}>
       <Switch
