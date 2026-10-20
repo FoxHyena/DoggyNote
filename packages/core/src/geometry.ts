@@ -119,6 +119,18 @@ export function nearestSide(r: Rect, p: Vec): Side {
   return SIDES.reduce((best, s) => (d[s] < d[best] ? s : best), 'top' as Side)
 }
 
+/**
+ * The side whose edge `p` is close to: up to `inside` in from the edge or
+ * `outside` beyond it. Null in the middle of the rect or away from it.
+ */
+export function edgeNear(r: Rect, p: Vec, inside: number, outside: number): Side | null {
+  if (p.x < r.x - outside || p.x > r.x + r.w + outside || p.y < r.y - outside || p.y > r.y + r.h + outside) return null
+  // How far inside each edge the point is (negative: beyond it).
+  const d: Record<Side, number> = { top: p.y - r.y, bottom: r.y + r.h - p.y, left: p.x - r.x, right: r.x + r.w - p.x }
+  const side = SIDES.reduce((best, s) => (d[s] < d[best] ? s : best), 'top' as Side)
+  return d[side] <= inside ? side : null
+}
+
 /** Facing sides for two rects: along whichever axis separates them more. */
 export function autoSides(a: Rect, b: Rect): [Side, Side] {
   const ca = center(a)

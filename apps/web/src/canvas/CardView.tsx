@@ -1,10 +1,10 @@
-import { ErrorBoundary, For, Match, Show, Switch, onCleanup, onMount, type JSX } from 'solid-js'
+import { ErrorBoundary, For, Match, Show, Switch, createSelector, onCleanup, onMount, type JSX } from 'solid-js'
 import { SIDES, type Card } from '@doggynote/core'
 import { COPY, cardColor } from '@doggynote/theme'
 import { isPreviewCurrent, previewBadge, type Badge } from '../state/preview.ts'
 
 const PREVIEW_CHIP: Record<Badge, string> = { added: 'New', changed: 'Edited', moved: 'Moved', removed: 'Buried' }
-import { camera, editingId, isSelected, selection } from '../state/ui.ts'
+import { camera, editingId, isSelected, nearHandle, selection } from '../state/ui.ts'
 import { touch } from '../state/device.ts'
 import { registerCardEl } from './layout.ts'
 import * as doc from '../state/doc.ts'
@@ -33,6 +33,8 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
   onMount(() => onCleanup(registerCardEl(props.card.id, el)))
 
   const editing = () => editingId() === props.card.id
+  // With a mouse, only the handle on the edge the pointer is near shows (canvas/Canvas.tsx).
+  const isNear = createSelector(nearHandle)
   const selected = () => isSelected(props.card.id)
   const free = () => !props.card.columnId
   const single = () => selected() && selection().size === 1
@@ -143,7 +145,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
       </Show>
       <Show when={!props.readOnly && !props.lod && (!touch() || touchHandles())}>
         <For each={SIDES}>
-          {(side) => <div class={`connect-handle ${side}`} data-connect-handle={side} data-testid={`connect-handle-${side}`} title="Drag to connect" />}
+          {(side) => <div class={`connect-handle ${side}`} classList={{ near: isNear(`${props.card.id}:${side}`) }} data-connect-handle={side} data-testid={`connect-handle-${side}`} title="Drag to connect" />}
         </For>
       </Show>
     </div>

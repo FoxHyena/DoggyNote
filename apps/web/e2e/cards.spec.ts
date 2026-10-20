@@ -189,6 +189,33 @@ test.describe('columns', () => {
 })
 
 test.describe('connectors', () => {
+  test('a connect handle shows only near its own edge, never mid-card or while editing', async ({ page }) => {
+    const card = await addNote(page, 'handles here', 0.4, 0.4)
+    await clickEmpty(page)
+    const box = (await card.boundingBox())!
+    const shown = () => card.locator('.connect-handle').evaluateAll((els) =>
+      els.filter((el) => getComputedStyle(el).opacity === '1').map((el) => (el as HTMLElement).dataset.connectHandle))
+    // The middle of the card: none.
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+    await page.waitForTimeout(250)
+    expect(await shown()).toEqual([])
+    // Just outside the right edge: that one only.
+    await page.mouse.move(box.x + box.width + 12, box.y + box.height / 2 + 6, { steps: 4 })
+    await expect.poll(shown).toEqual(['right'])
+    // Just inside the top edge, off its middle: the top one only.
+    await page.mouse.move(box.x + 30, box.y + 4, { steps: 4 })
+    await expect.poll(shown).toEqual(['top'])
+    // Off into empty board: none.
+    await page.mouse.move(box.x + box.width + 120, box.y - 120, { steps: 4 })
+    await expect.poll(shown).toEqual([])
+    // Editing the card: none, even at its edge.
+    await card.dblclick()
+    await expect(page.getByTestId('note-editor')).toBeVisible()
+    await page.mouse.move(box.x + box.width + 10, box.y + box.height / 2, { steps: 4 })
+    await page.waitForTimeout(250)
+    expect(await shown()).toEqual([])
+  })
+
   test('drag from a connect handle to another card; the arrow follows moves; delete it', async ({ page }) => {
     const a = await addNote(page, 'from here', 0.25, 0.3)
     const b = await addNote(page, 'to there', 0.7, 0.6)

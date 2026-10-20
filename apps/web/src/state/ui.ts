@@ -10,6 +10,8 @@ export const [camera, setCamera] = createSignal<Camera>({ x: -200, y: -150, zoom
 export const [viewport, setViewport] = createSignal({ width: 1, height: 1, left: 0, top: 0 })
 /** Line tool: next two card clicks create a connection. */
 export const [connectMode, setConnectMode] = createSignal<{ from: Id | null } | null>(null)
+/** Mouse: the one connector handle the pointer is near, as `cardId:side` ('' for none). */
+export const [nearHandle, setNearHandle] = createSignal('')
 export const [trashOpen, setTrashOpen] = createSignal(false)
 export const [paletteOpen, setPaletteOpen] = createSignal(false)
 

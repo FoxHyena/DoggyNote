@@ -438,8 +438,10 @@ html[data-input="mouse"] .menu-item:hover {
   margin-top: -7px;
 }
 
-html[data-input='mouse'] .card:hover > .connect-handle,
-.card.selected > .connect-handle {
+/* With a mouse, a handle shows only while the pointer is near its edge, and never on
+   the card being edited. Touch shows them on the selected card (mobile.css). */
+html[data-input='mouse'] .card:not(.editing) > .connect-handle.near,
+html[data-input='touch'] .card.selected > .connect-handle {
   opacity: 1;
 }
 
