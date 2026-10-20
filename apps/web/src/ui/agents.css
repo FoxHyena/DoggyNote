@@ -56,3 +56,39 @@
 @media (pointer: coarse) {
   .agents-dialog :is(button, input:not([type=checkbox]), select, summary), .agents-board-options label { min-height: 44px; }
 }
+
+/* ---- previewing a proposal on the board ---- */
+.proposal-banner {
+  position: absolute; z-index: 40; top: 12px; left: 50%; transform: translateX(-50%);
+  width: min(720px, calc(100% - 24px)); box-sizing: border-box; padding: 10px 12px;
+  display: grid; gap: 8px;
+  background: var(--dn-panel); color: var(--dn-text);
+  border: 1px solid var(--dn-border); border-radius: 14px; box-shadow: 0 10px 30px rgb(0 0 0 / .18);
+}
+.proposal-banner-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.proposal-banner-icon { display: inline-flex; color: var(--dn-accent); flex-shrink: 0; }
+.proposal-banner-text { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; min-width: 0; flex: 1; }
+.proposal-banner-title { font-size: 14px; overflow-wrap: anywhere; }
+.proposal-banner-counts { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.proposal-count { font-size: 12px; font-weight: 600; padding: 1px 7px; border-radius: 999px; color: var(--dn-diff-ink); }
+.proposal-count-added { background: var(--dn-diff-added); }
+.proposal-count-changed, .proposal-count-moved { background: var(--dn-diff-changed); }
+.proposal-count-removed { background: var(--dn-diff-removed); }
+.proposal-banner-exit { flex-shrink: 0; }
+.proposal-banner-note { margin: 0; font-size: 12px; line-height: 1.4; color: var(--dn-text-muted); }
+.proposal-banner-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.proposal-banner-spacer { flex: 1; }
+.proposal-board-select { min-height: 34px; max-width: 200px; border: 1px solid var(--dn-border); border-radius: 8px; background: var(--dn-card); color: var(--dn-text); padding: 0 8px; font: inherit; font-size: 13px; }
+.proposal-banner .primary-btn { min-height: 34px; padding-inline: 16px; }
+@media (pointer: coarse) {
+  .proposal-banner :is(button, select, .primary-btn, .bar-btn, .icon-btn) { min-height: 44px; }
+}
+.agents-change-list { display: grid; gap: 6px; margin: 12px 0 16px; padding: 0; list-style: none; font-size: 13px; }
+.agents-change-list li { display: flex; align-items: baseline; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
+.agents-change-list .proposal-count { flex-shrink: 0; }
+.agents-preview-button { width: 100%; justify-content: center; }
+/* Phones: the banner sits where the dock was, in thumb reach. */
+.app.phone .proposal-banner { top: auto; bottom: calc(8px + env(safe-area-inset-bottom)); width: calc(100% - 16px); }
+.proposal-next-icon { display: none; flex-shrink: 0; }
+.app.phone .proposal-next { display: none; }
+.app.phone .proposal-next-icon { display: inline-flex; }

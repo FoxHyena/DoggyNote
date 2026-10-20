@@ -16,6 +16,10 @@ export const SURFACE_TOKENS = [
   'selection',
   'gridDot', // background dots: quiet, but visible
   'scrim', // dims the app behind a phone sheet (translucent)
+  'diffAdded', // previewing an agent proposal: a card it adds
+  'diffChanged', // …edits or moves
+  'diffRemoved', // …buries
+  'diffInk', // text on the diff colours (badge chips)
 ] as const
 
 export type SurfaceToken = (typeof SURFACE_TOKENS)[number]
@@ -34,6 +38,10 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     selection: '#e8a849',
     gridDot: '#3d3934',
     scrim: '#0b0a0999',
+    diffAdded: '#62c48c',
+    diffChanged: '#74a9e6',
+    diffRemoved: '#ee7f6f',
+    diffInk: '#1c1b1a',
   },
   light: {
     bg: '#f3efe9',
@@ -48,6 +56,10 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     selection: '#b06c10',
     gridDot: '#d3cabe',
     scrim: '#2a252159',
+    diffAdded: '#2d7a4c',
+    diffChanged: '#2c66a8',
+    diffRemoved: '#b0392b',
+    diffInk: '#ffffff',
   },
 }
 

@@ -107,14 +107,14 @@ async function pull() {
       const editing = editingId()
       const editingCard = doc.getCard(editing)
       const editingTarget = editingCard?.type === 'board' ? doc.getBoard((editingCard.content as { boardId: string }).boardId) : undefined
-      if (editing && doc.get(editing) && (!writable(doc.get(editing)!) || (editingTarget && !writable(editingTarget)))) {
+      if (editing && doc.base(editing) && (!writable(doc.base(editing)!) || (editingTarget && !writable(editingTarget)))) {
         await preserveActiveEdit(editing, 'Access was removed while you were editing. Your text is preserved here.')
         const card = doc.getCard(editing)
         if (card?.type === 'board') await preserveActiveEdit((card.content as { boardId: string }).boardId, 'Board access changed during renaming.')
         cancelEdit()
       }
       const denied = doc.pendingOutbox().filter((change) => {
-        const object = doc.get(change.id)
+        const object = doc.base(change.id)
         return object && !writable(object)
       }).map((change) => change.id)
       await preserveDenied(denied, 'Your access to this board changed. Download these edits to keep a copy.')

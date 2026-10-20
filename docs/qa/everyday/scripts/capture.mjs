@@ -29,7 +29,8 @@ const settle = async (page) => {
   await page.evaluate(async () => { await Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))) })
 }
 const cardWith = (page, text) => page.locator('[data-testid="card"]', { hasText: text }).last()
-const exists = async (page, sel) => (await page.locator(sel).count()) > 0
+/** Present and visible (a control hidden by the layout doesn't count). */
+const exists = async (page, sel) => page.locator(sel).first().isVisible()
 /** A click with a mouse, a real tap on touch devices. */
 const press = (page, locator) => (page.context()._options?.hasTouch ? locator.tap() : locator.click())
 const pressId = (page, id) => press(page, page.getByTestId(id).first())
@@ -72,12 +73,28 @@ const STATES = {
     await page.keyboard.press('End')
   },
   proposals: async (page) => {
+    // The live board, previewed: "Review changes" opens the only proposal straight on the board.
     if (await exists(page, '[data-testid=review-changes]')) await pressId(page, 'review-changes')
     else {
       await openMore(page)
       if (!(await exists(page, '[data-testid=agent-proposals]'))) return false
       await pressId(page, 'agent-proposals')
+      const pick = page.getByTestId('agent-review').getByRole('button', { name: /Tidy movie night/ })
+      if (await pick.count()) await press(page, pick.first())
+      if (await exists(page, '[data-testid=preview-on-board]')) await pressId(page, 'preview-on-board')
     }
+    await page.waitForTimeout(900)
+  },
+  'proposal-current': async (page) => {
+    if ((await STATES.proposals(page)) === false) return false
+    if (!(await exists(page, '[data-testid=proposal-show-before]'))) return false
+    await pressId(page, 'proposal-show-before')
+    await page.waitForTimeout(600)
+  },
+  'proposal-dialog': async (page) => {
+    await openMore(page)
+    if (!(await exists(page, '[data-testid=agent-proposals]'))) return false
+    await pressId(page, 'agent-proposals')
     const pick = page.getByTestId('agent-review').getByRole('button', { name: /Tidy movie night/ })
     if (await pick.count()) await press(page, pick.first())
     await page.waitForTimeout(800)
