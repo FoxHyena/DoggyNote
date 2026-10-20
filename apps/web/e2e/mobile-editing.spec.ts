@@ -108,3 +108,42 @@ test('fields outside cards are 16px on touch, so iOS does not zoom into them', a
   await page.getByTestId('toybox-button').tap()
   expect(await fontSize(page, '[data-testid=toybox-input]')).toBeGreaterThanOrEqual(16)
 })
+
+test('the caret lands on the word you tapped, even as the card glides in', async ({ page }) => {
+  await seedCards(page, [note('Leave at eight Saturday morning sharp', 300, 400, { w: 260 })])
+  await setCamera(page, { x: -20, y: -20, zoom: 0.6 })
+  const card = cardByText(page, 'Saturday')
+  await tapOn(page, card)
+  const word = card.getByText('Leave at eight Saturday morning sharp')
+  const box = (await word.boundingBox())!
+  // Tap just inside "Saturday" (the 4th word).
+  const range = await word.evaluate((el) => {
+    const r = document.createRange()
+    const text = el.firstChild!
+    const i = text.textContent!.indexOf('Saturday')
+    r.setStart(text, i + 2)
+    r.setEnd(text, i + 3)
+    const b = r.getBoundingClientRect()
+    return { x: b.x + b.width / 2, y: b.y + b.height / 2 }
+  })
+  expect(range.y).toBeGreaterThan(box.y)
+  await tap(page, range)
+  await expect(page.getByTestId('note-editor')).toBeFocused()
+  await page.keyboard.type('Z')
+  // Inside the tapped word (a fingertip is a few letters wide).
+  await expect(page.getByTestId('note-editor')).toContainText(/S\w*Z\w*y morning/)
+})
+
+test('bolding a whole heading line keeps it a heading', async ({ page }) => {
+  await seedCards(page, [note('# Hike plan\nBring water', 0, 0)])
+  const card = cardByText(page, 'Hike plan')
+  await tapOn(page, card)
+  await tapOn(page, card, { x: 40, y: 18 })
+  await expect(page.getByTestId('note-editor')).toBeFocused()
+  await page.keyboard.press('ControlOrMeta+ArrowUp')
+  await page.keyboard.press('Home')
+  await page.keyboard.press('Shift+End')
+  await page.getByTestId('dock-fmt-bold').tap()
+  await page.getByTestId('edit-done').tap()
+  await expect(cardByText(page, 'Hike plan').locator('h1 strong')).toHaveText('Hike plan')
+})

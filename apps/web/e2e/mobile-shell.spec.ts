@@ -158,3 +158,29 @@ test('the back chevron goes up a level', async ({ page }) => {
   await page.getByTestId('parent-boards').tap()
   await expect(page.getByTestId('board-name')).toHaveText(parentName)
 })
+
+test('burying shows what happened, with Undo', async ({ page }) => {
+  await seedCards(page, [note('Old bone', 0, 0)])
+  await tapOn(page, cardByText(page, 'Old bone'))
+  await page.getByTestId('bury').tap()
+  await expect(page.getByTestId('toast')).toContainText('Buried 1 card')
+  await page.getByTestId('toast-action').tap()
+  await expect(cardByText(page, 'Old bone')).toBeVisible()
+})
+
+test('touching the board with the Inbox open puts the sheet away first', async ({ page }) => {
+  await seedCards(page, [note('Behind the sheet', 0, 0)])
+  await page.getByTestId('toybox-button').tap()
+  await expect(page.getByTestId('toybox-panel')).toBeVisible()
+  await tapOn(page, cardByText(page, 'Behind the sheet'))
+  await expect(page.getByTestId('toybox-panel')).toHaveCount(0)
+  await expect(cardByText(page, 'Behind the sheet')).not.toHaveClass(/selected/)
+})
+
+test('the Boards sheet lists boards you were just on', async ({ page }) => {
+  const first = (await page.getByTestId('board-name').textContent())!
+  await freshBoard(page)
+  await page.getByTestId('board-navigation').tap()
+  await page.getByTestId('recent-board').filter({ hasText: first }).tap()
+  await expect(page.getByTestId('board-name')).toHaveText(first)
+})

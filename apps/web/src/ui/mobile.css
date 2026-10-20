@@ -536,8 +536,10 @@ body:has(.edit-dock) .mobile-dock { visibility: hidden; }
 @media (max-height: 500px) {
   .login { justify-content: flex-start; }
   .login-card { margin-block: 12px; gap: 8px; }
-  .login-card .login-logo { width: 40px; height: 40px; border-radius: 11px; }
-  .login-card h1 { font-size: 18px; }
+  .login-card .login-logo { width: 36px; height: 36px; border-radius: 10px; }
+  .login-card h1 { font-size: 17px; }
+  .login-card .login-sub { display: none; }
+  .login-card { padding-block: 14px; }
 }
 
 /* V2-10: no desktop resize grips; real buttons for small actions. */

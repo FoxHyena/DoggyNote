@@ -546,8 +546,8 @@ export function Canvas(props: { readOnly: boolean }) {
         const isTitle = !!g.target.closest('[data-edit-title]')
         // Zoomed out, cards are shapes on a canvas: a click selects, it can't edit.
         if (!lod() && (c.type === 'note' || c.type === 'todo' || (c.type === 'column' && isTitle))) {
-          beginEdit(g.id)
           queueEditCaret(g.client)
+          beginEdit(g.id)
         } else select([g.id])
         break
       }
@@ -1052,8 +1052,9 @@ function editRoom() {
 export function touchEdit(id: Id, caret?: Vec) {
   const r = rectOf(id)
   if (r && focusEdits() && camera().zoom < LOD_ZOOM) setCamera(editCamera(r, editRoom(), camera()))
-  beginEdit(id)
+  // Queue the caret first: the editor mounts (and reads it) inside beginEdit.
   if (caret) queueEditCaret(caret)
+  beginEdit(id)
 }
 
 function caretRect(within: HTMLElement): DOMRect | null {
