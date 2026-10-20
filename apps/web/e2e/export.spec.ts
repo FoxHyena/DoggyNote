@@ -1,3 +1,4 @@
+import { FIXTURES } from './ports.ts'
 import { postSync } from './helpers.ts'
 import { readFile } from 'node:fs/promises'
 import { expect, test, type Page } from '@playwright/test'
@@ -43,7 +44,7 @@ async function seed(page: Page) {
       w: 260,
       h: 220,
       color: 'none',
-      content: { url: 'http://localhost:5180/og-png.html', status: 'ok', title: 'Green dog', image: 'http://localhost:5180/green.png' },
+      content: { url: `${FIXTURES}/og-png.html`, status: 'ok', title: 'Green dog', image: `${FIXTURES}/green.png` },
     },
     { id: ids.conn, kind: 'connection', boardId: board, from: ids.a, to: ids.b, arrow: 'end', createdAt: Date.now() },
   ]

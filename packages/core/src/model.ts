@@ -7,7 +7,10 @@ import type { Side } from './geometry.ts'
 
 export type Id = string
 
-export type CardType = 'note' | 'todo' | 'board' | 'image' | 'link' | 'column' | 'file'
+/** Every card type this build can draw. Anything else came from a newer app (see cardtext.ts). */
+export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'file'] as const
+export type CardType = (typeof CARD_TYPES)[number]
+export const isKnownCardType = (t: unknown): t is CardType => (CARD_TYPES as readonly unknown[]).includes(t)
 
 /** A ProseMirror document as JSON. Rendered without ProseMirror by richtext.ts. */
 export type RichDoc = { type: 'doc'; content?: RichNode[] }

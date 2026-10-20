@@ -1,3 +1,4 @@
+import { FIXTURES } from './ports.ts'
 import { openParentBoard } from './helpers.ts'
 import { postSync } from './helpers.ts'
 import { waitForSync } from './helpers.ts'
@@ -149,6 +150,25 @@ test.describe('columns', () => {
     await page.mouse.up()
     await expect(body.getByTestId('card')).toHaveCount(1)
     await expect(cardByText(page, 'first idea')).toHaveClass(/free/)
+  })
+
+  test('the first click on a column selects it for colour; a click on its title then renames it', async ({ page }) => {
+    await page.getByTestId('tool-column').click()
+    await page.keyboard.type('Snacks')
+    await page.keyboard.press('Enter')
+    await clickEmpty(page)
+    const column = cardByText(page, 'Snacks')
+    await column.getByTestId('column-title').click()
+    await expect(column).toHaveClass(/selected/)
+    await expect(page.getByTestId('column-title-input')).toHaveCount(0)
+    await page.getByTestId('swatch-sky').click()
+    await expect(column).toHaveClass(/colored/)
+    await column.getByTestId('column-title').click()
+    await expect(page.getByTestId('column-title-input')).toBeFocused()
+    await page.keyboard.press(`${MOD}+A`)
+    await page.keyboard.type('Treats')
+    await page.keyboard.press('Enter')
+    await expect(cardByText(page, 'Treats')).toBeVisible()
   })
 
   test('drag a tool straight into a column', async ({ page }) => {
@@ -360,13 +380,13 @@ test.describe('images', () => {
 test.describe('links', () => {
   test('Link tool: paste a URL, get a preview from the Worker', async ({ page }) => {
     await page.getByTestId('tool-link').click()
-    await page.getByTestId('link-input').fill('http://localhost:5180/og.html')
+    await page.getByTestId('link-input').fill(`${FIXTURES}/og.html`)
     await page.keyboard.press('Enter')
     const card = page.locator('.card-link')
     await expect(card.getByTestId('link-title')).toHaveText('Good Boy Supplies & Treats')
     await expect(card).toContainText('Everything a very good dog needs.')
     await expect(card).toContainText('Doggo Shop')
-    await expect(card.getByTestId('link-title')).toHaveAttribute('href', 'http://localhost:5180/og.html')
+    await expect(card.getByTestId('link-title')).toHaveAttribute('href', `${FIXTURES}/og.html`)
   })
 
   test('pasting a URL on the canvas makes a link card; other text makes a note', async ({ page }) => {
@@ -376,7 +396,7 @@ test.describe('links', () => {
         dt.setData('text/plain', t)
         document.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }))
       }, text)
-    await paste('http://localhost:5180/plain.html')
+    await paste(`${FIXTURES}/plain.html`)
     await expect(page.locator('.card-link').getByTestId('link-title')).toHaveText('Just a title')
     await paste('a pasted thought')
     await expect(cardByText(page, 'a pasted thought')).toHaveAttribute('data-type', 'note')

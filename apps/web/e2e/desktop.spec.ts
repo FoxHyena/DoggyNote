@@ -1,13 +1,13 @@
 import { waitForSync } from './helpers.ts'
 import { expect, test } from '@playwright/test'
 import { addNote, cardByText, freshBoard } from './helpers.ts'
-import { API_PORT } from './ports.ts'
+import { API_PORT, DESKTOP_PORT } from './ports.ts'
 
 // The desktop app's code path: no cookies, a bearer token kept by the native
 // side (Keychain), API calls cross-origin to the server. We stand in for the
 // Tauri bridge with an in-page fake that records what the app stores.
 
-test.use({ storageState: { cookies: [], origins: [] }, baseURL: 'http://localhost:4174' })
+test.use({ storageState: { cookies: [], origins: [] }, baseURL: `http://localhost:${DESKTOP_PORT}` })
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {

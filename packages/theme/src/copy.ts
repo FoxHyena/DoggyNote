@@ -20,6 +20,8 @@ export const COPY = {
   inboxEmpty: 'Nothing to chew on yet. Jot something down, or share a link here from another app.',
   buriedEmpty: 'No bones buried. Good dog.',
   installTitle: 'Keep DoggyNote on your phone',
+  /** A card made by a newer DoggyNote than this one. */
+  unknownCard: 'This card needs a newer DoggyNote. Update to see it.',
   fetchHint: 'Sniff out any board, note, to-do or link by a word in it.',
 } as const
 
