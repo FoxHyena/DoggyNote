@@ -1,18 +1,21 @@
-import { For, Show, createMemo } from 'solid-js'
+import './canvas-entry.css'
+import { For, Show, createMemo, createSignal, onCleanup } from 'solid-js'
 import type { BoardIcon, Card } from '@doggynote/core'
 import { CARD_COLORS, COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { setColor, trashSelection } from '../state/actions.ts'
-import { camera, editingId, selection, viewport } from '../state/ui.ts'
+import { beginEdit, camera, editingId, openBoard, selection, viewport } from '../state/ui.ts'
 import { draggingIds } from '../canvas/dnd.ts'
 import { layoutTick, rectOf } from '../canvas/layout.ts'
 import { union, worldToScreen } from '@doggynote/core'
 import { BOARD_ICONS, BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
+import { canvasControlsSize } from './CanvasControls.tsx'
 import { openThread } from './CommentsPanel.tsx'
 
 // Floating bar for the current selection: colour, board icon, bury (trash).
 
 export function SelectionBar() {
+  const [barSize, setBarSize] = createSignal({ width: 400, height: 46 })
   const cards = createMemo(() => [...selection()].map((id) => doc.getCard(id)).filter((c): c is Card => !!c))
   const conns = createMemo(() => [...selection()].filter((id) => doc.get(id)?.kind === 'connection'))
   const show = () => (cards().length || conns().length) && !draggingIds().size && !editingId()
@@ -37,27 +40,34 @@ export function SelectionBar() {
     const cam = camera()
     const tl = worldToScreen(cam, { x: u.x, y: u.y })
     const br = worldToScreen(cam, { x: u.x + u.w, y: u.y + u.h })
-    const BAR = 46
+    const BAR = barSize().height
     let top = tl.y - BAR - 14
     if (top < 8) top = Math.min(br.y + 14, v.height - BAR - 8)
-    const left = Math.min(Math.max((tl.x + br.x) / 2, 200), Math.max(200, v.width - 200))
-    return { left, top: Math.max(8, top) }
+    const half = Math.min(barSize().width, v.width - 16) / 2
+    const left = Math.min(Math.max((tl.x + br.x) / 2, half + 8), Math.max(half + 8, v.width - half - 8))
+    const controls = canvasControlsSize()
+    const controlsTop = v.height - 16 - controls.height
+    if (left - half < 24 + controls.width && top + BAR > controlsTop - 8) top = controlsTop - BAR - 12
+    return { left, top: Math.max(8, Math.min(top, v.height - BAR - 8)) }
   })
 
   return (
     <Show when={show()}>
       <div
+        ref={(element) => { const observer = new ResizeObserver(() => setBarSize({ width: element.offsetWidth, height: element.offsetHeight })); observer.observe(element); onCleanup(() => observer.disconnect()) }}
         class="selection-bar"
         data-testid="selection-bar"
+        onKeyDown={(e) => { if (!e.metaKey && !e.ctrlKey && ['Enter', ' ', 'Delete', 'Backspace'].includes(e.key)) { e.stopPropagation(); if (e.key === 'Backspace') e.preventDefault() } }}
         style={{ left: `${pos().left}px`, top: `${pos().top}px` }}
         onPointerDown={(e) => e.stopPropagation()}
       >
         <Show when={cards().length}>
-          <div class="swatches" role="radiogroup" aria-label="Colour">
+          <div class="swatches" role="group" aria-label="Colour">
             <For each={CARD_COLORS}>
               {(c) => (
                 <button
                   class="swatch"
+                  aria-pressed={currentColor() === c}
                   classList={{ on: currentColor() === c }}
                   style={{ background: `var(--dn-card-${c}-bg)` }}
                   data-testid={`swatch-${c}`}
@@ -70,6 +80,8 @@ export function SelectionBar() {
           </div>
         </Show>
         <Show when={soleBoard()}>
+          <button class="bar-btn" data-testid="open-board" onClick={() => openBoard(soleBoard()!.id)}>Open</button>
+          <button class="bar-btn" data-testid="rename-board" disabled={!doc.canWriteObject(soleBoard())} onClick={() => beginEdit(cards()[0].id)}>Rename</button>
           <div class="bar-sep" />
           <div class="icon-picker" aria-label="Board icon">
             <For each={BOARD_ICONS}>
@@ -79,6 +91,9 @@ export function SelectionBar() {
                   classList={{ on: soleBoard()!.icon === i }}
                   data-testid={`icon-${i}`}
                   title={i}
+                  aria-label={`Board icon: ${i}`}
+                  aria-pressed={soleBoard()!.icon === i}
+                  disabled={!doc.canWriteObject(soleBoard())}
                   onClick={() => doc.update({ [soleBoard()!.id]: { icon: i } })}
                 >
                   <BoardIconSvg icon={i} size={18} />

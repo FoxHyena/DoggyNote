@@ -10,15 +10,18 @@ export const hasBearer = () => !!bearer
 
 export class ApiError extends Error {
   status: number
-  constructor(status: number, message: string) {
+  details: Record<string, unknown>
+  constructor(status: number, message: string, details: Record<string, unknown> = {}) {
     super(message)
     this.status = status
+    this.details = details
   }
 }
 
 /** A checked request: throws ApiError with the server's message, else returns the response. */
 export async function apiRaw(path: string, init: RequestInit & { json?: unknown } = {}): Promise<Response> {
   const headers = new Headers(init.headers)
+  headers.set('x-doggynote-protocol', '2')
   if (bearer) headers.set('authorization', `Bearer ${bearer}`)
   let body = init.body
   if (init.json !== undefined) {
@@ -34,12 +37,14 @@ export async function apiRaw(path: string, init: RequestInit & { json?: unknown 
   })
   if (!res.ok) {
     let msg = res.statusText
+    let details: Record<string, unknown> = {}
     try {
-      msg = ((await res.json()) as { error?: string }).error ?? msg
+      details = await res.json() as Record<string, unknown>
+      msg = typeof details.error === 'string' ? details.error : msg
     } catch {
       // not JSON
     }
-    throw new ApiError(res.status, msg)
+    throw new ApiError(res.status, msg, details)
   }
   return res
 }

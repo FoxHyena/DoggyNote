@@ -1,3 +1,4 @@
+import { loadAccess } from './access.ts'
 import { Hono, type Context } from 'hono'
 import type { AppEnv } from './env.ts'
 import { requireUser, sessionUser } from './auth.ts'
@@ -29,12 +30,14 @@ assets.get('/assets/token', requireUser, async (c) => {
   const secret = c.env.ASSET_TOKEN_SECRET
   if (!secret) return c.json({ error: 'Image tokens are not configured on this server' }, 500)
   const expiresAt = (Math.floor(Date.now() / DAY) + 2) * DAY
-  return c.json({ token: await signAssetToken(secret, c.get('user').id, expiresAt), expiresAt })
+  return c.json({ token: await signAssetToken(secret, `session:${c.get('sessionHash')}`, expiresAt), expiresAt })
 })
 
 assets.put('/assets/:id/:size', requireUser, async (c) => {
   const { id, size } = c.req.param()
   if (!UUID.test(id) || !SIZES.has(size)) return c.json({ error: 'bad asset path' }, 400)
+  const uploader = await c.env.DB.prepare('SELECT created_by FROM assets WHERE id=?1 ORDER BY created_at,size LIMIT 1').bind(id).first<{ created_by: string }>()
+  if (uploader && uploader.created_by !== c.get('user').id) return c.json({ error: 'Only the uploader can add asset renditions' }, 403)
   const type = (c.req.header('content-type') ?? '').split(';')[0].trim()
   if (!TYPES.has(type)) return c.json({ error: `unsupported type ${type}` }, 415)
   const len = Number(c.req.header('content-length') ?? 0)
@@ -54,31 +57,20 @@ assets.put('/assets/:id/:size', requireUser, async (c) => {
 
 type Access = 'ok' | 'unauthenticated' | 'forbidden'
 
-/** True if every card using this image sits in someone else's Toy box. */
-async function privateToSomeoneElse(c: Context<AppEnv>, assetId: string, userId: string): Promise<boolean> {
+/** Bytes follow readable live card references, with an uploader-only orphan case. */
+async function privateToSomeoneElse(c: Context<AppEnv>, assetId: string, userId: string, isAdmin = false): Promise<boolean> {
+  const a = await loadAccess(c.env.DB, { id: userId, isAdmin })
   const { results } = await c.env.DB.prepare(
-    "SELECT owner_id FROM objects WHERE kind = 'card' AND json_extract(data, '$.content.assetId') = ?1",
-  )
-    .bind(assetId)
-    .all<{ owner_id: string | null }>()
-  return results.length > 0 && results.every((r) => r.owner_id && r.owner_id !== userId)
+    "SELECT board_id, owner_id, data FROM objects WHERE kind='card' AND json_extract(data, '$.content.assetId')=?1",
+  ).bind(assetId).all<{ board_id: string; owner_id: string | null; data: string }>()
+  if (results.some((r) => (!r.owner_id || r.owner_id === userId) && a.canRead(r.board_id) && !(JSON.parse(r.data) as { purged?: boolean }).purged)) return false
+  if (!results.length) {
+    return !(await c.env.DB.prepare('SELECT 1 FROM assets WHERE id=?1 AND created_by=?2').bind(assetId, userId).first())
+  }
+  return true
 }
 
 async function canRead(c: Context<AppEnv>, assetId: string): Promise<Access> {
-  const session = await sessionUser(c)
-  if (session) return (await privateToSomeoneElse(c, assetId, session.user.id)) ? 'forbidden' : 'ok'
-
-  const t = c.req.query('t')
-  if (t) {
-    const secret = c.env.ASSET_TOKEN_SECRET
-    const userId = secret ? await verifyAssetToken(secret, t, Date.now()) : null
-    if (!userId) return 'unauthenticated'
-    // A removed account's tokens stop working at once.
-    const exists = await c.env.DB.prepare('SELECT 1 FROM users WHERE id = ?1').bind(userId).first()
-    if (!exists) return 'unauthenticated'
-    return (await privateToSomeoneElse(c, assetId, userId)) ? 'forbidden' : 'ok'
-  }
-
   const share = c.req.query('share')
   if (share) {
     const resolved = await resolveShare(c.env.DB, share)
@@ -90,10 +82,26 @@ async function canRead(c: Context<AppEnv>, assetId: string): Promise<Access> {
       .all<{ board_id: string; data: string }>()
     const shown = results.some((r) => {
       const card = JSON.parse(r.data) as { deletedAt?: number | null; purged?: boolean }
-      return !card.purged && !card.deletedAt && resolved.sharedBoards.has(r.board_id)
+      return !card.purged && !card.deletedAt && resolved.sharedBoards.has(r.board_id) && resolved.objects.some((o) => o.kind === 'card' && o.boardId === r.board_id && (o as { content?: { assetId?: string } }).content?.assetId === assetId)
     })
     return shown ? 'ok' : 'forbidden'
   }
+
+  const session = await sessionUser(c)
+  if (session) return (await privateToSomeoneElse(c, assetId, session.user.id, session.user.isAdmin)) ? 'forbidden' : 'ok'
+
+  const t = c.req.query('t')
+  if (t) {
+    const secret = c.env.ASSET_TOKEN_SECRET
+    const principal = secret ? await verifyAssetToken(secret, t, Date.now()) : null
+    // Image credentials belong to their issuing session, so signing out,
+    // account recovery and admin session revocation invalidate them together.
+    if (!principal?.startsWith('session:')) return 'unauthenticated'
+    const session = await c.env.DB.prepare('SELECT u.id,u.is_admin FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=?1 AND s.expires_at>?2').bind(principal.slice(8), Date.now()).first<{ id: string; is_admin: number }>()
+    if (!session) return 'unauthenticated'
+    return (await privateToSomeoneElse(c, assetId, session.id, !!session.is_admin)) ? 'forbidden' : 'ok'
+  }
+
 
   return 'unauthenticated'
 }
@@ -133,6 +141,8 @@ export function contentDisposition(name: string): string {
 assets.put('/files/:id', requireUser, async (c) => {
   const id = c.req.param('id')
   if (!UUID.test(id)) return c.json({ error: 'bad file id' }, 400)
+  const uploader = await c.env.DB.prepare('SELECT created_by FROM assets WHERE id=?1 ORDER BY created_at,size LIMIT 1').bind(id).first<{ created_by: string }>()
+  if (uploader && uploader.created_by !== c.get('user').id) return c.json({ error: 'Only the uploader can add this file' }, 403)
   const len = Number(c.req.header('content-length') ?? NaN)
   if (!Number.isFinite(len)) return c.json({ error: 'content-length required' }, 411)
   if (len > MAX_FILE_BYTES) return c.json({ error: 'Files can be up to 50 MB' }, 413)

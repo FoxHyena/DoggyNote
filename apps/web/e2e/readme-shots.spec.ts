@@ -1,3 +1,5 @@
+import { postSync } from './helpers.ts'
+import { waitForSync } from './helpers.ts'
 import { mkdir } from 'node:fs/promises'
 import { expect, test, type Page } from '@playwright/test'
 import { MOD, cardByText, freshBoard } from './helpers.ts'
@@ -114,15 +116,15 @@ test('README screenshots', async ({ page, browser }) => {
     card({ id: id(), boardId: tb, type: 'note', x: 0, y: 0, w: 260, content: { md: "Ideas for Biscuit's birthday" }, createdAt: now - 2000 }),
     card({ id: id(), boardId: tb, type: 'link', x: 0, y: 0, w: 260, content: { url: 'http://localhost:5180/og.html', status: 'ok', title: 'Good Boy Supplies & Treats' }, createdAt: now - 1000 }),
   ]
-  expect((await page.request.post('/api/sync', { data: { changes: objs.map((o) => ({ id: o.id, patch: o })) } })).ok()).toBe(true)
+  expect((await postSync(page.request, { data: { changes: objs.map((o) => ({ id: o.id, patch: o })) } })).ok()).toBe(true)
   const c1 = id()
-  await page.request.post('/api/sync', {
+  await postSync(page.request, {
     data: { changes: [{ id: c1, patch: { id: c1, kind: 'comment', boardId: board, cardId: ids.rules, text: 'Does Biscuit know about the **kelp** rule?', createdAt: now - 3_600_000 } }] },
   })
   const fido = await browser.newContext({ storageState: { cookies: [], origins: [] } })
   await fido.request.post('/api/auth/login', { data: { username: 'fido', password: 'fetchfetch' } })
   const c2 = id()
-  await fido.request.post('/api/sync', {
+  await postSync(fido.request, {
     data: { changes: [{ id: c2, patch: { id: c2, kind: 'comment', boardId: board, cardId: ids.rules, text: 'He has been informed. He disagrees.', createdAt: now - 600_000 } }] },
   })
   await fido.close()
@@ -130,7 +132,7 @@ test('README screenshots', async ({ page, browser }) => {
   const settle = async () => {
     await page.keyboard.press(`${MOD}+1`)
     await page.mouse.move(5, 890)
-    await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
+    await waitForSync(page)
     await expect(page.locator('[data-testid="card-image"][data-loaded]')).toHaveCount(2)
     await page.waitForTimeout(600)
     await synced()
@@ -138,7 +140,7 @@ test('README screenshots', async ({ page, browser }) => {
   /** Measured heights sync silently after layout; wait until nothing is queued. */
   const synced = async () => {
     await page.getByTestId('sync-status').click()
-    await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
+    await waitForSync(page)
   }
 
   for (const theme of ['dark', 'light'] as const) {
@@ -168,6 +170,7 @@ test('README screenshots', async ({ page, browser }) => {
   await page.screenshot({ path: `${OUT}/toybox.png` })
   await page.getByTestId('toybox-button').click()
 
+  await page.getByTestId('board-more').click()
   await page.getByTestId('export').click()
   await page.waitForTimeout(400)
   await page.screenshot({ path: `${OUT}/export.png` })

@@ -1,3 +1,4 @@
+import { waitForSync } from './helpers.ts'
 import { expect, test } from '@playwright/test'
 import { addNote, cardByText, freshBoard } from './helpers.ts'
 import { API_PORT } from './ports.ts'
@@ -66,7 +67,7 @@ test('desktop: sign in with a Keychain token, sync cross-origin, open links in t
   await freshBoard(page)
   await addNote(page, 'from the desktop')
   await authed
-  await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
+  await waitForSync(page)
 
   // Relaunch: still signed in from the Keychain.
   await page.reload()
@@ -115,7 +116,7 @@ test('desktop: zoomed-out overview draws image thumbnails loaded cross-origin', 
   })
   await page.getByTestId('image-input').setInputFiles({ name: 'x.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') })
   await expect(page.getByTestId('card-image')).toHaveCount(1)
-  await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
+  await waitForSync(page)
   // Drop the local copy so the thumbnail must come from the server, cross-origin.
   await page.evaluate(
     () =>
@@ -189,6 +190,37 @@ test('desktop: snapping across grid points taps the trackpad haptic', async ({ p
   await page.mouse.up()
   const calls = await page.evaluate(() => (window as unknown as { __fakeKeychain: { calls: string[] } }).__fakeKeychain.calls)
   expect(calls.filter((c) => c === 'haptic').length).toBeGreaterThanOrEqual(3)
+})
+
+test('desktop: an update waits for durable local text and explains a failed save', async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem('fake-update', '0.1.50'))
+  await page.goto('/')
+  await page.getByLabel('Username').fill('rex')
+  await page.getByLabel('Password').fill('goodboy123')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await freshBoard(page)
+  const note = await addNote(page, 'Before updating')
+  await waitForSync(page)
+  await page.evaluate(() => {
+    const original = IDBDatabase.prototype.transaction
+    ;(window as unknown as { denyLocalSave: boolean }).denyLocalSave = true
+    IDBDatabase.prototype.transaction = function (...args: Parameters<IDBDatabase['transaction']>) {
+      const transaction = original.apply(this, args)
+      if ((window as unknown as { denyLocalSave: boolean }).denyLocalSave && args[1] === 'readwrite' && Array.isArray(args[0]) && args[0].includes('objects') && args[0].includes('outbox')) queueMicrotask(() => transaction.abort())
+      return transaction
+    }
+  })
+  await note.click()
+  await page.keyboard.press('ControlOrMeta+a')
+  await page.keyboard.type('Text preserved before restart')
+  await page.getByTestId('apply-update').click()
+  await expect(page.getByRole('alert')).toContainText('Could not save your changes')
+  expect(await page.evaluate(() => (window as unknown as { __fakeKeychain: { calls: string[] } }).__fakeKeychain.calls)).not.toContain('plugin:updater|install')
+  await page.evaluate(() => { (window as unknown as { denyLocalSave: boolean }).denyLocalSave = false })
+  await page.getByTestId('apply-update').click()
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __fakeKeychain: { calls: string[] } }).__fakeKeychain.calls)).toContain('plugin:process|restart')
+  await page.reload()
+  await expect(cardByText(page, 'Text preserved before restart')).toBeVisible()
 })
 
 test('desktop: upload a file cross-origin; the download opens in the browser with a file token', async ({ page, request }) => {

@@ -1,3 +1,6 @@
+import { openParentBoard } from './helpers.ts'
+import { postSync } from './helpers.ts'
+import { waitForSync } from './helpers.ts'
 import { expect, test, type Page } from '@playwright/test'
 import { MOD, addNote, at, camera, cardByText, clickEmpty, dragBy, freshBoard } from './helpers.ts'
 
@@ -34,12 +37,12 @@ test.describe('boards', () => {
     await expect(card.locator('.board-tile svg *').first()).toBeAttached() // the icon actually rendered
     await expect(card).toContainText('0 cards')
 
-    await card.locator('.board-tile').click()
+    await card.locator('.board-tile').dblclick()
     await expect(page.getByTestId('board-name')).toHaveText('Inner kennel')
     await expect(page.getByTestId('crumb').last()).toHaveText(parent!)
     await addNote(page, 'deep thought')
 
-    await page.getByTestId('crumb').last().click()
+    await openParentBoard(page, 'last')
     await expect(page.getByTestId('board-name')).toHaveText(parent!)
     await expect(cardByText(page, 'Inner kennel')).toContainText('1 card')
   })
@@ -49,7 +52,7 @@ test.describe('boards', () => {
     await page.keyboard.type('Styled')
     await page.keyboard.press('Enter')
     const card = cardByText(page, 'Styled')
-    await dragBy(page, card, 12, 0) // select (a click would open it)
+    await card.click() // selection does not open the board
     await page.getByTestId('icon-bone').click()
     await page.getByTestId('swatch-sky').click()
     const tile = card.locator('.board-tile')
@@ -332,8 +335,8 @@ test.describe('images', () => {
     await expect(img).toHaveAttribute('data-size', page.viewportSize() && (await page.evaluate(() => devicePixelRatio)) > 2.4 ? 'medium' : 'small')
     // Pretend it's an image from before the 640px tier.
     const id = await page.locator('.card-image').getAttribute('data-card-id')
-    await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
-    await page.request.post('/api/sync', { data: { changes: [{ id, patch: { content: { assetId: 'x', width: 1600, height: 1200 } } }] } })
+    await waitForSync(page)
+    await postSync(page.request, { data: { changes: [{ id, patch: { content: { assetId: 'x', width: 1600, height: 1200 } } }] } })
     await page.getByTestId('sync-status').click()
     await expect(img).toHaveAttribute('data-size', 'medium')
   })

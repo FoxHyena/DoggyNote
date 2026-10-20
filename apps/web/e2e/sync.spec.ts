@@ -1,17 +1,31 @@
-import { expect, test, type Browser, type Page } from '@playwright/test'
+import { openParentBoard } from './helpers.ts'
+import { postSync } from './helpers.ts'
+import { waitForSync } from './helpers.ts'
+import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test'
 import { AUTH_FILE } from '../playwright.config.ts'
 import { MOD, addNote, cardByText, dragBy, freshBoard } from './helpers.ts'
+
+// Extra devices are outside Playwright's context fixture; close them after
+// every test so old pages cannot keep polling in later tests.
+const deviceContexts = new Set<BrowserContext>()
+test.afterEach(async () => {
+  const contexts = [...deviceContexts]
+  deviceContexts.clear()
+  await Promise.all(contexts.map((context) => context.close()))
+})
+
 
 /** A second signed-in device (its own IndexedDB) opened on the same URL. */
 async function secondDevice(browser: Browser, url: string): Promise<Page> {
   const ctx = await browser.newContext({ storageState: AUTH_FILE })
+  deviceContexts.add(ctx)
   const page = await ctx.newPage()
   await page.goto(url)
   await expect(page.getByTestId('canvas')).toBeVisible()
   return page
 }
 
-const synced = (page: Page) => expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
+const synced = waitForSync
 /** Click the status to sync, and wait for that sync's pull to finish (the label may already say Synced). */
 const syncNow = async (page: Page) => {
   const pulled = page.waitForResponse((r) => r.url().includes('/api/sync?since=') && r.request().method() === 'GET')
@@ -51,7 +65,7 @@ test.describe('sync between devices', () => {
     await context.setOffline(true)
     await addNote(page, 'written offline')
     await expect(page.getByTestId('sync-status')).toContainText('Offline', { timeout: 10_000 })
-    await expect(page.getByTestId('sync-status')).toContainText('waiting')
+    await expect(page.getByTestId('sync-status')).toHaveAttribute('data-pending', /[1-9]/)
 
     await context.setOffline(false)
     await syncNow(page)
@@ -60,6 +74,8 @@ test.describe('sync between devices', () => {
   })
 
   test('edits to different fields merge; the same field is last-write-wins', async ({ page, browser }) => {
+    // Several complete permission-refresh/push/pull rounds across two devices.
+    test.setTimeout(60_000)
     await freshBoard(page)
     const note = await addNote(page, 'shared note')
     await synced(page)
@@ -147,7 +163,9 @@ test.describe('auth', () => {
     await form.getByLabel('Password').fill('goodboy123')
     await form.getByRole('button', { name: 'Sign in' }).click()
     await expect(page.getByTestId('canvas')).toBeVisible()
-    await expect(page.getByTestId('account')).toContainText('rex')
+    await page.getByTestId('account').click()
+    await expect(page.locator('.account-menu-identity')).toHaveText('rex')
+    await page.keyboard.press('Escape')
 
     await page.getByTestId('account').click()
     await page.getByTestId('sign-out').click()
@@ -157,7 +175,7 @@ test.describe('auth', () => {
   })
 
   test('the API refuses writes without a session', async ({ request }) => {
-    const res = await request.post('/api/sync', { data: { changes: [{ id: 'x', patch: { kind: 'card' } }] } })
+    const res = await postSync(request, { data: { changes: [{ id: 'x', patch: { kind: 'card' } }] } })
     expect(res.status()).toBe(401)
     expect((await request.put('/api/assets/00000000-0000-4000-8000-000000000000/thumb', { data: 'x', headers: { 'content-type': 'image/png' } })).status()).toBe(401)
   })
@@ -176,6 +194,7 @@ test.describe('auth', () => {
     await expect(page.getByTestId('people-dialog')).toContainText(name)
 
     const ctx = await browser.newContext()
+    deviceContexts.add(ctx)
     const p2 = await ctx.newPage()
     await p2.goto('/')
     await p2.getByLabel('Username').fill(name)
@@ -209,6 +228,6 @@ test('a device with a stale cursor from another database re-pulls everything', a
   )
   await page.reload()
   await expect(cardByText(page, 'survives a db swap')).toBeVisible({ timeout: 10_000 })
-  await page.getByTestId('crumb').first().click()
+  await openParentBoard(page, 'first')
   await expect(page.getByTestId('board-name')).toHaveText('Doghouse')
 })

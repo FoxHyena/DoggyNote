@@ -26,16 +26,26 @@ export const objs = state.objs as Readonly<Record<Id, Obj>>
 
 let persist = true
 let readOnly = false
+let writeGuard: ((object: Obj) => boolean) | null = null
+export const setWriteGuard = (guard: (object: Obj) => boolean) => { writeGuard = guard }
+export const canWriteObject = (object: Obj | undefined) => !!object && !readOnly && (!writeGuard || writeGuard(object))
 const undoStack = new UndoStack()
 const [undoTick, setUndoTick] = createSignal(0)
+export const [localSaveError, setLocalSaveError] = createSignal<string | null>(null)
+export const [lastLocalSave, setLastLocalSave] = createSignal<number | null>(null)
 
 /** id → merged patch not yet acknowledged by the server. */
 const outbox = new Map<Id, Partial<Obj>>()
+/** Retain creation ownership across the gap between push acknowledgement and access refresh. */
+export const localBoardCreations = new Set<Id>()
 const outboxListeners = new Set<() => void>()
+const transientListeners = new Set<(id: Id, patch: Partial<Obj>) => void>()
+export const onTransient = (listener: (id: Id, patch: Partial<Obj>) => void) => { transientListeners.add(listener); return () => transientListeners.delete(listener) }
 
 const dirtyObjs = new Set<Id>()
 const dirtyOutbox = new Set<Id>()
 let flushTimer: ReturnType<typeof setTimeout> | null = null
+let flushing: Promise<void> | null = null
 
 export const get = (id: Id | null | undefined): Obj | undefined => (id ? state.objs[id] : undefined)
 export const getCard = (id: Id | null | undefined) => {
@@ -58,6 +68,7 @@ function applyPatchToStore(id: Id, patch: Partial<Obj>) {
 
 function record(id: Id, patch: Partial<Obj>) {
   if (!persist) return
+  if (patch.kind === 'board') localBoardCreations.add(id)
   dirtyObjs.add(id)
   outbox.set(id, { ...(outbox.get(id) ?? {}), ...structuredClone(unwrap(patch)) })
   dirtyOutbox.add(id)
@@ -77,6 +88,23 @@ function applyTx(tx: Transaction) {
 /** Apply a transaction and push it onto the undo stack. */
 export function commit(tx: Transaction) {
   if (readOnly || !tx.length) return
+  if (writeGuard && tx.some((c) => state.objs[c.id] && !writeGuard!({ ...state.objs[c.id], ...c.after, id: c.id } as Obj))) return
+  if (writeGuard) {
+    const freshBoards = new Map(tx.filter((change) => !state.objs[change.id] && change.after.kind === 'board').map((change) => [change.id, change.after as Board]))
+    const writableBoard = (id: Id, seen = new Set<Id>()): boolean => {
+      if (seen.has(id)) return false
+      seen.add(id)
+      const board = getBoard(id)
+      if (board) return writeGuard!(board)
+      const fresh = freshBoards.get(id)
+      return !!fresh && (writeGuard!(fresh) || !fresh.parentId || writableBoard(fresh.parentId, seen))
+    }
+    if (tx.some((change) => {
+      if (state.objs[change.id]) return !writeGuard!(state.objs[change.id])
+      const object = change.after as Obj
+      return object.kind === 'board' ? !writableBoard(change.id) : !writableBoard(object.boardId)
+    })) return
+  }
   applyTx(tx)
   undoStack.push(tx)
   setUndoTick((n) => n + 1)
@@ -104,11 +132,20 @@ export function silent(patches: Record<Id, Partial<Obj>>) {
   if (readOnly) {
     // Viewers still need measured heights in memory.
     batch(() => {
-      for (const [id, p] of Object.entries(patches)) applyPatchToStore(id, p)
+      for (const [id, p] of Object.entries(patches)) if (state.objs[id]) applyPatchToStore(id, p)
     })
     return
   }
-  applyTx(changesFor(patches))
+  const writable: Record<Id, Partial<Obj>> = {}
+  for (const [id, patch] of Object.entries(patches)) {
+    // A queued measurement may arrive after access reconciliation removed its card.
+    if (!state.objs[id] && !patch.kind) continue
+    if (state.objs[id] && writeGuard && !writeGuard(state.objs[id])) {
+      // Read-only viewers still need layout measurements in memory.
+      applyPatchToStore(id, patch)
+    } else writable[id] = patch
+  }
+  applyTx(changesFor(writable))
 }
 
 /**
@@ -116,6 +153,7 @@ export function silent(patches: Record<Id, Partial<Obj>>) {
  * that step created/changed this object; otherwise commit it as its own step.
  */
 export function amendOrCommit(id: Id, snap: Partial<Obj>) {
+  if (!canWriteObject(get(id))) return
   const cur = unwrap(state.objs[id]) as unknown as Record<string, unknown>
   const patch: Record<string, unknown> = {}
   for (const k of Object.keys(snap)) patch[k] = structuredClone(cur[k])
@@ -131,7 +169,7 @@ export function amendOrCommit(id: Id, snap: Partial<Obj>) {
  * brings back the in-progress value. Never an undo step of its own.
  */
 export function amendOrSilent(id: Id, patch: Partial<Obj>) {
-  if (readOnly) return
+  if (!canWriteObject(get(id))) return
   applyPatchToStore(id, patch)
   const p = structuredClone(unwrap(patch)) as Record<string, unknown>
   undoStack.amendTop(id, p)
@@ -151,13 +189,23 @@ export function discardNew(id: Id) {
 
 /** Store only. Commit the final value with `commitFrom` when the gesture ends. */
 export function transient(id: Id, patch: Partial<Obj>) {
+  if (!canWriteObject(state.objs[id])) return
   applyPatchToStore(id, patch)
+  for (const listener of transientListeners) listener(id, patch)
+}
+
+/** Durable editing checkpoint; the eventual edit commit still owns its undo step. */
+export function checkpoint(id: Id, patch: Partial<Obj>) {
+  if (!canWriteObject(get(id))) return
+  record(id, patch)
+  for (const listener of outboxListeners) listener()
 }
 
 /** Commit the difference between `snapshot` (values before the gesture) and the current store. */
 export function commitFrom(snapshot: Record<Id, Partial<Obj>>) {
   const tx: Change[] = []
   for (const [id, before] of Object.entries(snapshot)) {
+    if (!canWriteObject(state.objs[id])) continue
     const cur = state.objs[id] as unknown as Record<string, unknown>
     const b: Record<string, unknown> = {}
     const a: Record<string, unknown> = {}
@@ -189,30 +237,50 @@ export function snapshot(id: Id, keys: string[]): Partial<Obj> {
 
 export function undo() {
   const tx = undoStack.undo()
-  if (tx) applyTx(tx)
+  if (tx && (!writeGuard || tx.every((change) => state.objs[change.id] && writeGuard!(state.objs[change.id])))) applyTx(tx)
   setUndoTick((n) => n + 1)
 }
 
 export function redo() {
   const tx = undoStack.redo()
-  if (tx) applyTx(tx)
+  if (tx && (!writeGuard || tx.every((change) => state.objs[change.id] && writeGuard!(state.objs[change.id])))) applyTx(tx)
   setUndoTick((n) => n + 1)
 }
 
 function scheduleFlush() {
-  flushTimer ??= setTimeout(flush, 150)
+  flushTimer ??= setTimeout(() => void flush().catch(() => {}), 150)
 }
 
 export async function flush() {
   if (flushTimer) clearTimeout(flushTimer)
   flushTimer = null
   if (!persist) return
-  const objIds = [...dirtyObjs]
-  const outIds = [...dirtyOutbox]
-  dirtyObjs.clear()
-  dirtyOutbox.clear()
-  await idb.putMany('objects', objIds.map((id) => [id, structuredClone(unwrap(state.objs[id]))]))
-  await idb.putMany('outbox', outIds.map((id) => [id, outbox.get(id)]))
+  if (flushing) {
+    await flushing
+    if (dirtyObjs.size || dirtyOutbox.size) return flush()
+    return
+  }
+  flushing = (async () => {
+    while (dirtyObjs.size || dirtyOutbox.size) {
+      const objIds = [...dirtyObjs]
+      const outIds = [...dirtyOutbox]
+      const objects: [string, unknown][] = objIds.map((id) => [id, structuredClone(unwrap(state.objs[id]))])
+      const patches: [string, unknown][] = outIds.map((id) => [id, structuredClone(outbox.get(id))])
+      dirtyObjs.clear()
+      dirtyOutbox.clear()
+      try {
+        await idb.putDocument(objects, patches)
+        setLocalSaveError(null)
+        setLastLocalSave(Date.now())
+      } catch (error) {
+        objIds.forEach((id) => dirtyObjs.add(id))
+        outIds.forEach((id) => dirtyOutbox.add(id))
+        setLocalSaveError('Changes could not be saved on this device. Keep this window open and retry.')
+        throw error
+      }
+    }
+  })().finally(() => { flushing = null })
+  return flushing
 }
 
 // ---- sync hooks -----------------------------------------------------------
@@ -313,7 +381,7 @@ export async function load(opts: { persist: boolean; readOnly: boolean }) {
   const map: Record<Id, Obj> = {}
   for (const [id, o] of all) map[id] = o
   setState('objs', map)
-  for (const [id, p] of out) outbox.set(id, p)
+  for (const [id, p] of out) { outbox.set(id, p); if (p.kind === 'board') localBoardCreations.add(id) }
 }
 
 /** Replace the whole document (share viewer). */
@@ -321,6 +389,21 @@ export function loadSnapshot(rows: Obj[]) {
   const map: Record<Id, Obj> = {}
   for (const r of rows) map[r.id] = r
   setState('objs', map)
+}
+
+/** Reconcile a new permission snapshot without discarding authorized offline creations. */
+export function reconcileSnapshot(rows: Obj[], keepLocal: (object: Obj) => boolean) {
+  const visible = new Set(rows.map((row) => row.id))
+  batch(() => {
+    for (const object of Object.values(state.objs)) {
+      if (visible.has(object.id) || (outbox.has(object.id) && keepLocal(object))) continue
+      deferred.delete(object.id)
+      setState('objs', object.id, undefined as never)
+      dirtyObjs.add(object.id)
+    }
+    receiveRemote(rows)
+  })
+  scheduleFlush()
 }
 
 export function ensureHome(title: string) {
@@ -342,6 +425,7 @@ export const outboxSize = () => outbox.size
 
 export async function resetLocal() {
   outbox.clear()
+  localBoardCreations.clear()
   setState('objs', {})
   await idb.clearAll()
 }

@@ -7,11 +7,13 @@ import type { BoardIcon } from '@doggynote/core'
 const BOARD_ICON_PATHS: Record<BoardIcon, () => JSX.Element> = {
   paw: () => (
     <>
-      <ellipse cx="12" cy="15.5" rx="4.2" ry="3.6" fill="currentColor" stroke="none" />
-      <circle cx="6.5" cy="10" r="1.9" fill="currentColor" stroke="none" />
-      <circle cx="9.7" cy="6.6" r="1.9" fill="currentColor" stroke="none" />
-      <circle cx="14.3" cy="6.6" r="1.9" fill="currentColor" stroke="none" />
-      <circle cx="17.5" cy="10" r="1.9" fill="currentColor" stroke="none" />
+      <g fill="currentColor" stroke="none">
+        <path d="M12 11.2c-2.1 0-3.1 2.8-4.6 4.4-1.3 1.4-1.1 3.5.5 4.1 1.5.6 2.7-.5 4.1-.5s2.7 1.1 4.1.5c1.6-.6 1.8-2.7.5-4.1-1.5-1.6-2.5-4.4-4.6-4.4Z" />
+        <ellipse cx="5.6" cy="10.2" rx="1.85" ry="2.5" transform="rotate(-30 5.6 10.2)" />
+        <ellipse cx="9.6" cy="6.7" rx="1.85" ry="2.5" transform="rotate(-10 9.6 6.7)" />
+        <ellipse cx="14.4" cy="6.7" rx="1.85" ry="2.5" transform="rotate(10 14.4 6.7)" />
+        <ellipse cx="18.4" cy="10.2" rx="1.85" ry="2.5" transform="rotate(30 18.4 10.2)" />
+      </g>
     </>
   ),
   bone: () => <path d="M7 9.5a2.5 2.5 0 1 1 2.5-3.2L14.6 11a2.5 2.5 0 1 1 3.2 2.5 2.5 2.5 0 1 1-2.5 3.2L10.2 12a2.5 2.5 0 1 1-3.2-2.5z" />,
@@ -70,13 +72,19 @@ export function BoardIconSvg(props: { icon: BoardIcon; size?: number }) {
   return <Icon size={props.size}>{(BOARD_ICON_PATHS[props.icon] ?? BOARD_ICON_PATHS.paw)()}</Icon>
 }
 
+/** Friendly line drawing shared by loading and missing-board states. */
+export function DogMark(props: { size?: number; wag?: boolean }) {
+  return <svg viewBox="0 0 88 64" width={props.size ?? 88} height={(props.size ?? 88) * 64 / 88} fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path class={props.wag ? 'tail' : undefined} d="M22 32C11 29 9 18 14 13c1 9 7 9 10 12" />
+    <path d="M26 48V37c0-5 5-9 12-9h17l3-13c1-4 5-6 9-4l6 7 8 3v8c0 4-3 6-7 6h-7l-3 14v6h-8V43H37v12h-9v-7Z" />
+    <path d="M60 13c-5 1-7 8-4 14 2 3 6 2 7-1l3-12M70 27h9M35 43l-2-6" />
+    <circle cx="72" cy="20" r="1.6" fill="currentColor" stroke="none" />
+    <path d="m78 21 3 1v3h-3Z" fill="currentColor" stroke="none" />
+  </svg>
+}
+
 export const ToolIcons: Record<string, () => JSX.Element> = {
-  inbox: () => (
-    <>
-      <path d="M4 13h4.5l1.5 2.5h4l1.5-2.5H20" />
-      <path d="M5.5 6.5 4 13v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5l-1.5-6.5a1 1 0 0 0-1-.8h-11a1 1 0 0 0-1 .8z" />
-    </>
-  ),
+  inbox: () => <><path d="m4 4-2 9v7h20v-7l-2-9Z" /><path d="M2 13h6l2 3h4l2-3h6" /></>,
   grid: () => (
     <>
       <circle cx="6" cy="6" r="1.4" fill="currentColor" stroke="none" />
@@ -161,8 +169,8 @@ export const ToolIcons: Record<string, () => JSX.Element> = {
   external: () => <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />,
   user: () => (
     <>
-      <circle cx="12" cy="8.5" r="3.5" />
-      <path d="M5 20c1.2-3.6 3.8-5.5 7-5.5s5.8 1.9 7 5.5" />
+      <path d="M7 6 4 5 2.5 11c-.5 3 3 4 4.5 1M17 6l3-1 1.5 6c.5 3-3 4-4.5 1M7 6c3-2 7-2 10 0l1 8c.5 4-3 6-6 6s-6.5-2-6-6Z" />
+      <path d="m10.5 13 1.5 1.5 1.5-1.5ZM12 15v2M8.5 10h.1M15.5 10h.1" />
     </>
   ),
 }

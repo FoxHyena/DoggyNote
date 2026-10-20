@@ -1,4 +1,5 @@
-import { expect, type Locator, type Page } from '@playwright/test'
+import { API_PORT } from './ports.ts'
+import { expect, type APIRequestContext, type Locator, type Page } from '@playwright/test'
 
 export const MOD = 'ControlOrMeta'
 
@@ -55,13 +56,55 @@ export async function clickEmpty(page: Page, fx = 0.95, fy = 0.95) {
 
 /** Fresh board so tests don't see each other's cards (they share a server once sync lands). */
 export async function freshBoard(page: Page, name = `Test ${Math.random().toString(36).slice(2, 7)}`) {
-  // Start from the Doghouse explicitly: '/' reopens the last board you were on.
-  await page.goto('/#/b/home')
+  const firstNavigation = page.url() === 'about:blank'
+  if (!firstNavigation) await expect(page.getByTestId('canvas')).toBeVisible()
+  // Seed a unique board directly: a shared root with hundreds of test tiles
+  // otherwise fits below the DOM-detail threshold during the full suite.
+  const id = crypto.randomUUID()
+  const desktopToken = await page.evaluate(() => sessionStorage.getItem('fake-keychain')).catch(() => null)
+  const response = await postSync(page.request, { ...(desktopToken ? { headers: { authorization: `Bearer ${desktopToken}`, 'x-doggynote-protocol': '2' } } : {}), data: { changes: [{ id, patch: { id, kind: 'board', parentId: 'home', title: name, icon: 'paw', color: 'gold', createdAt: Date.now() } }] } }, desktopToken ? `http://localhost:${API_PORT}/api/sync` : '/api/sync')
+  expect(response.ok(), await response.text()).toBe(true)
+  await page.goto(`/#/b/${id}`)
+  // Hash-only navigation reuses the app; reload establishes the seeded snapshot.
+  if (!firstNavigation) await page.reload()
   await expect(page.getByTestId('canvas')).toBeVisible()
-  await page.getByTestId('tool-board').click()
-  await page.keyboard.type(name)
-  await page.keyboard.press('Enter')
-  await cardByText(page, name).locator('.board-tile').click()
   await expect(page.getByTestId('board-name')).toHaveText(name)
+
   return name
+}
+
+/** Await the queue and network state, independently of quiet presentation. */
+export async function waitForSync(page: Page) {
+  await expect.poll(async () => page.getByTestId('sync-status').evaluate((el) => `${el.getAttribute('data-sync-state')}:${el.getAttribute('data-pending')}:${el.getAttribute('data-uploads')}`), { timeout: 15000 }).toBe('idle:0:0')
+}
+
+/** Access changes racing a fixture write are retried against fresh authorization. */
+export async function postSync(api: APIRequestContext, options: Parameters<APIRequestContext['post']>[1], url = '/api/sync') {
+  let response = await api.post(url, options)
+  for (let attempt = 0; response.status() === 409 && attempt < 10; attempt++) response = await api.post(url, options)
+  return response
+}
+
+/** Complete authorized snapshot; a workspace may exceed one sync page. */
+export async function pullAllObjects(api: APIRequestContext) {
+  const objects = []
+  let cursor = 0
+  for (;;) {
+    const response = await api.get(`/api/sync?since=${cursor}`)
+    expect(response.ok(), await response.text()).toBe(true)
+    const body = await response.json()
+    objects.push(...body.objects)
+    if (!body.more) return { objects }
+    cursor = body.cursor
+  }
+}
+
+/** Parent navigation is condensed into a menu when the title needs room. */
+export async function openParentBoard(page: Page, which: 'first' | 'last' = 'last') {
+  const condensed = page.getByTestId('parent-boards')
+  if (await condensed.isVisible()) {
+    await condensed.click()
+    const choices = page.getByLabel('Parent boards', { exact: true }).locator('button.menu-item')
+    await choices[which]().click()
+  } else await page.getByTestId('crumb')[which]().click()
 }

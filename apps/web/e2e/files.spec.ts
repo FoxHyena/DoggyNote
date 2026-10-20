@@ -1,3 +1,5 @@
+import { pullAllObjects } from './helpers.ts'
+import { waitForSync } from './helpers.ts'
 import { readFile, truncate, writeFile } from 'node:fs/promises'
 import { expect, test, type Page } from '@playwright/test'
 import { at, cardByText, freshBoard } from './helpers.ts'
@@ -40,8 +42,8 @@ async function upload(page: Page, name: string, mimeType: string, buffer: Buffer
 }
 
 async function serverCard(page: Page, name: string) {
-  await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
-  const { objects } = await (await page.request.get('/api/sync?since=0')).json()
+  await waitForSync(page)
+  const { objects } = await pullAllObjects(page.request)
   return objects.find((o: { content?: { name?: string } }) => o.content?.name === name) as { content: { assetId: string; thumb?: unknown } }
 }
 

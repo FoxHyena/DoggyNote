@@ -1,5 +1,19 @@
-import { expect, test, type Browser, type Page } from '@playwright/test'
+import { openParentBoard } from './helpers.ts'
+import { pullAllObjects } from './helpers.ts'
+import { postSync } from './helpers.ts'
+import { waitForSync } from './helpers.ts'
+import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test'
 import { addNote, at, cardByText, dragBy, freshBoard } from './helpers.ts'
+
+// Extra devices are outside Playwright's context fixture; close them after
+// every test so old pages cannot keep polling in later tests.
+const viewerContexts = new Set<BrowserContext>()
+test.afterEach(async () => {
+  const contexts = [...viewerContexts]
+  viewerContexts.clear()
+  await Promise.all(contexts.map((context) => context.close()))
+})
+
 
 async function createShare(page: Page, includeChildren = true): Promise<string> {
   await page.getByTestId('share').click()
@@ -14,6 +28,7 @@ async function createShare(page: Page, includeChildren = true): Promise<string> 
 /** A stranger: no cookies, no storage. */
 async function stranger(browser: Browser, url: string): Promise<Page> {
   const ctx = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+  viewerContexts.add(ctx)
   const p = await ctx.newPage()
   await p.goto(url)
   return p
@@ -25,15 +40,22 @@ test('a share link opens logged-out, read-only, with inner boards reachable', as
   await page.getByTestId('tool-board').click()
   await page.keyboard.type('Inner sanctum')
   await page.keyboard.press('Enter')
-  await cardByText(page, 'Inner sanctum').locator('.board-tile').click()
+  await cardByText(page, 'Inner sanctum').locator('.board-tile').dblclick()
   await addNote(page, 'secret-ish treat')
-  await page.getByTestId('crumb').last().click()
+  await openParentBoard(page, 'last')
   const url = await createShare(page, true)
 
   const v = await stranger(browser, url)
   await expect(v.getByTestId('viewer')).toBeVisible()
   await expect(v.getByTestId('board-name')).toHaveText(title)
   await expect(cardByText(v, 'public bone')).toBeVisible()
+  await expect(v.getByTestId('canvas-controls')).toBeVisible()
+  await expect(v.getByTestId('snap-toggle')).toHaveCount(0)
+  await expect(v.getByTestId('account')).toHaveCount(0)
+  await v.getByTestId('viewer-more').click()
+  await v.getByRole('radio', { name: 'Light', exact: true }).click()
+  await expect(v.locator('html')).toHaveAttribute('data-theme', 'light')
+  await v.keyboard.press('Escape')
   // No editing affordances.
   await expect(v.locator('.toolbar')).toHaveCount(0)
   await expect(v.getByTestId('undo')).toHaveCount(0)
@@ -51,7 +73,7 @@ test('a share link opens logged-out, read-only, with inner boards reachable', as
   // Breadcrumbs stop at the shared root (no peeking at the Doghouse).
   await expect(v.getByTestId('crumb')).toHaveText([title])
   // The viewer can't write through the API either.
-  expect((await v.request.post('/api/sync', { data: { changes: [] } })).status()).toBe(401)
+  expect((await postSync(v.request, { data: { changes: [] } })).status()).toBe(401)
   // Panning still works for viewers.
   const before = await v.getByTestId('world').evaluate((e) => (e as HTMLElement).style.transform)
   const q = await at(v, 0.5, 0.5)
@@ -70,7 +92,10 @@ test('a "this board only" link does not open inner boards', async ({ page, brows
   await page.keyboard.press('Escape')
   const url = await createShare(page, false)
   const v = await stranger(browser, url)
-  await cardByText(v, 'Private den').locator('.board-tile').click()
+  // A board-only public link conceals child titles behind a generic tile.
+  await expect(v.locator('.card-board')).toContainText('Board')
+  await expect(v.locator('.card-board')).not.toContainText('Private den')
+  await v.locator('.card-board .board-tile').click()
   await expect(v.getByText("This board isn't part of the link.")).toBeVisible()
 })
 
@@ -98,7 +123,7 @@ test('later edits show up for viewers on reload; trashed cards do not', async ({
   await page.keyboard.press('Delete')
   await expect(cardByText(page, 'will be buried')).toHaveCount(0)
   await addNote(page, 'fresh news', 0.7, 0.7)
-  await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
+  await waitForSync(page)
   const v = await stranger(browser, url)
   await expect(cardByText(v, 'fresh news')).toBeVisible()
   await expect(cardByText(v, 'will be buried')).toHaveCount(0)
@@ -119,9 +144,9 @@ test.describe('image access', () => {
     })
     await page.getByTestId('image-input').setInputFiles({ name: 'x.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') })
     await expect(page.getByTestId('card-image')).toHaveCount(1)
-    await expect(page.getByTestId('sync-status')).toHaveText('Synced', { timeout: 10_000 })
+    await waitForSync(page)
     const board = decodeURIComponent(page.url().split('#/b/')[1])
-    const { objects } = (await (await page.request.get('/api/sync?since=0')).json()) as { objects: { boardId?: string; type?: string; content?: { assetId?: string } }[] }
+    const { objects } = (await pullAllObjects(page.request)) as { objects: { boardId?: string; type?: string; content?: { assetId?: string } }[] }
     return objects.find((o) => o.boardId === board && o.type === 'image')!.content!.assetId!
   }
 
@@ -137,6 +162,7 @@ test.describe('image access', () => {
     const hidden = await addImage(page)
 
     const anon = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+    viewerContexts.add(anon)
     const get = (path: string) => anon.request.get(path)
     expect((await get(`/api/assets/${shown}/thumb`)).status(), 'no credential').toBe(401)
     const ok = await get(`/api/assets/${shown}/thumb?share=${token}`)

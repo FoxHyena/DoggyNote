@@ -9,7 +9,9 @@ playwright-report
 .DS_Store
 **/e2e/.auth
 dist-desktop
+dist-native-*
 apps/desktop/release
+/tmp/
 
 # Real Milanote exports for building the importer (private, never committed)
 import-samples/

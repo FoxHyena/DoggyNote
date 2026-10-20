@@ -3,12 +3,14 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./agent": "./src/agent.ts"
   },
   "scripts": {
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "zod": "^4.6.7",
     "@doggynote/theme": "workspace:*",
     "markdown-it": "^14.3.2"
   },

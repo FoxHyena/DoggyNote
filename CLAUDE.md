@@ -42,8 +42,9 @@ server, so each test works on its own `freshBoard()`.
 
 Every merge to `main` runs `.github/workflows/release.yml`:
 1. The full CI runs again.
-2. The Worker and web app deploy, with migrations applied first.
-3. The Mac app is built, signed with the self-signed "DoggyNote Signing" cert, and uploaded to R2 as an updater bundle, a DMG and `latest.json` (written last).
+2. The Mac app is built and signed with the self-signed "DoggyNote Signing" cert. Its updater bundle, DMG and versioned `desktop/<version>/latest.json` are staged in R2; the public fallback manifest stays unchanged.
+3. The Worker and web app deploy, with migrations applied first. The Worker selects the staged manifest matching `APP_VERSION`, making the compatible updater available when its minimum-client gate takes effect.
+4. After deployment, the fallback `desktop/latest.json` and GitHub release are published. A failed desktop build cannot strand old clients; a new desktop is not advertised by the old Worker.
 
 The version is `0.<minor in version.json>.<run number>`; bump `minor` by hand for big releases. Installed apps update themselves via `tauri-plugin-updater`, and browsers get a reload toast.
 
@@ -73,6 +74,6 @@ The version is `0.<minor in version.json>.<run number>`; bump `minor` by hand fo
 7. **Sync is per field.** Only acknowledge fields that didn't change while a push was in flight (`ackOutbox`). Re-sending a stale field overwrites someone else's newer edit.
 8. **Images need a credential.** That's a session, a `?t=` asset token (desktop app) or `?share=` (viewer only, for images on shared boards). Always build image URLs with `assetUrl()` in `state/api.ts`.
 9. **Notes are markdown** (`content.md`). `packages/core/src/markdown.ts` parses it into the sanitized tree that `RichText` draws with `createElement` only. Never render note HTML with `innerHTML`. The editor is CodeMirror 6 with a live preview (`editor/codemirror.ts`), lazy-loaded.
-10. **Toy boxes are private, enforced by the server.** A `toybox:<userId>` board and everything on it carry `owner_id`. `sync.ts` sends everyone else `{ id, hidden: true }` stubs and 403s their writes. Shares refuse Toy boxes, and `assets.ts` 403s images only used there. Any new endpoint that returns objects or bytes must apply the same filter.
+10. **Inboxes are private, enforced by the server.** An Inbox keeps its internal `toybox:<userId>` board ID; it and everything on it carry `owner_id`. `sync.ts` sends everyone else `{ id, hidden: true }` stubs and 403s their writes. Shares refuse Inboxes, and `assets.ts` 403s images only used there. Any new endpoint that returns objects or bytes must apply the same filter.
 11. **Uploaded files are never served inline.** `GET /api/files/:id` always sends `content-disposition: attachment`, `nosniff` and a `sandbox` CSP, so an uploaded .html/.svg can't run on our origin. Access follows the image rules (rule 8). Build download links with `fileUrl()`.
 12. **A deleted comment is private to its author** (the server sets `owner_id`, so others get stubs) until it's restored. Emptying Buried bones wipes its text. Comment authorship is stamped by the server (`stampComment`).

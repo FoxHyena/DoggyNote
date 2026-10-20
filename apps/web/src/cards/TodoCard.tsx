@@ -4,6 +4,7 @@ import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { editIsNewCard, endEdit, onEndEdit } from '../state/ui.ts'
 import { takeEditCaret } from '../canvas/Canvas.tsx'
+import { BoardIconSvg } from '../ui/icons.tsx'
 import type { CardProps } from '../canvas/CardView.tsx'
 
 type Content = Card<'todo'>['content']
@@ -76,7 +77,7 @@ export function TodoCard(props: CardProps<'todo'>) {
         </Show>
         <Show when={cheer() === id}>
           <div class="cheer" data-testid="cheer" aria-live="polite">
-            <span class="cheer-paws" aria-hidden="true">🐾 🐾 🐾</span>
+            <span class="cheer-paws" aria-hidden="true"><BoardIconSvg icon="paw" size={16} /> <BoardIconSvg icon="paw" size={20} /> <BoardIconSvg icon="paw" size={16} /></span>
             {COPY.allDone}
           </div>
         </Show>

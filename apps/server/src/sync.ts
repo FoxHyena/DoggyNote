@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { AppEnv } from './env.ts'
+import { accessGuard, bumpAccess, loadAccess, newBoardAccess, type Access } from './access.ts'
 
 // Push: field patches, merged per top-level field (last write to arrive wins).
 // Pull: every object whose seq is above the client's cursor.
@@ -20,9 +21,12 @@ export function parseChanges(body: unknown): IncomingChange[] | string {
   if (!Array.isArray(changes)) return 'changes must be an array'
   if (changes.length > MAX_CHANGES) return `at most ${MAX_CHANGES} changes per push`
   const out: IncomingChange[] = []
+  const seen = new Set<string>()
   for (const ch of changes) {
     const { id, patch } = (ch ?? {}) as { id?: unknown; patch?: unknown }
     if (typeof id !== 'string' || !ID.test(id)) return 'bad id'
+    if (seen.has(id)) return 'duplicate object id'
+    seen.add(id)
     if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return `bad patch for ${id}`
     const keys = Object.keys(patch)
     if (!keys.length || keys.length > 40 || !keys.every((k) => KEY.test(k))) return `bad keys for ${id}`
@@ -68,7 +72,7 @@ export function ownerFor(id: string, boardId: string | null): string | null {
   return null
 }
 
-type Existing = { id: string; kind: string; board_id: string | null; owner_id: string | null; author_id: string | null; deleted_at: number | null; purged: number | null }
+type Existing = { data: string; id: string; kind: string; board_id: string | null; owner_id: string | null; author_id: string | null; deleted_at: number | null; purged: number | null }
 
 // ---- comments ------------------------------------------------------------------
 // The author of a comment is whoever is signed in when it's created: the server
@@ -80,7 +84,7 @@ type Existing = { id: string; kind: string; board_id: string | null; owner_id: s
 // Toy box, so their devices drop it), it waits in the author's Buried bones in
 // case it was a slip, and emptying those wipes the text for good.
 
-const OTHERS_MAY_SET = new Set(['resolvedAt', 'boardId'])
+const OTHERS_MAY_SET = new Set(['id', 'resolvedAt', 'boardId'])
 
 /** Stamps or protects comment authorship in place. Returns an error message to refuse the change. */
 export function stampComment(
@@ -134,42 +138,149 @@ sync.post('/sync', async (c) => {
     const chunk = ids.slice(i, i + 90)
     const { results } = await db
       .prepare(
-        `SELECT id, kind, board_id, owner_id, json_extract(data, '$.authorId') AS author_id, json_extract(data, '$.deletedAt') AS deleted_at, json_extract(data, '$.purged') AS purged FROM objects WHERE id IN (${chunk.map((_, j) => `?${j + 1}`).join(',')})`,
+        `SELECT data, id, kind, board_id, owner_id, json_extract(data, '$.authorId') AS author_id, json_extract(data, '$.deletedAt') AS deleted_at, json_extract(data, '$.purged') AS purged FROM objects WHERE id IN (${chunk.map((_, j) => `?${j + 1}`).join(',')})`,
       )
       .bind(...chunk)
       .all<Existing>()
     for (const r of results) existing.set(r.id, r)
   }
 
-  const stmts: D1PreparedStatement[] = []
+  const access = await loadAccess(db, me)
+  const deniedIds = await deniedChanges(db, access, me.id, parsed)
+  if (deniedIds.length) return c.json({ error: 'You no longer have permission to change these objects', deniedIds }, 403)
+  const stmts: D1PreparedStatement[] = [accessGuard(db, access.revision)]
+  const newIds = parsed.filter((ch) => !existing.has(ch.id)).map((ch) => ch.id)
+  for (let i = 0; i < newIds.length; i += 90) stmts.push(accessGuard(db, access.revision, newIds.slice(i, i + 90)))
   for (const { id, patch } of parsed) {
     const prev = existing.get(id)
     if (prev?.owner_id && prev.owner_id !== user) return c.json({ error: "That's private to someone else" }, 403)
     const kind = typeof patch.kind === 'string' ? patch.kind : (prev?.kind ?? 'card')
     const denied = stampComment(patch, prev, kind, me)
-    if (denied) return c.json({ error: denied }, 403)
+    if (denied) return c.json({ error: denied, deniedIds: [id] }, 403)
     const boardId = typeof patch.boardId === 'string' ? patch.boardId : null
     const toybox = ownerFor(id, boardId ?? prev?.board_id ?? null)
-    if (toybox && toybox !== user) return c.json({ error: "You can't put things in someone else's Toy box" }, 403)
+    if (toybox && toybox !== user) return c.json({ error: "You can't put things in someone else's Inbox" }, 403)
     const owner = toybox ?? deletedCommentOwner(kind, patch, prev, user)
     const { sql, args } = upsertSql(patch)
     stmts.push(db.prepare("UPDATE counters SET value = value + 1 WHERE name = 'seq'"))
     stmts.push(db.prepare(sql).bind(id, kind, boardId, JSON.stringify({ ...patch, id }), now, user, owner, ...args))
+    if (kind === 'board' && !prev && !id.startsWith('toybox:')) stmts.push(newBoardAccess(db, id, user))
+    if ((kind === 'board' && (!prev || 'parentId' in patch)) || (prev && boardId && boardId !== prev.board_id) || (kind === 'comment' && ('deletedAt' in patch || 'purged' in patch))) stmts.push(bumpAccess(db))
   }
-  await db.batch(stmts)
+  try { await db.batch(stmts) } catch (e) {
+    if (String(e).includes('Access changed')) return c.json({ error: 'Access changed; refresh and retry' }, 409)
+    throw e
+  }
   return c.json({ ok: true, count: parsed.length })
 })
 
 sync.get('/sync', async (c) => {
+  c.header('cache-control', 'no-store')
+  const a = await loadAccess(c.env.DB, c.get('user'))
+  const reset = c.req.query('accessRevision') !== a.revision
   const since = Math.max(0, Number(c.req.query('since') ?? 0) || 0)
-  const me = c.get('user').id
-  const { results } = await c.env.DB.prepare('SELECT id, data, seq, owner_id FROM objects WHERE seq > ?1 ORDER BY seq LIMIT ?2')
+  // The client restarts at zero after observing reset. Keeping the supplied
+  // cursor supports pagination while it collects the replacement snapshot.
+  const { results } = await c.env.DB.prepare('SELECT id, kind, board_id, data, seq, owner_id FROM objects WHERE seq > ?1 ORDER BY seq LIMIT ?2')
     .bind(since, PULL_LIMIT)
-    .all<{ id: string; data: string; seq: number; owner_id: string | null }>()
-  // Someone else's private object: only a stub, so devices that had a copy (it
-  // was just moved into a Toy box) delete it. The data never leaves the server.
-  const objects = results.map((r) => (r.owner_id && r.owner_id !== me ? { id: r.id, hidden: true } : JSON.parse(r.data)))
+    .all<{ id: string; kind: string; board_id: string | null; data: string; seq: number; owner_id: string | null }>()
+  const objects = results.flatMap((r) => {
+    const readable = (!r.owner_id || r.owner_id === c.get('user').id) && a.canRead(r.kind === 'board' ? r.id : r.board_id ?? '')
+    if (readable) return [JSON.parse(r.data)]
+    // Authorized snapshots contain only readable IDs; deltas retain the old
+    // privacy stub behavior to evict objects moved between boards.
+    return reset ? [] : [{ id: r.id, hidden: true }]
+  })
   const cursor = results.length ? results[results.length - 1].seq : since
   const epoch = (await c.env.DB.prepare("SELECT value FROM meta WHERE key = 'epoch'").first<{ value: string }>())?.value ?? ''
-  return c.json({ objects, cursor, more: results.length === PULL_LIMIT, epoch })
+  return c.json({ objects, cursor, more: results.length === PULL_LIMIT, epoch, accessRevision: a.revision, reset })
 })
+
+/** Shared by sync and agent proposals; checks the entire prospective batch. */
+export async function deniedChanges(db: D1Database, access: Access, userId: string, changes: IncomingChange[]): Promise<string[]> {
+  const old = new Map<string, { data: Record<string, unknown>; owner: string | null }>()
+  const load = async (ids: string[]) => {
+    const missing = [...new Set(ids)].filter((id) => !old.has(id))
+    for (let i = 0; i < missing.length; i += 90) {
+      const chunk = missing.slice(i, i + 90)
+      const { results } = await db.prepare(`SELECT id,data,owner_id FROM objects WHERE id IN (${chunk.map((_, j) => `?${j + 1}`).join(',')})`).bind(...chunk).all<{ id: string; data: string; owner_id: string | null }>()
+      for (const row of results) old.set(row.id, { data: JSON.parse(row.data) as Record<string, unknown>, owner: row.owner_id })
+    }
+  }
+  await load(changes.map((c) => c.id))
+  const references: string[] = []
+  for (const c of changes) {
+    const o = { ...old.get(c.id)?.data, ...c.patch }
+    for (const ref of [o.boardId, o.parentId, o.columnId, o.cardId, o.from, o.to, (o.content as { boardId?: string } | undefined)?.boardId]) if (typeof ref === 'string') references.push(ref)
+  }
+  await load(references)
+  const next = new Map<string, Record<string, unknown>>([...access.boards.values()].map((b) => [b.id, { id: b.id, kind: 'board', parentId: b.parentId }]))
+  for (const [id, r] of old) next.set(id, r.data)
+  for (const { id, patch } of changes) next.set(id, { ...next.get(id), ...patch, id })
+  const createdBoards = new Set(changes.filter((c) => !old.has(c.id) && c.patch.kind === 'board').map((c) => c.id))
+  const editable = (id: string) => createdBoards.has(id) || access.canEdit(id)
+  const readable = (id: string) => createdBoards.has(id) || access.canRead(id)
+  const denied: string[] = []
+  for (const { id, patch } of changes) {
+    const prev = old.get(id)
+    const o = next.get(id)!
+    let ok = !prev?.owner || prev.owner === userId
+    if (prev && o.kind !== prev.data.kind) ok = false
+    if (!prev && !KINDS.has(o.kind as string)) ok = false
+    if ('ownerId' in patch || 'owner_id' in patch || 'legacy' in patch) ok = false
+    if (id.startsWith('home:') && (!prev || ('parentId' in patch && (patch.parentId ?? null) !== (prev.data.parentId ?? null)) || patch.deletedAt || patch.purged)) ok = false
+    if (id.startsWith('toybox:') && (id !== `toybox:${userId}` || o.kind !== 'board' || o.parentId != null)) ok = false
+    if (o.kind === 'board') {
+      if (prev && !access.canEdit(id)) ok = false
+      if (prev && 'parentId' in patch && (patch.parentId ?? null) !== (prev.data.parentId ?? null) && !access.canManage(id)) ok = false
+      const parent = o.parentId ?? null
+      if ((!prev || ('parentId' in patch && (patch.parentId ?? null) !== (prev.data.parentId ?? null))) && parent !== null && (typeof parent !== 'string' || next.get(parent)?.kind !== 'board' || !editable(parent))) ok = false
+      const seen = new Set([id])
+      let p: unknown = parent
+      while (typeof p === 'string') {
+        if (seen.has(p)) { ok = false; break }
+        seen.add(p)
+        p = next.get(p)?.parentId
+      }
+    } else {
+      const board = o.boardId
+      if (typeof board !== 'string' || next.get(board)?.kind !== 'board' || !editable(board)) ok = false
+      if (prev && (typeof prev.data.boardId !== 'string' || !editable(prev.data.boardId))) ok = false
+      if (o.kind === 'card') {
+        if (!['note', 'todo', 'board', 'image', 'link', 'column', 'file'].includes(o.type as string)) ok = false
+        if (o.type === 'column' && o.columnId != null) ok = false
+        if (o.columnId) {
+          const col = next.get(o.columnId as string)
+          if (col?.kind !== 'card' || col.type !== 'column' || col.boardId !== board || col.id === id) ok = false
+        }
+        if (o.type === 'board') {
+          const target = (o.content as { boardId?: string } | undefined)?.boardId
+          if (!target || next.get(target)?.kind !== 'board' || !readable(target)) ok = false
+        }
+        if ((o.type === 'image' || o.type === 'file') && !o.purged) {
+          const assetId = (o.content as { assetId?: string } | undefined)?.assetId
+          // A card reference must not be usable to steal somebody else's asset.
+          if (assetId && (prev?.data.content as { assetId?: string } | undefined)?.assetId !== assetId) {
+            const uploader = await db.prepare('SELECT created_by FROM assets WHERE id=?1 ORDER BY created_at,size LIMIT 1').bind(assetId).first<{ created_by: string }>()
+            if (uploader && uploader.created_by !== userId) {
+              const { results: refs } = await db.prepare("SELECT board_id,owner_id FROM objects WHERE kind='card' AND json_extract(data,'$.content.assetId')=?1 AND COALESCE(json_extract(data,'$.purged'),0)=0").bind(assetId).all<{ board_id: string; owner_id: string | null }>()
+              if (!refs.some((r) => (!r.owner_id || r.owner_id === userId) && readable(r.board_id))) ok = false
+            }
+          }
+        }
+      }
+      if (o.kind === 'comment') {
+        const card = next.get(o.cardId as string)
+        if (card?.kind !== 'card' || card.boardId !== board || (!prev && (card.deletedAt || card.purged))) ok = false
+      }
+      if (o.kind === 'connection' && !o.purged && !o.deletedAt) {
+        for (const endpoint of [o.from, o.to]) {
+          const card = next.get(endpoint as string)
+          if (card?.kind !== 'card' || card.boardId !== board || card.deletedAt || card.purged) ok = false
+        }
+      }
+    }
+    if (!ok) denied.push(id)
+  }
+  return denied
+}

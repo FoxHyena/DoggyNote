@@ -69,6 +69,21 @@ export async function putMany(store: StoreName, entries: Iterable<[string, unkno
   return done(tx)
 }
 
+/** A document and the patches needed to reproduce it must survive together. */
+export async function putDocument(objects: [string, unknown][], outbox: [string, unknown][]): Promise<void> {
+  const db = await open()
+  const tx = db.transaction(['objects', 'outbox'], 'readwrite')
+  const completed = done(tx)
+  for (const [name, entries] of [['objects', objects], ['outbox', outbox]] as const) {
+    const store = tx.objectStore(name)
+    for (const [key, value] of entries) {
+      if (value === undefined) store.delete(key)
+      else store.put(value, key)
+    }
+  }
+  await completed
+}
+
 export const put = (store: StoreName, key: string, value: unknown) => putMany(store, [[key, value]])
 export const del = (store: StoreName, key: string) => putMany(store, [[key, undefined]])
 

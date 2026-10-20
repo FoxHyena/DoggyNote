@@ -1,141 +1,100 @@
-import { For, Show, createResource, createSignal } from 'solid-js'
-import { api, ApiError } from '../state/api.ts'
-import { logout, user, type User } from '../state/session.ts'
-import { lastError, pendingCount, syncNow, syncState } from '../state/sync.ts'
+import './navigation.css'
+import { Show, createEffect, createSignal, createUniqueId, onCleanup } from 'solid-js'
+import { logout, user } from '../state/session.ts'
 import { Icon, ToolIcons } from './icons.tsx'
+import { AdminDashboard } from './AdminDashboard.tsx'
+import { AgentConnections } from './AgentConnections.tsx'
+import { ThemeChoices, type ThemeChoicesProps } from './ThemeChoices.tsx'
 
-export function SyncStatus() {
-  const label = () => {
-    switch (syncState()) {
-      case 'syncing':
-        return 'Syncing…'
-      case 'offline':
-        return pendingCount() ? `Offline · ${pendingCount()} waiting` : 'Offline'
-      case 'error':
-        return 'Sync problem'
-      case 'signed-out':
-        return 'Signed out'
-      default:
-        return pendingCount() ? `${pendingCount()} waiting` : 'Synced'
-    }
-  }
-  return (
-    <button
-      class="sync-status"
-      data-testid="sync-status"
-      data-state={syncState()}
-      title={lastError() ?? 'Click to sync now'}
-      onClick={() => void syncNow()}
-    >
-      <span class="sync-dot" />
-      {label()}
-    </button>
-  )
-}
+export { SyncStatus } from './SyncStatus.tsx'
 
-export function AccountMenu() {
+export function AccountMenu(props: ThemeChoicesProps) {
   const [open, setOpen] = createSignal(false)
   const [people, setPeople] = createSignal(false)
+  const [agents, setAgents] = createSignal(false)
+  const menuId = createUniqueId()
+  let container!: HTMLDivElement
+  let trigger!: HTMLButtonElement
+  let menu: HTMLDivElement | undefined
+
+  const close = (restoreFocus = false) => {
+    setOpen(false)
+    if (restoreFocus) trigger.focus()
+  }
+  const showMenu = (last = false) => {
+    setOpen(true)
+    queueMicrotask(() => {
+      const controls = menu?.querySelectorAll<HTMLButtonElement>('button:not([tabindex="-1"])')
+      const target = last ? controls?.item((controls?.length ?? 1) - 1) : controls?.item(0)
+      target?.focus()
+    })
+  }
+  createEffect(() => {
+    if (!open()) return
+    const outside = (event: Event) => {
+      if (event.target instanceof Node && !container.contains(event.target)) close()
+    }
+    document.addEventListener('pointerdown', outside, true)
+    document.addEventListener('focusin', outside)
+    onCleanup(() => {
+      document.removeEventListener('pointerdown', outside, true)
+      document.removeEventListener('focusin', outside)
+    })
+  })
   return (
-    <div class="zoom">
-      <button class="icon-btn" data-testid="account" onClick={() => setOpen(!open())} title="Account">
+    <div class="zoom account-menu" ref={container} onKeyDown={(event) => {
+      // Account dialogs install their own keyboard containment on document/window.
+      if (!open() && event.target !== trigger) return
+      event.stopPropagation()
+      if (event.key === 'Escape' && open()) { event.preventDefault(); close(true) }
+    }}>
+      <button
+        ref={trigger}
+        type="button"
+        class="icon-btn account-trigger"
+        data-testid="account"
+        data-tooltip="Account"
+        aria-label="Account"
+        aria-haspopup="dialog"
+        aria-expanded={open()}
+        aria-controls={open() ? menuId : undefined}
+        onClick={() => open() ? close() : showMenu()}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault()
+            showMenu(event.key === 'ArrowUp')
+          }
+        }}
+      >
         <Icon>{ToolIcons.user()}</Icon>
-        <span class="icon-btn-label">{user()?.username}</span>
       </button>
       <Show when={open()}>
-        <div class="menu" onPointerLeave={() => setOpen(false)}>
+        <div ref={menu} id={menuId} class="menu nav-menu account-popover" role="dialog" aria-label="Account">
+          <div class="account-menu-identity">{user()?.username}</div>
+          <div class="account-menu-section-label">Appearance</div>
+          <ThemeChoices mode={props.mode} onThemeChange={props.onThemeChange} />
           <Show when={user()?.isAdmin}>
             <button
               class="menu-item"
               data-testid="manage-people"
               onClick={() => {
-                setOpen(false)
+                close()
                 setPeople(true)
               }}
             >
               Manage people
             </button>
           </Show>
-          <button class="menu-item" data-testid="sign-out" onClick={() => void logout()}>
+          <button class="menu-item" data-testid="manage-agents" onClick={() => { close(); setAgents(true) }}>Agent connections</button>
+          <button class="menu-item" data-testid="sign-out" onClick={() => { close(); void logout() }}>
             Sign out
           </button>
         </div>
       </Show>
+      <Show when={agents()}><AgentConnections onClose={() => { setAgents(false); trigger.focus() }} /></Show>
       <Show when={people()}>
-        <PeopleDialog onClose={() => setPeople(false)} />
+        <AdminDashboard onClose={() => { setPeople(false); trigger.focus() }} />
       </Show>
-    </div>
-  )
-}
-
-function PeopleDialog(props: { onClose: () => void }) {
-  const [list, { refetch }] = createResource(() => api<{ users: User[] }>('/api/users').then((r) => r.users))
-  const [username, setUsername] = createSignal('')
-  const [password, setPassword] = createSignal('')
-  const [isAdmin, setIsAdmin] = createSignal(false)
-  const [error, setError] = createSignal<string | null>(null)
-
-  async function add(e: SubmitEvent) {
-    e.preventDefault()
-    setError(null)
-    try {
-      await api('/api/users', { method: 'POST', json: { username: username().trim(), password: password(), isAdmin: isAdmin() } })
-      setUsername('')
-      setPassword('')
-      setIsAdmin(false)
-      void refetch()
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not add that person')
-    }
-  }
-
-  async function remove(u: User) {
-    await api(`/api/users/${u.id}`, { method: 'DELETE' })
-    void refetch()
-  }
-
-  return (
-    <div class="dialog-backdrop" onPointerDown={(e) => e.target === e.currentTarget && props.onClose()}>
-      <div class="dialog" role="dialog" aria-label="People" data-testid="people-dialog">
-        <header class="dialog-head">
-          <h2>People</h2>
-          <button class="icon-btn" title="Close" onClick={props.onClose}>
-            <Icon>{ToolIcons.close()}</Icon>
-          </button>
-        </header>
-        <ul class="people">
-          <For each={list() ?? []}>
-            {(u) => (
-              <li>
-                <span>
-                  {u.username}
-                  <Show when={u.isAdmin}>
-                    <span class="tag">admin</span>
-                  </Show>
-                </span>
-                <Show when={u.id !== user()?.id}>
-                  <button class="bar-btn" onClick={() => void remove(u)}>
-                    Remove
-                  </button>
-                </Show>
-              </li>
-            )}
-          </For>
-        </ul>
-        <form class="add-person" onSubmit={add}>
-          <input placeholder="username" data-testid="new-username" value={username()} onInput={(e) => setUsername(e.currentTarget.value)} required />
-          <input placeholder="password (8+)" type="password" data-testid="new-password" value={password()} onInput={(e) => setPassword(e.currentTarget.value)} required />
-          <label class="check">
-            <input type="checkbox" checked={isAdmin()} onChange={(e) => setIsAdmin(e.currentTarget.checked)} /> admin
-          </label>
-          <button class="primary-btn" type="submit" data-testid="add-person">
-            Add
-          </button>
-        </form>
-        <Show when={error()}>
-          <p class="form-error">{error()}</p>
-        </Show>
-      </div>
     </div>
   )
 }

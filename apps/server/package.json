@@ -12,6 +12,8 @@
     "deploy:all": "./scripts/deploy.sh"
   },
   "dependencies": {
+    "@doggynote/core": "workspace:*",
+    "zod": "^4.6.7",
     "hono": "^4.10.0"
   },
   "devDependencies": {

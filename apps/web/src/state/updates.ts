@@ -1,10 +1,8 @@
 import { createSignal } from 'solid-js'
 import { compareVersions } from '@doggynote/core'
 import { api } from './api.ts'
-import * as doc from './doc.ts'
 import { isTauri } from './platform.ts'
-import { syncNow } from './sync.ts'
-import { endEdit } from './ui.ts'
+import { saveBeforeLeaving } from './lifecycle.ts'
 
 // Keeping clients current.
 // - Desktop: the Tauri updater checks the server's latest.json on launch and
@@ -61,9 +59,7 @@ export function startUpdateChecks() {
 
 /** Save everything, then restart into the new version (desktop) or reload (browser). */
 export async function applyUpdate() {
-  endEdit()
-  await doc.flush()
-  await Promise.race([syncNow(), new Promise((r) => setTimeout(r, 3000))])
+  await saveBeforeLeaving()
   if (desktopUpdate) {
     await desktopUpdate.install()
     const { relaunch } = await import('@tauri-apps/plugin-process')

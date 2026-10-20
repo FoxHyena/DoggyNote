@@ -1,3 +1,4 @@
+import './canvas-entry.css'
 import { For, Show, createSignal, type JSX } from 'solid-js'
 import { DEFAULT_SIZE, findFreeSpot, screenToWorld, type CardType, type Vec } from '@doggynote/core'
 import { cardHeight } from '../canvas/layout.ts'
@@ -72,16 +73,20 @@ export function Toolbar() {
     el.addEventListener('pointerup', up)
   }
 
-  const trashCount = () => (trashOpen(), doc.index(), doc.trashedOn(boardId()).length + doc.trashedCommentsOn(boardId()).length)
-
   return (
-    <aside class="toolbar" aria-label="Tools">
+    <aside class="toolbar" aria-label="Tools" onKeyDown={(e) => { if (!e.metaKey && !e.ctrlKey && ['Enter', ' ', 'Delete', 'Backspace'].includes(e.key)) { e.stopPropagation(); if (e.key === 'Backspace') e.preventDefault() } }}>
       <For each={TOOLS}>
         {(t) => (
           <button
             class="tool"
             classList={{ active: t.id === 'line' && !!connectMode() }}
             data-testid={`tool-${t.id}`}
+            aria-label={t.label}
+            onClick={(e) => {
+              if (e.detail !== 0) return
+              if (t.id === 'line') setConnectMode(connectMode() ? null : { from: null })
+              else createCard(t.id, centrePlacement(t.id))
+            }}
             title={t.id === 'line' ? 'Line: click two cards to connect them' : `${t.label}: click to add, or drag onto the board`}
             onPointerDown={(e) => onToolPointerDown(e, t)}
           >
@@ -130,9 +135,6 @@ export function Toolbar() {
       <button class="tool" classList={{ active: trashOpen() }} data-testid="tool-trash" title={COPY.trash} onClick={() => setTrashOpen(!trashOpen())}>
         <Icon size={22}>{ToolIcons.trash()}</Icon>
         <span>{COPY.trash}</span>
-        <Show when={trashCount() > 0}>
-          <span class="badge">{trashCount()}</span>
-        </Show>
       </button>
       <Show when={ghost()}>
         <div class="tool-ghost" style={{ left: `${ghost()!.at.x}px`, top: `${ghost()!.at.y}px` }}>

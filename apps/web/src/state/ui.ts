@@ -24,9 +24,28 @@ export const clearSelection = () => setSelection(new Set<Id>())
 let editSnapshot: Record<Id, Partial<Obj>> | null = null
 let editIsNew = false
 const endEditHooks = new Set<(id: Id) => void>()
+let checkpointTimer: ReturnType<typeof setInterval> | null = null
+let checkpointSnapshot: Record<Id, Partial<Obj>> = {}
+
+export function checkpointEdit() {
+  if (!editSnapshot) return
+  for (const [id, initial] of Object.entries(editSnapshot)) {
+    const current = doc.snapshot(id, Object.keys(initial))
+    if (JSON.stringify(current) === JSON.stringify(checkpointSnapshot[id])) continue
+    checkpointSnapshot[id] = current
+    doc.checkpoint(id, current)
+  }
+}
+
+// Queue text with the same local transaction as incidental height changes.
+// Waiting for the periodic checkpoint could otherwise persist new text with
+// only a height patch, letting the next server pull restore the old text.
+doc.onTransient((id, patch) => {
+  if (editSnapshot?.[id] && Object.keys(patch).some((key) => key in editSnapshot![id])) checkpointEdit()
+})
 
 export function beginEdit(id: Id, opts: { isNew?: boolean } = {}) {
-  if (doc.isReadOnly()) return
+  if (!doc.canWriteObject(doc.get(id))) return
   if (editingId() === id) return
   endEdit()
   editSnapshot = { [id]: doc.snapshot(id, ['content']) }
@@ -35,10 +54,13 @@ export function beginEdit(id: Id, opts: { isNew?: boolean } = {}) {
   const card = doc.getCard(id)
   if (card?.type === 'board') {
     const bid = (card.content as { boardId: Id }).boardId
+    if (!doc.canWriteObject(doc.getBoard(bid))) { editSnapshot = null; doc.unmarkBusy([id]); return }
     editSnapshot[bid] = doc.snapshot(bid, ['title'])
     doc.markBusy([bid])
   }
   editIsNew = !!opts.isNew
+  checkpointSnapshot = structuredClone(editSnapshot)
+  checkpointTimer = setInterval(checkpointEdit, 500)
   setEditingId(id)
   select([id])
 }
@@ -52,6 +74,9 @@ export function onEndEdit(fn: (id: Id) => void) {
 export function endEdit() {
   const id = editingId()
   if (!id) return
+  if (checkpointTimer) clearInterval(checkpointTimer)
+  checkpointTimer = null
+  checkpointSnapshot = {}
   setEditingId(null)
   for (const h of endEditHooks) h(id)
   const card = doc.get(id)
@@ -67,6 +92,19 @@ export function endEdit() {
 }
 
 export const editIsNewCard = () => editIsNew
+
+/** Permission was removed; the caller preserves unsynced text before cancelling. */
+export function cancelEdit() {
+  if (checkpointTimer) clearInterval(checkpointTimer)
+  checkpointTimer = null
+  const ids = Object.keys(editSnapshot ?? {})
+  setEditingId(null)
+  editSnapshot = null
+  checkpointSnapshot = {}
+  editIsNew = false
+  doc.unmarkBusy(ids)
+  clearSelection()
+}
 
 // ---- routing ---------------------------------------------------------------
 // App: #/b/<boardId>. Share viewer: /s/<token>#/b/<boardId>.
@@ -99,6 +137,7 @@ function rememberBoard(id: Id) {
 }
 
 export const [boardId, setBoardIdSignal] = createSignal<Id>(boardFromHash())
+if (location.hash.match(/^#\/b\//)) rememberBoard(boardId())
 
 export function openBoard(id: Id) {
   endEdit()
