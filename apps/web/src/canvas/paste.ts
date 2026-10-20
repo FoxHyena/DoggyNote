@@ -67,11 +67,12 @@ export function addAnyFiles(files: File[], at: Vec, onBoard?: Id): boolean {
 export function handleCanvasPaste(e: ClipboardEvent, at: Vec, columnId?: Id): boolean {
   const dt = e.clipboardData
   if (!dt) return false
-  // ⌘⇧V: just the words, as a note (no copied cards, no link preview).
-  if (takePlainPaste()) {
-    const text = dt.getData('text/plain').trim()
-    if (text) createNoteWithText(text, { at })
-    return !!text
+  // ⌘⇧V: just the words, as a note (no copied cards, no link preview). An empty
+  // paste (some systems fire one for the keys themselves) leaves the flag for the real one.
+  const plain = dt.getData('text/plain').trim()
+  if (plain && takePlainPaste()) {
+    createNoteWithText(plain, { at })
+    return true
   }
   const clip = readClip(dt)
   if (clip) {

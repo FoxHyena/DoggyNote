@@ -145,6 +145,8 @@ test('⌘⇧V pastes words as a plain note, without a link preview', async ({ pa
   const p = await at(page, 0.5, 0.5)
   await page.mouse.move(p.x, p.y)
   await page.keyboard.press(`${MOD}+Shift+V`)
+  // Linux browsers fire their own (empty) paste for the keys first.
+  await paste('')
   await paste('https://example.com/dogs')
   await expect(page.locator('[data-type=note]', { hasText: 'https://example.com/dogs' })).toBeVisible()
   await expect(page.locator('[data-type=link]')).toHaveCount(0)
