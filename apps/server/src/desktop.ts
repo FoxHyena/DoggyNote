@@ -1,8 +1,9 @@
 import { Hono } from 'hono'
-import type { AppEnv } from './env.ts'
+import type { AppEnv, Env } from './env.ts'
 
 // Desktop releases live in R2 under "desktop/":
-//   desktop/latest.json                       Tauri updater manifest (written last by CI)
+//   desktop/latest.json                       fallback manifest (published after deployment)
+//   desktop/<version>/latest.json             staged manifest exposed by that Worker version
 //   desktop/<version>/DoggyNote.app.tar.gz    signed update bundle
 //   desktop/<version>/DoggyNote_<v>_<arch>.dmg first-install disk image
 // These are public: app binaries aren't secret, and the GitHub repo is private,
@@ -15,6 +16,16 @@ type Manifest = { version: string; platforms: Record<string, { url: string; sign
 
 export const desktop = new Hono<AppEnv>()
 
+/** Stage binaries first, then deploying APP_VERSION exposes their manifest.
+ * An old Worker continues advertising its compatible release during staging. */
+async function releaseManifest(env: Env): Promise<R2ObjectBody | null> {
+  if (env.APP_VERSION && VERSION.test(env.APP_VERSION)) {
+    const staged = await env.BUCKET.get(`desktop/${env.APP_VERSION}/latest.json`)
+    if (staged) return staged
+  }
+  return env.BUCKET.get('desktop/latest.json')
+}
+
 /** Which version the server (and the web app it serves) is on, and the oldest client it still supports. */
 desktop.get('/version', (c) => {
   c.header('cache-control', 'no-store')
@@ -22,18 +33,18 @@ desktop.get('/version', (c) => {
 })
 
 desktop.get('/desktop/latest.json', async (c) => {
-  const obj = await c.env.BUCKET.get('desktop/latest.json')
+  const obj = await releaseManifest(c.env)
   if (!obj) return c.json({ error: 'No desktop release yet' }, 404)
-  return new Response(obj.body, { headers: { 'content-type': 'application/json', 'cache-control': 'no-cache' } })
+  return new Response(obj.body, { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } })
 })
 
 /** A link you can hand to friends: always the newest disk image. */
 desktop.get('/desktop/download', async (c) => {
-  const obj = await c.env.BUCKET.get('desktop/latest.json')
+  const obj = await releaseManifest(c.env)
   if (!obj) return c.json({ error: 'No desktop release yet' }, 404)
   const m = (await obj.json()) as Manifest & { dmg?: string }
   if (!m.dmg || !VERSION.test(m.version) || !FILE.test(m.dmg)) return c.json({ error: 'Release has no disk image' }, 404)
-  c.header('cache-control', 'no-cache')
+  c.header('cache-control', 'no-store')
   return c.redirect(`/api/desktop/files/${m.version}/${m.dmg}`, 302)
 })
 

@@ -119,6 +119,33 @@ describe('desktop releases', () => {
     expect(file.status).toBe(200)
     expect(file.headers.get('content-disposition')).toContain('attachment')
   })
+  it('exposes a staged updater only with its matching Worker version', async () => {
+    const staged = { ...manifest, version: '0.2.100', dmg: 'DoggyNote_0.2.100_aarch64.dmg' }
+    const key = 'desktop/0.2.100/latest.json'
+    files[key] = JSON.stringify(staged)
+    files['desktop/0.2.100/DoggyNote_0.2.100_aarch64.dmg'] = 'NEW DMG'
+    try {
+      // Uploading the next release must not send new clients to an old API.
+      const oldWorker = await app.request('/api/desktop/latest.json', {}, env)
+      expect((await oldWorker.json() as { version: string }).version).toBe('0.1.42')
+      const deployed = { BUCKET, APP_VERSION: '0.2.100', MIN_CLIENT: '0.2.0' } as never
+      const updater = await app.request('/api/desktop/latest.json', {}, deployed)
+      expect((await updater.json() as { version: string }).version).toBe('0.2.100')
+      expect(updater.headers.get('cache-control')).toBe('no-store')
+      const download = await app.request('/api/desktop/download', {}, deployed)
+      expect(download.headers.get('location')).toBe('/api/desktop/files/0.2.100/DoggyNote_0.2.100_aarch64.dmg')
+      expect(download.headers.get('cache-control')).toBe('no-store')
+      expect(await (await app.request(download.headers.get('location')!, {}, deployed)).text()).toBe('NEW DMG')
+      // Older releases without staged manifests retain the existing fallback.
+      delete files[key]
+      const fallback = await app.request('/api/desktop/latest.json', {}, deployed)
+      expect((await fallback.json() as { version: string }).version).toBe('0.1.42')
+      expect(fallback.headers.get('cache-control')).toBe('no-store')
+    } finally {
+      delete files[key]
+      delete files['desktop/0.2.100/DoggyNote_0.2.100_aarch64.dmg']
+    }
+  })
   it('only serves release files, never other bucket keys', async () => {
     for (const p of ['/api/desktop/files/0.1.42/..%2F..%2Flatest.json', '/api/desktop/files/0.1.42/secret.png', '/api/desktop/files/x/DoggyNote.app.tar.gz']) {
       expect((await app.request(p, {}, env)).status).toBe(404)
