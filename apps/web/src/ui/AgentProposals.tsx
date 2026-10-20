@@ -49,17 +49,19 @@ export function AgentProposals(props: { boardId: string; renderTrigger?: (contro
 
 const VERB: Record<Badge, string> = { added: 'New', changed: 'Edited', moved: 'Moved', removed: 'Buried' }
 
-/** One line per change, in plain words: "New · note · Snack budget". */
+const TYPE_WORD: Record<string, string> = { note: 'Note', todo: 'To-do list', board: 'Board', image: 'Picture', link: 'Link', column: 'Column', file: 'File', movie: 'Movie' }
+
+/** One line per change, in plain words: "New · Note · Snack budget". */
 function describe(change: Detail['proposal']['changes'][number], titleOf: (id: string) => string): { badge: Badge | null; text: string } {
   const after = change.after as Obj
   const badge: Badge | null = after.deletedAt || after.purged ? 'removed' : !change.before ? 'added' : 'changed'
   if (after.kind === 'card') {
     const moved = change.before && ['x', 'y', 'columnId', 'order', 'boardId'].some((k) => JSON.stringify((change.before as Record<string, unknown>)[k]) !== JSON.stringify((after as unknown as Record<string, unknown>)[k]))
     const edited = change.before && JSON.stringify((change.before as { content?: unknown }).content) !== JSON.stringify((after as Card).content)
-    return { badge: badge === 'changed' && moved && !edited ? 'moved' : badge, text: `${after.type} · ${cardLabel(after as Card, titleOf)}` }
+    return { badge: badge === 'changed' && moved && !edited ? 'moved' : badge, text: `${TYPE_WORD[after.type] ?? 'Card'} · ${cardLabel(after as Card, titleOf)}` }
   }
-  if (after.kind === 'board') return { badge, text: `board · ${boardDisplayTitle(after, 'Untitled board')}` }
-  if (after.kind === 'connection') return { badge, text: 'connection' }
+  if (after.kind === 'board') return { badge, text: `Board · ${boardDisplayTitle(after, 'Untitled board')}` }
+  if (after.kind === 'connection') return { badge, text: 'Line between cards' }
   return { badge, text: after.kind }
 }
 
@@ -94,7 +96,7 @@ function ProposalPanel(props: { proposals: Summary[]; loading: boolean; failed: 
       <div class="agents-heading"><h2 id="agent-proposals-title">Agent proposals</h2><button class="icon-btn" title="Close" onClick={props.onClose}><Icon>{ToolIcons.close()}</Icon></button></div>
       <p>Agents can only suggest changes. Preview one on the board to see it exactly as it would look, then approve or reject it.</p>
       <Show when={props.failed}><p role="alert" class="form-error">Could not refresh the list. Showing what was last loaded.</p></Show>
-      <div class="agents-review-layout"><nav aria-label="Proposals" class="agents-proposal-list"><button class="icon-btn" onClick={() => void props.onRefresh()}>Refresh</button><Show when={props.proposals.length} fallback={<p>{props.loading ? 'Loading…' : 'No proposals for this board yet.'}</p>}><For each={props.proposals}>{(p) => <button class="agents-proposal-choice" classList={{ on: selected() === p.id }} onClick={() => { setSelected(p.id); setError(null) }}><strong>{p.label}</strong><small>{p.status} · {p.count} {p.count === 1 ? 'change' : 'changes'}</small></button>}</For></Show></nav>
+      <div class="agents-review-layout"><nav aria-label="Proposals" class="agents-proposal-list" classList={{ single: props.proposals.length === 1 }}><button class="link-btn agents-refresh" onClick={() => void props.onRefresh()}>Refresh list</button><Show when={props.proposals.length} fallback={<p>{props.loading ? 'Loading…' : 'No proposals for this board yet.'}</p>}><For each={props.proposals}>{(p) => <button class="agents-proposal-choice" classList={{ on: selected() === p.id }} onClick={() => { setSelected(p.id); setError(null) }}><strong>{p.label}</strong><small>{p.status} · {p.count} {p.count === 1 ? 'change' : 'changes'}</small></button>}</For></Show></nav>
         <div class="agents-proposal-detail"><Show when={selected()} fallback={<p class="agents-hint">Select a proposal to see what it changes.</p>}><Show when={detailValue()} fallback={<div><p>{detail.error ? 'This proposal could not be loaded. Check your connection and retry.' : 'Loading…'}</p><Show when={detail.error}><button class="icon-btn" onClick={() => void retryDetail()}>Retry</button></Show></div>}>{(d) => <>
           <h3>{d().proposal.label}</h3><p class="agents-hint">{d().proposal.changes.length} {d().proposal.changes.length === 1 ? 'change' : 'changes'} · {d().proposal.status}</p>
           <ul class="agents-change-list" data-testid="agent-change-list"><For each={d().proposal.changes}>{(c) => { const line = describe(c, titleOf(d().after as Obj[])); return <li><Show when={line.badge}><span class={`proposal-count proposal-count-${line.badge}`}>{VERB[line.badge!]}</span></Show><span>{line.text}</span></li> }}</For></ul>

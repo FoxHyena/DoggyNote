@@ -42,7 +42,12 @@ test('changes far apart: the phone frames one as a real card, and › steps to t
   const right = page.locator('[data-preview=added]', { hasText: 'Right kennel' })
   await expect(left).toBeInViewport()
   await expect(right).not.toBeInViewport()
+  await expect(page.getByTestId('proposal-step-phone')).toHaveText('1/2')
   await page.getByTestId('proposal-next-icon').tap()
   await expect(right).toBeInViewport()
   await expect(left).not.toBeInViewport()
+  await expect(page.getByTestId('proposal-step-phone')).toHaveText('2/2')
+  // The change it's on is marked, and readable (not shrunk to a thumbnail).
+  await expect(right).toHaveAttribute('data-preview-current', 'true')
+  expect((await right.boundingBox())!.width).toBeGreaterThan(200)
 })

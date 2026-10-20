@@ -56,8 +56,13 @@ test('a real stdio MCP client stages a board layout, a person previews/approves 
   // Current shows the board as it is; Proposed brings the proposal back.
   await page.getByTestId('proposal-show-before').click()
   await expect(note).toHaveCount(0)
+  await expect(page.locator('[data-preview]')).toHaveCount(0)
   await page.getByTestId('proposal-show-after').click()
   await expect(note).toBeVisible()
+  // Next change says where it is and marks the card it lands on.
+  await page.getByTestId('proposal-next').click()
+  await expect(page.getByTestId('proposal-step')).toHaveText(/^1 of \d+$/)
+  await expect(page.locator('[data-preview-current]')).toHaveCount(1)
   // Escape leaves the preview, and the live board is untouched.
   await page.keyboard.press('Escape')
   await expect(banner).toHaveCount(0)
@@ -70,7 +75,8 @@ test('a real stdio MCP client stages a board layout, a person previews/approves 
   await page.setViewportSize({ width: 600, height: 900 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await openProposals(page)
-  await page.getByTestId('agent-review').getByRole('button', { name: new RegExp(result.label) }).click()
+  // A lone proposal opens already selected (its list row is hidden on narrow screens).
+  await expect(page.getByTestId('agent-review').getByRole('heading', { name: result.label })).toBeVisible()
   await page.getByTestId('preview-on-board').click()
   const bounds = (await banner.boundingBox())!
   expect(bounds.x).toBeGreaterThanOrEqual(0)
@@ -82,7 +88,8 @@ test('a real stdio MCP client stages a board layout, a person previews/approves 
   await expect(cardByText(page, built)).toBeVisible()
   await expect(cardByText(page, built)).not.toHaveAttribute('data-preview', /.+/)
   await openProposals(page)
-  await page.getByTestId('agent-review').getByRole('button', { name: new RegExp(result.label) }).click()
+  // A lone proposal opens already selected (its list row is hidden on narrow screens).
+  await expect(page.getByTestId('agent-review').getByRole('heading', { name: result.label })).toBeVisible()
   await expect(page.getByTestId('reverse-agent-proposal')).toBeVisible()
   await page.getByTestId('reverse-agent-proposal').click()
   await expect(page.getByTestId('agent-review')).toContainText('reversed')

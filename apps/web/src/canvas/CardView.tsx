@@ -1,7 +1,7 @@
 import { ErrorBoundary, For, Match, Show, Switch, onCleanup, onMount, type JSX } from 'solid-js'
 import { SIDES, type Card } from '@doggynote/core'
 import { COPY, cardColor } from '@doggynote/theme'
-import { previewBadge, type Badge } from '../state/preview.ts'
+import { isPreviewCurrent, previewBadge, type Badge } from '../state/preview.ts'
 
 const PREVIEW_CHIP: Record<Badge, string> = { added: 'New', changed: 'Edited', moved: 'Moved', removed: 'Buried' }
 import { camera, editingId, isSelected, selection } from '../state/ui.ts'
@@ -79,6 +79,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
       data-testid="card"
       data-type={props.card.type}
       data-preview={previewBadge(props.card.id)}
+      data-preview-current={isPreviewCurrent(props.card.id) || undefined}
       style={style()}
     >
       <Show when={!props.lod && previewBadge(props.card.id)}>

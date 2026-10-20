@@ -22,7 +22,10 @@
 .agents-setup pre { overflow: auto; font-size: 12px; }
 .agents-review { width: min(1100px, calc(100vw - 32px)); }
 .agents-review-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 20px; }
-.agents-proposal-list { display: grid; align-content: start; gap: 8px; }
+.agents-proposal-list { display: grid; grid-auto-rows: max-content; align-content: start; gap: 8px; }
+.agents-refresh { justify-self: start; }
+/* Room for the home indicator under the last buttons (phones). */
+.agents-dialog { padding-bottom: calc(var(--agents-padding) + env(safe-area-inset-bottom)); }
 .agents-proposal-choice { display: grid; gap: 6px; width: 100%; text-align: left; overflow-wrap: anywhere; background: var(--dn-card); color: var(--dn-text); border: 1px solid var(--dn-border); border-radius: 8px; padding: 12px; cursor: pointer; }
 .agents-proposal-choice.on { border-color: var(--dn-accent); }
 .agents-proposal-detail { min-width: 0; }
@@ -45,7 +48,7 @@
 .agents-changes { margin: 16px 0; }
 .agents-changes pre { max-height: 200px; overflow: auto; white-space: pre-wrap; font-size: 11px; background: var(--dn-bg); padding: 12px; border-radius: 8px; }
 .agents-decisions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin: 16px 0 0; }
-@media (max-width: 700px) { .agents-review-layout { grid-template-columns: 1fr; } .agents-proposal-list { max-height: 140px; overflow: auto; } .agents-dialog { --agents-padding: 16px; } }
+@media (max-width: 700px) { .agents-review-layout { grid-template-columns: 1fr; } .agents-proposal-list { max-height: 200px; overflow: auto; } .agents-proposal-list.single .agents-proposal-choice { display: none; } .agents-dialog { --agents-padding: 16px; } }
 
 .agents-dialog :is(button, input:not([type=checkbox]), select, summary) { min-height: 36px; }
 .agents-dialog summary { padding-block: 8px; line-height: 20px; }
@@ -99,3 +102,12 @@
 .about-credit { display: flex; flex-direction: column; gap: 8px; }
 .about-credit img { display: block; height: 18px; width: auto; }
 .about-credit p { margin: 0; }
+
+/* While previewing, Review changes keeps its place (the top bar doesn't shift under the pointer). */
+.preview-hidden { visibility: hidden; }
+.proposal-banner:focus { outline: none; }
+.proposal-banner:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 2px; }
+.proposal-step { font-size: 12px; color: var(--dn-text-muted); white-space: nowrap; }
+.proposal-step-phone { display: none; }
+.app.phone .proposal-step-phone { display: inline; }
+.app.phone .proposal-step:not(.proposal-step-phone) { display: none; }

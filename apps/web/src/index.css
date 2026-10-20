@@ -478,7 +478,10 @@ html[data-input='mouse'] .connect-handle:hover {
 .card[data-preview='added'] { --preview-colour: var(--dn-diff-added); }
 .card[data-preview='changed'], .card[data-preview='moved'] { --preview-colour: var(--dn-diff-changed); }
 .card[data-preview='removed'] { --preview-colour: var(--dn-diff-removed); outline-style: dashed; }
-.card[data-preview='removed'] > :not(.preview-chip) { opacity: 0.45; }
+/* Faded enough to read as going, still legible. */
+.card[data-preview='removed'] > :not(.preview-chip) { opacity: 0.7; }
+/* The change Next change is on. */
+.card[data-preview-current] { outline-width: 3px; outline-offset: 5px; }
 .preview-chip {
   position: absolute;
   z-index: 3;
