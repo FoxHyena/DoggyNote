@@ -268,7 +268,6 @@ export function MovieCard(props: CardProps<'movie'>) {
                   <Show when={c().info}>
                     <button
                       class="movie-icon-btn"
-                      classList={{ on: !!c().details }}
                       aria-label="Details"
                       aria-expanded={!!c().details}
                       title={c().details ? 'Hide details' : 'Details: genres, summary, where to watch'}

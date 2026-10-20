@@ -479,7 +479,7 @@ html[data-input='mouse'] .connect-handle:hover {
 .card[data-preview='changed'], .card[data-preview='moved'] { --preview-colour: var(--dn-diff-changed); }
 .card[data-preview='removed'] { --preview-colour: var(--dn-diff-removed); outline-style: dashed; }
 /* Faded enough to read as going, still legible. */
-.card[data-preview='removed'] > :not(.preview-chip) { opacity: 0.7; }
+.card[data-preview='removed'] > :not(.preview-chip) { opacity: 0.78; }
 /* The change Next change is on. */
 .card[data-preview-current] { outline-width: 3px; outline-offset: 5px; }
 .preview-chip {
@@ -617,7 +617,6 @@ html[data-input='mouse'] .connect-handle:hover {
 
 .rich .task-check {
   margin: 0 6px 0 0;
-  vertical-align: -2px;
   accent-color: var(--dn-accent);
   cursor: pointer;
 }
@@ -702,7 +701,6 @@ html[data-input='mouse'] .connect-handle:hover {
 .note-editor .cm-md-bullet { display: inline-block; width: 1.1em; }
 .note-editor .cm-md-task {
   margin: 0 6px 0 0;
-  vertical-align: -2px;
   accent-color: var(--dn-accent);
   cursor: pointer;
 }
@@ -819,6 +817,11 @@ html[data-input="mouse"] .fmt:hover {
 .note-editor .cm-md-task {
   width: 13px;
   height: 13px;
+  /* Centred on the line, not on a baseline: the tick inside a checked box is a grid
+     item, which moves the box's baseline and dropped ticked boxes ~3px. */
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
 }
 .todo-check:checked,
 .rich .task-check:checked,
@@ -1140,7 +1143,8 @@ html[data-input="mouse"] .link-title:hover {
 
 .column-meta {
   font-size: 11px;
-  opacity: 0.7;
+  /* Small text on a coloured header: faded only a little, so it stays readable. */
+  opacity: 0.85;
 }
 
 .column-body {
@@ -1855,6 +1859,9 @@ html[data-input="mouse"] a.file-name:hover {
   border-radius: 6px;
   overflow: hidden;
   background: var(--dn-card-hover);
+  /* A hairline frame, drawn over the poster, so a dark poster keeps its edges on a dark card. */
+  outline: 1px solid var(--dn-border);
+  outline-offset: -1px;
 }
 
 .movie-poster-img {
@@ -1877,6 +1884,11 @@ html[data-input="mouse"] a.file-name:hover {
 .movie-card.watched .movie-poster-img {
   opacity: 0.8;
   filter: grayscale(1);
+}
+
+/* In the dark a grey of a dark poster would melt into the card: lift it a little. */
+:root:not([data-theme='light']) .movie-card.watched .movie-poster-img {
+  filter: grayscale(1) brightness(1.35) contrast(0.85);
 }
 
 .movie-watched-badge {
@@ -2008,6 +2020,13 @@ html[data-input="mouse"] .movie-icon-btn:hover {
   border-color: var(--dn-accent);
   background: var(--dn-accent);
   color: var(--dn-accent-text);
+}
+
+/* Details open is a view state, not a mark on the film: outlined, not filled. */
+.movie-icon-btn[aria-expanded='true'] {
+  border-color: var(--dn-accent);
+  background: transparent;
+  color: inherit;
 }
 
 html[data-input="mouse"] .movie-icon-btn.on:hover {

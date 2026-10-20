@@ -89,7 +89,7 @@ test('mark a show watched (one undo step), open its details, and both survive a 
   await page.reload()
   await expect(movie(page, 'Severance').getByTestId('movie-details')).toBeVisible()
   await expect(movie(page, 'Severance').getByTestId('movie-watched')).toHaveAttribute('aria-pressed', 'true')
-  await expect(movie(page, 'Severance').locator('.movie-poster-img')).toHaveCSS('filter', 'grayscale(1)')
+  await expect(movie(page, 'Severance').locator('.movie-poster-img')).toHaveCSS('filter', /grayscale\(1\)/)
 })
 
 test('pasting a TMDB or IMDb link makes a movie card; other links stay links', async ({ page }) => {

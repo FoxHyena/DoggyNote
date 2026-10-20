@@ -196,13 +196,17 @@ export function LodLayer() {
         const assetId = film.assetId
         const t = typeof assetId === 'string' ? thumb(assetId) : null
         // Watched posters step back, as on the card.
-        if (film.watched) ctx.globalAlpha = 0.45
+        if (film.watched) {
+          ctx.globalAlpha = 0.6
+          ctx.filter = 'grayscale(1)'
+        }
         if (t && atlas) ctx.drawImage(atlas, t.sx, t.sy, t.sw, t.sh, x + pad, y + pad, pw, ph)
         else {
           ctx.fillStyle = pal.border
           ctx.fillRect(x + pad, y + pad, pw, ph)
         }
         ctx.globalAlpha = 1
+        ctx.filter = 'none'
         ctx.fillStyle = pal.muted
         ctx.globalAlpha = 0.35
         const tx = tall ? x + pad : x + pad * 2 + pw

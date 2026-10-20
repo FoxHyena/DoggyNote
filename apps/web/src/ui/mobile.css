@@ -638,7 +638,7 @@ html[data-input='touch'] :is(.icon-btn, .bar-btn, .menu-item, .tool, .toast-acti
 
 /* V3-05: on the narrowest phones Done is a tick, so every format fits. */
 @media (max-width: 399px) {
-  .edit-done { width: 48px; padding: 0; justify-content: center; }
+  .edit-done { width: 44px; height: 44px; padding: 0; justify-content: center; }
   .edit-done-label { display: none; }
   .edit-dock-tools { mask-image: none; }
 }

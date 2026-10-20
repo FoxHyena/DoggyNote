@@ -81,7 +81,11 @@ const STATES = {
       await pressId(page, 'agent-proposals')
       const pick = page.getByTestId('agent-review').getByRole('button', { name: /Tidy movie night/ })
       if (await pick.count()) await press(page, pick.first())
-      if (await exists(page, '[data-testid=preview-on-board]')) await pressId(page, 'preview-on-board')
+      // The sheet slides up: let it settle before tapping, then wait for the banner.
+      await page.getByTestId('preview-on-board').waitFor({ timeout: 5000 })
+      await page.waitForTimeout(500)
+      await pressId(page, 'preview-on-board')
+      await page.getByTestId('proposal-banner').waitFor({ timeout: 5000 })
     }
     await page.waitForTimeout(900)
   },

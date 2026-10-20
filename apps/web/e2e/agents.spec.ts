@@ -46,10 +46,12 @@ test('a real stdio MCP client stages a board layout, a person previews/approves 
   await expect(page.getByTestId('tool-note')).toHaveCount(0)
   await page.keyboard.press(`${MOD}+z`)
   await expect(note).toBeVisible()
-  const stored = await page.evaluate((text) => new Promise<string>((resolve) => {
+  // On this board only: the same test in another browser may have approved its own copy.
+  const board = new URL(page.url()).hash.split('/').at(-1)
+  const stored = await page.evaluate(([text, board]) => new Promise<string>((resolve) => {
     const request = indexedDB.open('doggynote')
-    request.onsuccess = () => { const q = request.result.transaction('objects', 'readonly').objectStore('objects').getAll(); q.onsuccess = () => resolve(JSON.stringify(q.result.find((o) => !o.deletedAt && !o.purged && o.content?.md?.includes(text)) ?? null)) }
-  }), built)
+    request.onsuccess = () => { const q = request.result.transaction('objects', 'readonly').objectStore('objects').getAll(); q.onsuccess = () => resolve(JSON.stringify(q.result.find((o) => o.boardId === board && !o.deletedAt && !o.purged && o.content?.md?.includes(text)) ?? null)) }
+  }), [built, board] as const)
   expect(stored).toBe('null')
   await expect(page.getByTestId('sync-status')).toHaveAttribute('data-pending', '0')
   await capture(page, testInfo, 'proposal-dark.png')
@@ -283,7 +285,7 @@ test('a card re-measured since the agent read it can still be approved, keeping 
   const boardId = new URL(page.url()).hash.split('/').at(-1)!
   const id = crypto.randomUUID()
   const note = { id, kind: 'card', type: 'note', boardId, x: 0, y: 0, w: 240, h: 60, z: 1, color: 'none', content: { md: 'Walk at noon' }, createdAt: Date.now() }
-  expect((await page.request.post('/api/sync', { data: { changes: [{ id, patch: note }] } })).ok()).toBe(true)
+  expect((await postSync(page.request, { data: { changes: [{ id, patch: note }] } })).ok()).toBe(true)
   const { token } = await (await page.request.post('/api/agent-connections', { data: { name: 'Mover', mode: 'propose', boardIds: [boardId] } })).json()
   const headers = { authorization: `Bearer ${token}` }
   const read = await (await page.request.get(`/api/agent/boards/${boardId}`, { headers })).json()
@@ -291,7 +293,7 @@ test('a card re-measured since the agent read it can still be approved, keeping 
   const staged = await page.request.post('/api/agent/proposals', { headers, data: { idempotencyKey: `move-${crypto.randomUUID()}`, label: 'Move it', operations: [{ action: 'replace', expectedRevision: row.revision, object: { ...row.object, x: 400 } }] } })
   expect(staged.status(), await staged.text()).toBe(201)
   // Another device measures the card: only its height changes.
-  expect((await page.request.post('/api/sync', { data: { changes: [{ id, patch: { h: 74 } }] } })).ok()).toBe(true)
+  expect((await postSync(page.request, { data: { changes: [{ id, patch: { h: 74 } }] } })).ok()).toBe(true)
   const approved = await page.request.post(`/api/agent-proposals/${(await staged.json()).id}/approve`, { data: {} })
   expect(approved.status(), await approved.text()).toBe(200)
   const { objects } = await pullAllObjects(page.request)
