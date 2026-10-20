@@ -25,6 +25,7 @@ export function CanvasControls(props: { readOnly: boolean }) {
     <div class="canvas-zoom" ref={root}>
       <button ref={trigger} class="icon-btn" data-testid="zoom" aria-label={`Zoom: ${Math.round(camera().zoom * 100)}%`} aria-expanded={open()} data-tooltip="Zoom options" onClick={() => setOpen(!open())}>{Math.round(camera().zoom * 100)}% <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="m2 4 3 3 3-3" fill="none" stroke="currentColor" /></svg></button>
       <Show when={open()}><div class="menu nav-menu" aria-label="Zoom options">
+        <div class="nav-menu-head sheet-only"><strong>Zoom · {Math.round(camera().zoom * 100)}%</strong></div>
         {item('Zoom in', '⌘=', () => zoomBy(1.25))}{item('Zoom out', '⌘−', () => zoomBy(0.8))}{item('Zoom to 100%', '⌘0', () => zoomTo(1))}{item('Zoom to fit', '⌘1', zoomToFit)}
       </div></Show>
     </div>

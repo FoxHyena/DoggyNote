@@ -462,7 +462,20 @@ body:has(.edit-dock) .canvas-controls { visibility: hidden; }
 
 /* Tablets and touch laptops: the docked bar floats above the bottom edge, one row. */
 @media (min-width: 600px) and (min-height: 501px) {
+  .edit-dock {
+    left: 50%;
+    right: auto;
+    bottom: calc(var(--vv-bottom, 0px) + 16px);
+    transform: translateX(-50%);
+    width: min(620px, calc(100% - 32px));
+    padding: 6px;
+    border: 1px solid var(--dn-border);
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.22);
+  }
+  /* Within the canvas, so the tool rail stays clear. */
   .selection-bar.docked {
+    position: absolute;
     left: 50%;
     right: auto;
     bottom: calc(16px + env(safe-area-inset-bottom));
@@ -488,3 +501,129 @@ body:has(.edit-dock) .canvas-controls { visibility: hidden; }
   .menu::before, .share-panel::before, .export-panel::before, .save-details::before, .trash::before { z-index: 3; }
 }
 .install-help { padding-left: 12px; }
+
+/* ---- round 2 visual fixes ------------------------------------------------------ */
+
+/* V2-03: while typing, the edit dock owns the bottom; the main dock (and its raised +) steps away. */
+body:has(.edit-dock) .mobile-dock { visibility: hidden; }
+
+/* V2-05: the connect hint sits low, out of the way of the card you picked. */
+.connect-banner { top: auto; bottom: 14px; }
+
+/* V2-06: non-modal sheets lift clearly off the board, especially in the dark. */
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  .trash { box-shadow: 0 -2px 0 var(--dn-border), 0 -14px 40px rgb(0 0 0 / 0.32); }
+  /* V2-15: a tidy three-by-three Add grid. */
+  .add-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* V2-14: colours centred in their row; Done lines up with the actions. */
+  .selection-bar.docked .swatches { margin-inline: auto; }
+  .selection-bar.docked .bar-done { align-self: flex-start; margin-top: 5px; }
+}
+
+/* V2-07, V2-18: a phone on its side gets the one-row bar, and side panels share one width. */
+@media (pointer: coarse) and (max-height: 500px) {
+  .selection-bar.docked { flex-direction: row; align-items: center; padding-block: 6px calc(6px + env(safe-area-inset-bottom)); }
+  .selection-bar.docked .bar-style { flex: 0 1 auto; min-width: 0; }
+  .selection-bar.docked .swatches { margin-inline: 0; }
+  .selection-bar.docked .bar-actions .bar-btn { min-height: 48px; min-width: 52px; }
+  .trash { width: min(420px, 60vw) !important; }
+  /* V2-02: the thread keeps room; the reply box shrinks to one line. */
+  .comment-list { min-height: 72px; }
+  .comment-input { min-height: 44px; height: 44px; }
+}
+
+/* V2-01: signing in on a phone on its side. */
+@media (max-height: 500px) {
+  .login { justify-content: flex-start; }
+  .login-card { margin-block: 12px; gap: 8px; }
+  .login-card .login-logo { width: 40px; height: 40px; border-radius: 11px; }
+  .login-card h1 { font-size: 18px; }
+}
+
+/* V2-10: no desktop resize grips; real buttons for small actions. */
+html[data-input='touch'] textarea { resize: none; }
+html[data-input='touch'] .comment-actions .link-btn {
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--dn-text);
+  background: var(--dn-card-hover);
+}
+html[data-input='touch'] .share-panel .link-btn,
+html[data-input='touch'] .share-panel button:not(.primary-btn, .icon-btn, .check) { min-height: 44px; }
+
+/* V2-17: ticks on coloured notes use the note's own ink; handles use the selection colour. */
+.card.colored .todo-check:checked,
+.card.colored .rich .task-check:checked,
+.card.colored .cm-md-task:checked { background: var(--c-text); border-color: var(--c-text); }
+.card.colored .todo-check:checked::before,
+.card.colored .rich .task-check:checked::before,
+.card.colored .cm-md-task:checked::before { border-color: var(--c-bg); }
+html[data-input='touch'] .card > .connect-handle { border-color: var(--dn-selection); }
+
+.fetch-hint { padding: 16px; }
+/* V2-12: sheets that are plain lists on desktop get a title on phones. */
+.sheet-only { display: none !important; }
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  .sheet-only { display: flex !important; }
+  .account-menu-identity { font-size: 15px; padding-top: 4px; }
+}
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  /* V2-04: when all's saved, the save mark is just a small tick; problems still get words. */
+  .topbar .save-status-wrap .sync-status:not(.attention) { min-width: 28px; padding-inline: 2px; }
+}
+
+/* A paw print where a finger asks for something (double-tap, long-press). */
+.paw-ripple {
+  position: absolute;
+  z-index: 35;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  display: grid;
+  place-items: center;
+  color: var(--dn-accent);
+  pointer-events: none;
+  animation: paw-ripple 520ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+@keyframes paw-ripple {
+  0% { opacity: 0; transform: scale(0.4) rotate(-12deg); }
+  30% { opacity: 0.95; transform: scale(1.1) rotate(4deg); }
+  100% { opacity: 0; transform: scale(1.5) rotate(0deg); }
+}
+@media (prefers-reduced-motion: reduce) { .paw-ripple { display: none; } }
+
+/* Toasts can carry one action (Undo). On phones they sit at the top, clear of sheets, docks and the keyboard. */
+.toast { display: flex; align-items: center; gap: 12px; }
+.toast-action {
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--dn-card-hover);
+  color: var(--dn-accent);
+  font: inherit;
+  font-weight: 650;
+}
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  .toast {
+    position: fixed;
+    top: calc(env(safe-area-inset-top) + 60px);
+    bottom: auto;
+    z-index: 120;
+    width: max-content;
+    max-width: calc(100% - 24px);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
+    animation: toast-down 200ms cubic-bezier(0.2, 0.9, 0.3, 1.1);
+  }
+  .toast-action { min-height: 40px; }
+}
+@keyframes toast-down { from { opacity: 0; transform: translate(-50%, -10px); } }
+/* UX1-04: the connect hint never swallows the tap meant for a card. */
+.connect-banner { pointer-events: none; }
+.connect-banner button { pointer-events: auto; }
+.nav-menu-recent { padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--dn-border); }
+/* Taps answer with a press state (hover doesn't exist on glass). */
+html[data-input='touch'] :is(.icon-btn, .bar-btn, .menu-item, .tool, .toast-action):active:not(:disabled) { background: var(--dn-card-hover); }

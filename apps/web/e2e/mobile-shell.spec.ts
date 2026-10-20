@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { cardByText, freshBoard, waitForSync } from './helpers.ts'
-import { Fingers, note, seedCards, tapOn } from './touch.ts'
+import { Fingers, center, longPress, note, seedCards, tapOn } from './touch.ts'
 
 // The phone shell: a thumb dock instead of the rail, an Add sheet, menus and
 // panels as bottom sheets that never spill off the screen.
@@ -145,13 +145,16 @@ test('Select more picks several cards for one action', async ({ page }) => {
 
 test('the back chevron goes up a level', async ({ page }) => {
   const parent = page.url().split('/').at(-1)!
+  const parentName = (await page.getByTestId('board-name').textContent())!
   const child = crypto.randomUUID()
   expect((await page.request.post('/api/sync', { data: { changes: [{ id: child, patch: { id: child, kind: 'board', parentId: parent, title: 'Puppy class', icon: 'bone', color: 'none', createdAt: Date.now() } }] } })).ok()).toBe(true)
   await page.goto(`/#/b/${child}`)
   await page.reload()
   await expect(page.getByTestId('board-name')).toHaveText('Puppy class')
+  // Long-press lists every parent; a tap goes straight up.
+  await longPress(page, await center(page.getByTestId('parent-boards')))
+  await expect(page.getByLabel('Parent boards', { exact: true }).locator('button.menu-item').last()).toBeVisible()
+  await page.keyboard.press('Escape')
   await page.getByTestId('parent-boards').tap()
-  const sheet = page.getByLabel('Parent boards', { exact: true }).locator('button.menu-item')
-  await sheet.last().tap()
-  await expect(page.getByTestId('board-name')).not.toHaveText('Puppy class')
+  await expect(page.getByTestId('board-name')).toHaveText(parentName)
 })

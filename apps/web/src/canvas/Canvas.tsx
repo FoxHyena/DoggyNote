@@ -50,7 +50,9 @@ import {
   setCamera,
   setConnectMode,
   setSelection,
+  setTrashOpen,
   setViewport,
+  trashOpen,
   viewport,
 } from '../state/ui.ts'
 import { columnChildren, connect, createCard } from '../state/actions.ts'
@@ -61,6 +63,9 @@ import { cardEl, cardHeight, rectOf, setMeasuring } from './layout.ts'
 import { setDropTarget, dropTarget, connectPreview, setConnectPreview, draggingIds, setDraggingIds, resizingId, setResizingId } from './dnd.ts'
 import { snapTick, snapToGrid } from '../state/grid.ts'
 import { handleCanvasDrop, handleCanvasPaste } from './paste.ts'
+import { BoardIconSvg } from '../ui/icons.tsx'
+import { setToyboxOpen, toyboxOpen } from '../ui/ToyboxPanel.tsx'
+import { setThreadCardId, threadCardId } from '../state/comments.ts'
 import { haptic, phone, touch } from '../state/device.ts'
 import { resetPageScroll, visible } from '../state/viewport.ts'
 
@@ -82,7 +87,7 @@ const LONG_PRESS_MS = 350
 /** Screen px around a checkbox that still toggles it on touch. */
 const CHECK_REACH = 24
 /** Smallest zoom a phone opens a board at: below this, notes stop being readable. */
-const PHONE_MIN_ZOOM = 0.55
+const PHONE_MIN_ZOOM = 0.8
 /** Height of the formatting dock that sits on the keyboard while editing (EditDock). */
 const EDIT_DOCK = 56
 
@@ -301,6 +306,21 @@ export function Canvas(props: { readOnly: boolean }) {
     if (!el) return false
     const path = e.composedPath()
     return path.includes(el) && !path.some((n) => n instanceof HTMLElement && (n.hasAttribute('data-resize') || n.hasAttribute('data-connect-handle')))
+  }
+
+  function closePanelSheets(): boolean {
+    if (!toyboxOpen() && !trashOpen() && !threadCardId()) return false
+    setToyboxOpen(false)
+    setTrashOpen(false)
+    setThreadCardId(null)
+    return true
+  }
+
+  function insideOwnCard(e: PointerEvent, target: HTMLElement): boolean {
+    if (!target.closest('[data-connect-handle],[data-resize]')) return false
+    const el = target.closest<HTMLElement>('[data-card-id]')
+    const r = el?.getBoundingClientRect()
+    return !!r && e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom
   }
 
   /** Resize and connect handles, and connection lines: the same for every pointer. */
@@ -602,10 +622,25 @@ export function Canvas(props: { readOnly: boolean }) {
   // tapping the selected card again edits or opens it.
   const fingers = new Map<number, Vec>()
   let lastTap: Tap | null = null
+  // A paw print where the finger asked for something.
+  const [paw, setPaw] = createSignal<{ x: number; y: number; n: number } | null>(null)
+  let pawTimer: ReturnType<typeof setTimeout> | undefined
+  function pawAt(client: Vec) {
+    const p = local({ clientX: client.x, clientY: client.y })
+    setPaw({ ...p, n: (paw()?.n ?? 0) + 1 })
+    clearTimeout(pawTimer)
+    pawTimer = setTimeout(() => setPaw(null), 560)
+  }
 
   function touchDown(e: PointerEvent) {
     stopMomentum()
     cancelCameraAnimation()
+    // On a phone a panel sheet covers most of the board: the first touch on
+    // what's left of the board puts the sheet away, rather than acting behind it.
+    if (phone() && !fingers.size && closePanelSheets()) {
+      e.preventDefault()
+      return
+    }
     fingers.set(e.pointerId, { x: e.clientX, y: e.clientY })
     if (fingers.size === 2) {
       cancelGesture()
@@ -624,7 +659,9 @@ export function Canvas(props: { readOnly: boolean }) {
     // focus from an editor this touch opens), no text selection or callout.
     // Links and checkboxes keep their click.
     if (!nodrag) e.preventDefault()
-    if (!props.readOnly && startHandleGesture(e, target)) return
+    // Browsers snap a fingertip to nearby handles. A touch inside the card's
+    // own box is about the card (move it), not the handle on its edge.
+    if (!props.readOnly && !insideOwnCard(e, target) && startHandleGesture(e, target)) return
     const id = cardIdAt(target, e)
     if (id && !props.readOnly && connectTap(id)) return
     const p = { x: e.clientX, y: e.clientY }
@@ -638,6 +675,7 @@ export function Canvas(props: { readOnly: boolean }) {
     if (g?.kind !== 'tpress' || props.readOnly) return
     capture(g.pointerId)
     haptic('lift')
+    pawAt(g.last)
     const at = { clientX: g.last.x, clientY: g.last.y }
     if (g.id) {
       beginDrag({ kind: 'press', id: g.id, start: g.start, shift: selectMore(), target: g.target, client: g.start }, at)
@@ -726,6 +764,8 @@ export function Canvas(props: { readOnly: boolean }) {
         // Zoomed out there's no DOM to type into: come in first, inside the
         // touch, so the editor mounts and focuses while iOS still allows a keyboard.
         if (lod()) setCamera(zoomAt(camera(), local(e), 1))
+        pawAt({ x: e.clientX, y: e.clientY })
+        haptic('success')
         createCard('note', { at: toWorld(e) })
         return
       }
@@ -971,11 +1011,21 @@ export function Canvas(props: { readOnly: boolean }) {
       <Show when={marquee()}>
         <div class="marquee" style={marqueeStyle()} />
       </Show>
+      <Show when={paw()} keyed>
+        {(p) => (
+          <div class="paw-ripple" style={{ left: `${p.x}px`, top: `${p.y}px` }} aria-hidden="true">
+            <BoardIconSvg icon="paw" size={30} />
+          </div>
+        )}
+      </Show>
       <Show when={!doc.cardsOn(boardId()).length}>
         <div class="empty">
           <p class="empty-title">{props.readOnly ? 'This board is empty' : `Nothing in this ${boardId() === 'home' ? COPY.home : 'board'} yet`}</p>
           <Show when={!props.readOnly}>
-            <p class="empty-sub">Double-click anywhere to add a note, or drag something in from the left.</p>
+            <p class="empty-sub">{touch() ? (phone() ? COPY.emptyTouch : COPY.emptyTouchTablet) : 'Double-click anywhere to add a note, or drag something in from the left.'}</p>
+            <Show when={touch()}>
+              <p class="empty-sub">{COPY.emptyHintTouch}</p>
+            </Show>
           </Show>
         </div>
       </Show>

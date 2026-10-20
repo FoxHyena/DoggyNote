@@ -26,7 +26,7 @@ export function EditDock() {
             <For each={FORMAT}>
               {(f) => (
                 <button class={`fmt fmt-${f.cmd}`} aria-label={f.title.split(':')[0]} data-testid={`dock-fmt-${f.cmd}`} onPointerDown={(e) => { keep(e); activeNoteEditor()?.run(f.cmd) }}>
-                  {f.label}
+                  {f.cmd === 'task' ? <Icon size={20}>{ToolIcons.todo()}</Icon> : f.label}
                 </button>
               )}
             </For>

@@ -5,7 +5,7 @@ export function installCanvasPanel(open: Accessor<boolean>, close: () => void, r
   createEffect(() => {
     if (!open()) return
     const previousFocus = (document.activeElement && document.activeElement !== document.body ? document.activeElement : opener()) as HTMLElement | null
-    queueMicrotask(() => root()?.querySelector<HTMLElement>('textarea,button')?.focus({ preventScroll: true }))
+    queueMicrotask(() => { const r = root(); (r?.querySelector<HTMLElement>('textarea') ?? r?.querySelector<HTMLElement>('button'))?.focus({ preventScroll: true }) })
     const key = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || document.querySelector('[role="dialog"], [role="alertdialog"]')) return
       const focusedPanel = document.activeElement?.closest('.trash')

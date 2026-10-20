@@ -7,7 +7,7 @@
 // the line(s) the cursor is on, where they show faded so you can edit them.
 // Bullets render as dots and "[ ]" as a clickable checkbox off the active line.
 
-import { EditorSelection, EditorState, type Extension, type Range, type StateCommand } from '@codemirror/state'
+import { EditorSelection, EditorState, type Extension, type Range, type SelectionRange, type StateCommand } from '@codemirror/state'
 import { Decoration, EditorView, ViewPlugin, WidgetType, keymap, type DecorationSet, type ViewUpdate } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap, insertNewline } from '@codemirror/commands'
 import { syntaxTree } from '@codemirror/language'
@@ -170,9 +170,26 @@ const livePreview = ViewPlugin.fromClass(
 // ---- formatting commands ----------------------------------------------------------
 
 /** Wrap each selection in `mark` (or unwrap if it's already wrapped). Empty selections get a pair to type into. */
+/**
+ * Keep inline marks inside a line's block syntax and off the edges of the
+ * selection: bolding a whole heading line gives "# **Title**", not
+ * "**# Title**" (which is no longer a heading).
+ */
+function inlineRange(state: EditorState, r: SelectionRange): SelectionRange {
+  if (r.empty) return r
+  let { from, to } = r
+  const line = state.doc.lineAt(from)
+  const prefix = line.from + (LINE_PREFIX.exec(line.text)?.[0].length ?? 0)
+  if (from < prefix && to > prefix) from = prefix
+  while (from < to && /\s/.test(state.sliceDoc(from, from + 1))) from++
+  while (to > from && /\s/.test(state.sliceDoc(to - 1, to))) to--
+  return from < to ? EditorSelection.range(from, to) : r
+}
+
 function wrap(mark: string): StateCommand {
   return ({ state, dispatch }) => {
-    const tr = state.changeByRange((r) => {
+    const tr = state.changeByRange((whole) => {
+      const r = inlineRange(state, whole)
       const before = state.sliceDoc(r.from - mark.length, r.from)
       const after = state.sliceDoc(r.to, r.to + mark.length)
       if (before === mark && after === mark) {

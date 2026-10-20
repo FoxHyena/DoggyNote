@@ -131,7 +131,7 @@ button:disabled {
   transition: background 120ms, color 120ms;
 }
 
-.icon-btn:hover:not(:disabled) {
+html[data-input="mouse"] .icon-btn:hover:not(:disabled) {
   background: var(--dn-card-hover);
   color: var(--dn-text);
 }
@@ -172,7 +172,7 @@ button:disabled {
   text-align: left;
 }
 
-.menu-item:hover {
+html[data-input="mouse"] .menu-item:hover {
   background: var(--dn-card-hover);
 }
 
@@ -1110,7 +1110,7 @@ html[data-input='mouse'] .connect-handle:hover {
   font-size: 13px;
 }
 
-.bar-btn:hover {
+html[data-input="mouse"] .bar-btn:hover {
   background: var(--dn-card-hover);
 }
 
@@ -1202,6 +1202,14 @@ html[data-input='mouse'] .connect-handle:hover {
 
 .primary-btn:hover:not(:disabled) {
   filter: brightness(1.06);
+}
+
+/* Disabled stays legible: a quiet outline, not a faded accent. */
+.primary-btn:disabled {
+  opacity: 1;
+  background: var(--dn-card-hover);
+  color: var(--dn-text-muted);
+  box-shadow: inset 0 0 0 1px var(--dn-border);
 }
 
 .form-error {

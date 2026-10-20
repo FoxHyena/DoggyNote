@@ -103,7 +103,10 @@ export function CommentsPanel(props: { readOnly?: boolean }) {
     if (!id || !draft().trim()) return
     addComment(id, draft())
     setDraft('')
+    // Show the reply you just sent, wherever the thread was scrolled.
+    requestAnimationFrame(() => list?.scrollTo({ top: list.scrollHeight, behavior: 'smooth' }))
   }
+  let list: HTMLUListElement | undefined
 
   return (
     <Show when={card()}>
@@ -136,7 +139,7 @@ export function CommentsPanel(props: { readOnly?: boolean }) {
           </Show>
         </p>
         <Show when={messages().length} fallback={<p class="trash-empty">No comments yet.</p>}>
-          <ul class="comment-list">
+          <ul class="comment-list" ref={list}>
             <For each={messages()}>{(m) => <Message m={m} readOnly={!!props.readOnly} />}</For>
           </ul>
         </Show>

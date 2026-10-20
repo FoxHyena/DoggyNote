@@ -22,7 +22,7 @@ export async function seed(request, { title = 'Weekend in the hills' } = {}) {
   const now = Date.now()
   const objects = [
     { id: board, kind: 'board', parentId: 'home', title, icon: 'paw', color: 'gold', createdAt: now },
-    { id: inner, kind: 'board', parentId: board, title: 'Trail snacks', icon: 'bone', color: 'green', createdAt: now },
+    { id: inner, kind: 'board', parentId: board, title: 'Trail snacks', icon: 'bone', color: 'ball', createdAt: now },
   ]
   const intro = card(board, 'note', 0, 0, 280, { md: '# Hike plan\nLeave **8am** Saturday. Meet at the trailhead café.\n\n- [x] Book the cabin\n- [ ] Check the weather' }, { color: 'gold' })
   const todo = card(board, 'todo', 320, 0, 260, { title: 'Packing list', items: [

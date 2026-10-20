@@ -118,7 +118,7 @@ export function FetchPalette() {
             aria-controls="fetch-results"
             aria-activedescendant={hits()[active()] ? `fetch-hit-${active()}` : undefined}
             data-testid="fetch-input"
-            placeholder={`${COPY.search}… boards, notes, to-dos, links`}
+            placeholder={touch() ? `${COPY.search} a board, note or link…` : `${COPY.search}… boards, notes, to-dos, links`}
             value={q()}
             onInput={(e) => {
               setQ(e.currentTarget.value)
@@ -128,6 +128,9 @@ export function FetchPalette() {
           />
           <button class="fetch-close" aria-label="Close search" onClick={() => setPaletteOpen(false)}>{touch() ? 'Cancel' : <kbd>esc</kbd>}</button>
         </div>
+        <Show when={!q().trim() && touch()}>
+          <p class="fetch-empty fetch-hint">{COPY.fetchHint}</p>
+        </Show>
         <Show when={q().trim()}>
           <ul ref={results} id="fetch-results" class="fetch-results" role="listbox" aria-label="Search results">
             <For each={hits()} fallback={<li class="fetch-empty">No bones found for “{q()}”.</li>}>

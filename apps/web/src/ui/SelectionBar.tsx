@@ -6,6 +6,7 @@ import * as doc from '../state/doc.ts'
 import { setColor, trashSelection } from '../state/actions.ts'
 import { beginEdit, camera, clearSelection, connectMode, editingId, openBoard, selectMore, selection, setConnectMode, setSelectMore, viewport } from '../state/ui.ts'
 import { phone, touch } from '../state/device.ts'
+import { showToast } from '../state/toast.ts'
 import { draggingIds } from '../canvas/dnd.ts'
 import { layoutTick, rectOf } from '../canvas/layout.ts'
 import { union, worldToScreen } from '@doggynote/core'
@@ -28,6 +29,11 @@ export function SelectionBar() {
   const editable = () => {
     const c = sole()
     return !!c && (c.type === 'note' || c.type === 'todo' || c.type === 'column') && doc.canWriteObject(c)
+  }
+  const bury = () => {
+    const n = selection().size
+    trashSelection()
+    if (touch()) showToast(`${COPY.buried} ${n} ${n === 1 ? 'card' : 'cards'}`, 5000, { label: 'Undo', run: () => doc.undo() })
   }
   const startConnect = () => {
     const c = sole()
@@ -143,15 +149,15 @@ export function SelectionBar() {
         <Show when={touch()}>
           <button class="bar-btn" data-testid="select-more" aria-pressed={selectMore()} classList={{ on: selectMore() }} onClick={() => setSelectMore(!selectMore())}>
             <Icon size={18}>{ToolIcons.multi()}</Icon>
-            {selection().size > 1 ? `${selection().size} picked` : 'Select more'}
+            {selection().size > 1 ? `${selection().size} picked` : 'Select'}
           </button>
         </Show>
-        <button class="bar-btn" data-testid="bury" title={`Move to ${COPY.trash} (Delete)`} onClick={trashSelection}>
+        <button class="bar-btn" data-testid="bury" title={`Move to ${COPY.trash} (Delete)`} onClick={bury}>
           <Icon size={18}>{ToolIcons.trash()}</Icon>
           Bury
         </button>
         <Show when={phone()}>
-          <button class="icon-btn bar-done" data-testid="selection-done" aria-label="Done" onClick={clearSelection}>
+          <button class="icon-btn bar-done" data-testid="selection-done" aria-label="Done" title="Done" onClick={clearSelection}>
             <Icon size={18}>{ToolIcons.close()}</Icon>
           </button>
         </Show>

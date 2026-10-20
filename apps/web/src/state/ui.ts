@@ -133,10 +133,25 @@ function boardFromHash(): Id {
   return HOME_BOARD_ID
 }
 
+const RECENT_KEY = 'doggynote.recentBoards'
+function readRecent(): Id[] {
+  try {
+    const list = JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]')
+    return Array.isArray(list) ? list.filter((x): x is Id => typeof x === 'string') : []
+  } catch {
+    return []
+  }
+}
+/** Boards opened on this device, most recent first. */
+export const [recentBoards, setRecentBoards] = createSignal<Id[]>(readRecent())
+
 function rememberBoard(id: Id) {
   if (isViewer()) return
+  const recent = [id, ...recentBoards().filter((x) => x !== id)].slice(0, 8)
+  setRecentBoards(recent)
   try {
     localStorage.setItem(LAST_BOARD_KEY, id)
+    localStorage.setItem(RECENT_KEY, JSON.stringify(recent))
   } catch {
     // storage unavailable
   }

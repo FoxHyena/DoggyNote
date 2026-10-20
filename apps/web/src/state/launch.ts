@@ -7,11 +7,18 @@ const KEY = 'doggynote.launch'
 
 type Launch = { share?: string; inbox?: boolean }
 
-/** What to drop in the Inbox from a share: the link if there is one, else the words. */
+/**
+ * What to drop in the Inbox from a share. A bare link becomes a link card
+ * (its preview brings the page title back); a link with your own words stays
+ * a note with both; words alone are a note.
+ */
 export function sharedText(title: string, text: string, url: string): string {
-  const link = url || text.match(/https?:\/\/\S+/)?.[0] || ''
-  if (link) return link
-  return [title, text].map((s) => s.trim()).filter(Boolean).join('\n')
+  const t = text.trim()
+  const link = url || t.match(/https?:\/\/\S+/)?.[0] || ''
+  if (!link) return [title.trim(), t].filter(Boolean).join('\n')
+  const words = t.replace(link, '').trim()
+  if (!words || words === title.trim()) return link
+  return t.includes(link) ? t : `${t} ${link}`
 }
 
 /** Before routing: note the intent and tidy the address bar. */

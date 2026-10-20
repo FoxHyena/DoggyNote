@@ -46,7 +46,7 @@
   transition: background 120ms, color 120ms, transform 120ms;
 }
 
-.tool:hover {
+html[data-input="mouse"] .tool:hover {
   background: var(--dn-card-hover);
   color: var(--dn-text);
 }

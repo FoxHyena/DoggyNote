@@ -12,7 +12,8 @@ import { addAnyFiles, addText } from '../canvas/paste.ts'
 import { describeCard } from './TrashPanel.tsx'
 import { placementAt } from './Toolbar.tsx'
 import { Icon, ToolIcons } from './icons.tsx'
-import { touch } from '../state/device.ts'
+import { phone, touch } from '../state/device.ts'
+import { showToast } from '../state/toast.ts'
 import { screenToWorld } from '@doggynote/core'
 
 export const [toyboxOpen, setToyboxOpen] = createSignal(false)
@@ -40,7 +41,8 @@ export function ToyboxButton() {
 
 const centre = (): Vec => {
   const v = viewport()
-  return screenToWorld(camera(), { x: v.width / 2, y: v.height / 2.6 })
+  // On a phone the Inbox sheet covers the lower part: place where it can be seen.
+  return screenToWorld(camera(), { x: v.width / 2, y: phone() ? v.height * 0.16 : v.height / 2.6 })
 }
 
 export function ToyboxPanel() {
@@ -165,15 +167,23 @@ export function ToyboxPanel() {
                     aria-describedby={!canPlace() ? 'toybox-move-hint' : undefined}
                     title={canPlace() ? 'Put it in the middle of this board' : 'You need editing access to this board'}
                     onPointerDown={(e) => e.stopPropagation()}
-                    onClick={() => moveCardTo(c.id, boardId(), { at: centre() })}
+                    onClick={() => {
+                      moveCardTo(c.id, boardId(), { at: centre() })
+                      if (touch()) showToast('Placed on this board', 4000, { label: 'Undo', run: () => doc.undo() })
+                    }}
                   >
                     Place
                   </button>
                   <button
                     class="icon-btn"
+                    data-testid="toybox-bury"
                     title={`Move to ${COPY.trash}`}
+                    aria-label={`Move to ${COPY.trash}`}
                     onPointerDown={(e) => e.stopPropagation()}
-                    onClick={() => doc.update({ [c.id]: { deletedAt: Date.now() } })}
+                    onClick={() => {
+                      doc.update({ [c.id]: { deletedAt: Date.now() } })
+                      if (touch()) showToast(`${COPY.buried} 1 card`, 5000, { label: 'Undo', run: () => doc.undo() })
+                    }}
                   >
                     <Icon size={16}>{ToolIcons.trash()}</Icon>
                   </button>

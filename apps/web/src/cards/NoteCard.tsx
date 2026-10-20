@@ -1,7 +1,7 @@
 import { For, Show, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
 import { noteMarkdown, parseMarkdown, toggleTask, type Card } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
-import { editIsNewCard, endEdit, onEndEdit } from '../state/ui.ts'
+import { camera, editIsNewCard, endEdit, onEndEdit } from '../state/ui.ts'
 import { RichText } from '../editor/RichText.tsx'
 import { takeEditCaret } from '../canvas/Canvas.tsx'
 import type { CardProps } from '../canvas/CardView.tsx'
@@ -69,15 +69,22 @@ function NoteEditor(props: { card: Card<'note'> }) {
   }
 
   onMount(async () => {
-    const caret = takeEditCaret()
+    // The tap, relative to the note (unscaled px): on a phone the card glides
+    // into view while the editor loads, so screen coordinates go stale.
+    const tap = takeEditCaret()
+    const box0 = mount.getBoundingClientRect()
+    const z0 = camera().zoom
+    const rel = tap && { x: (tap.x - box0.left) / z0, y: (tap.y - box0.top) / z0 }
     // No page scroll: the canvas moves the card into view itself.
     buffer.focus({ preventScroll: true })
     buffer.addEventListener('keydown', onBufferKey)
     buffer.addEventListener('input', onBufferInput)
     const { createEditor } = await import('../editor/codemirror.ts')
     if (disposed) return
+    const box = mount.getBoundingClientRect()
+    const z = camera().zoom
     editor = createEditor(mount, noteMarkdown(props.card), {
-      placeAt: caret ?? undefined,
+      placeAt: rel ? { x: box.left + rel.x * z, y: box.top + rel.y * z } : undefined,
       onChange: (md: string) => doc.transient(id, { content: { md } } as Partial<Card>),
       onExit: () => endEdit(),
     })
