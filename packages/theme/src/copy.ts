@@ -25,5 +25,7 @@ export const COPY = {
 
 /** Reserved personal inboxes keep their IDs and legacy stored titles across upgrades. */
 export function boardDisplayTitle(board: { id: string; title?: string | null } | null | undefined, fallback = 'Untitled board'): string {
-  return board?.id.startsWith('toybox:') ? COPY.unsorted : board?.title || fallback
+  if (board?.id.startsWith('toybox:')) return COPY.unsorted
+  // Titles are synced from other people's devices; anything but text is ignored.
+  return typeof board?.title === 'string' && board.title ? board.title : fallback
 }

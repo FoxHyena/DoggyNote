@@ -89,7 +89,7 @@ function SharePanel(props: { boardId: Id; onClose: () => void }) {
   }
   return <div ref={panel} class="menu share-panel" data-testid="share-panel" role="dialog" aria-label="Board sharing" onKeyDown={agentDialogKeys}>
     <div class="share-head"><strong>Share board</strong><button class="icon-btn" aria-label="Close sharing" onClick={props.onClose}><Icon size={16}>{ToolIcons.close()}</Icon></button></div>
-    <p class="share-sub">{sharing()?.legacy ? 'Shared space members already have editing access. Admins manage its invitations.' : 'Private until you invite someone. Only you and admins manage sharing.'}</p>
+    <p class="share-sub">{sharing()?.legacy ? 'Shared space members already have editing access. Admins manage its invitations.' : 'Private until you invite someone. Only you manage sharing.'}</p>
     <Show when={parent() && parent() !== `home:${sharing()?.ownerId}`}><p class="share-sub">People with inherited access from “{boardDisplayTitle(doc.getBoard(parent()), 'the parent board')}” keep that access. Manage it on the parent board.</p></Show>
     <label class="check"><input type="checkbox" data-testid="include-children" checked={includeChildren()} onChange={(e) => setIncludeChildren(e.currentTarget.checked)} />Include boards inside this one</label>
     <strong>Invite by username</strong>

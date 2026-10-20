@@ -1,7 +1,9 @@
 import { z } from 'zod'
 import { CARD_COLORS } from '@doggynote/theme'
 
-const id = z.string().regex(/^[a-zA-Z0-9_:-]{1,64}$/)
+/** Object ids key plain maps on every client, so built-in property names are refused. */
+export const isReservedId = (id: string) => id === 'prototype' || Object.hasOwn(Object.prototype, id)
+const id = z.string().regex(/^[a-zA-Z0-9_:-]{1,64}$/).refine((v) => !isReservedId(v), 'Reserved identifier')
 const stamp = z.number().int().nonnegative()
 const text = z.string().max(200_000)
 const color = z.enum(CARD_COLORS)

@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { isReservedId } from '@doggynote/core/agent'
 import type { AppEnv } from './env.ts'
 import { accessGuard, bumpAccess, loadAccess, newBoardAccess, type Access } from './access.ts'
 
@@ -24,7 +25,7 @@ export function parseChanges(body: unknown): IncomingChange[] | string {
   const seen = new Set<string>()
   for (const ch of changes) {
     const { id, patch } = (ch ?? {}) as { id?: unknown; patch?: unknown }
-    if (typeof id !== 'string' || !ID.test(id)) return 'bad id'
+    if (typeof id !== 'string' || !ID.test(id) || isReservedId(id)) return 'bad id'
     if (seen.has(id)) return 'duplicate object id'
     seen.add(id)
     if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return `bad patch for ${id}`

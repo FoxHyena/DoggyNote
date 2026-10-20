@@ -14,6 +14,10 @@ concurrency:
 permissions:
   contents: write
 
+# Secrets go only to the steps that use them (never job-wide), so dependency
+# installs, build scripts and third-party actions can't read them. Actions are
+# pinned to commit SHAs.
+
 env:
   PUBLIC_URL: https://notepad.dog
 
@@ -27,7 +31,7 @@ jobs:
       version: ${{ steps.v.outputs.version }}
       notes: ${{ steps.v.outputs.notes }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       # 0.<minor from version.json>.<release run number>
       - id: v
         run: |
@@ -39,15 +43,14 @@ jobs:
   deploy:
     name: Deploy Worker + web app
     needs: [ci, version, desktop]
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.version.outputs.version }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: pnpm
@@ -56,29 +59,34 @@ jobs:
         run: VITE_APP_VERSION=$VERSION pnpm --filter web build
       - name: Migrate database
         working-directory: apps/server
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm exec wrangler d1 migrations apply doggynote --remote
       - name: Deploy
         working-directory: apps/server
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm exec wrangler deploy --var APP_VERSION:$VERSION
 
   desktop:
     name: Build + stage Mac app
     needs: [version, ci]
+    if: github.ref == 'refs/heads/main'
     runs-on: macos-14 # Apple silicon
     env:
       VERSION: ${{ needs.version.outputs.version }}
       NOTES: ${{ needs.version.outputs.notes }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: pnpm
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           workspaces: apps/desktop/src-tauri
       - run: pnpm install --frozen-lockfile
@@ -87,6 +95,12 @@ jobs:
         working-directory: apps/desktop/src-tauri
         run: jq --arg v "$VERSION" '.version = $v' tauri.conf.json > t.json && mv t.json tauri.conf.json
 
+      - name: Build app
+        working-directory: apps/desktop
+        run: VITE_API_BASE=$PUBLIC_URL VITE_APP_VERSION=$VERSION pnpm exec tauri build --bundles app
+
+      # Imported after the build, so the unlocked signing identity is never
+      # exposed to build scripts.
       - name: Import signing certificate
         env:
           MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
@@ -109,10 +123,6 @@ jobs:
           echo "SIGN_KEYCHAIN=$KC" >> "$GITHUB_ENV"
           echo "SIGN_IDENTITY=$ID" >> "$GITHUB_ENV"
 
-      - name: Build app
-        working-directory: apps/desktop
-        run: VITE_API_BASE=$PUBLIC_URL VITE_APP_VERSION=$VERSION pnpm exec tauri build --bundles app
-
       - name: Sign + package
         working-directory: apps/desktop
         env:
@@ -122,6 +132,9 @@ jobs:
 
       - name: Stage versioned files in R2 (manifest last)
         working-directory: apps/server
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           R=../desktop/release
           put() { pnpm exec wrangler r2 object put "doggynote-assets/desktop/$1" --file "$2" --content-type "$3" --remote; }
@@ -130,7 +143,7 @@ jobs:
           put "$VERSION/latest.json" "$R/latest.json" application/json
 
       - name: Retain manifest and disk image for publication
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: desktop-release-${{ env.VERSION }}
           path: |
@@ -147,26 +160,28 @@ jobs:
   publish:
     name: Publish updater and GitHub release
     needs: [version, desktop, deploy]
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.version.outputs.version }}
       NOTES: ${{ needs.version.outputs.notes }}
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: desktop-release-${{ env.VERSION }}
           path: apps/desktop/release
       - name: Publish fallback manifest
         working-directory: apps/server
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm exec wrangler r2 object put doggynote-assets/desktop/latest.json --file ../desktop/release/latest.json --content-type application/json --remote
       - name: GitHub release
         env:

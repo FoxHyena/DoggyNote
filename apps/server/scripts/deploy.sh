@@ -28,5 +28,12 @@ echo "✓ R2 bucket doggynote-assets"
 $W d1 migrations apply doggynote --remote
 pnpm --filter web build
 $W deploy
+
+# Image/file URL tokens for the desktop app are signed with this. Generated once;
+# replacing it only makes apps fetch a fresh token.
+if ! $W secret list 2>/dev/null | grep -q ASSET_TOKEN_SECRET; then
+  openssl rand -base64 32 | $W secret put ASSET_TOKEN_SECRET >/dev/null
+  echo "✓ ASSET_TOKEN_SECRET set"
+fi
 echo "✓ Deployed. Create your account with:"
 echo "  pnpm --filter server create-user <name> <password> --admin --remote"

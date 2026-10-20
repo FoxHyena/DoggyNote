@@ -55,6 +55,9 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
 // text colour drawn on it, tuned separately per theme.
 export const CARD_COLORS = ['none', 'gold', 'collar', 'ball', 'sky', 'lilac', 'peach'] as const
 export type CardColor = (typeof CARD_COLORS)[number]
+/** A synced colour if it's one of ours, else the fallback: it goes straight into CSS. */
+export const cardColor = (c: unknown, fallback: CardColor = 'none'): CardColor =>
+  (CARD_COLORS as readonly unknown[]).includes(c) ? (c as CardColor) : fallback
 
 export const cardColors: Record<ThemeName, Record<CardColor, { bg: string; text: string }>> = {
   dark: {

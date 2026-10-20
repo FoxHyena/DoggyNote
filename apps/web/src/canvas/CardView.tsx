@@ -1,5 +1,6 @@
-import { For, Match, Show, Switch, onCleanup, onMount, type JSX } from 'solid-js'
+import { ErrorBoundary, For, Match, Show, Switch, onCleanup, onMount, type JSX } from 'solid-js'
 import { SIDES, type Card } from '@doggynote/core'
+import { cardColor } from '@doggynote/theme'
 import { camera, editingId, isSelected, selection } from '../state/ui.ts'
 import { touch } from '../state/device.ts'
 import { registerCardEl } from './layout.ts'
@@ -38,8 +39,8 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
   const style = (): JSX.CSSProperties => {
     const c = props.card
     const s: JSX.CSSProperties = {
-      '--c-bg': `var(--dn-card-${c.color ?? 'none'}-bg)`,
-      '--c-text': `var(--dn-card-${c.color ?? 'none'}-text)`,
+      '--c-bg': `var(--dn-card-${cardColor(c.color)}-bg)`,
+      '--c-text': `var(--dn-card-${cardColor(c.color)}-text)`,
     }
     if (free()) {
       // left/top, not transform: a thousand per-card transforms make the
@@ -75,6 +76,8 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
       data-type={props.card.type}
       style={style()}
     >
+      {/* Cards are synced data from other people: one malformed card must not take the board down. */}
+      <ErrorBoundary fallback={<p class="card-unreadable" data-testid="card-unreadable">This card can't be shown.</p>}>
       <Switch>
         <Match when={props.card.type === 'note'}>
           <NoteCard {...(props2() as CardProps<'note'>)} />
@@ -98,6 +101,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
           <ColumnCard {...(props2() as CardProps<'column'>)} />
         </Match>
       </Switch>
+      </ErrorBoundary>
       <Show when={comments() && !props.lod}>
         <button
           class="comment-badge"

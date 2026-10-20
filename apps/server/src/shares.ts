@@ -108,17 +108,19 @@ shares.post('/shares/:token/accept', requireUser, async (c) => {
 })
 
 export type ResolvedShare = { root: Obj; sharedBoards: Set<string>; objects: Obj[] }
-/** Public view capabilities expose only boards their creator can still read. */
+/** Public view capabilities expose only boards their creator still looks after:
+ * boards they manage, or shared-space (legacy) boards they are a member of. */
 export async function resolveShare(db: D1Database, token: string): Promise<ResolvedShare | null> {
   const s = await db.prepare("SELECT * FROM shares WHERE token=?1 AND permission='view' AND revoked_at IS NULL").bind(token).first<ShareRow>()
   if (!s) return null
   const creator = await db.prepare('SELECT id,is_admin FROM users WHERE id=?1').bind(s.created_by).first<{ id: string; is_admin: number }>()
   if (!creator) return null
   const a = await loadAccess(db, { id: creator.id, isAdmin: !!creator.is_admin })
+  const stewards = (id: string) => a.canManage(id) || (!!a.boards.get(id)?.legacy && a.canRead(id) && !isToyboxTree(a.boards, id))
   const { results } = await db.prepare('SELECT data FROM objects WHERE owner_id IS NULL').all<{ data: string }>()
   const all = results.map((r) => JSON.parse(r.data) as Obj)
   const root = all.find((o) => o.id === s.board_id && o.kind === 'board')
-  if (!root || !alive(root) || !a.canRead(root.id) || isToyboxTree(a.boards, root.id)) return null
+  if (!root || !alive(root) || !stewards(root.id)) return null
   if (s.scope_version >= 1) {
     // Parent ancestry is the authority. Board-card references outside this
     // closure are locked placeholders, never a route to another private root.
@@ -142,19 +144,31 @@ export async function resolveShare(db: D1Database, token: string): Promise<Resol
     }
     return { root: { ...root, parentId: null }, sharedBoards: scope, objects }
   }
+  // Legacy links follow board cards, but only into boards the creator manages
+  // or that are nested under the root: never into a board someone else merely
+  // shared with them.
+  const nested = (id: string) => {
+    const visited = new Set<string>()
+    for (let p = a.boards.get(id)?.parentId ?? null; p && !visited.has(p); p = a.boards.get(p)?.parentId ?? null) {
+      if (p === root.id) return true
+      visited.add(p)
+    }
+    return false
+  }
+  const followable = (id: string) => a.canRead(id) && !isToyboxTree(a.boards, id) && (stewards(id) || nested(id))
   const seen = new Set<string>()
   const queue = [root.id]
   const out: Obj[] = []
   while (queue.length) {
     const id = queue.shift()!
-    if (seen.has(id) || !a.canRead(id) || isToyboxTree(a.boards, id)) continue
+    if (seen.has(id) || !followable(id)) continue
     const b = all.find((o) => o.id === id && o.kind === 'board' && alive(o))
     if (!b) continue
     seen.add(id)
     out.push(b)
     const items = all.filter((o) => o.boardId === id && alive(o))
     // Never leak a restricted child's title or identifier through its tile.
-    const visibleItems = visibleRelations(items.filter((o) => o.type !== 'board' || (!!o.content?.boardId && a.canRead(o.content.boardId) && !isToyboxTree(a.boards, o.content.boardId))))
+    const visibleItems = visibleRelations(items.filter((o) => o.type !== 'board' || (!!o.content?.boardId && followable(o.content.boardId))))
     out.push(...visibleItems)
     for (const item of visibleItems) {
       if (item.kind !== 'card' || item.type !== 'board' || !item.content?.boardId) continue

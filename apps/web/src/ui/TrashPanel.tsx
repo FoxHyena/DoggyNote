@@ -9,7 +9,17 @@ import { purgeComments, restoreComment } from '../state/comments.ts'
 import { boardId, setTrashOpen, trashOpen } from '../state/ui.ts'
 import { Icon, ToolIcons } from './icons.tsx'
 
+/** A short label; a malformed (synced) card gets a generic one instead of an error. */
 export function describeCard(c: Card): string {
+  try {
+    const label = rawDescribeCard(c)
+    return typeof label === 'string' && label ? label : 'Card'
+  } catch {
+    return 'Card'
+  }
+}
+
+function rawDescribeCard(c: Card): string {
   switch (c.type) {
     case 'note':
       return mdToText(noteMarkdown(c as Card<'note'>)).split('\n')[0] || 'Empty note'

@@ -161,7 +161,8 @@ export function LodLayer() {
     const drawCard = (c: Card, x: number, y: number, w: number, h: number) => {
       const bg = c.color && c.color !== 'none' ? pal[`${c.color}-bg`] : pal.card
       if (c.type === 'board') {
-        const b = doc.getBoard((c as Card<'board'>).content.boardId)
+        // Synced data: tolerate a card whose content is missing.
+        const b = doc.getBoard((c as Card<'board'>).content?.boardId)
         const s = Math.min(w, h) * 0.55
         ctx.fillStyle = pal[`${b?.color ?? 'gold'}-bg`]
         roundRect(ctx, x + (w - s) / 2, y + h * 0.1, s, s, s * 0.22)
@@ -171,7 +172,8 @@ export function LodLayer() {
         return
       }
       if (c.type === 'image') {
-        const t = thumb((c as Card<'image'>).content.assetId)
+        const assetId = (c as Card<'image'>).content?.assetId
+        const t = typeof assetId === 'string' ? thumb(assetId) : null
         if (t && atlas) ctx.drawImage(atlas, t.sx, t.sy, t.sw, t.sh, x, y, w, h)
         else {
           ctx.fillStyle = pal.border
