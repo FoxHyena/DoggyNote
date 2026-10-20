@@ -4,6 +4,7 @@ import {
   GRID,
   LOD_ZOOM,
   dotSpacing,
+  edgeNear,
   snap,
   clampZoom,
   cullRect,
@@ -49,6 +50,7 @@ import {
   selection,
   setCamera,
   setConnectMode,
+  setNearHandle,
   setSelection,
   setTrashOpen,
   setViewport,
@@ -425,6 +427,51 @@ export function Canvas(props: { readOnly: boolean }) {
     if (e.pointerType === 'touch') return touchMove(e)
     lastPointer = { clientX: e.clientX, clientY: e.clientY }
     moveGesture(e)
+    trackNearHandle(e)
+  }
+
+  // ---- connector handles (mouse) ---------------------------------------------
+  // A handle shows only while the pointer is near its edge: an edge of the card
+  // under the pointer, else the closest edge just outside a card. Never mid-card,
+  // and never on the card being edited. Checked once a frame.
+  type Hover = { clientX: number; clientY: number; target: Element | null }
+  let nearFrame = 0
+  let nearAt: Hover | null = null
+  function trackNearHandle(e: PointerEvent) {
+    nearAt = { clientX: e.clientX, clientY: e.clientY, target: e.target as Element | null }
+    if (nearFrame) return
+    nearFrame = requestAnimationFrame(() => {
+      nearFrame = 0
+      if (nearAt) setNearHandle(nearHandleAt(nearAt))
+    })
+  }
+  function nearHandleAt(e: Hover): string {
+    if (gesture || lod()) return ''
+    const p = toWorld(e)
+    const zoom = camera().zoom
+    const sideOf = (id: Id) => {
+      const r = id === editingId() ? null : rectOf(id)
+      return r && edgeNear(r, p, 12 / zoom, 24 / zoom)
+    }
+    const under = domCardAt(e.target)
+    if (under) {
+      const side = sideOf(under)
+      return side ? `${under}:${side}` : ''
+    }
+    let best = ''
+    let bestD = Infinity
+    for (const c of doc.cardsOn(boardId())) {
+      if (c.columnId) continue
+      const side = sideOf(c.id)
+      if (!side) continue
+      const r = rectOf(c.id)!
+      const d = Math.hypot(Math.max(r.x - p.x, 0, p.x - r.x - r.w), Math.max(r.y - p.y, 0, p.y - r.y - r.h))
+      if (d < bestD) {
+        best = `${c.id}:${side}`
+        bestD = d
+      }
+    }
+    return best
   }
 
   function moveGesture(e: Client) {
@@ -1013,7 +1060,7 @@ export function Canvas(props: { readOnly: boolean }) {
       classList={{ panning: panning(), moving: moving(), snapping: snapping(), 'snap-on': snapToGrid(), connecting: !!connectPreview(), 'space-held': spaceHeld(), lod: lod(), 'connect-mode': !!connectMode(), readonly: props.readOnly }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
-      onPointerLeave={(e) => { if (e.pointerType !== 'touch') lastPointer = null }}
+      onPointerLeave={(e) => { if (e.pointerType !== 'touch') { lastPointer = null; nearAt = null; setNearHandle('') } }}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
       onDblClick={onDblClick}
