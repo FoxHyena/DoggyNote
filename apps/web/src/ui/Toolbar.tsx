@@ -90,6 +90,8 @@ export function Toolbar() {
             }}
             title={t.id === 'line' ? 'Line: click two cards to connect them' : `${t.label}: click to add, or drag onto the board`}
             onPointerDown={(e) => onToolPointerDown(e, t)}
+            // The new card takes focus on pointerup; a tap's late mousedown would take it back.
+            onMouseDown={(e) => e.preventDefault()}
           >
             <Icon size={22}>{t.icon()}</Icon>
             <span>{t.label}</span>

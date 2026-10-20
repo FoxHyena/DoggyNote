@@ -41,3 +41,16 @@ test('the Add sheet keeps a tidy grid with the Movie tile', async ({ page }) => 
   // A lone last tile spans the row rather than sitting in a corner.
   if (boxes.length % 3 === 1) expect(boxes.at(-1)!.w).toBeGreaterThan(boxes[0].w * 2)
 })
+
+test('opening the details of a tall card brings the details into view, above the bars', async ({ page }) => {
+  await seedCards(page, [{ type: 'movie', w: 300, content: { kind: 'tv', tmdbId: 95396, title: '', status: 'pending' } }])
+  const card = page.locator('[data-type=movie]', { hasText: 'Severance' })
+  await expect(card.getByTestId('movie-sub')).toContainText('Show')
+  await card.getByTestId('movie-details-toggle').tap()
+  const details = card.getByTestId('movie-details')
+  await expect(details).toBeVisible()
+  // The phone's bottom bars take about 150px.
+  const room = page.viewportSize()!.height - 150
+  await expect.poll(async () => (await details.boundingBox())!.y).toBeLessThan(room - 60)
+  expect((await details.boundingBox())!.y).toBeGreaterThan(0)
+})

@@ -42,3 +42,14 @@ test('a selected card shows fingertip handles and a bottom bar', async ({ page }
   }
   await expect(page.getByTestId('connect-handle-left')).toBeVisible()
 })
+
+test('a tapped tool keeps the new card focused, so the keyboard stays up', async ({ page }) => {
+  for (const [tool, field] of [['tool-note', 'note-editor'], ['tool-movie', 'movie-search']] as const) {
+    await tapOn(page, page.getByTestId(tool))
+    await expect(page.getByTestId(field)).toBeVisible()
+    // The tap's late mouse events land on the tool button after the card has focus.
+    await page.waitForTimeout(400)
+    expect(await page.getByTestId(field).evaluate((el) => el.contains(document.activeElement))).toBe(true)
+    await page.keyboard.press('Escape')
+  }
+})

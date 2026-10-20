@@ -197,8 +197,13 @@ export function MovieCard(props: CardProps<'movie'>) {
   const toggleDetails = () => {
     const details = !c().details
     doc.update({ [id]: { content: { ...c(), details } } as Partial<Card> })
-    if (details) afterLayout(() => revealCard(id))
+    // Bring the details into view, even when the whole card can't fit.
+    if (details) afterLayout(() => {
+      const card = detailsEl?.closest<HTMLElement>('.card')
+      revealCard(id, card && detailsEl ? (detailsEl.getBoundingClientRect().top - card.getBoundingClientRect().top) / camera().zoom : 0)
+    })
   }
+  let detailsEl: HTMLDivElement | undefined
   const page = () => tmdbPage(c())
   // A title TMDB couldn't find still says what it was.
   const name = () => c().title || (c().status === 'error' ? (c().imdbId ? `IMDb ${c().imdbId}` : 'Unknown title') : COPY.loading)
@@ -300,7 +305,7 @@ export function MovieCard(props: CardProps<'movie'>) {
           </div>
           <Show when={c().details && c().info}>
             {(info) => (
-              <div class="movie-details" data-testid="movie-details">
+              <div ref={detailsEl} class="movie-details" data-testid="movie-details">
                 <Show when={info().genres?.length}>
                   <div class="movie-chips" aria-label="Genres">
                     <For each={info().genres}>{(g) => <span class="movie-chip">{g}</span>}</For>

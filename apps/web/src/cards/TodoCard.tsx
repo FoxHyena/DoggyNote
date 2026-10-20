@@ -53,9 +53,10 @@ function glide(list: () => HTMLElement | undefined, order: () => string) {
           el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' })
         }
       })
-      // While rows slide, a tap aimed at the old spot would land on another task.
+      // While rows slide, and for a reaction time after, a tap aimed at the old spot
+      // would land on another task.
       const el = list()
-      if (el && moved) el.dataset.glideUntil = String(Date.now() + 300)
+      if (el && moved) el.dataset.glideUntil = String(Date.now() + 600)
     }
     last = now
   }, { defer: true }))
