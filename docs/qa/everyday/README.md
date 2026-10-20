@@ -8,6 +8,33 @@
 - A legible Sync now.
 - Columns: the first click selects.
 - Movie and show cards from TMDB.
+- Connector handles: only the one near the pointer.
+
+[Open the before/after gallery](../../../output/review/doggynote-everyday.html) (run `python3 docs/qa/everyday/scripts/gallery.py` first) · [Every captured state](review-matrix.csv)
+
+## What changed
+
+| Usage pattern | Before | After |
+| --- | --- | --- |
+| Chores | Done tasks stayed where they were ticked | A tick sinks below the open tasks a beat later and says "done today"; done tasks fold away or clear, with undo |
+| Writing notes | Tab left the note; lists nested by hand | Tab and Shift-Tab nest list items (dock buttons on phones); Backspace unbullets; the caret's line keeps its bullets and boxes |
+| Ticking in notes | A ticked box sat ~4px below its line | Ticked and open boxes sit level with their text |
+| Rearranging | No copy or paste of cards | ⌘C/⌘X/⌘V/⌘D keep layout, connectors and comments (cut moves); ⌘⇧V pastes plain text |
+| Agent proposals | A mini-board drawing in a dialog | The proposal shows on the real board with New/Edited/Moved/Buried marks, Next change with a counter, approve from the banner |
+| Saving | "Sync now" greyed out mid-sync | "Syncing…" long enough to read, then a quiet "✓ Synced" |
+| Columns | The first click edited the title | The first click selects (colours); the title edits after |
+| Watchlist | Links to IMDb | Movie and show cards with TMDB posters, watched toggle, runtime, genres and where to stream; IMDb/TMDB links paste as cards |
+| Connecting | All four handles on every hovered card | Only the handle on the edge the pointer is near; none mid-card or while editing |
+
+## Rounds
+
+| Round | Reviewer | Evidence | Outcome |
+| --- | --- | --- | --- |
+| Before | — | [before/](before/) | Baseline on `main` |
+| Visual 1, UX 1 | Independent subagents (desktop, phones, iPad) | Shots outside the repo | Round 1 table; every High and Med-High fixed |
+| Visual 2, UX 2 | Independent subagents, verified round 1 | Shots outside the repo | Round 2 table; every Med-High and Med fixed |
+| Visual 3 | Independent subagent, verified round 2 | Shots outside the repo | 7 of 9 round-2 fixes held; 11 new (round 3 table), Meds fixed |
+| Final | Capture of the finished build | [after/](after/) | Gallery compares before with after |
 
 **How each round runs:**
 1. **Capture.** `scripts/capture.mjs` seeds the "Movie night and chores" board (`scripts/fixture.mjs`).
@@ -108,3 +135,27 @@ All round-1 fixes passed except the dark watched posters (VD-3, now V2-1).
 | V2-5, V2-6, V2-9, UXM2-5 | Low | Docks | H/S scroll off the phone dock; dock icon alignment; the format bar's top corners clip under the top bar. | Deferred. Existing dock design, worth one pass on all docks. |
 | UXM2-4b | Low | Proposals | The iPad counter appears only after the first Next; the phone counter hides in Current. | Deferred. |
 | UXM2-1b | Low | Movies (iPad) | At the default 42% zoom a new movie's search box is small. | Deferred. Zoom in or use the phone dock. |
+
+## Round 3: findings
+
+Shots from one build, after the round-2 fixes. Verified: U-1, V2-1, V2-2, V2-3, V2-7, V2-8, V2-10. Failed: V2-4 and UXD2-2 (below).
+
+| # | Sev | Area | Finding | Status |
+|---|---|---|---|---|
+| V3-1 | Med-High | Overview | Watched posters stayed in colour on WebKit (the Mac app, iOS), which ignores canvas filters. Same as V2-4. | **Fixed.** A blend mode greys them in every engine; e2e test reads the canvas. |
+| V3-2 | Med | Overview | In dark, the grey poster melted into the card. | **Fixed.** Lifted, as on the card. |
+| V3-3 | Med | Proposals | The light theme's card shadow replaced the current change's tinted band. Same as UXD2-2. | **Fixed;** e2e test checks both themes. |
+| V3-4 | Med | Notes | Done tasks in coloured notes were 3.9:1. | **Fixed.** Muted on plain notes; full colour (struck through) on coloured ones. e2e contrast test. |
+| V3-5 | Med | Proposals | On a phone on its side, the sheet's buttons sat below the fold. | **Fixed.** Preview on the board stays in reach; e2e test added. |
+| V3-6 | Low | Movies | The selected search result's year line was 4.2:1 in dark. | **Fixed.** |
+| V3-7 | Low | Movies | Watched posters lost their hairline frame. | **Fixed.** The frame sits above the poster. |
+| V3-8 | Low | iPad | Selection dock swatches are 34px. | Kept. A deliberate tablet trade-off (mobile.css). |
+| V3-9 | Low | Proposals | The desktop banner covers the top row of unchanged cards. | Deferred. Changed cards are framed clear of it. |
+| V3-10 | Low | Proposals | The phone counter hides in Current mode, leaving a lone ›. | Deferred. Same as UXM2-4b. |
+| U-2 | — | Connectors | Handles should show only near their edge (maintainer request). | **Done;** e2e test added. |
+
+## Real devices and the simulator
+
+- iOS Simulator (iPhone 16e, iOS 18.6): a share link of the fixture board in Safari. Ticked and open note boxes sit level, as in Playwright's WebKit.
+- The signed-in app in the Simulator needs keystrokes through macOS accessibility, so the iPad keyboard fix (UXM2-1) was checked in Playwright's WebKit touch emulation. Worth a tap on a real iPad.
+- The Mac app (WKWebView) wasn't rebuilt this round. The overview fix targets its engine (WebKit) and is covered by the WebKit e2e project.
