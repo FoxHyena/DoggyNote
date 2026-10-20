@@ -1,7 +1,8 @@
-import { DEFAULT_SIZE, safeHref, type Id, type Vec } from '@doggynote/core'
+import { DEFAULT_SIZE, movieRefFromUrl, safeHref, type Id, type MovieRef, type Vec } from '@doggynote/core'
 import { createCard, createNoteWithText, type Placement } from '../state/actions.ts'
 import { importImage } from '../state/assets.ts'
 import { unfurl } from '../state/unfurl.ts'
+import { resolveMovie } from '../state/movies.ts'
 import { select } from '../state/ui.ts'
 import { addFiles } from '../state/files.ts'
 import { pasteClip, readClip, takePlainPaste } from '../state/clipboard.ts'
@@ -43,12 +44,22 @@ export function addLink(url: string, place: Placement, onBoard?: Id, title?: str
   return id
 }
 
-/** A URL becomes a link card, anything else a note. */
+/** A TMDB or IMDb link: a movie card that fetches its own details. */
+export function addMovie(ref: MovieRef, place: Placement, onBoard?: Id): Id {
+  const content = 'imdbId' in ref ? { kind: 'movie', title: '', imdbId: ref.imdbId, status: 'pending' } : { kind: ref.kind, tmdbId: ref.tmdbId, title: '', status: 'pending' }
+  const id = createCard('movie', place, { content, edit: false, boardId: onBoard })
+  void resolveMovie(id)
+  return id
+}
+
+/** A movie link becomes a movie card, any other URL a link card, anything else a note. */
 export function addText(text: string, at: Vec, onBoard?: Id, title?: string) {
   const t = text.trim()
   if (!t) return
   const href = safeHref(t)
-  if (href && !/\s/.test(t)) addLink(href, { at }, onBoard, title)
+  const movie = href && !/\s/.test(t) ? movieRefFromUrl(href) : null
+  if (movie) addMovie(movie, { at }, onBoard)
+  else if (href && !/\s/.test(t)) addLink(href, { at }, onBoard, title)
   else if (onBoard) createCard('note', { at }, { content: { md: t }, edit: false, boardId: onBoard })
   else createNoteWithText(t, { at })
 }

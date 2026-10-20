@@ -7,6 +7,8 @@ import { randomToken, sha256Hex } from './crypto.ts'
 import { loadAccess, type Access } from './access.ts'
 import { deniedChanges, ownerFor, deletedCommentOwner, stampComment } from './sync.ts'
 
+const assetOf = (o: { kind: string; content?: unknown }): string | undefined => (o.kind === 'card' ? (o.content as { assetId?: string } | undefined)?.assetId : undefined)
+
 type Credential = { id: string; user_id: string; name: string; mode: 'read' | 'propose'; board_ids: string; expires_at: number; revoked_at: number | null }
 type AgentEnv = AppEnv & { Variables: AppEnv['Variables'] & { agent: Credential } }
 type Row = { id: string; data: string; seq: number; owner_id: string | null }
@@ -126,10 +128,11 @@ async function validateChanges(db: D1Database, access: Access, credential: Crede
     const before = change.before
     if (before && before.createdAt !== after.createdAt) error('Creation timestamp cannot change')
     if (before?.kind === 'comment' && after.kind === 'comment' && (before.authorId !== after.authorId || before.author !== after.author)) error('Comment author cannot change')
-    if (after.kind === 'card' && (after.type === 'image' || after.type === 'file')) {
-      const assetId = after.content.assetId
-      const existingId = before?.kind === 'card' && (before.type === 'image' || before.type === 'file') ? before.content.assetId : null
-      if (assetId !== existingId && ![...all.values()].some((r) => r.object.kind === 'card' && (r.object.type === 'image' || r.object.type === 'file') && r.object.content.assetId === assetId && readable(access, credential, user.id, r))) error('Use an asset already visible within this connection’s boards')
+    // Any card that names an asset (images, files, movie posters) grants reading it.
+    const assetId = assetOf(after)
+    if (assetId) {
+      const existingId = before ? assetOf(before) : undefined
+      if (assetId !== existingId && ![...all.values()].some((r) => assetOf(r.object) === assetId && readable(access, credential, user.id, r))) error('Use an asset already visible within this connection’s boards')
     }
     // Protect server-stamped identity while allowing an unchanged foreign
     // comment to follow its card between boards.

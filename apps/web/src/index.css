@@ -1826,6 +1826,315 @@ html[data-input="mouse"] a.file-name:hover {
   font-weight: 600;
 }
 
+/* movies and shows */
+
+.movie-card {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  column-gap: 12px;
+  padding: 12px;
+}
+
+.movie-poster {
+  position: relative;
+  width: 92px;
+  aspect-ratio: 2 / 3;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--dn-card-hover);
+}
+
+.movie-poster-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.movie-poster-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--dn-text-muted);
+}
+
+/* Watched: the poster steps back; the words stay readable. */
+.movie-card.watched .movie-poster-img {
+  opacity: 0.5;
+  filter: grayscale(0.7);
+}
+
+.movie-watched-badge {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--dn-accent);
+  color: var(--dn-accent-text);
+}
+
+.movie-watched-badge svg,
+.movie-watch svg {
+  width: 14px;
+  height: 14px;
+}
+
+.movie-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.movie-title {
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.3;
+  color: inherit;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+html[data-input="mouse"] a.movie-title:hover {
+  text-decoration: underline;
+}
+
+.movie-sub,
+.movie-note,
+.movie-watched-at,
+.movie-watched-label,
+.movie-where-label,
+.movie-credit,
+.movie-search-note,
+.movie-result-text small {
+  color: var(--dn-text-muted);
+}
+
+.movie-sub {
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.movie-note {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.movie-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+.movie-watch,
+.movie-details-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 3px 10px;
+  border: 1px solid var(--dn-border);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+}
+
+/* Touch: a fingertip-sized target around the small buttons, without changing the card's layout. */
+html[data-input='touch'] :is(.movie-watch, .movie-details-toggle) {
+  position: relative;
+}
+
+html[data-input='touch'] :is(.movie-watch, .movie-details-toggle)::after {
+  content: '';
+  position: absolute;
+  inset: -8px -3px;
+}
+
+html[data-input="mouse"] .movie-watch:hover,
+html[data-input="mouse"] .movie-details-toggle:hover {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.movie-watch.on {
+  border-color: var(--dn-accent);
+  background: var(--dn-accent);
+  color: var(--dn-accent-text);
+}
+
+html[data-input="mouse"] .movie-watch.on:hover {
+  background: var(--dn-accent);
+}
+
+.movie-watched-label,
+.movie-watched-at {
+  font-size: 11px;
+}
+
+.movie-watched-at {
+  margin-top: 6px;
+}
+
+.movie-details {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--dn-border);
+}
+
+.movie-chips,
+.movie-where {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.movie-where {
+  font-size: 12px;
+}
+
+.movie-chip {
+  padding: 1px 8px;
+  border: 1px solid var(--dn-border);
+  border-radius: 999px;
+  font-size: 11.5px;
+}
+
+.movie-where-label {
+  min-width: 44px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.movie-overview {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.movie-credit {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.movie-credit a {
+  color: inherit;
+}
+
+.colored :is(.movie-sub, .movie-note, .movie-watched-at, .movie-watched-label, .movie-where-label, .movie-credit, .movie-search-note, .movie-result-text small) {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.colored :is(.movie-watch, .movie-details-toggle, .movie-chip),
+.colored .movie-details {
+  border-color: color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.movie-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px;
+  color: var(--dn-text-muted);
+}
+
+/* The search a new movie card starts with. */
+.movie-search {
+  padding: 10px;
+}
+
+.movie-search-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--dn-border);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+}
+
+.movie-search-input::placeholder {
+  color: var(--dn-text-muted);
+}
+
+.movie-search-note {
+  margin: 8px 2px 0;
+  font-size: 12.5px;
+}
+
+.movie-results {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.movie-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.movie-result[aria-selected='true'] {
+  background: color-mix(in srgb, currentColor 9%, transparent);
+}
+
+.movie-result-thumb {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  aspect-ratio: 2 / 3;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--dn-card-hover);
+  color: var(--dn-text-muted);
+}
+
+.movie-result-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.movie-result-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.movie-result-text strong {
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.movie-result-text small {
+  font-size: 11.5px;
+}
+
 .toast {
   position: absolute;
   left: 50%;

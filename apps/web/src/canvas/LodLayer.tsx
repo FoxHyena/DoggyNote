@@ -181,6 +181,30 @@ export function LodLayer() {
         }
         return
       }
+      if (c.type === 'movie') {
+        // The card, its poster on the left (2:3), and a line or two of title.
+        ctx.fillStyle = bg
+        roundRect(ctx, x, y, w, h, 3 * z * 4)
+        ctx.fill()
+        const pad = 10 * z
+        const ph = Math.max(1, Math.min(h - pad * 2, 138 * z))
+        const pw = ph * (2 / 3)
+        const assetId = (c as Card<'movie'>).content?.assetId
+        const t = typeof assetId === 'string' ? thumb(assetId) : null
+        if (t && atlas) ctx.drawImage(atlas, t.sx, t.sy, t.sw, t.sh, x + pad, y + pad, pw, ph)
+        else {
+          ctx.fillStyle = pal.border
+          ctx.fillRect(x + pad, y + pad, pw, ph)
+        }
+        ctx.fillStyle = pal.muted
+        ctx.globalAlpha = 0.35
+        const tx = x + pad * 2 + pw
+        const tw = Math.max(1, w - (tx - x) - pad)
+        ctx.fillRect(tx, y + pad, tw, Math.max(1, 8 * z))
+        ctx.fillRect(tx, y + pad + 16 * z, tw * 0.6, Math.max(1, 8 * z))
+        ctx.globalAlpha = 1
+        return
+      }
       ctx.fillStyle = c.type === 'column' ? pal.panel : bg
       roundRect(ctx, x, y, w, h, 3 * z * 4)
       ctx.fill()

@@ -27,3 +27,16 @@ it('round-trips to-do lists with done times and list options', () => {
   expect(agentObjectSchema.safeParse(todo).success).toBe(true)
   expect(agentObjectSchema.safeParse({ ...todo, content: { ...todo.content, items: [{ id: 'a', text: 'Walk', done: true, doneAt: 'yesterday' }] } }).success).toBe(false)
 })
+
+it('takes movie cards that name their title, with or without fetched details', () => {
+  const card = { id: 'film-1', kind: 'card', type: 'movie', boardId: 'board-1', x: 0, y: 0, w: 300, h: 162, z: 1, color: 'none', createdAt: 1 }
+  expect(agentObjectSchema.safeParse({ ...card, content: { kind: 'movie', tmdbId: 157336, title: 'Interstellar', status: 'pending' } }).success).toBe(true)
+  expect(agentObjectSchema.safeParse({ ...card, content: { kind: 'tv', title: 'Severance', imdbId: 'tt11280740', status: 'pending' } }).success).toBe(true)
+  // A full card read back from a board (poster, details) can be replaced as is.
+  const full = { kind: 'movie', tmdbId: 157336, title: 'Interstellar', year: 2014, assetId: 'poster-1', watched: true, watchedAt: 5, details: true, status: 'ok',
+    info: { runtime: 169, genres: ['Drama'], overview: 'Space.', providers: { region: 'US', link: 'https://www.themoviedb.org/watch', stream: ['Paramount Plus'] }, fetchedAt: 4 } }
+  expect(agentObjectSchema.safeParse({ ...card, content: full }).success).toBe(true)
+  // No id to look it up by; a bad IMDb id; a script link; extra fields.
+  for (const content of [{ kind: 'movie', title: 'Something good' }, { kind: 'movie', title: 'x', imdbId: 'nm0000190' }, { ...full, info: { ...full.info, providers: { region: 'US', link: 'javascript:alert(1)' } } }, { ...full, poster: 'https://example.com/p.jpg' }])
+    expect(agentObjectSchema.safeParse({ ...card, content }).success).toBe(false)
+})

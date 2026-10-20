@@ -99,6 +99,18 @@ const STATES = {
     if (await pick.count()) await press(page, pick.first())
     await page.waitForTimeout(800)
   },
+  movies: async (page) => {
+    await page.getByText('Severance').first().waitFor({ timeout: 8000 })
+  },
+  'movie-search': async (page, touch) => {
+    if (touch) {
+      await pressId(page, 'dock-add')
+      await pressId(page, 'add-movie')
+    } else await page.getByTestId('tool-movie').click()
+    await page.getByTestId('movie-search').fill('s')
+    await page.keyboard.type('e')
+    await page.getByTestId('movie-result').first().waitFor({ timeout: 5000 })
+  },
   overview: async () => {},
 }
 
@@ -120,7 +132,7 @@ for (const { key, engine, d } of DEVICES) {
       if (stateFilter && !stateFilter.split(',').includes(state)) continue
       await page.goto(`/#/b/${fixture.board}`)
       const cam = state === 'board' ? null : state === 'overview' ? { x: -200, y: -300, zoom: 0.3 } : { x: -16, y: -40, zoom: 1 }
-      const camFor = state === 'todo' || state === 'todo-select' || state === 'todo-options' ? { x: 300, y: -40, zoom: 1 } : state === 'column-click' ? { x: 600, y: -40, zoom: 1 } : cam
+      const camFor = state === 'todo' || state === 'todo-select' || state === 'todo-options' ? { x: 300, y: -40, zoom: 1 } : state === 'column-click' ? { x: 600, y: -40, zoom: 1 } : state === 'movies' ? { x: 940, y: -40, zoom: 1 } : cam
       await page.evaluate(({ board, cam }) => {
         localStorage.removeItem(`doggynote.cam.${board}`)
         if (cam) localStorage.setItem(`doggynote.cam.${board}`, JSON.stringify(cam))

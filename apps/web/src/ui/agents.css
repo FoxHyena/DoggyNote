@@ -92,3 +92,10 @@
 .proposal-next-icon { display: none; flex-shrink: 0; }
 .app.phone .proposal-next { display: none; }
 .app.phone .proposal-next-icon { display: inline-flex; }
+
+/* About & credits */
+.about-dialog { max-width: 440px; }
+.about-version { color: var(--dn-text-muted); }
+.about-credit { display: flex; flex-direction: column; gap: 8px; }
+.about-credit img { display: block; height: 18px; width: auto; }
+.about-credit p { margin: 0; }

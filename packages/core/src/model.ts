@@ -8,7 +8,7 @@ import type { Side } from './geometry.ts'
 export type Id = string
 
 /** Every card type this build can draw. Anything else came from a newer app (see cardtext.ts). */
-export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'file'] as const
+export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie'] as const
 export type CardType = (typeof CARD_TYPES)[number]
 export const isKnownCardType = (t: unknown): t is CardType => (CARD_TYPES as readonly unknown[]).includes(t)
 
@@ -43,6 +43,39 @@ export type CardContent = {
    * first-page preview stored as the image rendition "<assetId>/thumb".
    */
   file: { assetId: Id; name: string; size: number; mime: string; status?: 'uploading' | 'ok' | 'error'; error?: string; thumb?: { width: number; height: number } }
+  movie: MovieContent
+}
+
+/**
+ * A film or show from TMDB. A card with no `tmdbId` is still being searched for;
+ * `status: 'pending'` (a pasted link, an agent's card) means it still needs
+ * resolving. The poster is an image asset ("<assetId>/thumb" and "/small").
+ */
+export type MovieContent = {
+  tmdbId?: number
+  kind: 'movie' | 'tv'
+  title: string
+  year?: number
+  imdbId?: string
+  assetId?: Id
+  watched?: boolean
+  watchedAt?: number | null
+  /** Show the extras (runtime, genres, overview, where to watch). */
+  details?: boolean
+  status?: 'pending' | 'ok' | 'error'
+  info?: MovieInfo
+}
+
+export type MovieInfo = {
+  /** Minutes (films). */
+  runtime?: number
+  seasons?: number
+  episodes?: number
+  genres?: string[]
+  overview?: string
+  /** Where to watch, from JustWatch via TMDB, for one region. */
+  providers?: { region: string; link?: string; stream?: string[]; rent?: string[]; buy?: string[] }
+  fetchedAt: number
 }
 
 type Base = {
@@ -122,6 +155,7 @@ export const DEFAULT_SIZE: Record<CardType, { w: number; h: number }> = {
   link: { w: 260, h: 220 },
   column: { w: 280, h: 120 },
   file: { w: 260, h: 72 },
+  movie: { w: 300, h: 162 },
 }
 
 export const isAlive = (o: Obj | undefined): boolean => !!o && !o.purged && !o.deletedAt
