@@ -155,7 +155,7 @@ export const DEFAULT_SIZE: Record<CardType, { w: number; h: number }> = {
   link: { w: 260, h: 220 },
   column: { w: 280, h: 120 },
   file: { w: 260, h: 72 },
-  movie: { w: 300, h: 162 },
+  movie: { w: 220, h: 370 },
 }
 
 export const isAlive = (o: Obj | undefined): boolean => !!o && !o.purged && !o.deletedAt

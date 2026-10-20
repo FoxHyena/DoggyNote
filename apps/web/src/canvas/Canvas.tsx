@@ -1171,6 +1171,21 @@ export function cancelCameraAnimation() {
   anim = 0
 }
 
+/**
+ * Pan (never zoom) so a card's whole height is on screen, clear of the phone's
+ * bottom bars. A card taller than the room shows its top.
+ */
+export function revealCard(id: Id) {
+  const r = rectOf(id)
+  if (!r) return
+  const cam = camera()
+  const room = viewport().height - (phone() ? 150 : 24)
+  const top = (r.y - cam.y) * cam.zoom
+  const bottom = (r.y + r.h - cam.y) * cam.zoom
+  const dy = bottom > room ? Math.min(bottom - room, top - 16) : top < 16 ? top - 16 : 0
+  if (Math.abs(dy) >= 2) animateCamera({ ...cam, y: cam.y + dy / cam.zoom }, 260)
+}
+
 /** Ease the camera to a target. Short and springy: it should feel physical, not slow. */
 export function animateCamera(to: { x: number; y: number; zoom: number }, ms = 220, done?: () => void) {
   cancelAnimationFrame(anim)

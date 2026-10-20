@@ -10,12 +10,17 @@ import { clock } from '../state/todos.ts'
 import { resolveMovie, searchMovies, type SearchHit } from '../state/movies.ts'
 import { Icon, ToolIcons } from '../ui/icons.tsx'
 import type { CardProps } from '../canvas/CardView.tsx'
+import { revealCard } from '../canvas/Canvas.tsx'
 
 // A film or show: poster, title, year and kind, a Watched toggle, and (per card)
-// the details: genres, a summary and where to watch. A new card starts as a
-// search box; picking a title fetches its details and poster.
+// the details: genres, a summary and where to watch. On the board the poster
+// leads, with the title under it; in a column the card is a compact row (like
+// board cards). A new card starts as a search box; picking a title fetches its
+// details and poster.
 
-const POSTER_W = 92
+/** The poster's width in a column; on the board it fills the card. */
+const ROW_POSTER_W = 72
+const PAD = 10
 
 onEndEdit((id) => {
   const c = doc.getCard(id) as Card<'movie'> | undefined
@@ -24,13 +29,16 @@ onEndEdit((id) => {
     if (editIsNewCard()) doc.discardNew(id)
     return
   }
-  if (c.content.status === 'pending') queueMicrotask(() => void resolveMovie(id))
+  if (c.content.status === 'pending') queueMicrotask(() => void resolveMovie(id).then(() => afterLayout(() => revealCard(id))))
 })
 
+/** Once the card has re-rendered and been measured. */
+const afterLayout = (fn: () => void) => requestAnimationFrame(() => requestAnimationFrame(fn))
+
 /** The stored poster, at the smallest size that stays sharp. */
-function Poster(props: { assetId: string; title: string }) {
+function Poster(props: { assetId: string; title: string; width: number }) {
   const size = createMemo<AssetSize>(() => {
-    const onScreen = exporting() ? POSTER_W * exportScale() : POSTER_W * camera().zoom * (window.devicePixelRatio || 1)
+    const onScreen = exporting() ? props.width * exportScale() : props.width * camera().zoom * (window.devicePixelRatio || 1)
     return onScreen <= 185 ? 'thumb' : 'small'
   })
   const [src, setSrc] = createSignal<string>()
@@ -186,8 +194,13 @@ export function MovieCard(props: CardProps<'movie'>) {
     const watched = !c().watched
     doc.update({ [id]: { content: { ...c(), watched, watchedAt: watched ? Date.now() : null } } as Partial<Card> })
   }
-  const toggleDetails = () => doc.update({ [id]: { content: { ...c(), details: !c().details } } as Partial<Card> })
+  const toggleDetails = () => {
+    const details = !c().details
+    doc.update({ [id]: { content: { ...c(), details } } as Partial<Card> })
+    if (details) afterLayout(() => revealCard(id))
+  }
   const page = () => tmdbPage(c())
+  const inColumn = () => !!props.card.columnId
   const providers = () => c().info?.providers
   const anyProvider = () => !!(providers()?.stream?.length || providers()?.rent?.length || providers()?.buy?.length)
 
@@ -212,22 +225,56 @@ export function MovieCard(props: CardProps<'movie'>) {
           </Show>
         }
       >
-        <div class="movie-card" classList={{ watched: !!c().watched }} data-status={c().status} data-testid="movie-card">
+        <div class="movie-card" classList={{ watched: !!c().watched, 'movie-row': inColumn(), 'movie-tall': !inColumn() }} data-status={c().status} data-testid="movie-card">
           <div class="movie-poster" data-testid="movie-poster">
             <Show when={c().assetId} fallback={<span class="movie-poster-empty"><Icon>{ToolIcons.film()}</Icon></span>}>
-              <Poster assetId={c().assetId!} title={c().title} />
+              <Poster assetId={c().assetId!} title={c().title} width={inColumn() ? ROW_POSTER_W : props.card.w - PAD * 2} />
             </Show>
             <Show when={c().watched}>
               <span class="movie-watched-badge" aria-hidden="true"><Icon>{ToolIcons.check()}</Icon></span>
             </Show>
           </div>
           <div class="movie-body">
-            <Show when={page()} fallback={<span class="movie-title">{c().title || COPY.loading}</span>}>
-              <a class="movie-title" href={page()!} target="_blank" rel="noopener noreferrer" data-nodrag data-testid="movie-title">
-                {c().title || COPY.loading}
-              </a>
-            </Show>
-            <div class="movie-sub" data-testid="movie-sub">{movieSubtitle(c())}</div>
+            <div class="movie-head">
+              <div class="movie-head-text">
+                <Show when={page()} fallback={<span class="movie-title">{c().title || COPY.loading}</span>}>
+                  <a class="movie-title" href={page()!} target="_blank" rel="noopener noreferrer" data-nodrag data-testid="movie-title">
+                    {c().title || COPY.loading}
+                  </a>
+                </Show>
+                <div class="movie-sub" data-testid="movie-sub">{movieSubtitle(c())}</div>
+              </div>
+              <Show when={!props.readOnly}>
+                <div class="movie-icons">
+                  <button
+                    class="movie-icon-btn"
+                    classList={{ on: !!c().watched }}
+                    aria-label="Watched"
+                    aria-pressed={!!c().watched}
+                    title={c().watched ? 'Watched (tap to unmark)' : 'Mark watched'}
+                    data-nodrag
+                    data-testid="movie-watched"
+                    onClick={toggleWatched}
+                  >
+                    <Icon>{ToolIcons.check()}</Icon>
+                  </button>
+                  <Show when={c().info}>
+                    <button
+                      class="movie-icon-btn"
+                      classList={{ on: !!c().details }}
+                      aria-label="Details"
+                      aria-expanded={!!c().details}
+                      title={c().details ? 'Hide details' : 'Details: genres, summary, where to watch'}
+                      data-nodrag
+                      data-testid="movie-details-toggle"
+                      onClick={toggleDetails}
+                    >
+                      <Icon>{ToolIcons.info()}</Icon>
+                    </button>
+                  </Show>
+                </div>
+              </Show>
+            </div>
             <Show when={c().status === 'pending'}>
               <div class="movie-note" role="status">{COPY.loading}</div>
             </Show>
@@ -240,18 +287,6 @@ export function MovieCard(props: CardProps<'movie'>) {
                 </Show>
               </div>
             </Show>
-            <div class="movie-actions">
-              <Show when={!props.readOnly} fallback={<Show when={c().watched}><span class="movie-watched-label">Watched</span></Show>}>
-                <button class="movie-watch" classList={{ on: !!c().watched }} aria-pressed={!!c().watched} data-nodrag data-testid="movie-watched" onClick={toggleWatched}>
-                  <Icon>{c().watched ? ToolIcons.check() : ToolIcons.circle()}</Icon> Watched
-                </button>
-                <Show when={c().info}>
-                  <button class="movie-details-toggle" aria-expanded={!!c().details} data-nodrag data-testid="movie-details-toggle" onClick={toggleDetails}>
-                    {c().details ? 'Less' : 'Details'}
-                  </button>
-                </Show>
-              </Show>
-            </div>
             <Show when={c().watched && c().watchedAt}>
               <div class="movie-watched-at" data-testid="movie-watched-at">Watched {doneLabel(c().watchedAt!, clock())}</div>
             </Show>

@@ -1828,20 +1828,26 @@ html[data-input="mouse"] a.file-name:hover {
 
 /* movies and shows */
 
-.card[data-type='movie'] {
-  container-type: inline-size;
+/* On the board the poster leads, title and icons under it; in a column, a compact row. */
+.movie-card {
+  padding: 10px;
 }
 
-.movie-card {
+.movie-card.movie-tall {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.movie-card.movie-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: 72px minmax(0, 1fr);
   column-gap: 12px;
-  padding: 12px;
 }
 
 .movie-poster {
   position: relative;
-  width: 92px;
+  width: 100%;
   aspect-ratio: 2 / 3;
   border-radius: 6px;
   overflow: hidden;
@@ -1864,17 +1870,6 @@ html[data-input="mouse"] a.file-name:hover {
   color: var(--dn-text-muted);
 }
 
-/* Narrow cards (in a column): a smaller poster, so the buttons share a row. */
-@container (max-width: 284px) {
-  .movie-poster {
-    width: 72px;
-  }
-
-  .movie-actions :is(.movie-watch, .movie-details-toggle) {
-    padding-inline: 8px;
-  }
-}
-
 /* Watched: the poster steps back; the words stay readable. */
 .movie-card.watched .movie-poster-img {
   opacity: 0.5;
@@ -1895,15 +1890,38 @@ html[data-input="mouse"] a.file-name:hover {
   color: var(--dn-accent-text);
 }
 
+.movie-tall .movie-watched-badge {
+  right: 8px;
+  bottom: 8px;
+  width: 30px;
+  height: 30px;
+}
+
 .movie-watched-badge svg,
-.movie-watch svg {
-  width: 14px;
-  height: 14px;
+.movie-icon-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .movie-body {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+}
+
+.movie-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+/* In a column the icons sit at the foot of the text, not beside the title. */
+.movie-row .movie-head {
+  display: contents;
+}
+
+.movie-head-text {
+  flex: 1;
   min-width: 0;
 }
 
@@ -1916,6 +1934,14 @@ html[data-input="mouse"] a.file-name:hover {
   overflow-wrap: anywhere;
 }
 
+.movie-tall .movie-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 14px;
+}
+
 html[data-input="mouse"] a.movie-title:hover {
   text-decoration: underline;
 }
@@ -1923,7 +1949,6 @@ html[data-input="mouse"] a.movie-title:hover {
 .movie-sub,
 .movie-note,
 .movie-watched-at,
-.movie-watched-label,
 .movie-where-label,
 .movie-credit,
 .movie-search-note,
@@ -1941,71 +1966,71 @@ html[data-input="mouse"] a.movie-title:hover {
   font-size: 12px;
 }
 
-.movie-actions {
+.movie-icons {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: auto;
-  padding-top: 10px;
+  flex: none;
+  gap: 4px;
 }
 
-.movie-watch,
-.movie-details-toggle {
+.movie-row .movie-icons {
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.movie-icon-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  min-height: 28px;
-  padding: 3px 10px;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border: 1px solid var(--dn-border);
-  border-radius: 999px;
+  border-radius: 50%;
   background: transparent;
   color: inherit;
-  font-size: 12px;
 }
 
-/* Touch: a fingertip-sized target around the small buttons, without changing the card's layout. */
-html[data-input='touch'] :is(.movie-watch, .movie-details-toggle) {
-  position: relative;
-}
-
-html[data-input='touch'] :is(.movie-watch, .movie-details-toggle)::after {
-  content: '';
-  position: absolute;
-  inset: -8px -3px;
-}
-
-html[data-input="mouse"] .movie-watch:hover,
-html[data-input="mouse"] .movie-details-toggle:hover {
+html[data-input="mouse"] .movie-icon-btn:hover {
   background: color-mix(in srgb, currentColor 8%, transparent);
 }
 
-.movie-watch.on {
+.movie-icon-btn.on {
   border-color: var(--dn-accent);
   background: var(--dn-accent);
   color: var(--dn-accent-text);
 }
 
-html[data-input="mouse"] .movie-watch.on:hover {
+html[data-input="mouse"] .movie-icon-btn.on:hover {
   background: var(--dn-accent);
 }
 
-.movie-watched-label,
+/* Touch: a fingertip-sized target around the icons, without changing the card's layout. */
+html[data-input='touch'] .movie-icon-btn {
+  position: relative;
+}
+
+html[data-input='touch'] .movie-icon-btn::after {
+  content: '';
+  position: absolute;
+  inset: -8px -2px;
+}
+
 .movie-watched-at {
+  margin-top: 4px;
   font-size: 11px;
 }
 
-.movie-watched-at {
-  margin-top: 6px;
-}
-
 .movie-details {
-  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 12px;
   padding-top: 10px;
   border-top: 1px solid var(--dn-border);
+}
+
+.movie-row .movie-details {
+  grid-column: 1 / -1;
+  margin-top: 12px;
 }
 
 .movie-chips,
@@ -2041,8 +2066,9 @@ html[data-input="mouse"] .movie-watch.on:hover {
 
 .movie-credit {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 8px;
+  gap: 4px 8px;
   font-size: 11px;
 }
 
@@ -2050,12 +2076,12 @@ html[data-input="mouse"] .movie-watch.on:hover {
   color: inherit;
 }
 
-.colored :is(.movie-sub, .movie-note, .movie-watched-at, .movie-watched-label, .movie-where-label, .movie-credit, .movie-search-note, .movie-result-text small) {
+.colored :is(.movie-sub, .movie-note, .movie-watched-at, .movie-where-label, .movie-credit, .movie-search-note, .movie-result-text small) {
   color: inherit;
   opacity: 0.75;
 }
 
-.colored :is(.movie-watch, .movie-details-toggle, .movie-chip),
+.colored :is(.movie-icon-btn:not(.on), .movie-chip),
 .colored .movie-details {
   border-color: color-mix(in srgb, currentColor 30%, transparent);
 }

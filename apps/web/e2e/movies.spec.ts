@@ -200,11 +200,26 @@ test('a card left without a pick rests quietly and can be picked later', async (
   await expect(page.locator('[data-type=movie]')).toHaveCount(0)
 })
 
-test('in a narrow card the poster shrinks so Watched and Details share a row', async ({ page }) => {
-  await seedCards(page, [{ type: 'movie', w: 264, content: { kind: 'movie', tmdbId: 999, title: '', status: 'pending' } }])
-  const card = movie(page, 'Lost Reel')
-  await expect(card.getByTestId('movie-details-toggle')).toBeVisible()
-  const [w, d] = [await card.getByTestId('movie-watched').boundingBox(), await card.getByTestId('movie-details-toggle').boundingBox()]
-  expect(Math.abs(w!.y - d!.y)).toBeLessThan(2)
-  expect((await card.getByTestId('movie-poster').boundingBox())!.width).toBeLessThan(80)
+test('on the board the poster leads with the title under it; in a column the card is a compact row', async ({ page }) => {
+  const column = crypto.randomUUID()
+  await seedCards(page, [
+    { type: 'movie', w: 220, content: { kind: 'movie', tmdbId: 157336, title: '', status: 'pending' } },
+    { id: column, type: 'column', x: 400, w: 280, content: { title: 'Watchlist' } },
+    { type: 'movie', w: 264, columnId: column, order: 1, content: { kind: 'tv', tmdbId: 95396, title: '', status: 'pending' } },
+  ])
+  const box = async (title: string, id: string) => (await movie(page, title).getByTestId(id).boundingBox())!
+  await expect(movie(page, 'Interstellar').getByTestId('movie-sub')).toContainText('2014')
+  await expect(movie(page, 'Severance').getByTestId('movie-sub')).toContainText('2022')
+  // Free: a big poster, the title below it, the icons on the caption row.
+  const poster = await box('Interstellar', 'movie-poster')
+  expect(poster.width).toBeGreaterThan(180)
+  expect((await box('Interstellar', 'movie-title')).y).toBeGreaterThan(poster.y + poster.height)
+  expect(Math.abs((await box('Interstellar', 'movie-watched')).y - (await box('Interstellar', 'movie-details-toggle')).y)).toBeLessThan(2)
+  // In a column: a small poster with the title beside it.
+  const small = await box('Severance', 'movie-poster')
+  expect(small.width).toBeLessThan(80)
+  expect((await box('Severance', 'movie-title')).x).toBeGreaterThan(small.x + small.width)
+  // Icons, labelled for screen readers.
+  await expect(movie(page, 'Severance').getByRole('button', { name: 'Watched' })).toBeVisible()
+  await expect(movie(page, 'Severance').getByRole('button', { name: 'Details' })).toBeVisible()
 })
