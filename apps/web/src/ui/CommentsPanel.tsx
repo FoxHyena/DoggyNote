@@ -1,8 +1,9 @@
 import { For, Show, createEffect, createMemo, createSignal } from 'solid-js'
 import { isAlive, parseMarkdown, type Comment } from '@doggynote/core'
+import { touch } from '../state/device.ts'
 import * as doc from '../state/doc.ts'
 import { user } from '../state/session.ts'
-import { setTrashOpen } from '../state/ui.ts'
+import { endEdit, setTrashOpen } from '../state/ui.ts'
 import { addComment, deleteComment, editComment, isResolved, relativeTime, setResolved, setThreadCardId, threadCardId } from '../state/comments.ts'
 import { RichText } from '../editor/RichText.tsx'
 import { describeCard } from './TrashPanel.tsx'
@@ -13,6 +14,8 @@ import { Icon, ToolIcons } from './icons.tsx'
 export function openThread(cardId: string) {
   setTrashOpen(false)
   setToyboxOpen(false)
+  // A phone sheet covers the note; leave no editor (and keyboard) hiding behind it.
+  if (touch()) endEdit()
   setThreadCardId(cardId)
 }
 
@@ -102,7 +105,10 @@ export function CommentsPanel(props: { readOnly?: boolean }) {
     if (!id || !draft().trim()) return
     addComment(id, draft())
     setDraft('')
+    // Show the reply you just sent, wherever the thread was scrolled.
+    requestAnimationFrame(() => list?.scrollTo({ top: list.scrollHeight, behavior: 'smooth' }))
   }
+  let list: HTMLUListElement | undefined
 
   return (
     <Show when={card()}>
@@ -135,7 +141,7 @@ export function CommentsPanel(props: { readOnly?: boolean }) {
           </Show>
         </p>
         <Show when={messages().length} fallback={<p class="trash-empty">No comments yet.</p>}>
-          <ul class="comment-list">
+          <ul class="comment-list" ref={list}>
             <For each={messages()}>{(m) => <Message m={m} readOnly={!!props.readOnly} />}</For>
           </ul>
         </Show>
@@ -145,7 +151,7 @@ export function CommentsPanel(props: { readOnly?: boolean }) {
               class="comment-input"
               data-testid="comment-input"
               rows={3}
-              placeholder={messages().length ? 'Reply… (⌘Enter to send)' : 'Start a thread… (⌘Enter to send)'}
+              placeholder={`${messages().length ? 'Reply…' : 'Start a thread…'}${touch() ? '' : ' (⌘Enter to send)'}`}
               value={draft()}
               ref={(el) => queueMicrotask(() => el.focus({ preventScroll: true }))}
               onInput={(e) => setDraft(e.currentTarget.value)}

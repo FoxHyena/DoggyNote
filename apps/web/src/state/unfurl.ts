@@ -14,7 +14,7 @@ export async function unfurl(id: Id) {
   try {
     const meta = await api<Unfurled>(`/api/unfurl?url=${encodeURIComponent(card.content.url)}`)
     const cur = doc.getCard(id) as Card<'link'> | undefined
-    if (cur) doc.silent({ [id]: { content: { ...cur.content, ...meta, status: 'ok' } } as Partial<Card> })
+    if (cur) doc.silent({ [id]: { content: { ...cur.content, ...meta, title: meta.title || cur.content.title, status: 'ok' } } as Partial<Card> })
   } catch (err) {
     const cur = doc.getCard(id) as Card<'link'> | undefined
     // Offline: leave it pending so it retries next time the card mounts.

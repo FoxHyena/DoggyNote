@@ -47,7 +47,7 @@ export function TrashPanel() {
             <Icon>{ToolIcons.close()}</Icon>
           </button>
         </header>
-        <Show when={items().length || comments().length} fallback={<p class="trash-empty">No bones buried on this board.</p>}>
+        <Show when={items().length || comments().length} fallback={<p class="trash-empty">{COPY.buriedEmpty}</p>}>
           <ul class="trash-list">
             <For each={items()}>
               {(c) => (

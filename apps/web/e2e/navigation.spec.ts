@@ -21,9 +21,13 @@ test('compact navigation stays usable across themes, narrow windows and long anc
     for (const width of [1440, 720, 600, 360]) {
       await page.setViewportSize({ width, height: 900 })
       await page.evaluate((native) => document.documentElement.classList.toggle('tauri', native), width === 720)
+      // Narrow windows switch to the phone layout once the resize lands.
+      await expect(page.locator('.app')).toHaveClass(width < 600 ? /\bphone\b/ : /^(?!.*\bphone\b)/)
       await expect(page.getByTestId('board-name')).toBeVisible()
       await expect(page.getByTestId('toybox-button')).toContainText('Inbox')
       for (const id of ['board-navigation', 'board-name', 'sync-status', 'open-fetch', 'toybox-button', 'share', 'board-more', 'account', 'canvas-controls']) {
+        // Narrow windows move some controls into the phone dock; wait for the move.
+        await expect(page.getByTestId(id)).toBeVisible()
         const bounds = await page.getByTestId(id).boundingBox()
         expect(bounds, `${id} exists at ${width}`).not.toBeNull()
         expect(bounds!.x, `${id} left at ${width}`).toBeGreaterThanOrEqual(0)

@@ -26,6 +26,13 @@ describe('contrast', () => {
       expect(c).toBeGreaterThanOrEqual(1.25)
       expect(c).toBeLessThanOrEqual(2.2)
     })
+    it(`${t}: the sheet scrim dims without blacking out`, () => {
+      const m = /^#[0-9a-f]{6}([0-9a-f]{2})$/.exec(s.scrim)
+      expect(m).not.toBeNull()
+      const alpha = parseInt(m![1], 16) / 255
+      expect(alpha).toBeGreaterThan(0.2)
+      expect(alpha).toBeLessThan(0.7)
+    })
     it(`${t}: selection outline clears 3:1 on canvas`, () => {
       expect(contrast(s.selection, s.bg)).toBeGreaterThanOrEqual(3)
     })

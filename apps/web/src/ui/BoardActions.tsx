@@ -39,6 +39,7 @@ export function BoardActions(props: { boardId: string; primary?: JSX.Element }) 
       <Icon><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none" /></Icon><Show when={proposal.pending() > 0}><span class="board-actions-more-badge" aria-hidden="true">{proposal.pending()}</span></Show>
     </button>
     <Show when={open()}><div ref={(el) => { menu = el; queueMicrotask(() => menu.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()) }} class="menu nav-menu board-actions-menu" role="menu" aria-label="Board actions" data-testid="board-actions-menu" onKeyDown={menuKeys}>
+      <div class="nav-menu-head sheet-only" aria-hidden="true"><strong>This board</strong></div>
       <button class="menu-item nav-menu-row" role="menuitem" data-testid="agent-proposals" aria-haspopup="dialog" onClick={() => { png.close(false); close(); proposal.open(more) }}><BoardIconSvg icon="paw" size={18} /><span class="nav-menu-label">Agent proposals</span><Show when={proposal.pending() > 0}><span class="nav-menu-meta">{` · ${proposal.pending()}`}</span></Show></button>
       <button class="menu-item nav-menu-row" role="menuitem" data-testid="export" aria-haspopup="dialog" onClick={() => { close(); png.open(more) }}><Icon size={18}>{ToolIcons.download()}</Icon><span class="nav-menu-label">Export PNG</span></button>
     </div></Show>

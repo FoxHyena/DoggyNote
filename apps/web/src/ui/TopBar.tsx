@@ -5,6 +5,7 @@ import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { boardId, openBoard } from '../state/ui.ts'
 import { installMenu } from './menu.ts'
+import { phone, touch } from '../state/device.ts'
 
 export function breadcrumbs(id: Id, root: Id = HOME_BOARD_ID): Board[] {
   const out: Board[] = []
@@ -29,6 +30,26 @@ export function TopBar(props: { readOnly: boolean; root?: Id; left?: JSX.Element
   let ancestorRoot!: HTMLDivElement, ancestorTrigger!: HTMLButtonElement
   installMenu(ancestorsOpen, () => setAncestorsOpen(false), () => ancestorRoot, () => ancestorTrigger)
 
+  // On a phone the chevron is Back: a tap goes up one level, a long-press lists every parent.
+  const backMode = () => phone() && touch()
+  let hold: ReturnType<typeof setTimeout> | undefined
+  let held = false
+  const startHold = (e: PointerEvent) => {
+    if (!backMode() || e.pointerType !== 'touch') return
+    held = false
+    hold = setTimeout(() => {
+      held = true
+      setAncestorsOpen(true)
+    }, 450)
+  }
+  const endHold = () => clearTimeout(hold)
+  const onParent = () => {
+    if (held) return void (held = false)
+    const up = crumbs().at(-2)
+    if (backMode() && up) return openBoard(up.id)
+    setAncestorsOpen(!ancestorsOpen())
+  }
+
   function rename(value: string) {
     setRenaming(false)
     const b = current()
@@ -41,7 +62,7 @@ export function TopBar(props: { readOnly: boolean; root?: Id; left?: JSX.Element
       <div class="topbar-left">{props.left}<div class="board-heading">
       <nav class="crumbs" classList={{ 'deep-crumbs': crumbs().length > 2 }} aria-label="Breadcrumbs" data-testid="breadcrumbs">
         <Show when={crumbs().length > 1}><div class="ancestor-menu zoom" ref={ancestorRoot}>
-          <button ref={ancestorTrigger} class="crumb" aria-label="Parent boards" data-testid="parent-boards" aria-expanded={ancestorsOpen()} onClick={() => setAncestorsOpen(!ancestorsOpen())}>…</button>
+          <button ref={ancestorTrigger} class="crumb" aria-label="Parent boards" data-testid="parent-boards" aria-expanded={ancestorsOpen()} onPointerDown={startHold} onPointerUp={endHold} onPointerLeave={endHold} onPointerCancel={endHold} onClick={onParent}><span class="parent-dots">…</span><svg class="parent-back" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
           <Show when={ancestorsOpen()}><div class="menu nav-menu" aria-label="Parent boards"><For each={crumbs().slice(0,-1)}>{(b) => <button class="menu-item" onClick={() => { openBoard(b.id); setAncestorsOpen(false); queueMicrotask(() => (ancestorTrigger.isConnected ? ancestorTrigger : document.querySelector<HTMLButtonElement>('[data-testid=board-name]'))?.focus()) }}>{titleOf(b)}</button>}</For></div></Show>
         </div><span class="crumb-sep ancestor-menu">/</span></Show>
         <div class="ancestor-crumbs"><For each={crumbs().slice(0, -1)}>

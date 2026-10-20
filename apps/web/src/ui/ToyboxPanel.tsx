@@ -12,6 +12,8 @@ import { addAnyFiles, addText } from '../canvas/paste.ts'
 import { describeCard } from './TrashPanel.tsx'
 import { placementAt } from './Toolbar.tsx'
 import { Icon, ToolIcons } from './icons.tsx'
+import { phone, touch } from '../state/device.ts'
+import { showToast } from '../state/toast.ts'
 import { screenToWorld } from '@doggynote/core'
 
 export const [toyboxOpen, setToyboxOpen] = createSignal(false)
@@ -30,21 +32,24 @@ export function ToyboxButton() {
       <Icon>{ToolIcons.inbox()}</Icon>
       <span class="icon-btn-label">
         {COPY.unsorted}
-        <Show when={toyboxCards().length}> · {toyboxCards().length}</Show>
+        <Show when={toyboxCards().length}><span class="count-inline"> · {toyboxCards().length}</span></Show>
       </span>
+      <Show when={toyboxCards().length}><span class="count-badge" aria-hidden="true">{toyboxCards().length}</span></Show>
     </button>
   )
 }
 
 const centre = (): Vec => {
   const v = viewport()
-  return screenToWorld(camera(), { x: v.width / 2, y: v.height / 2.6 })
+  // On a phone the Inbox sheet covers the lower part: place where it can be seen.
+  return screenToWorld(camera(), { x: v.width / 2, y: phone() ? v.height * 0.16 : v.height / 2.6 })
 }
 
 export function ToyboxPanel() {
   let panel: HTMLElement | undefined
   installCanvasPanel(toyboxOpen, () => setToyboxOpen(false), () => panel, () => document.querySelector('[data-testid="toybox-button"]'))
   const [draft, setDraft] = createSignal('')
+  let photo!: HTMLInputElement
   const [ghost, setGhost] = createSignal<{ card: Card; at: Vec } | null>(null)
   const canPlace = () => canEditBoard(boardId())
 
@@ -77,7 +82,8 @@ export function ToyboxPanel() {
 
   /** Drag an item out of the panel onto the board (or into a column). */
   function startDrag(e: PointerEvent, card: Card) {
-    if (e.button !== 0 || !canPlace()) return
+    // Touch scrolls the list; items go onto the board with Place.
+    if (e.button !== 0 || !canPlace() || e.pointerType === 'touch') return
     const start = { x: e.clientX, y: e.clientY }
     let dragging = false
     const el = e.currentTarget as HTMLElement
@@ -110,12 +116,13 @@ export function ToyboxPanel() {
             <Icon>{ToolIcons.close()}</Icon>
           </button>
         </header>
-        <p class="toybox-sub">Only you can see this. Drag things onto a board when you're ready.</p>
+        <p class="toybox-sub">Only you can see this. {touch() ? 'Place things onto a board when you\'re ready.' : 'Drag things onto a board when you\'re ready.'}</p>
         <Show when={!canPlace()}><p class="toybox-sub" id="toybox-move-hint">You need editing access to place items on this board. You can still add to your {COPY.unsorted}.</p></Show>
         <div class="toybox-add">
           <textarea
             data-testid="toybox-input"
             rows={2}
+            enterkeyhint="send"
             placeholder="Jot something down, or paste a link or image…"
             value={draft()}
             onInput={(e) => setDraft(e.currentTarget.value)}
@@ -126,8 +133,27 @@ export function ToyboxPanel() {
               }
             }}
           />
+          <div class="toybox-add-actions">
+            <button class="icon-btn" data-testid="toybox-photo" aria-label="Add a photo" title="Add a photo" onClick={() => photo.click()}>
+              <Icon>{ToolIcons.image()}</Icon>
+            </button>
+            <button class="primary-btn" data-testid="toybox-add" disabled={!draft().trim()} onClick={add}>Add</button>
+          </div>
+          <input
+            ref={photo}
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+            onChange={(e) => {
+              const tb = toyboxId()
+              const files = [...(e.currentTarget.files ?? [])]
+              e.currentTarget.value = ''
+              if (tb && files.length) addAnyFiles(files, { x: 0, y: 0 }, tb)
+            }}
+          />
         </div>
-        <Show when={toyboxCards().length} fallback={<p class="trash-empty">Nothing in your {COPY.unsorted.toLowerCase()} yet.</p>}>
+        <Show when={toyboxCards().length} fallback={<p class="trash-empty">{COPY.inboxEmpty}</p>}>
           <ul class="trash-list">
             <For each={toyboxCards()}>
               {(c) => (
@@ -141,15 +167,23 @@ export function ToyboxPanel() {
                     aria-describedby={!canPlace() ? 'toybox-move-hint' : undefined}
                     title={canPlace() ? 'Put it in the middle of this board' : 'You need editing access to this board'}
                     onPointerDown={(e) => e.stopPropagation()}
-                    onClick={() => moveCardTo(c.id, boardId(), { at: centre() })}
+                    onClick={() => {
+                      moveCardTo(c.id, boardId(), { at: centre() })
+                      if (touch()) showToast('Placed on this board', 4000, { label: 'Undo', run: () => doc.undo() })
+                    }}
                   >
                     Place
                   </button>
                   <button
                     class="icon-btn"
+                    data-testid="toybox-bury"
                     title={`Move to ${COPY.trash}`}
+                    aria-label={`Move to ${COPY.trash}`}
                     onPointerDown={(e) => e.stopPropagation()}
-                    onClick={() => doc.update({ [c.id]: { deletedAt: Date.now() } })}
+                    onClick={() => {
+                      doc.update({ [c.id]: { deletedAt: Date.now() } })
+                      if (touch()) showToast(`${COPY.buried} 1 card`, 5000, { label: 'Undo', run: () => doc.undo() })
+                    }}
                   >
                     <Icon size={16}>{ToolIcons.trash()}</Icon>
                   </button>

@@ -46,7 +46,7 @@
   transition: background 120ms, color 120ms, transform 120ms;
 }
 
-.tool:hover {
+html[data-input="mouse"] .tool:hover {
   background: var(--dn-card-hover);
   color: var(--dn-text);
 }
@@ -137,7 +137,7 @@
 }
 
 .icon-choice.on,
-.icon-choice:hover {
+html[data-input="mouse"] .icon-choice:hover {
   background: var(--dn-card-hover);
   color: var(--dn-text);
 }
@@ -218,7 +218,7 @@
   border-radius: 8px;
 }
 
-.trash-item:hover {
+html[data-input="mouse"] .trash-item:hover {
   background: var(--dn-card-hover);
 }
 
@@ -460,6 +460,19 @@
   font: inherit;
 }
 
+.toybox-add-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.toybox-add-actions .primary-btn {
+  min-height: 32px;
+  padding: 6px 16px;
+}
+
 .toybox-add textarea:focus {
   outline: 2px solid var(--dn-selection);
   outline-offset: 0;
@@ -513,6 +526,17 @@
   color: var(--dn-text-muted);
 }
 
+.capture-foot {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.capture-foot .capture-status { flex: 1; min-width: 0; }
+.capture-foot .primary-btn { min-height: 32px; padding: 6px 16px; }
+.capture-open { align-self: flex-start; text-decoration: none; }
+
 .capture-status[data-state='saved'] {
   color: var(--dn-accent);
   font-weight: 600;
@@ -527,7 +551,7 @@
 .toybox-item > .icon-btn { grid-column: 3; }
 .trash-head .icon-btn { flex-shrink: 0; }
 .trash > .danger-btn { flex-shrink: 0; min-height: 36px; }
-.selection-bar > .bar-btn { flex: 0 0 auto; min-height: 28px; }
+.selection-bar .bar-btn { flex: 0 0 auto; min-height: 28px; }
 .login-card form { display: grid; gap: 12px; min-width: 0; }
 .login-card h1, .login-card h2, .login-card p { overflow-wrap: anywhere; }
 .login-card .primary-btn { min-height: 44px; text-align: center; }
@@ -542,13 +566,13 @@
 .column-head .column-title { overflow-wrap: anywhere; }
 .capture .capture-input:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 0; }
 @media (pointer: coarse) {
-  .selection-bar > .bar-btn, .selection-bar .icon-choice { min-width: 44px; min-height: 44px; }
+  .selection-bar .bar-btn, .selection-bar .icon-choice { min-width: 44px; min-height: 44px; }
   .selection-bar .swatch { width: 44px; height: 44px; }
   .trash-item > .bar-btn, .trash-item > .icon-btn, .trash-head .icon-btn, .trash > .danger-btn { min-height: 44px; min-width: 44px; }
 }
 
 .fetch-close { display: grid; place-items: center; flex-shrink: 0; padding: 0; border: 0; border-radius: 6px; color: var(--dn-text-muted); background: transparent; }
-.fetch-close:hover { color: var(--dn-text); background: var(--dn-card-hover); }
+html[data-input="mouse"] .fetch-close:hover { color: var(--dn-text); background: var(--dn-card-hover); }
 @media (pointer: coarse) {
   .fetch-close { min-width: 44px; min-height: 44px; }
 }

@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-20",
+  "build": "feat/mobile-touch after UX round 2 fixes",
+  "unit": { "command": "pnpm test", "result": "141 passed" },
+  "typecheck": { "command": "pnpm -r typecheck", "result": "clean" },
+  "e2e": {
+    "command": "pnpm --filter web exec playwright test --workers=6",
+    "projects": ["webkit", "chromium", "mobile-webkit", "mobile-chromium", "tablet-webkit"],
+    "result": "396 passed, 3 skipped, 1 failed then passed 6/6 on rerun (agents.spec.ts:20, link unfurl racing the proposal under load)"
+  },
+  "captures": {
+    "devices": ["iPhone SE (3rd gen)", "iPhone 15 Pro", "iPhone 15 Pro landscape", "Pixel 7", "iPad Mini"],
+    "appearances": ["light", "dark"],
+    "sets": { "before": 171, "r2": 180, "r3": 180, "after": 180 }
+  },
+  "rounds": {
+    "visual": ["self (round 1)", "independent subagent (round 2, 18 findings)", "independent subagent (round 3, 14 findings)"],
+    "ux": ["independent subagent (round 1, 17 findings, 10 tasks)", "independent subagent (round 2, verified 16 fixes, 10 findings, 11 tasks)"]
+  }
+}

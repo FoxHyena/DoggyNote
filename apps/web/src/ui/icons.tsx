@@ -161,6 +161,13 @@ export const ToolIcons: Record<string, () => JSX.Element> = {
     </>
   ),
   close: () => <path d="M6 6l12 12M18 6 6 18" />,
+  plus: () => <path d="M12 5v14M5 12h14" />,
+  minus: () => <path d="M5 12h14" />,
+  edit: () => <path d="M15.5 5.5 18.5 8.5M4 20l1-4L16 5a2.1 2.1 0 0 1 3 3L8 19z" />,
+  multi: () => <><rect x="3" y="7" width="11" height="11" rx="2" /><path d="M8 4h10a2 2 0 0 1 2 2v10" /><path d="m6 12.5 2 2 3.5-4" /></>,
+  camera: () => <><path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" /><circle cx="12" cy="13" r="3.5" /></>,
+  open: () => <path d="M9 6l6 6-6 6" />,
+  fit: () => <path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4" />,
   comment: () => <path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4.5 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" />,
   check: () => <path d="M5 12.5 10 17l9-10" />,
   download: () => <path d="M12 4v12M7 11l5 5 5-5M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" />,

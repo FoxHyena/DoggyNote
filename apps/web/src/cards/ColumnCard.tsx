@@ -1,4 +1,4 @@
-import { For, Show, createMemo } from 'solid-js'
+import { For, Show, createMemo, onMount } from 'solid-js'
 import type { Card } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
 import { endEdit } from '../state/ui.ts'
@@ -25,7 +25,7 @@ export function ColumnCard(props: CardProps<'column'>) {
           }
         >
           <input
-            ref={(el) => queueMicrotask(() => el.focus())}
+            ref={(el) => onMount(() => el.focus())}
             class="column-title-input"
             data-testid="column-title-input"
             placeholder="Column"

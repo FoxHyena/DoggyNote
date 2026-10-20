@@ -34,7 +34,7 @@
 .theme-choices { display: flex; gap: 4px; padding: 0 8px 12px; margin-bottom: 4px; border-bottom: 1px solid var(--dn-border); }
 .theme-choice { flex: 1; min-width: 0; min-height: 36px; background: transparent; color: var(--dn-text-muted); border: 1px solid transparent; border-radius: 6px; padding: 8px 4px; font-size: 12px; }
 .theme-choice[aria-checked='true'] { background: var(--dn-card-hover); color: var(--dn-text); border-color: var(--dn-border); }
-.theme-choice:hover { color: var(--dn-text); background: var(--dn-card-hover); }
+html[data-input="mouse"] .theme-choice:hover { color: var(--dn-text); background: var(--dn-card-hover); }
 .viewer-menu { width: 240px; padding-top: 12px; }
 .viewer-menu .theme-choices { border-bottom: 0; margin-bottom: 0; padding-bottom: 4px; }
 .board-actions { position: relative; }

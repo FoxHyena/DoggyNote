@@ -5,7 +5,7 @@ import { createTheme } from './theme.ts'
 import { Canvas } from './canvas/Canvas.tsx'
 import { Toolbar } from './ui/Toolbar.tsx'
 import { TopBar } from './ui/TopBar.tsx'
-import { SelectionBar } from './ui/SelectionBar.tsx'
+import { ConnectBanner, SelectionBar } from './ui/SelectionBar.tsx'
 import { TrashPanel } from './ui/TrashPanel.tsx'
 import { Loader } from './ui/Loader.tsx'
 import { Login } from './ui/Login.tsx'
@@ -26,10 +26,13 @@ import { syncNow } from './state/sync.ts'
 import { FetchPalette } from './ui/Fetch.tsx'
 import { Diagnostics } from './ui/Diagnostics.tsx'
 import { UpdateToast } from './ui/UpdateToast.tsx'
-import { ToyboxButton, ToyboxPanel } from './ui/ToyboxPanel.tsx'
+import { ToyboxButton, ToyboxPanel, setToyboxOpen } from './ui/ToyboxPanel.tsx'
 import { CommentsPanel } from './ui/CommentsPanel.tsx'
 import { Toast } from './ui/Toast.tsx'
-import { ensureToybox } from './state/toybox.ts'
+import { ensureToybox, toyboxId } from './state/toybox.ts'
+import { captureLaunch, takeLaunch } from './state/launch.ts'
+import { addText } from './canvas/paste.ts'
+import { showToast } from './state/toast.ts'
 import { startUpdateChecks } from './state/updates.ts'
 import { paletteOpen, setPaletteOpen } from './state/ui.ts'
 import { Icon, ToolIcons } from './ui/icons.tsx'
@@ -39,9 +42,14 @@ import { BoardNavigation } from './ui/BoardNavigation.tsx'
 import { canEditBoard, canManageBoard, canReadBoard, homeBoardId } from './state/access.ts'
 import { installNativeSave } from './state/lifecycle.ts'
 import { ExitSaveDialog } from './ui/ExitSaveDialog.tsx'
+import { EditDock } from './ui/EditDock.tsx'
+import { MobileDock } from './ui/MobileDock.tsx'
+import { installSheetDrag } from './ui/sheet.ts'
+import { phone } from './state/device.ts'
 
 export default function Root() {
   installLinkHandler()
+  captureLaunch()
   const invitation = location.pathname.match(/^\/(signup|reset)\/([^/]+)/)
   if (invitation) return <Signup token={decodeURIComponent(invitation[2])} mode={invitation[1] === 'reset' ? 'reset' : 'signup'} />
   const join = location.pathname.match(/^\/join\/([^/]+)/)
@@ -83,6 +91,7 @@ function EditorApp() {
         if (!doc.getBoard(boardId()) || !canReadBoard(boardId())) openBoard(homeBoardId())
         migrateNotesToMarkdown()
         ensureToybox()
+        openLaunchIntent()
       })
     }
     setSignedOut(false)
@@ -95,6 +104,8 @@ function EditorApp() {
     if (s === 'anon') setPhase('login')
     else await boot()
   })
+
+  onMount(() => onCleanup(installSheetDrag()))
 
   onMount(() => {
     const off = installShortcuts({ get readOnly() { return !canEditBoard(boardId()) } })
@@ -127,36 +138,40 @@ function EditorApp() {
         <Login onLogin={() => void boot()} />
       </Match>
       <Match when={phase() === 'ready'}>
-        <div class="app" classList={{ 'read-only': !canEditBoard(boardId()) }}>
+        <div class="app" classList={{ 'read-only': !canEditBoard(boardId()), phone: phone() }}>
           <TopBar
             readOnly={!canEditBoard(boardId())}
-            left={<BoardNavigation />}
+            left={<Show when={!phone()}><BoardNavigation /></Show>}
             status={<SyncStatus />}
             permission={<Show when={!canManageBoard(boardId())}><span class="share-permission" data-testid="board-permission">{canEditBoard(boardId()) ? 'Can edit' : 'View only'}</span></Show>}
             right={
               <>
-                <button class="icon-btn" data-testid="open-fetch" aria-label={`${COPY.search} (⌘K)`} data-tooltip={`${COPY.search} (⌘K)`} onClick={() => setPaletteOpen(true)}><Icon>{ToolIcons.search()}</Icon></button>
-                <ToyboxButton />
+                <Show when={!phone()}>
+                  <button class="icon-btn" data-testid="open-fetch" aria-label={`${COPY.search} (⌘K)`} data-tooltip={`${COPY.search} (⌘K)`} onClick={() => setPaletteOpen(true)}><Icon>{ToolIcons.search()}</Icon></button>
+                  <ToyboxButton />
+                </Show>
                 <BoardActions boardId={boardId()} primary={<ShareButton boardId={boardId()} />} />
                 <AccountMenu mode={theme.mode()} onThemeChange={theme.setMode} />
               </>
             }
           />
-          <Show when={canEditBoard(boardId())}><Toolbar /></Show>
+          <Show when={canEditBoard(boardId()) && !phone()}><Toolbar /></Show>
           <main class="stage">
             <Show when={canReadBoard(boardId()) && doc.getBoard(boardId())} fallback={<div class="gone"><h1>This board is unavailable</h1><p>Your access may have changed. Your other boards are still available.</p><button class="primary-btn" onClick={() => openBoard(homeBoardId())}>My Doghouse</button></div>}>
               <Canvas readOnly={!canEditBoard(boardId())} />
             </Show>
-            <Show when={canEditBoard(boardId())}><SelectionBar /><TrashPanel /></Show>
+            <Show when={canEditBoard(boardId())}><SelectionBar /><ConnectBanner /><TrashPanel /></Show>
             <CanvasControls readOnly={!canEditBoard(boardId())} />
             <ToyboxPanel />
             <CommentsPanel readOnly={!canEditBoard(boardId())} />
             <Toast />
           </main>
+          <Show when={phone()}><MobileDock readOnly={!canEditBoard(boardId())} /></Show>
         </div>
         <Show when={paletteOpen()}>
           <FetchPalette />
         </Show>
+        <EditDock />
         <ExitSaveDialog />
         <Diagnostics />
         <UpdateToast />
@@ -168,6 +183,17 @@ function EditorApp() {
       </Match>
     </Switch>
   )
+}
+
+/** A share from another app goes in the Inbox; the home-screen shortcut opens it. */
+function openLaunchIntent() {
+  const launch = takeLaunch()
+  const inbox = toyboxId()
+  if (launch.share && inbox) {
+    addText(launch.share, { x: 0, y: 0 }, inbox, launch.title)
+    showToast(COPY.fetchedToInbox)
+  }
+  if (launch.inbox) setToyboxOpen(true)
 }
 
 /**
