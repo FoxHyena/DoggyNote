@@ -711,6 +711,47 @@ html[data-input='mouse'] .connect-handle:hover {
   cursor: pointer;
 }
 
+/* Our own checkbox, the same size as the browser's: iOS draws read-only boxes as
+   solid black squares, and native boxes ignore the card's colours. */
+.todo-check,
+.rich .task-check,
+.note-editor .cm-md-task {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  display: inline-grid;
+  place-content: center;
+  border: 1.5px solid color-mix(in srgb, currentColor 55%, transparent);
+  border-radius: 4px;
+  background: transparent;
+}
+.rich .task-check,
+.note-editor .cm-md-task {
+  width: 13px;
+  height: 13px;
+}
+.todo-check:checked,
+.rich .task-check:checked,
+.note-editor .cm-md-task:checked {
+  border-color: var(--dn-accent);
+  background: var(--dn-accent);
+}
+.todo-check:checked::before,
+.rich .task-check:checked::before,
+.note-editor .cm-md-task:checked::before {
+  content: '';
+  width: 3px;
+  height: 7px;
+  margin-top: -2px;
+  border: solid var(--dn-accent-text);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.todo-check:disabled,
+.rich .task-check:disabled { cursor: default; }
+.todo-check:focus-visible,
+.rich .task-check:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 1px; }
+
 .todo-item.done .todo-text,
 .todo-item.done .todo-input {
   text-decoration: line-through;

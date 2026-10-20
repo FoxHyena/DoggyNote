@@ -24,7 +24,7 @@ export async function seed(request, { title = 'Weekend in the hills' } = {}) {
     { id: board, kind: 'board', parentId: 'home', title, icon: 'paw', color: 'gold', createdAt: now },
     { id: inner, kind: 'board', parentId: board, title: 'Trail snacks', icon: 'bone', color: 'green', createdAt: now },
   ]
-  const intro = card(board, 'note', 0, 0, 280, { md: '# Hike plan\nLeave **8am** Saturday. Meet at the trailhead café.\n\n- [x] Book the cabin\n- [ ] Check the weather' }, { color: 'yellow' })
+  const intro = card(board, 'note', 0, 0, 280, { md: '# Hike plan\nLeave **8am** Saturday. Meet at the trailhead café.\n\n- [x] Book the cabin\n- [ ] Check the weather' }, { color: 'gold' })
   const todo = card(board, 'todo', 320, 0, 260, { title: 'Packing list', items: [
     { id: uid(), text: 'Boots', done: true },
     { id: uid(), text: 'Rain jacket', done: false },
@@ -36,9 +36,9 @@ export async function seed(request, { title = 'Weekend in the hills' } = {}) {
   const column = card(board, 'column', 620, 200, 280, { title: 'Ideas for Sunday' })
   const kids = [
     card(board, 'note', 0, 0, 264, { md: 'Swim at the lake if it is warm' }, { columnId: column.id, order: 1 }),
-    card(board, 'note', 0, 0, 264, { md: 'Farmers market in town' }, { columnId: column.id, order: 2, color: 'blue' }),
+    card(board, 'note', 0, 0, 264, { md: 'Farmers market in town' }, { columnId: column.id, order: 2, color: 'sky' }),
   ]
-  const late = card(board, 'note', 0, 440, 260, { md: 'Who is driving? 🚗' }, { color: 'pink' })
+  const late = card(board, 'note', 0, 440, 260, { md: 'Who is driving? 🚗' }, { color: 'peach' })
   const conn = { id: uid(), kind: 'connection', boardId: board, from: intro.id, to: todo.id, createdAt: now }
   const innerNote = card(inner, 'note', 0, 0, 260, { md: 'Trail mix, apples, peanut butter sandwiches' })
   objects.push(intro, todo, link, boardCard, column, ...kids, late, conn, innerNote)
