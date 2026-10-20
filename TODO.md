@@ -60,6 +60,13 @@ Legend: [x] done + tested · [~] in progress · [ ] not started
 - [x] PNG export: board or selection, 1×/2×, canvas or transparent background; link previews via /api/proxy-image; native Save dialog in the Mac app
 - [-] Milanote import: dropped, Milanote can't export the boards
 
+## Round 4: phones and touchscreens (Oct 2026)
+- [x] Touch gestures: pan, pinch, long-press lift, double-tap note, fingertip handles, momentum; mouse unchanged
+- [x] Editing on phones: tap, tap to type where you tapped; the card glides above the keyboard; formatting + Done dock
+- [x] Phone shell: thumb dock with +, Add sheet (photo/camera/file), bottom sheets with grips, docked selection bar, one-row header with Back, recent boards, safe areas, landscape
+- [x] Installable: manifest + icons, Android share target and Inbox shortcut into the Inbox, Add to Home Screen row
+- [x] Mobile/tablet Playwright projects (WebKit iPhone, Chromium Pixel, iPad) in CI; QA record in docs/qa/mobile
+
 ## Still open
 1. [ ] Memory: busy boards still ~183–202 MB in the Mac app (target 150). The rest is WebKit graphics surfaces + JS heap; next lever is fewer GPU layers
 2. [ ] Intel Mac build (CI builds Apple silicon only); a universal build if a friend needs it

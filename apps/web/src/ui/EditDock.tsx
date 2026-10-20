@@ -33,9 +33,9 @@ export function EditDock() {
           </div>
         </Show>
         {/* Done means done with this card: back to the board, dock and all. */}
-        <button class="edit-done" data-testid="edit-done" onClick={() => { endEdit(); clearSelection() }}>
+        <button class="edit-done" data-testid="edit-done" aria-label="Done" onClick={() => { endEdit(); clearSelection() }}>
           <Icon size={18}>{ToolIcons.check()}</Icon>
-          Done
+          <span class="edit-done-label">Done</span>
         </button>
       </div>
     </Show>
