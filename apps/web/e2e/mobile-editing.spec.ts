@@ -1,9 +1,10 @@
 import { expect, test, type Page } from '@playwright/test'
 import { at, camera, cardByText, freshBoard, waitForSync } from './helpers.ts'
-import { note, seedCards, setCamera, tap, tapOn, touchAddNote } from './touch.ts'
+import { closeKeyboard, fakeKeyboard, note, seedCards, setCamera, tap, tapEmpty, tapOn, touchAddNote } from './touch.ts'
 
 // Editing on a phone: two taps to type, the card glides to a readable size,
-// formatting and Done ride above the keyboard, and the board comes back after.
+// a note's formatting rides above the keyboard, and closing the keyboard (or
+// tapping the board) finishes and brings the board back.
 
 test.beforeEach(async ({ page }) => {
   await freshBoard(page)
@@ -11,7 +12,7 @@ test.beforeEach(async ({ page }) => {
 
 const fontSize = (page: Page, sel: string) => page.locator(sel).first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize))
 
-test('tap, tap, type, Done: the note glides into view and back', async ({ page }) => {
+test('tap, tap, type, tap the board: the note glides into view and back', async ({ page }) => {
   await seedCards(page, [note('Shopping', 300, 500)])
   await setCamera(page, { x: -20, y: -20, zoom: 0.5 })
   const before = await camera(page)
@@ -21,6 +22,9 @@ test('tap, tap, type, Done: the note glides into view and back', async ({ page }
   const editor = page.getByTestId('note-editor')
   await expect(editor).toBeVisible()
   await expect(page.getByTestId('edit-dock')).toBeVisible()
+  // Formatting only: closing the keyboard is how you finish.
+  await expect(page.getByTestId('edit-dock').locator('button:not(.fmt)')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Done' })).toHaveCount(0)
   await expect(page.getByTestId('format-bar')).toHaveCount(0)
   // Readable, near the top of the screen, fully across.
   await expect.poll(async () => (await camera(page)).zoom).toBeGreaterThanOrEqual(0.9)
@@ -34,7 +38,7 @@ test('tap, tap, type, Done: the note glides into view and back', async ({ page }
   await page.keyboard.type(' list')
   await page.getByTestId('dock-fmt-heading').tap()
   await expect(editor.locator('.cm-md-h2')).toHaveText('Shopping list')
-  await page.getByTestId('edit-done').tap()
+  await tapEmpty(page)
   await expect(editor).toHaveCount(0)
   await expect(cardByText(page, 'Shopping list').locator('h2')).toBeVisible()
   await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(before.zoom, 2)
@@ -43,7 +47,7 @@ test('tap, tap, type, Done: the note glides into view and back', async ({ page }
   await expect(cardByText(page, 'Shopping list')).toBeVisible()
 })
 
-test('the keyboard’s own ✓ (a blur) finishes a note, like Done', async ({ page }) => {
+test('the keyboard’s own ✓ (a blur) finishes a note', async ({ page }) => {
   await seedCards(page, [note('Walkies', 300, 500), note('Dinner', 300, 50)])
   await setCamera(page, { x: -20, y: -20, zoom: 0.5 })
   const before = await camera(page)
@@ -59,7 +63,7 @@ test('the keyboard’s own ✓ (a blur) finishes a note, like Done', async ({ pa
   await page.getByTestId('dock-fmt-bold').tap()
   await page.waitForTimeout(100)
   await expect(page.getByTestId('edit-dock')).toBeVisible()
-  await page.evaluate(() => (document.activeElement as HTMLElement).blur())
+  await closeKeyboard(page)
   await expect(page.getByTestId('edit-dock')).toHaveCount(0)
   await expect(editor).toHaveCount(0)
   await expect(cardByText(page, 'Walkies at six')).not.toHaveClass(/selected/)
@@ -82,7 +86,33 @@ test('tapping another card while typing finishes the note and selects that card'
   await expect(cardByText(page, 'Rope')).toHaveClass(/selected/)
 })
 
-test('double-tap, type, Done makes a note', async ({ page }) => {
+test('closing the keyboard finishes the edit, even when focus stays (Android back)', async ({ page }) => {
+  await seedCards(page, [note('Fetch', 300, 400)])
+  await setCamera(page, { x: -20, y: -20, zoom: 0.5 })
+  const before = await camera(page)
+  const card = cardByText(page, 'Fetch')
+  await tapOn(page, card)
+  await tapOn(page, card)
+  const editor = page.getByTestId('note-editor')
+  await expect(editor).toBeFocused()
+  // A hardware keyboard: no on-screen one ever opened, so a full-height viewport keeps the edit.
+  await fakeKeyboard(page, false)
+  await page.waitForTimeout(100)
+  await expect(editor).toBeFocused()
+  await fakeKeyboard(page, true)
+  await page.keyboard.press('End')
+  await page.keyboard.type(' ball')
+  await page.waitForTimeout(100)
+  await expect(editor).toBeVisible()
+  // The keyboard goes away; nothing blurs.
+  await fakeKeyboard(page, false)
+  await expect(editor).toHaveCount(0)
+  await expect(page.getByTestId('edit-dock')).toHaveCount(0)
+  await expect(cardByText(page, 'Fetch ball')).not.toHaveClass(/selected/)
+  await expect.poll(async () => JSON.stringify(await camera(page))).toBe(JSON.stringify(before))
+})
+
+test('double-tap, type, close the keyboard makes a note', async ({ page }) => {
   await touchAddNote(page, 'Squirrel spotted')
   await waitForSync(page)
   await page.reload()
@@ -99,19 +129,21 @@ test('zoomed right out, a double-tap still opens a note to type in', async ({ pa
   await tap(page, p)
   await expect(page.getByTestId('note-editor')).toBeFocused()
   await page.keyboard.type('Close up')
-  await page.getByTestId('edit-done').tap()
+  await closeKeyboard(page)
   await expect(cardByText(page, 'Close up')).toBeVisible()
 })
 
-test('a to-do edits with two taps and finishes with Done', async ({ page }) => {
+test('a to-do edits with two taps, without a dock, and finishes when the keyboard closes', async ({ page }) => {
   await seedCards(page, [{ type: 'todo', x: 0, y: 0, w: 240, content: { title: 'Errands', items: [{ id: 'a', text: 'Vet', done: false }] } }])
   const card = cardByText(page, 'Errands')
   await tapOn(page, card.getByText('Errands'))
   await tapOn(page, card.getByText('Vet'))
   await expect(page.getByTestId('todo-item-input').first()).toBeVisible()
-  await expect(page.getByTestId('edit-dock')).toBeVisible()
-  await expect(page.getByTestId('dock-fmt-bold')).toHaveCount(0)
-  await page.getByTestId('edit-done').tap()
+  await expect(page.getByTestId('todo-item-input').first()).toBeFocused()
+  await expect(page.getByTestId('edit-dock')).toHaveCount(0)
+  // The board's own controls still step away while typing.
+  await expect(page.locator('.mobile-dock')).toBeHidden()
+  await closeKeyboard(page)
   await expect(page.getByTestId('todo-item-input')).toHaveCount(0)
 })
 
@@ -191,7 +223,7 @@ test('bolding a whole heading line keeps it a heading', async ({ page }) => {
   await page.keyboard.press('Home')
   await page.keyboard.press('Shift+End')
   await page.getByTestId('dock-fmt-bold').tap()
-  await page.getByTestId('edit-done').tap()
+  await closeKeyboard(page)
   await expect(cardByText(page, 'Hike plan').locator('h1 strong')).toHaveText('Hike plan')
 })
 
@@ -202,7 +234,7 @@ test('the edit dock nests and un-nests list items (phones have no Tab key)', asy
   await tapOn(page, card.getByText('treats'))
   const editor = page.getByTestId('note-editor')
   await expect(editor).toBeVisible()
-  // Indent and outdent sit in view, not scrolled off behind Done.
+  // Indent and outdent sit in view, not scrolled off the end.
   const tools = (await page.locator('.edit-dock-tools').boundingBox())!
   for (const id of ['dock-fmt-outdent', 'dock-fmt-indent']) {
     const b = (await page.getByTestId(id).boundingBox())!

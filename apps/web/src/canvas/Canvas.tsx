@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, onMount } from 'solid-js'
+import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, onMount, untrack } from 'solid-js'
 import { isPositionLocked } from '../state/position.ts'
 import { StickerLayer, groupTurn, selectionRing, setGroupTurn, setManipulatingSticker, stickerAt, stickerRingAt } from './StickerLayer.tsx'
 import { armedSticker, cancelStickerPlacement, placeSticker, setStickerGhost } from '../state/stickers.ts'
@@ -102,7 +102,7 @@ const LONG_PRESS_MS = 350
 const CHECK_REACH = 24
 /** Smallest zoom a phone opens a board at: below this, notes stop being readable. */
 const PHONE_MIN_ZOOM = 0.8
-/** Height of the formatting dock that sits on the keyboard while editing (EditDock). */
+/** Height of the formatting dock that sits on the keyboard while editing a note (EditDock). */
 const EDIT_DOCK = 56
 
 type Client = { clientX: number; clientY: number; altKey?: boolean }
@@ -277,11 +277,38 @@ export function Canvas(props: { readOnly: boolean }) {
     // The app never scrolls; iOS scrolling the page to a field slides the grid away.
     const onScroll = () => resetPageScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
-    // Focus leaving the card (the keyboard's own ✓ just blurs) means done, like
-    // the dock's Done. A frame later, so focus moving within the card (a note's
-    // buffer handing over to its editor) or to the dock's buttons doesn't count.
-    // A colour card has nothing to type into: its panel owns focus, and closes itself.
+    const done = () => {
+      endEdit()
+      clearSelection()
+    }
+    // A colour card has nothing to type into: its panel owns focus and there's no
+    // keyboard. Tapping the board finishes it.
     const typed = doc.getCard(id)?.type !== 'swatch'
+    // The keyboard going away means done, however it went (iOS ✓, Android's back
+    // gesture, which keeps focus). Only once it was seen to open: a hardware
+    // keyboard never opens one, and turning the phone resizes everything.
+    let opened = false
+    let width = untrack(visibleArea).width
+    createEffect(
+      on(visibleArea, (v) => {
+        if (!typed) return
+        if (v.width !== width) {
+          width = v.width
+          opened = false
+          return
+        }
+        // A pinch-zoomed page shrinks the visual viewport too.
+        if (Math.abs((window.visualViewport?.scale ?? 1) - 1) > 0.01) return
+        if (v.height < innerHeight * 0.8) opened = true
+        else if (opened && v.height >= innerHeight * 0.9 && editingId() === id) {
+          opened = false
+          done()
+        }
+      }),
+    )
+    // Focus leaving the card (the keyboard's own ✓ just blurs) means done too. A
+    // frame later, so focus moving within the card (a note's buffer handing over
+    // to its editor) or to the dock's format buttons doesn't count.
     let blurFrame = 0
     const onFocusOut = () => {
       if (!typed) return
@@ -291,8 +318,7 @@ export function Canvas(props: { readOnly: boolean }) {
         if (editingId() !== id || fingers.size) return
         const active = document.activeElement
         if (active && active !== document.body && (cardEl(id)?.contains(active) || active.closest('.edit-dock, .selection-bar'))) return
-        endEdit()
-        clearSelection()
+        done()
       })
     }
     document.addEventListener('focusout', onFocusOut)
@@ -1407,7 +1433,8 @@ function editRoom() {
   const v = viewport()
   const vis = visibleArea()
   const top = Math.max(0, vis.top - v.top)
-  const bottom = Math.min(v.height, vis.top + vis.height - v.top) - EDIT_DOCK
+  const dock = doc.getCard(editingId())?.type === 'note' ? EDIT_DOCK : 0
+  const bottom = Math.min(v.height, vis.top + vis.height - v.top) - dock
   return { width: v.width, top, bottom }
 }
 

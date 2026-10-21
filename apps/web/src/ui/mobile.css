@@ -116,7 +116,7 @@ html[data-input='touch'] .card > .resize-handle::before {
 }
 .connect-banner > span { flex: 1; min-width: 0; }
 
-/* ---- editing on touch: formatting + Done, riding on the keyboard ---------------- */
+/* ---- editing a note on touch: formatting, riding on the keyboard ----------------- */
 
 .edit-dock {
   position: fixed;
@@ -153,21 +153,6 @@ html[data-input='touch'] .card > .resize-handle::before {
   font-size: 17px;
 }
 .edit-dock .fmt:active { background: var(--dn-card-hover); }
-.edit-done {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: 0 0 auto;
-  min-height: 44px;
-  margin-left: auto;
-  padding: 0 16px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--dn-accent);
-  color: var(--dn-accent-text);
-  font: inherit;
-  font-weight: 650;
-}
 
 /* iOS zooms into fields under 16px. Card text keeps its size (heights sync). */
 html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type='range']), textarea, select):not(.card *) {
@@ -451,7 +436,7 @@ html[data-input='touch'] .toybox-item { touch-action: pan-y; cursor: default; }
 html[data-input='touch'] .nav-menu kbd.nav-menu-meta { display: none; }
 html[data-input='touch'] .fetch-close { min-width: 64px; padding: 0 12px; color: var(--dn-accent); font: inherit; font-weight: 600; }
 /* While typing, only the card and the edit dock. */
-body:has(.edit-dock) .canvas-controls { visibility: hidden; }
+html[data-touch-editing] .canvas-controls { visibility: hidden; }
 .edit-dock .fmt { min-width: 40px; }
 .edit-dock-tools { mask-image: linear-gradient(to right, black calc(100% - 28px), transparent); }
 .connect-banner { left: 12px; right: 12px; width: fit-content; margin-inline: auto; transform: none; }
@@ -515,7 +500,7 @@ body:has(.edit-dock) .canvas-controls { visibility: hidden; }
 /* ---- round 2 visual fixes ------------------------------------------------------ */
 
 /* V2-03: while typing, the edit dock owns the bottom; the main dock (and its raised +) steps away. */
-body:has(.edit-dock) .mobile-dock { visibility: hidden; }
+html[data-touch-editing] .mobile-dock { visibility: hidden; }
 
 /* V2-05: the connect hint sits low, out of the way of the card you picked. */
 .connect-banner { top: auto; bottom: 14px; }
@@ -642,13 +627,6 @@ html[data-input='touch'] .card > .connect-handle { border-color: var(--dn-select
 html[data-input='touch'] :is(.icon-btn, .bar-btn, .menu-item, .tool, .toast-action):active:not(:disabled) { background: var(--dn-card-hover); }
 
 /* ---- round 3 visual fixes ------------------------------------------------------ */
-
-/* V3-05: on phones Done is a tick, so the list controls always fit beside it. */
-@media (max-width: 599px) {
-  .edit-done { width: 44px; height: 44px; padding: 0; justify-content: center; }
-  .edit-done-label { display: none; }
-  .edit-dock-tools { mask-image: none; }
-}
 
 /* V3-01: on tablets the bar fits the canvas: smaller swatches, compact actions. */
 @media (min-width: 600px) and (min-height: 501px) {
