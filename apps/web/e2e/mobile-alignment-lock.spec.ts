@@ -1,19 +1,8 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { cardByText, freshBoard, waitForSync } from './helpers.ts'
-import { center, note, seedCards, tapOn, touchDrag } from './touch.ts'
+import { center, note, seedCards, selectionBarFits, tapOn, touchDrag } from './touch.ts'
 
-async function toolbarActionsFit(page: Page) {
-  await expect.poll(() => page.getByTestId('selection-bar').evaluate((bar) => {
-    const box = bar.getBoundingClientRect()
-    const buttons = [...bar.querySelectorAll('button')].filter((button) => button.getClientRects().length)
-    return buttons.length > 0 && buttons.every((button) => {
-      const rect = button.getBoundingClientRect()
-      return rect.left >= box.left && rect.right <= box.right && rect.top >= box.top && rect.bottom <= box.bottom
-        && rect.left >= 0 && rect.right <= innerWidth && rect.top >= 0 && rect.bottom <= innerHeight
-        && button.scrollWidth <= button.clientWidth + 1
-    })
-  })).toBe(true)
-}
+const toolbarActionsFit = selectionBarFits
 
 test('touch alignment has immediate Undo and position locks survive a new session', async ({ page }) => {
   await freshBoard(page)
