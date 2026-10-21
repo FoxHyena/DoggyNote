@@ -50,16 +50,14 @@ async function push() {
     const pending = doc.pendingOutbox().slice(0, PUSH_CHUNK)
     if (!pending.length) return
     try {
-      await api('/api/sync', { method: 'POST', json: { changes: pending.map((p) => ({ id: p.id, patch: { ...p.patch, id: p.id } })) } })
+      const result = await api<{ lockedIds?: string[] }>('/api/sync', { method: 'POST', json: { changes: pending.map((p) => ({ id: p.id, patch: { ...p.patch, id: p.id } })) } })
+      // The server kept a locked card's layout and saved the rest. Acknowledging the
+      // send drops the move here too; the next pull brings the locked position back.
+      if (result?.lockedIds?.length) showToast('A position was locked in another session. Its layout was kept; your other edits are saved.')
     } catch (error) {
       if (error instanceof ApiError && error.status === 403 && Array.isArray(error.details.deniedIds)) {
         await preserveDenied(error.details.deniedIds as string[], error.message)
         await refreshAccess()
-        continue
-      }
-      if (error instanceof ApiError && error.status === 409 && Array.isArray(error.details.lockedIds) && Array.isArray(error.details.objects)) {
-        doc.reconcileLockedPositions(error.details.lockedIds as string[], error.details.objects as Obj[], pending)
-        showToast('A position was locked in another session. Its layout was kept; your content edits are still saved.')
         continue
       }
       if (error instanceof ApiError && error.status === 409) {

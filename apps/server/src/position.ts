@@ -47,3 +47,20 @@ export function positionWriteGuards(db: D1Database, accessRevision: string, vers
   // Unrelated boards do not contend, and a racing lock in this family retries.
   return [...versions].map(([boardId, version]) => db.prepare("INSERT INTO access_write_guard(id,revision) VALUES (1,CASE WHEN (SELECT COALESCE(SUM(seq),0) FROM objects WHERE kind='card' AND board_id=?1)=?2 THEN ?3 ELSE -1 END) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision").bind(boardId, version, Number(accessRevision)))
 }
+
+/**
+ * A push that moves a locked card still succeeds (older apps loop on errors). Only
+ * that card's layout fields are dropped; its other fields and every other change
+ * stay. The row is still written, so its seq rises and every client pulls the
+ * locked position. The client acknowledges what it sent, so it never re-sends it.
+ */
+export function dropLockedLayout(changes: IncomingChange[], lockedIds: readonly string[]): IncomingChange[] {
+  if (!lockedIds.length) return changes
+  const locked = new Set(lockedIds)
+  return changes.map((change) => {
+    if (!locked.has(change.id)) return change
+    const patch = { ...change.patch }
+    for (const key of POSITION_FIELDS) delete patch[key]
+    return { id: change.id, patch }
+  })
+}

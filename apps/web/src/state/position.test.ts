@@ -78,17 +78,21 @@ describe('document layout transactions', () => {
     doc.setWriteGuard(()=>false); doc.undo(); expect(doc.getCard('a')!.x).toBe(50)
     doc.setWriteGuard(()=>true); doc.undo(); expect(doc.getCard('a')!.x).toBe(10)
   })
-  it('reconciles rejected geometry without dropping unsent null clears or content', async () => {
+  it('an older app that moved a locked card converges on the locked position', async () => {
     await doc.load({persist:true,readOnly:false})
-    doc.update({a:{x:50,deletedAt:null,content:{md:'offline content'}}})
-    // Include a null clear explicitly in the queue, as happens when unlocking/restoring.
-    doc.checkpoint('a',{positionLocked:null} as unknown as Partial<Card>)
+    doc.setWriteGuard(()=>true)
+    doc.loadSnapshot([card('a',{x:10,y:20})])
+    // An older app knows nothing of locks: it moves the card and edits it offline.
+    doc.update({a:{x:50,y:70,content:{md:'offline content'}}})
     const sent=doc.pendingOutbox()
-    doc.reconcileLockedPositions(['a'],[card('a',{positionLocked:true})],sent)
-    const pending=doc.pendingOutbox().find((p)=>p.id==='a')!
-    expect(pending.patch).not.toHaveProperty('x')
-    expect(pending.patch).toHaveProperty('positionLocked',null)
+    // The Worker drops the layout, saves the rest and answers ok; the push is acknowledged.
+    doc.ackOutbox(sent)
+    expect(doc.pendingOutbox().find((p)=>p.id==='a')).toBeUndefined()
+    // The next pull returns the row (seq bumped) at its locked position.
+    doc.receiveRemote([card('a',{x:10,y:20,positionLocked:true,content:{md:'offline content'}})])
+    expect([doc.getCard('a')!.x,doc.getCard('a')!.y]).toEqual([10,20])
     expect(doc.getCard('a')!.content).toEqual({md:'offline content'})
+    expect(doc.pendingOutbox()).toEqual([])
     await doc.flush()
     await doc.resetLocal()
   })

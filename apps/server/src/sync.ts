@@ -3,7 +3,7 @@ import { stickerObjectSchema, isReservedId } from '@doggynote/core/agent'
 import type { AppEnv } from './env.ts'
 import { accessGuard, bumpAccess, loadAccess, newBoardAccess, type Access } from './access.ts'
 import { prepareNote } from './notes.ts'
-import { checkPositionLocks, positionWriteGuards } from './position.ts'
+import { checkPositionLocks, dropLockedLayout, positionWriteGuards } from './position.ts'
 import { notifyRooms } from './realtime.ts'
 import { decodeUpdate, encodeUpdate, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
 import * as Y from 'yjs'
@@ -144,7 +144,7 @@ async function pushSync(c: Context<AppEnv>) {
   if (noteId && body?.stateVector !== undefined) {
     try { vector = decodeUpdate(body.stateVector); Y.decodeStateVector(vector) } catch { return c.json({ error: 'Invalid state vector' }, 400) }
   }
-  const parsed = parseChanges(noteId ? { changes: [{ id: noteId, patch: { noteUpdate: body?.update } }] } : body)
+  let parsed = parseChanges(noteId ? { changes: [{ id: noteId, patch: { noteUpdate: body?.update } }] } : body)
   if (typeof parsed === 'string') return c.json({ error: parsed }, 400)
   if (!parsed.length) return c.json({ ok: true })
   const db = c.env.DB
@@ -170,7 +170,8 @@ async function pushSync(c: Context<AppEnv>) {
   const deniedIds = await deniedChanges(db, access, me.id, parsed)
   if (deniedIds.length) return c.json({ error: 'You no longer have permission to change these objects', deniedIds }, 403)
   const positions = await checkPositionLocks(db, parsed)
-  if (positions.lockedIds.length) return c.json({ error: 'Locked positions stayed in place. Unlock before moving them.', lockedIds: positions.lockedIds, objects: positions.objects }, 409)
+  // Additive for older apps: never an error. Locked layout is dropped, the rest saved.
+  parsed = dropLockedLayout(parsed, positions.lockedIds)
   const stmts: D1PreparedStatement[] = [accessGuard(db, access.revision), ...positionWriteGuards(db, access.revision, positions.versions)]
   const newIds = parsed.filter((ch) => !existing.has(ch.id)).map((ch) => ch.id)
   for (let i = 0; i < newIds.length; i += 90) stmts.push(accessGuard(db, access.revision, newIds.slice(i, i + 90)))
@@ -219,7 +220,7 @@ async function pushSync(c: Context<AppEnv>) {
     const document = noteDocument(row?.state)
     try { return c.json({ ok: true, update: encodeUpdate(Y.encodeStateAsUpdate(document, vector)) }) } finally { document.destroy() }
   }
-  return c.json({ ok: true, count: parsed.length })
+  return c.json({ ok: true, count: parsed.length, ...(positions.lockedIds.length ? { lockedIds: positions.lockedIds } : {}) })
 }
 sync.post('/sync', pushSync)
 sync.post('/notes/:noteId/sync', pushSync)

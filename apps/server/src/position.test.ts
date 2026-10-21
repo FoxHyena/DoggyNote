@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { checkPositionLocks, positionWriteGuards } from './position.ts'
+import { checkPositionLocks, dropLockedLayout, positionWriteGuards } from './position.ts'
+import { upsertSql } from './sync.ts'
 import { DatabaseSync } from 'node:sqlite'
 import { readFileSync } from 'node:fs'
 
@@ -49,6 +50,37 @@ describe('server position locks', () => {
       await expect(positionWriteGuards(db,'1',versions)[0].run()).resolves.toBeDefined()
       sql.exec("UPDATE objects SET seq=101,data=json_set(data,'$.positionLocked',json('true')) WHERE id='free'")
       await expect(positionWriteGuards(db,'1',versions)[0].run()).rejects.toThrow('Access changed')
+    } finally { sql.close() }
+  })
+})
+
+describe('an older app moving a locked card', () => {
+  it('saves the rest of the push, keeps the locked layout and bumps the seq so every client pulls it', async () => {
+    const { sql, db } = fixture()
+    try {
+      sql.exec("INSERT INTO counters(name,value) VALUES('seq',1) ON CONFLICT(name) DO UPDATE SET value=1")
+      // What an app without locks sends: a move plus a colour, and a move of an unlocked card.
+      const pushed = [{ id: 'a', patch: { id: 'a', x: 500, y: 600, w: 400, columnId: null, order: 9, color: 'sky' } }, { id: 'free', patch: { id: 'free', x: 77 } }]
+      const { lockedIds } = await checkPositionLocks(db, pushed)
+      expect(lockedIds).toEqual(['a'])
+      const kept = dropLockedLayout(pushed, lockedIds)
+      expect(kept).toEqual([{ id: 'a', patch: { id: 'a', color: 'sky' } }, pushed[1]])
+      // Apply as the Worker's batch does: bump seq, upsert each change.
+      for (const { id, patch } of kept) {
+        sql.exec("UPDATE counters SET value = value + 1 WHERE name = 'seq'")
+        const { sql: query, args } = upsertSql(patch)
+        const bindings = [id, 'card', null, JSON.stringify(patch), 2, 'old-app', null, ...args]
+        const values: unknown[] = []
+        sql.prepare(query.replace(/\?(\d+)/g, (_, n: string) => { values.push(bindings[Number(n) - 1]); return '?' })).run(...(values as (string | number | null)[]))
+      }
+      const row = (id: string) => sql.prepare('SELECT data, seq FROM objects WHERE id=?').get(id) as { data: string; seq: number }
+      const locked = JSON.parse(row('a').data)
+      expect([locked.x, locked.y, locked.w, locked.columnId, locked.order]).toEqual([10, 20, 200, 'col', undefined])
+      expect(locked.color).toBe('sky')
+      expect(locked.positionLocked).toBe(true)
+      // Seq rose past the pushing client's cursor, so its next pull returns this row and it snaps back.
+      expect(row('a').seq).toBeGreaterThan(1)
+      expect(JSON.parse(row('free').data).x).toBe(77)
     } finally { sql.close() }
   })
 })

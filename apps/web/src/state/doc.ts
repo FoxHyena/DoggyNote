@@ -657,28 +657,6 @@ export async function load(opts: { persist: boolean; readOnly: boolean }) {
 }
 
 /** Replace the whole document (share viewer). */
-/** A server lock rejects only layout fields; retain unrelated pending content. */
-export function reconcileLockedPositions(ids: string[], rows: Obj[], sent: { id: Id; patch: Partial<Obj> }[]) {
-  const rejected = new Set(ids)
-  const fields = new Set<string>(POSITION_FIELDS)
-  ackOutbox(sent.filter((s) => rejected.has(s.id)).map((s) => ({ id: s.id, patch: Object.fromEntries(Object.entries(s.patch).filter(([key]) => fields.has(key))) as Partial<Obj> })))
-  // Adopt the server's layout and locks only. These rows lack the collaborative
-  // note state, so replacing whole objects would strand note text.
-  fields.add('positionLocked')
-  batch(() => {
-    for (const row of rows) {
-      const current = state.objs[row.id]
-      if (!current || current.kind !== 'card' || row.kind !== 'card') continue
-      const pending = outbox.get(row.id) ?? {}
-      const patch: Record<string, unknown> = {}
-      for (const key of fields) if (!(key in pending)) patch[key] = (row as unknown as Record<string, unknown>)[key]
-      applyPatchToStore(row.id, patch as Partial<Obj>)
-      if (persist) dirtyObjs.add(row.id)
-    }
-  })
-  scheduleFlush()
-}
-
 export function loadSnapshot(rows: Obj[]) {
   const map: Record<Id, Obj> = {}
   for (const r of rows) map[r.id] = r
