@@ -39,7 +39,8 @@ async function imagesReady(world: HTMLElement) {
     const imgs = [...world.querySelectorAll('img')]
     const ready = (img: HTMLImageElement) =>
       !!img.getAttribute('src') && img.complete && img.naturalWidth > 0 && (img.dataset.testid !== 'card-image' || img.dataset.loaded === img.dataset.size)
-    if (imgs.every(ready)) return
+    // A sticker's blank stays until its art has finished fading in.
+    if (imgs.every(ready) && !world.querySelector('.sticker-blank')) return
     await new Promise((r) => setTimeout(r, 50))
   }
 }
