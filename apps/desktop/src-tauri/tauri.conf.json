@@ -43,7 +43,7 @@
         "script-src": "'self'",
         "style-src": "'self' 'unsafe-inline'",
         "img-src": "'self' data: blob: https: http:",
-        "connect-src": "'self' ipc: http://ipc.localhost https: http://localhost:8787"
+        "connect-src": "'self' ipc: http://ipc.localhost https: wss: http://localhost:8787 ws://localhost:8787"
       }
     }
   },
