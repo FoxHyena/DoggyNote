@@ -1,4 +1,4 @@
-import { createEffect, createRoot, createSignal, onCleanup } from 'solid-js'
+import { batch, createEffect, createRoot, createSignal, onCleanup, untrack } from 'solid-js'
 import { createStore, reconcile } from 'solid-js/store'
 import { newId, screenToWorld, stickerHeight, type Sticker, type StickerAsset, type Vec } from '@doggynote/core'
 import { api } from './api.ts'
@@ -11,7 +11,19 @@ import { phone } from './device.ts'
 export type PackSticker = StickerAsset & { available: boolean; error?: string; animationError?: string; keywords?: string[] }
 export type StickerPack = { name: string; title: string; stickers: PackSticker[] }
 type Preferences = { assetId: string; favorite: number; recentAt: number | null }[]
-export const [packs, setPacks] = createSignal<StickerPack[]>([])
+// Pack objects and sticker tiles keep their identity through progress/collection
+// refreshes, including refreshes received while a tile owns pointer capture.
+const [collection, setCollection] = createStore<Record<string, StickerPack>>({})
+const [packNames, setPackNames] = createSignal<string[]>([])
+export const packs = () => packNames().map((name) => collection[name])
+function setPacks(next: StickerPack[]) {
+  batch(() => {
+    setCollection(reconcile(Object.fromEntries(next.map((p) => [p.name, p])), { key: 'assetId' }))
+    const names = next.map((p) => p.name)
+    const previous = untrack(packNames)
+    if (names.length !== previous.length || names.some((name, i) => name !== previous[i])) setPackNames(names)
+  })
+}
 export const [preferences, setPreferences] = createSignal<Preferences>([])
 export const [stickerTrayOpen, setStickerTrayOpen] = createSignal(false)
 // A per-device preference, like snap-to-grid.
@@ -72,9 +84,7 @@ export async function refreshStickers() {
   const current = generation, request = ++refreshRequest
   const result = await api<{ packs: StickerPack[]; preferences: Preferences }>('/api/stickers')
   if (current !== generation || request !== refreshRequest) return
-  // Preserve keyed tile identities when a background refresh has no collection changes.
-  // Replacing them during pointer capture used to abort an otherwise valid drag.
-  if (JSON.stringify(packs()) !== JSON.stringify(result.packs)) setPacks(result.packs)
+  setPacks(result.packs)
   if (JSON.stringify(preferences()) !== JSON.stringify(result.preferences)) setPreferences(result.preferences)
   setCollectionLoaded(true)
 }

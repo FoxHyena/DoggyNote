@@ -4,6 +4,7 @@ import { openStickerTray, pairFixtureTelegram, stickerBoard } from './sticker-he
 
 /** Serves previews as unprepared and prepares each requested step after a delay, so progress is observable. */
 async function slowPreparation(page: Page, delays: Record<string, number>) {
+  let active = 0, peak = 0
   const packs = new Map<string, { stickers: { available: boolean }[] }>()
   await page.route('**/api/stickers/preview', async (route) => {
     const response = await route.fetch(), data = await response.json()
@@ -12,20 +13,23 @@ async function slowPreparation(page: Page, delays: Record<string, number>) {
     await route.fulfill({ response, json: { ...data, pack } })
   })
   await page.route('**/api/stickers/packs/*/load', async (route) => {
+    active++; peak = Math.max(peak, active)
     const name = decodeURIComponent(new URL(route.request().url()).pathname.split('/').at(-2)!).toLowerCase()
     const { offset, count } = route.request().postDataJSON() as { offset: number; count: number }
     await new Promise((r) => setTimeout(r, delays[name] ?? 50))
     const pack = packs.get(name)!
     pack.stickers = pack.stickers.map((s, i) => i >= offset && i < offset + count ? { ...s, available: true } : s)
+    active--
     await route.fulfill({ json: { pack } })
   })
+  return () => peak
 }
 
 test('several sent packs list together by title, prepare in the background and preview while preparing', async ({ page, request }) => {
   await stickerBoard(page, request)
   const telegram = await pairFixtureTelegram(page)
   await telegram.sendSticker('DoggyFixture'); await telegram.sendSticker('PuppyParade42x')
-  await slowPreparation(page, { doggyfixture: 1500, puppyparade42x: 2500 })
+  const peak = await slowPreparation(page, { doggyfixture: 1500, puppyparade42x: 2500 })
   await page.reload()
   await expect(page.getByTestId('sticker-found-badge')).toBeVisible()
   await expect(page.getByTestId('tool-stickers')).toHaveAttribute('title', '2 packs found in Telegram')
@@ -76,5 +80,6 @@ test('several sent packs list together by title, prepare in the background and p
   expect((await (await page.request.get('/api/stickers')).json()).packs.map((p: { name: string }) => p.name)).toEqual(['DoggyFixture', 'PuppyParade42x'])
   await expect(page.getByTestId('sticker-found-badge')).toHaveCount(0)
   expect((await (await page.request.get('/api/stickers/telegram')).json()).suggestions).toEqual([])
+  expect(peak()).toBe(2)
   expect((await page.request.delete('/api/stickers/telegram')).status()).toBe(200)
 })

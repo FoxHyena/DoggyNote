@@ -3,7 +3,6 @@ import { LOD_ZOOM, STICKER_MAX, STICKER_MIN, defaultStickerWidth, normalizeAngle
 import * as doc from '../state/doc.ts'
 import { boardId, camera, select, selection, viewport } from '../state/ui.ts'
 import { exporting } from '../state/export.ts'
-import { draggingIds } from './dnd.ts'
 import { stickerCenter } from '../state/stickers.ts'
 import { Icon, ToolIcons } from '../ui/icons.tsx'
 import { StickerImage, stickerAlphaHit } from '../ui/StickerImage.tsx'
@@ -69,22 +68,6 @@ function resetSticker(s: Sticker) {
 }
 const changed = (s: Sticker) => Math.round(s.angle) !== 0 || Math.abs(s.w - defaultStickerWidth(s)) >= 1
 
-/**
- * The die-cut border: grow the artwork's shape, snap its soft edge solid, fill it with the
- * outline colour and set the art on top. Lives inside the layer so exports carry it along.
- */
-function StickerOutlineDefs() {
-  const outline = (id: string, radius: number) => <filter id={id} x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
-    <feMorphology in="SourceAlpha" operator="dilate" radius={radius} result="grown" />
-    <feComponentTransfer in="grown" result="solid"><feFuncA type="linear" slope="3" intercept="-0.5" /></feComponentTransfer>
-    <feFlood style={{ 'flood-color': 'var(--dn-sticker-outline)' }} result="paper" />
-    <feComposite in="paper" in2="solid" operator="in" result="border" />
-    <feMerge><feMergeNode in="border" /><feMergeNode in="SourceGraphic" /></feMerge>
-  </filter>
-  return <svg class="sticker-outline-defs" width="0" height="0" aria-hidden="true">
-    <defs>{outline('dn-sticker-outline', 2)}{outline('dn-sticker-outline-thin', 1)}</defs>
-  </svg>
-}
 export function stickerAt(point: Vec, touch = false): Sticker | undefined {
   return [...doc.stickersOn(boardId())].sort((a, b) => b.z - a.z || b.id.localeCompare(a.id)).find((s) => {
     const local = stickerLocal(s, point)
@@ -109,8 +92,7 @@ export function StickerLayer(props: { readOnly: boolean }) {
   createEffect(on(selection, () => setGroupTurn(0), { defer: true }))
   const visible = createMemo(() => doc.stickersOn(boardId()).filter((s) => exporting() || intersects(stickerBounds(s), cull())).sort((a, b) => a.z - b.z || a.id.localeCompare(b.id)))
   return <div class="sticker-layer" data-testid="sticker-layer">
-    <StickerOutlineDefs />
-    <For each={exporting() || camera().zoom >= LOD_ZOOM ? visible() : []}>{(s) => <div class="placed-sticker" data-sticker-id={s.id} data-testid="placed-sticker" classList={{ selected: selection().has(s.id) && !props.readOnly, lifting: manipulatingSticker() === s.id || (manipulatingSticker() === 'group' && selection().has(s.id)) || draggingIds().has(s.id) }} style={{ left: `${s.x}px`, top: `${s.y}px`, width: `${s.w}px`, height: `${stickerHeight(s)}px` }}>
+    <For each={exporting() || camera().zoom >= LOD_ZOOM ? visible() : []}>{(s) => <div class="placed-sticker" data-sticker-id={s.id} data-testid="placed-sticker" classList={{ selected: selection().has(s.id) && !props.readOnly }} style={{ left: `${s.x}px`, top: `${s.y}px`, width: `${s.w}px`, height: `${stickerHeight(s)}px` }}>
       <div class="sticker-rotation" style={{ transform: `rotate(${s.angle}deg)` }}>
         <div class="sticker-visual"><StickerImage sticker={s.content} animate={selection().has(s.id) && camera().zoom >= .35 && !exporting()} /></div>
       </div>
