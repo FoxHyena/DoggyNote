@@ -24,6 +24,9 @@ describe('contrast', () => {
       expect(contrast(s.textMuted, s.card)).toBeGreaterThanOrEqual(4.5)
       expect(contrast(s.textMuted, s.bg)).toBeGreaterThanOrEqual(4.5)
     })
+    it(`${t}: inline error text clears 4.5:1 on panel, card and hovered rows`, () => {
+      for (const bg of [s.panel, s.card, s.cardHover, s.bg]) expect(contrast(s.errorText, bg)).toBeGreaterThanOrEqual(4.5)
+    })
     it(`${t}: accent text clears 4.5:1 on accent`, () => {
       expect(contrast(s.accentText, s.accent)).toBeGreaterThanOrEqual(4.5)
     })

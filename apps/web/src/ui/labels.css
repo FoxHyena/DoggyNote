@@ -1,0 +1,193 @@
+/* Labels: chips on cards, and the popover from the selection bar (ui/Labels.tsx). */
+
+.label-chip {
+  display: inline-block;
+  max-width: 100%;
+  min-width: 0;
+  padding: 1px 8px;
+  border-radius: 999px;
+  color: var(--label-text);
+  background: var(--label-bg);
+  box-shadow: inset 0 0 0 1px var(--label-edge, color-mix(in srgb, var(--label-text) 16%, transparent));
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-labels > li { display: flex; min-width: 0; max-width: 100%; }
+/* Matching labels on a search result, after where it lives. */
+.fetch-labels { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
+.fetch-labels .label-chip { font-size: 11px; line-height: 16px; }
+.card-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0 12px 10px;
+  list-style: none;
+  min-width: 0;
+}
+
+/*
+ * The popover. Same metrics as the colour panel: 12px padding, one 8px step
+ * between things, 32px fields and rows, 24px dots (32px for fingers).
+ */
+.labels-panel {
+  --lb-dot: 24px;
+  --lb-gap: 8px;
+  --lb-row: 32px;
+  display: grid;
+  gap: var(--lb-gap);
+  width: 280px;
+  padding: 12px;
+}
+.labels-panel *, .labels-panel *::before, .labels-panel *::after { box-sizing: border-box; }
+
+.labels-input {
+  width: 100%;
+  min-width: 0;
+  height: var(--lb-row);
+  padding: 0 8px;
+  border: 1px solid var(--dn-border);
+  border-radius: 6px;
+  color: var(--dn-text);
+  background: var(--dn-bg);
+  font: inherit;
+  font-size: 13px;
+}
+.labels-input:focus-visible { outline: none; border-color: var(--dn-selection); }
+.labels-input::placeholder { color: var(--dn-text-muted); }
+
+
+.labels-list {
+  display: grid;
+  gap: 2px;
+  max-height: 248px;
+  margin: 0 -4px;
+  padding: 0 4px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+.label-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-height: var(--lb-row);
+  border-radius: 6px;
+}
+/* The highlighted option, and hover. A renaming row stays clear so its field reads as a field. */
+.label-row.active:not(.renaming),
+html[data-input='mouse'] .label-row:not(.renaming):hover { background: var(--dn-card-hover); }
+
+.label-toggle {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  gap: var(--lb-gap);
+  min-width: 0;
+  height: var(--lb-row);
+  /* The checkbox lines up with the text in the search field above. */
+  padding: 0 4px 0 8px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--dn-text);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.label-toggle:disabled { cursor: default; }
+.label-toggle-static { flex: 0 0 auto; cursor: default; }
+.label-toggle:focus-visible, .label-action:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: -2px; }
+
+.label-check {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--dn-text-muted);
+  border-radius: 4px;
+  color: var(--dn-text);
+}
+.label-toggle[aria-pressed='true'] .label-check,
+.label-toggle[aria-pressed='mixed'] .label-check { border-color: var(--dn-text); }
+.label-check.label-plus { border: 0; color: var(--dn-text-muted); }
+.label-create-text { flex: 0 0 auto; font-weight: 500; }
+
+/*
+ * Row tools: out of the way until the row is hovered, highlighted or focused
+ * (always there for fingers). Inset inside the row's rounded corner, with a
+ * tint for hover so they never read as a notch cut out of the row.
+ */
+.label-actions { display: flex; flex: 0 0 auto; gap: 2px; padding-right: 2px; opacity: 0; }
+html[data-input='mouse'] .label-row:hover .label-actions,
+.label-row.active .label-actions,
+.label-row:focus-within .label-actions { opacity: 1; }
+.label-action {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  color: var(--dn-text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+/* Remove stands apart from the editing tools. */
+.label-remove { margin-left: 6px; }
+html[data-input='mouse'] .label-action:hover { color: var(--dn-text); background: color-mix(in srgb, var(--dn-text) 10%, transparent); }
+
+.label-rename { flex: 1 1 0; border-color: var(--dn-selection); }
+
+/* Text-only errors: under the field they're about. */
+.labels-error { margin: 0; padding: 0 8px; color: var(--dn-error-text); font-size: 12px; line-height: 1.5; }
+.label-rename-error { flex: 1 1 100%; padding: 4px 0 4px 32px; }
+.labels-empty { margin: 0; padding: 0 8px; color: var(--dn-text-muted); font-size: 13px; line-height: var(--lb-row); }
+
+/* Colour choice: six theme presets and the colour wheel, one row. */
+.label-dots {
+  display: grid;
+  grid-template-columns: repeat(7, var(--lb-dot));
+  gap: var(--lb-gap);
+  flex: 1 1 100%;
+  padding: 4px 8px 8px;
+}
+.labels-panel > .label-dots { padding: 0 8px; }
+.label-dot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--lb-dot);
+  height: var(--lb-dot);
+  padding: 0;
+  border: 1px solid var(--dn-border);
+  border-radius: 50%;
+  color: var(--dn-text-muted);
+  background: var(--label-dot, transparent);
+  cursor: pointer;
+}
+.label-dot.on { box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-selection); }
+.label-dot:focus-visible, .label-custom:has(input:focus-visible) { outline: none; box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-text); }
+html[data-input='mouse'] .label-dot:not(.on):hover { box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-border); }
+.label-custom { border-style: dashed; }
+.label-custom.on { border-style: solid; }
+.label-custom input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+
+/* Fingers: 32px dots with a 44px hit area, 44px rows and tools, and 16px text so iOS doesn't zoom. */
+@media (pointer: coarse) {
+  .labels-panel { --lb-dot: 32px; --lb-row: 44px; width: 304px; }
+  .label-dot::after { content: ''; position: absolute; inset: -6px; }
+  .labels-input, .label-toggle { font-size: 16px; }
+  .label-actions { gap: 0; padding-right: 0; opacity: 1; }
+  .label-action { width: 44px; height: 44px; border-radius: 6px; }
+  .label-remove { margin-left: 0; }
+}

@@ -22,6 +22,7 @@ import { ColumnCard } from '../cards/ColumnCard.tsx'
 import { FileCard } from '../cards/FileCard.tsx'
 import { MovieCard } from '../cards/MovieCard.tsx'
 import { SwatchCard } from '../cards/SwatchCard.tsx'
+import { CardLabels } from '../ui/Labels.tsx'
 
 export type CardProps<T extends Card['type'] = Card['type']> = {
   card: Card<T>
@@ -129,6 +130,9 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
           <ColumnCard {...(props2() as CardProps<'column'>)} />
         </Match>
       </Switch>
+      <Show when={!props.lod && props.card.type !== 'column'}>
+        <CardLabels card={props.card} />
+      </Show>
       </ErrorBoundary>
       <Show when={isPositionLocked(props.card.id) && !props.readOnly && !props.lod}>
         <span class="position-lock-badge" data-testid="position-lock-badge" title={props.card.positionLocked === true ? 'Position locked — select to unlock' : 'Column layout locked — unlock the column or its locked member'} aria-label="Position locked"><svg width="12" height="14" viewBox="0 0 12 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="6" width="9" height="7" rx="1.5" /><path d="M3.5 6V3.5a2.5 2.5 0 0 1 5 0V6" /></svg></span>

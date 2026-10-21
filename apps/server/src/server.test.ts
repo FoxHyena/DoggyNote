@@ -40,6 +40,15 @@ describe('sync validation', () => {
     for (const positionLocked of [true, false, null]) expect(parseChanges({ changes: [{ id: 'a', patch: { positionLocked } }] })).toHaveLength(1)
     expect(parseChanges({ changes: [{ id: 'a', patch: { positionLocked: 'true' } }] })).toBe('bad position lock for a')
   })
+  it('validates label fields by their key, and allows dense label catalogues', () => {
+    const token = 'a1b2c3d4e5f6'
+    expect(parseChanges({ changes: [{ id: 'b', patch: { [`labelName${token}`]: 'Lighting', [`labelColor${token}`]: '#12AB3F' } }] })).toHaveLength(1)
+    expect(parseChanges({ changes: [{ id: 'c', patch: { [`label${token}`]: false } }] })).toHaveLength(1)
+    for (const patch of [{ [`label${token}`]: 'true' }, { [`labelName${token}`]: ' ' }, { [`labelColor${token}`]: 'url(x)' }]) expect(parseChanges({ changes: [{ id: 'a', patch }] })).toBe('bad label field for a')
+    const dense = Object.fromEntries(Array.from({ length: 90 }, (_, i) => [`labelName${i.toString(16).padStart(12, '0')}`, `L${i}`]))
+    expect(parseChanges({ changes: [{ id: 'b', patch: dense }] })).toHaveLength(1)
+    expect(parseChanges({ changes: [{ id: 'b', patch: { ...dense, extra: 1 } }] })).toBe('bad keys for b')
+  })
   it('accepts well-formed patches', () => {
     expect(parseChanges({ changes: [{ id: 'abc-1', patch: { x: 1, content: { a: 1 } } }] })).toEqual([{ id: 'abc-1', patch: { x: 1, content: { a: 1 } } }])
   })

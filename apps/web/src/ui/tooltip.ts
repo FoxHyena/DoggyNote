@@ -26,8 +26,10 @@ function show(el: HTMLElement) {
   if (!r.width && !r.height) { hide(); return }
   const t = tip.getBoundingClientRect()
   const left = Math.min(Math.max(8, r.left + r.width / 2 - t.width / 2), innerWidth - t.width - 8)
-  // Above the button, or below it when there's no room.
-  const top = r.top - t.height - 6 >= 8 ? r.top - t.height - 6 : r.bottom + 6
+  // Above the button, or below it when there's no room or it asks (`data-tip-place="below"`,
+  // e.g. so a tip in a list doesn't cover the field above it).
+  const below = el.dataset.tipPlace === 'below' && r.bottom + 6 + t.height <= innerHeight - 8
+  const top = !below && r.top - t.height - 6 >= 8 ? r.top - t.height - 6 : r.bottom + 6
   tip.style.left = `${left}px`
   tip.style.top = `${top}px`
 }

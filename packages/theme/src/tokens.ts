@@ -11,6 +11,7 @@ export const SURFACE_TOKENS = [
   'border',
   'text',
   'textMuted',
+  'errorText', // inline field errors, on panel and card
   'accent',
   'accentText', // text drawn on top of `accent`
   'selection',
@@ -36,6 +37,7 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     border: '#3d3934',
     text: '#ece7e1',
     textMuted: '#a69d93',
+    errorText: '#f08a7b',
     accent: '#e8a849', // golden retriever
     accentText: '#1c1b1a',
     selection: '#e8a849',
@@ -57,6 +59,7 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     border: '#ddd5ca',
     text: '#2a2521',
     textMuted: '#6b6158',
+    errorText: '#a8352a',
     accent: '#9a5f0c',
     accentText: '#ffffff',
     selection: '#b06c10',

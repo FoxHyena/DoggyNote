@@ -18,6 +18,7 @@ import { openThread } from './CommentsPanel.tsx'
 import { TodoOptions } from './TodoOptions.tsx'
 import { BarMenu } from './BarMenu.tsx'
 import { duplicateSelection } from '../state/clipboard.ts'
+import { LabelsButton } from './Labels.tsx'
 
 // Floating bar for the current selection: colour, board icon, bury (trash).
 // On touch it also offers what a mouse does with clicks and modifier keys
@@ -43,6 +44,8 @@ export function SelectionBar() {
     const c = sole()
     return !!c && (c.type === 'note' || c.type === 'todo' || c.type === 'column' || c.type === 'image' || c.type === 'swatch') && doc.canWriteObject(c)
   }
+  // Labels go on the cards of one board; a column is a container, so it has none.
+  const canLabel = () => cards().length > 0 && cards().every((c) => c.type !== 'column' && c.boardId === cards()[0].boardId && doc.canWriteObject(c))
   const canDuplicate = () => cards().length > 0 && cards().every((c) => doc.canWriteObject(c))
   const bury = () => {
     const n = selection().size
@@ -198,6 +201,9 @@ export function SelectionBar() {
           <TodoOptions card={sole() as Card<'todo'>} />
         </Show>
         <Show when={!editingList()}>
+        <Show when={canLabel()}>
+          <LabelsButton cards={cards()} />
+        </Show>
         <Show when={canDuplicate()}>
           <IconButton testid="duplicate-selection" icon={ToolIcons.duplicate} label="Duplicate" title="Duplicate (⌘D)" onClick={() => duplicateSelection()} />
         </Show>
