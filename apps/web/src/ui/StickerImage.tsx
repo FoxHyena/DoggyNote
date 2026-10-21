@@ -1,5 +1,5 @@
 import { StickerAnimation } from './StickerAnimation.tsx'
-import { Show, createEffect, createSignal, onCleanup } from 'solid-js'
+import { Show, createEffect, createMemo, createSignal, on, onCleanup } from 'solid-js'
 import type { StickerAsset } from '@doggynote/core'
 import { assetUrl } from '../state/api.ts'
 import { user } from '../state/session.ts'
@@ -32,27 +32,51 @@ export function cacheStickerAlpha(assetId: string, img: HTMLImageElement) {
       } catch { /* Cross-origin/expired credentials leave a conservative inset hit region. */ }
     }
 }
+/** Art that arrives within this just appears. Slower art gets the blank, then fades in over it. */
+const QUICK_MS = 120
+
 export function StickerImage(props: { sticker: StickerAsset; class?: string; onReady?: () => void; animate?: boolean }) {
   const [url, setUrl] = createSignal<string>()
   const [playing, setPlaying] = createSignal(false)
   const [failed, setFailed] = createSignal(false)
-  createEffect(() => {
-    const id = props.sticker.assetId
+  /** 'waiting' shows nothing yet; 'loading' shows the blank; 'arriving' fades the art in over it. */
+  const [state, setState] = createSignal<'waiting' | 'loading' | 'arriving' | 'ready'>('waiting')
+  // Synced rows arrive as fresh objects, so `content` changes identity on every
+  // echo. Reload only when the artwork itself changes.
+  const source = createMemo(() => ({ id: props.sticker.assetId, outlined: props.sticker.format === 'static', account: user()?.id ?? null }), undefined,
+    { equals: (a, b) => a.id === b.id && a.outlined === b.outlined && a.account === b.account })
+  /** The outline whose URL the image is showing. It is kept until a replacement shows or the image unmounts. */
+  let held: { release(): void } | undefined, shown: string | undefined
+  createEffect(on(source, ({ id, outlined, account }) => {
     // Even animated stickers' stills keep their original artwork.
-    const render = props.sticker.format === 'static' ? acquireStickerOutline(id, user()?.id ?? null) : undefined
+    const render = outlined ? acquireStickerOutline(id, account) : undefined
     let disposed = false
-    setUrl(undefined); setFailed(false)
+    // Other artwork starts over. The same artwork keeps showing until its new URL is ready.
+    if (id !== shown) {
+      held?.release(); held = undefined
+      setUrl(undefined); setState('waiting')
+      const slow = setTimeout(() => { if (state() === 'waiting') setState('loading') }, QUICK_MS)
+      onCleanup(() => clearTimeout(slow))
+    }
+    setFailed(false)
     void (render?.url ?? assetUrl(id, 'thumb')).then((url) => {
-      if (!disposed) setUrl(url)
+      if (disposed) return
+      if (held !== render) held?.release()
+      held = render; shown = id; setUrl(url)
     }).catch(() => { if (!disposed) setFailed(true) })
-    onCleanup(() => { disposed = true; render?.release() })
-  })
+    onCleanup(() => { disposed = true; if (render !== held) render?.release() })
+  }))
+  onCleanup(() => held?.release())
   const loaded = (img: HTMLImageElement) => {
     setFailed(false)
+    if (state() === 'waiting') setState('ready')
+    else if (state() === 'loading') setState('arriving')
     cacheStickerAlpha(props.sticker.assetId, img)
     props.onReady?.()
   }
-  return <span class="sticker-image" classList={{ playing: playing() }}><Show when={!failed()} fallback={<span class="sticker-unavailable" role="img" aria-label="Sticker image unavailable">{props.sticker.emoji || '◇'}</span>}>
-    <img class={props.class} src={url()} decoding="async" alt={`${props.sticker.emoji || 'Sticker'} · ${props.sticker.packName}`} draggable={false} crossOrigin="anonymous" onLoad={(e) => loaded(e.currentTarget)} onError={() => setFailed(true)} />
-  </Show><Show when={props.animate && props.sticker.format !== 'static'}><StickerAnimation sticker={props.sticker} enabled={!!props.animate} onReady={setPlaying} /></Show></span>
+  return <span class="sticker-image" classList={{ playing: playing() }} data-state={failed() ? 'failed' : state()}>
+    <Show when={!failed() && (state() === 'loading' || state() === 'arriving') && !playing()}><span class="sticker-blank" aria-hidden="true"><span class="sticker-blank-face"><span>{props.sticker.emoji || '🐾'}</span></span></span></Show>
+    <Show when={!failed()} fallback={<span class="sticker-unavailable" role="img" aria-label="Sticker image unavailable">{props.sticker.emoji || '◇'}</span>}>
+      <img class={props.class} src={url()} decoding="async" alt={`${props.sticker.emoji || 'Sticker'} · ${props.sticker.packName}`} draggable={false} crossOrigin="anonymous" onLoad={(e) => loaded(e.currentTarget)} onError={() => setFailed(true)} onAnimationEnd={() => { if (state() === 'arriving') setState('ready') }} />
+    </Show><Show when={props.animate && props.sticker.format !== 'static'}><StickerAnimation sticker={props.sticker} enabled={!!props.animate} onReady={setPlaying} /></Show></span>
 }
