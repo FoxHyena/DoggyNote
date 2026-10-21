@@ -36,6 +36,10 @@ describe('sync validation', () => {
   it('accepts namespaced ids like toybox:<user>', () => {
     expect(parseChanges({ changes: [{ id: 'toybox:abc-123', patch: { kind: 'board' } }] })).toHaveLength(1)
   })
+  it('validates optional position lock values without changing existing patch semantics', () => {
+    for (const positionLocked of [true, false, null]) expect(parseChanges({ changes: [{ id: 'a', patch: { positionLocked } }] })).toHaveLength(1)
+    expect(parseChanges({ changes: [{ id: 'a', patch: { positionLocked: 'true' } }] })).toBe('bad position lock for a')
+  })
   it('accepts well-formed patches', () => {
     expect(parseChanges({ changes: [{ id: 'abc-1', patch: { x: 1, content: { a: 1 } } }] })).toEqual([{ id: 'abc-1', patch: { x: 1, content: { a: 1 } } }])
   })

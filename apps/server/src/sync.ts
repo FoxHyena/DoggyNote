@@ -3,6 +3,7 @@ import { stickerObjectSchema, isReservedId } from '@doggynote/core/agent'
 import type { AppEnv } from './env.ts'
 import { accessGuard, bumpAccess, loadAccess, newBoardAccess, type Access } from './access.ts'
 import { prepareNote } from './notes.ts'
+import { checkPositionLocks, positionWriteGuards } from './position.ts'
 import { notifyRooms } from './realtime.ts'
 import { decodeUpdate, encodeUpdate, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
 import * as Y from 'yjs'
@@ -37,6 +38,7 @@ export function parseChanges(body: unknown): IncomingChange[] | string {
     if (!keys.length || keys.length > 40 || !keys.every((k) => KEY.test(k))) return `bad keys for ${id}`
     const p = patch as Record<string, unknown>
     if ('id' in p && p.id !== id) return `id mismatch for ${id}`
+    if ('positionLocked' in p && p.positionLocked !== null && typeof p.positionLocked !== 'boolean') return `bad position lock for ${id}`
     if ('kind' in p && !KINDS.has(p.kind as string)) return `bad kind for ${id}`
     if (JSON.stringify({ ...p, noteUpdate: undefined }).length > MAX_OBJECT_BYTES) return `object ${id} too large`
     out.push({ id, patch: p })
@@ -167,7 +169,9 @@ async function pushSync(c: Context<AppEnv>) {
   const access = await loadAccess(db, me)
   const deniedIds = await deniedChanges(db, access, me.id, parsed)
   if (deniedIds.length) return c.json({ error: 'You no longer have permission to change these objects', deniedIds }, 403)
-  const stmts: D1PreparedStatement[] = [accessGuard(db, access.revision)]
+  const positions = await checkPositionLocks(db, parsed)
+  if (positions.lockedIds.length) return c.json({ error: 'Locked positions stayed in place. Unlock before moving them.', lockedIds: positions.lockedIds, objects: positions.objects }, 409)
+  const stmts: D1PreparedStatement[] = [accessGuard(db, access.revision), ...positionWriteGuards(db, access.revision, positions.versions)]
   const newIds = parsed.filter((ch) => !existing.has(ch.id)).map((ch) => ch.id)
   for (let i = 0; i < newIds.length; i += 90) stmts.push(accessGuard(db, access.revision, newIds.slice(i, i + 90)))
   for (const { id, patch } of parsed) {

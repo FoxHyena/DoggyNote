@@ -106,7 +106,11 @@ export type Card<T extends CardType = CardType> = Base & {
   color: CardColor
   /** Set when the card sits inside a column; x/y are then ignored. */
   columnId?: Id | null
+  /** Column presentation only. Null/absent means expanded; member geometry is retained. */
+  collapsed?: boolean | null
   order?: number
+  /** Persistent editor layout lock. Content edits and natural height reflow remain allowed. */
+  positionLocked?: boolean
   content: CardContent[T]
 }
 
