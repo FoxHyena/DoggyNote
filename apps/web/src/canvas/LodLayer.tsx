@@ -1,5 +1,6 @@
+import { cacheStickerAlpha } from '../ui/StickerImage.tsx'
 import { createEffect, createSignal, onCleanup, onMount } from 'solid-js'
-import { intersects, worldToScreen, type Card, type Rect } from '@doggynote/core'
+import { intersects, stickerBounds, stickerHeight, worldToScreen, type Card, type Rect } from '@doggynote/core'
 import { theme as themeSignal } from '../theme.ts'
 import * as doc from '../state/doc.ts'
 import { boardId, camera, selection, viewport } from '../state/ui.ts'
@@ -63,7 +64,7 @@ function atlasFor(cell: number): HTMLCanvasElement {
   return atlas
 }
 
-function loadThumb(assetId: string) {
+function loadThumb(assetId: string, sticker = false) {
   void acquireUrl(assetId, 'thumb')
     .catch(() => assetUrl(assetId, 'thumb'))
     .then((src) => {
@@ -75,6 +76,7 @@ function loadThumb(assetId: string) {
       img.crossOrigin = 'anonymous'
       img.onload = () => {
         if (slots.get(assetId) === 'loading') {
+          if (sticker) cacheStickerAlpha(assetId, img)
           const scale = Math.min(CELL_W / img.naturalWidth, CELL_H / img.naturalHeight)
           const sw = Math.max(1, Math.round(img.naturalWidth * scale))
           const sh = Math.max(1, Math.round(img.naturalHeight * scale))
@@ -102,12 +104,12 @@ function loadThumb(assetId: string) {
     })
 }
 
-function thumb(assetId: string): Slot | null {
+function thumb(assetId: string, sticker = false): Slot | null {
   const t = slots.get(assetId)
   if (t && t !== 'loading') return t
   if (!t) {
     slots.set(assetId, 'loading')
-    loadThumb(assetId)
+    loadThumb(assetId, sticker)
   }
   return null
 }
@@ -226,6 +228,16 @@ export function LodLayer() {
         ctx.strokeRect(p.x - 3, p.y - 3, c.w * z + 6, h * z + 6)
       }
     }
+    // Stickers remain independent overlays above every ordinary card at overview.
+    for (const s of [...doc.stickersOn(boardId())].sort((a, b) => a.z - b.z || a.id.localeCompare(b.id))) {
+      if (!intersects(view, stickerBounds(s))) continue
+      const t = thumb(s.content.assetId, true)
+      if (!t || !atlas) continue
+      const h = stickerHeight(s), p = worldToScreen(cam, { x: s.x + s.w / 2, y: s.y + h / 2 })
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(s.angle * Math.PI / 180)
+      ctx.drawImage(atlas, t.sx, t.sy, t.sw, t.sh, -s.w * z / 2, -h * z / 2, s.w * z, h * z)
+      ctx.restore()
+    }
   }
 
   createEffect(() => {
@@ -235,6 +247,7 @@ export function LodLayer() {
     palette()
     selection()
     thumbTick()
+    for (const s of doc.stickersOn(boardId())) void (s.x, s.y, s.w, s.angle, s.z, s.content.assetId)
     for (const c of doc.cardsOn(boardId())) void (c.x, c.y, c.w, c.h, c.z, c.color, c.columnId, c.order)
     if (!frame) frame = requestAnimationFrame(draw)
   })

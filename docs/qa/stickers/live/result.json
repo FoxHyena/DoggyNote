@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-20T18:03:44.226Z",
+  "pack": "hyenafox",
+  "baseURL": "http://localhost:8789",
+  "checks": [
+    "Live Bot API resolved the real title in the app preview.",
+    "Added live pack: 34/34 usable; formats static.",
+    "Live asset placed, resized, rotated and rendered after reload."
+  ],
+  "boardId": "8f015867-80ec-4d2d-9fd5-49ddef8b05cc",
+  "title": "Oreo the Fox Hyena",
+  "count": 34,
+  "available": 34,
+  "formats": [
+    "static"
+  ],
+  "unavailable": [],
+  "success": true
+}

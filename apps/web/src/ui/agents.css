@@ -56,3 +56,4 @@
 @media (pointer: coarse) {
   .agents-dialog :is(button, input:not([type=checkbox]), select, summary), .agents-board-options label { min-height: 44px; }
 }
+.agents-preview-sticker { position: absolute; pointer-events: none; }

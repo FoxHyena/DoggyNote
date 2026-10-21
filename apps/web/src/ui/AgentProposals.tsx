@@ -1,6 +1,7 @@
 import { For, Show, createMemo, createResource, createSignal, onCleanup, onMount, type Accessor, type JSX } from 'solid-js'
 import type { AgentChange, AgentObject } from '@doggynote/core/agent'
-import { parseMarkdown } from '@doggynote/core'
+import { StickerImage } from './StickerImage.tsx'
+import { stickerBounds, stickerHeight, usableSticker, parseMarkdown } from '@doggynote/core'
 import { boardDisplayTitle, cardColor } from '@doggynote/theme'
 import { RichText } from '../editor/RichText.tsx'
 import { api, assetUrl } from '../state/api.ts'
@@ -82,6 +83,7 @@ function ProposalPanel(props: { proposals: Summary[]; loading: boolean; failed: 
 /** Isolated scene: reads proposal snapshots only, never installs a global doc. */
 export function AgentBoardPreview(props: { objects: AgentObject[]; boardId?: string }) {
   const cards = () => props.objects.filter((o): o is Extract<AgentObject, { kind: 'card' }> => o.kind === 'card' && o.boardId === props.boardId && !o.deletedAt && !o.purged)
+  const stickers = () => props.objects.filter(usableSticker).filter((s) => s.boardId === props.boardId && !s.deletedAt && !s.purged).sort((a, b) => a.z - b.z || a.id.localeCompare(b.id))
   const scene = createMemo(() => {
     const all = cards(), rects = new Map<string, { x: number; y: number; w: number; h: number }>()
     for (const c of all.filter((c) => !c.columnId)) rects.set(c.id, { x: c.x, y: c.y, w: c.w, h: c.h })
@@ -91,7 +93,7 @@ export function AgentBoardPreview(props: { objects: AgentObject[]; boardId?: str
       const r = rects.get(column.id)
       if (r) r.h = Math.max(r.h, y - column.y + 12)
     }
-    const bounds = [...rects.values()]
+    const bounds = [...rects.values(), ...stickers().map(stickerBounds)]
     const x = Math.min(0, ...bounds.map((r) => r.x)) - 20, y = Math.min(0, ...bounds.map((r) => r.y)) - 20
     const width = Math.max(320, ...bounds.map((r) => r.x + r.w - x + 20)), height = Math.max(180, ...bounds.map((r) => r.y + r.h - y + 20))
     return { rects, x, y, width, height }
@@ -101,9 +103,10 @@ export function AgentBoardPreview(props: { objects: AgentObject[]; boardId?: str
   onMount(() => { const ro = new ResizeObserver(() => setAvailable(viewport.clientWidth || 600)); ro.observe(viewport); onCleanup(() => ro.disconnect()) })
   const scale = () => Math.min(1, available() / scene().width)
   const connections = () => props.objects.filter((o): o is Extract<AgentObject, { kind: 'connection' }> => o.kind === 'connection' && o.boardId === props.boardId && !o.deletedAt && !o.purged)
-  return <div class="agents-preview" ref={viewport} data-testid="agent-board-preview"><Show when={cards().length} fallback={<p class="agents-hint">This board has no cards.</p>}><div style={{ position: 'relative', height: `${scene().height * scale()}px` }}><div class="agents-preview-world" inert style={{ width: `${scene().width}px`, height: `${scene().height}px`, transform: `scale(${scale()})` }}>
+  return <div class="agents-preview" ref={viewport} data-testid="agent-board-preview"><Show when={cards().length || stickers().length} fallback={<p class="agents-hint">This board has no cards or stickers.</p>}><div style={{ position: 'relative', height: `${scene().height * scale()}px` }}><div class="agents-preview-world" inert style={{ width: `${scene().width}px`, height: `${scene().height}px`, transform: `scale(${scale()})` }}>
     <svg class="agents-preview-lines" width={scene().width} height={scene().height} aria-hidden="true"><For each={connections()}>{(c) => { const from = () => scene().rects.get(c.from), to = () => scene().rects.get(c.to); return <Show when={from() && to()}><line x1={from()!.x + from()!.w / 2 - scene().x} y1={from()!.y + from()!.h / 2 - scene().y} x2={to()!.x + to()!.w / 2 - scene().x} y2={to()!.y + to()!.h / 2 - scene().y} /></Show> }}</For></svg>
     <For each={cards().sort((a, b) => (a.type === 'column' ? -1 : 0) - (b.type === 'column' ? -1 : 0) || a.z - b.z)}>{(c) => { const rect = () => scene().rects.get(c.id); return <Show when={rect()}><div class="agents-preview-card" classList={{ 'agents-preview-column': c.type === 'column' }} style={{ left: `${rect()!.x - scene().x}px`, top: `${rect()!.y - scene().y}px`, width: `${rect()!.w}px`, 'min-height': `${rect()!.h}px`, '--agent-card-bg': `var(--dn-card-${cardColor(c.color)}-bg)`, '--agent-card-text': `var(--dn-card-${cardColor(c.color)}-text)` }}><small>{c.type}</small><Show when={c.type === 'image'}><PreviewImage assetId={(c.content as { assetId: string }).assetId} /></Show><div class="agents-preview-text"><Show when={c.type === 'note'} fallback={cardText(c, props.objects)}><RichText doc={parseMarkdown((c.content as { md: string }).md ?? '')} /></Show></div></div></Show> }}</For>
+    <For each={stickers()}>{(s) => <div class="agents-preview-sticker" style={{ left: `${s.x - scene().x}px`, top: `${s.y - scene().y}px`, width: `${s.w}px`, height: `${stickerHeight(s)}px` }}><div class="sticker-rotation" style={{ transform: `rotate(${s.angle}deg)` }}><StickerImage sticker={s.content} /></div></div>}</For>
   </div></div></Show></div>
 }
 function PreviewImage(props: { assetId: string }) { const [src] = createResource(() => props.assetId, (id) => assetUrl(id, 'thumb')); return <Show when={src()}><img alt="Proposed image" src={src()} /></Show> }

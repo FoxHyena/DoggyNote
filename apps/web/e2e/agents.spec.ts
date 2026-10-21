@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { freshBoard, cardByText, addNote, MOD, waitForSync, postSync } from './helpers.ts'
+import { freshBoard, cardByText, addNote, MOD, waitForSync, postSync, pullAllObjects } from './helpers.ts'
 const appRoot = fileURLToPath(new URL('../../../', import.meta.url))
 async function openProposals(page: Page) {
   await page.getByTestId('board-more').click()
@@ -89,7 +89,7 @@ test('agent scope, read-only mode, session isolation, stale approval and newer-e
   const proposed = { ...row.object, content: { md: 'Agent replacement' } }
   const request = { idempotencyKey: `conflict-${crypto.randomUUID()}`, label: 'Replace the note', operations: [{ action: 'replace', object: proposed, expectedRevision: row.revision }] }
   const staged = await page.request.post('/api/agent/proposals', { headers, data: request })
-  expect(staged.status()).toBe(201)
+  expect(staged.status(), await staged.text()).toBe(201)
   const { id } = await staged.json()
   expect((await page.request.post(`/api/agent-proposals/${id}/approve`, { headers, data: {} })).status()).toBe(401)
   const note = cardByText(page, 'Human original')
@@ -171,19 +171,36 @@ test('image and file proposals reuse scoped assets and cannot borrow assets from
   const outside = { ...file, id: crypto.randomUUID(), boardId: outsideId, content: { ...file.content, assetId: outsideAsset } }
   expect((await postSync(page.request, { data: { changes: [
     { id: outsideId, patch: { id: outsideId, kind: 'board', parentId: null, title: 'Outside agent scope', icon: 'paw', color: 'gold', createdAt: Date.now() } },
+    // Emptying trash clears image content. An unrelated cleared row must not
+    // crash the asset-reference scan before it reaches this proposal's image.
+    { id: 'cleared-image-' + boardId, patch: { ...image, id: 'cleared-image-' + boardId, content: null, purged: true } },
     ...[image, file, outside].map((object) => ({ id: object.id, patch: object })),
   ] } })).ok()).toBe(true)
+  // Render and sync fixture card measurements before capturing the proposal's
+  // revision. A later layout write must not invalidate this authorization test.
+  await page.reload()
+  await expect.poll(() => page.getByTestId('card-image').first().evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBe(16)
+  const measured = await page.getByTestId('card').evaluateAll((els) => els.map((el) => ({ id: (el as HTMLElement).dataset.cardId!, h: (el as HTMLElement).offsetHeight })))
+  expect(measured).toHaveLength(2)
+  // Height writes are debounced in layout.ts, so idle sync alone can precede
+  // them. Wait until those actual measurements have reached the server.
+  await expect.poll(async () => {
+    const { objects } = await pullAllObjects(page.request)
+    return measured.every(({ id, h }) => Math.abs((objects.find((o) => o.id === id)?.h ?? 0) - h) <= 1)
+  }).toBe(true)
+  await waitForSync(page)
   const connection = await (await page.request.post('/api/agent-connections', { data: { name: 'Scoped assets', mode: 'propose', boardIds: [boardId] } })).json()
   const headers = { authorization: `Bearer ${connection.token}` }
   const staged = await page.request.post('/api/agent/proposals', { headers, data: { idempotencyKey: `assets-${crypto.randomUUID()}`, label: 'Reuse authorized assets', operations: [image, file].map((object, index) => ({ action: 'create', object: { ...object, id: crypto.randomUUID(), x: 360, y: 40 + index * 180 } })) } })
-  expect(staged.status()).toBe(201)
+  expect(staged.status(), await staged.text()).toBe(201)
   const proposalId = (await staged.json()).id
   await openProposals(page)
   await page.getByTestId('agent-review').getByRole('button', { name: /Reuse authorized assets/ }).click()
   const preview = page.getByTestId('agent-board-preview')
   await expect(preview).toContainText('reference.txt')
   await expect.poll(() => preview.getByAltText('Proposed image').first().evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBe(16)
-  expect((await page.request.post(`/api/agent-proposals/${proposalId}/approve`, { data: {} })).status()).toBe(200)
+  const approval = await page.request.post(`/api/agent-proposals/${proposalId}/approve`, { data: {} })
+  expect(approval.status(), await approval.text()).toBe(200)
   const forbidden = await page.request.post('/api/agent/proposals', { headers, data: { idempotencyKey: `outside-${crypto.randomUUID()}`, label: 'Forbidden outside asset', operations: [{ action: 'create', object: { ...file, id: crypto.randomUUID(), content: { ...file.content, assetId: outsideAsset } } }] } })
   expect(forbidden.status()).toBe(409)
   expect((await forbidden.json()).error).toContain('asset already visible')

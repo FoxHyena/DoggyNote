@@ -42,6 +42,9 @@ importers:
       '@doggynote/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@doggynote/theme':
+        specifier: workspace:*
+        version: link:../../packages/theme
       hono:
         specifier: ^4.10.0
         version: 4.13.13
@@ -91,6 +94,9 @@ importers:
       '@tauri-apps/plugin-updater':
         specifier: ^2.13.2
         version: 2.13.2
+      lottie-web:
+        specifier: 5.13.0
+        version: 5.13.0
       modern-screenshot:
         specifier: 4.7.0
         version: 4.7.0
@@ -1401,6 +1407,9 @@ packages:
 
   linkify-it@5.0.2:
     resolution: {integrity: sha512-ONTm2jCMAVZjgQa/Fy1kScXsuOoF5NPTsoFBdE1KVIZ2vAh/r9+Bqo+0jINCBYnavTPQZz38QzFTme79ENoN3Q==}
+
+  lottie-web@5.13.0:
+    resolution: {integrity: sha512-+gfBXl6sxXMPe8tKQm7qzLnUy5DUPJPKIyRHwtpCpyUEYjHYRJC/5gjUvdkuO2c3JllrPtHXH5UJJK8LRYl5yQ==}
 
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
@@ -3021,6 +3030,8 @@ snapshots:
   linkify-it@5.0.2:
     dependencies:
       uc.micro: 2.1.0
+
+  lottie-web@5.13.0: {}
 
   lru-cache@5.1.1:
     dependencies:

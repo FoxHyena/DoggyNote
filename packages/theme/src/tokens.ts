@@ -16,6 +16,8 @@ export const SURFACE_TOKENS = [
   'selection',
   'gridDot', // background dots: quiet, but visible
   'scrim', // dims the app behind a phone sheet (translucent)
+  'stickerShadow', // hard, offset shadow under placed stickers (translucent)
+  'stickerOutline', // the die-cut border drawn around every sticker
 ] as const
 
 export type SurfaceToken = (typeof SURFACE_TOKENS)[number]
@@ -34,6 +36,8 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     selection: '#e8a849',
     gridDot: '#3d3934',
     scrim: '#0b0a0999',
+    stickerShadow: '#00000099',
+    stickerOutline: '#ffffff',
   },
   light: {
     bg: '#f3efe9',
@@ -48,6 +52,8 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     selection: '#b06c10',
     gridDot: '#d3cabe',
     scrim: '#2a252159',
+    stickerShadow: '#2a252129',
+    stickerOutline: '#ffffff',
   },
 }
 

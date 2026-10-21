@@ -16,7 +16,15 @@ const card = {
 }
 const safeUrl = z.string().max(4096).refine((v) => { try { return ['https:', 'http:'].includes(new URL(v).protocol) } catch { return false } }, 'Use an http or https URL')
 const rendition = z.enum(['thumb', 'small', 'medium', 'full'])
+export const stickerObjectSchema = z.strictObject({
+  ...common, kind: z.literal('sticker'), boardId: id,
+  x: z.number().finite().min(-1_000_000).max(1_000_000), y: z.number().finite().min(-1_000_000).max(1_000_000),
+  w: z.number().finite().min(32).max(1024), angle: z.number().finite().min(-180).max(180), z: z.number().finite().min(-1e9).max(1e9),
+  content: z.strictObject({ assetId: z.uuid(), stickerId: z.string().min(1).max(128), packName: z.string().regex(/^[a-zA-Z][a-zA-Z0-9_]{0,63}$/), emoji: z.string().max(64),
+    width: z.number().int().min(1).max(512), height: z.number().int().min(1).max(512), format: z.enum(['static', 'tgs', 'webm']) }),
+}).refine((s) => s.w * s.content.height / s.content.width <= 1024 && s.content.width / s.content.height <= 16 && s.content.height / s.content.width <= 16, 'Sticker bounds exceed limits')
 export const agentObjectSchema = z.discriminatedUnion('kind', [
+  stickerObjectSchema,
   z.strictObject({ ...common, kind: z.literal('board'), parentId: id.nullable(), title: z.string().max(200), icon: z.enum(['paw', 'bone', 'ball', 'collar', 'kennel', 'bowl', 'star', 'heart']), color }),
   z.discriminatedUnion('type', [
     z.strictObject({ ...card, type: z.literal('note'), content: z.strictObject({ md: text }) }),

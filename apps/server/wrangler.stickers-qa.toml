@@ -1,0 +1,27 @@
+# Isolated hosted Telegram QA. Always pass --config wrangler.stickers-qa.toml.
+# No production domains, data, assets, updater publishing, or diagnostic logging.
+name = "doggynote-stickers-qa"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+workers_dev = true
+account_id = "e4099c808dc2438ae24e16513b245f4f"
+
+[assets]
+directory = "../web/dist-stickers-hosted-qa"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "doggynote-stickers-qa"
+database_id = "3a8f1877-769d-433c-9e81-320e48d8cdeb"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "doggynote-stickers-qa-assets"
+
+[vars]
+ALLOWED_ORIGINS = ""
+APP_VERSION = "0.0.1"
+MIN_CLIENT = "0.0.0"

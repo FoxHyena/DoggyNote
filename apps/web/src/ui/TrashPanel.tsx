@@ -1,7 +1,7 @@
 import { installCanvasPanel } from './canvasPanel.ts'
 import './canvas-entry.css'
 import { For, Show, createMemo } from 'solid-js'
-import { mdToText, noteMarkdown, type Card } from '@doggynote/core'
+import { mdToText, noteMarkdown, type Card, type Sticker } from '@doggynote/core'
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { emptyTrash, restoreCard } from '../state/actions.ts'
@@ -10,8 +10,9 @@ import { boardId, setTrashOpen, trashOpen } from '../state/ui.ts'
 import { Icon, ToolIcons } from './icons.tsx'
 
 /** A short label; a malformed (synced) card gets a generic one instead of an error. */
-export function describeCard(c: Card): string {
+export function describeCard(c: Card | Sticker): string {
   try {
+    if (c.kind === 'sticker') return `${c.content.emoji || 'Sticker'} · ${c.content.packName}`
     const label = rawDescribeCard(c)
     return typeof label === 'string' && label ? label : 'Card'
   } catch {
@@ -62,7 +63,7 @@ export function TrashPanel() {
             <For each={items()}>
               {(c) => (
                 <li class="trash-item" data-testid="trash-item">
-                  <span class="trash-type">{c.type}</span>
+                  <span class="trash-type">{c.kind === 'sticker' ? 'sticker' : c.type}</span>
                   <span class="trash-text">{describeCard(c)}</span>
                   <button class="bar-btn" data-testid="restore" title="Dig it back up" onClick={() => restoreCard(c.id)}>
                     <Icon size={16}>{ToolIcons.restore()}</Icon>

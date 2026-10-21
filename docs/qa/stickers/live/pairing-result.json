@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-20T18:22:28.651Z",
+  "transport": "Telegram getUpdates, forwarded locally to authenticated webhook handler; public webhook registration unchanged",
+  "success": true,
+  "checks": [
+    "Resuming the explicitly confirmed real pairing and pending pack suggestion.",
+    "App confirmation bound the test identity; a genuine sent sticker produced the expected pack preview without automatic placement.",
+    "Confirmed Add pack imported the real suggested set into the personal collection."
+  ],
+  "packName": "spottedhyenaNL"
+}

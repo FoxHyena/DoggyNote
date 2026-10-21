@@ -1,3 +1,4 @@
+import { suggestions, openStickers, stickerTrayOpen } from '../state/stickers.ts'
 import './canvas-entry.css'
 import { For, Show, createSignal, type JSX } from 'solid-js'
 import { DEFAULT_SIZE, findFreeSpot, screenToWorld, type CardType, type Vec } from '@doggynote/core'
@@ -95,6 +96,7 @@ export function Toolbar() {
           </button>
         )}
       </For>
+      <button class="tool" data-testid="tool-stickers" aria-label="Stickers" aria-expanded={stickerTrayOpen()} aria-description={suggestions.length ? suggestions.length === 1 ? 'Pack found in Telegram' : `${suggestions.length} packs found in Telegram` : undefined} title={suggestions.length ? suggestions.length === 1 ? 'Pack found in Telegram' : `${suggestions.length} packs found in Telegram` : undefined} onClick={openStickers}><Icon size={22}><path d="M4 4h16v10l-6 6H4Z M14 20v-6h6 M8 9h.01 M15 9h.01 M8 12q4 5 8 0" /></Icon><span>Stickers</span><Show when={suggestions.length}><span class="sticker-found-dot" data-testid="sticker-found-badge" aria-hidden="true" /></Show></button>
       <div class="toolbar-sep" />
       <button class="tool" data-testid="tool-image" title="Add image" onClick={() => fileInput.click()}>
         <Icon size={22}>{ToolIcons.image()}</Icon>

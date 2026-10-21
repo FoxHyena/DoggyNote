@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-10-20T22:51:53.376Z",
+  "origin": "https://doggynote-stickers-qa.oreothehyena.workers.dev",
+  "registered": true,
+  "securityChecks": [
+    "unauthenticated collection 401",
+    "missing webhook secret 403",
+    "private non-admin login 200",
+    "asset token configuration 200"
+  ],
+  "webhook": {
+    "matchesQA": true,
+    "pendingUpdateCount": 3,
+    "allowedUpdates": [
+      "message"
+    ],
+    "lastErrorDate": null,
+    "lastErrorMessage": null
+  }
+}

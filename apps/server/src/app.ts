@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import type { AppEnv } from './env.ts'
 import { auth, requireUser, users } from './auth.ts'
+import { stickers, telegramWebhook } from './stickers.ts'
 import { sync } from './sync.ts'
 import { assets } from './assets.ts'
 import { shares } from './shares.ts'
@@ -70,6 +71,7 @@ app.post('/diag', async (c) => {
   return c.json({ ok: true })
 })
 
+app.route('/', telegramWebhook)
 app.route('/auth', auth)
 app.route('/', assets)
 app.route('/', shares)
@@ -85,6 +87,7 @@ authed.use('/sync', async (c, next) => {
 })
 authed.route('/', users)
 authed.route('/', sync)
+authed.route('/', stickers)
 authed.get('/unfurl', async (c) => {
   const target = isFetchableUrl(c.req.query('url') ?? '')
   if (!target) return c.json({ error: 'Only http(s) links can be previewed' }, 400)

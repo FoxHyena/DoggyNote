@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js'
-import type { Card, Id, Rect } from '@doggynote/core'
+import { usableSticker, stickerBounds, type Card, type Id, type Rect } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
 
 // Measured card geometry. Cards report their rendered height through one shared
@@ -64,6 +64,8 @@ export function cardHeight(c: Card): number {
 
 /** World rect of a card, including cards stacked inside a column. */
 export function rectOf(id: Id): Rect | null {
+  const o = doc.get(id)
+  if (usableSticker(o)) return o.deletedAt || o.purged ? null : stickerBounds(o)
   const c = doc.getCard(id)
   if (!c || c.deletedAt || c.purged) return null
   if (c.columnId) {

@@ -73,8 +73,12 @@ test('a move on touch offers Undo', async ({ page }) => {
 test('long-press lifts a card that was not selected', async ({ page }) => {
   await seedCards(page, [note('Lift me', 0, 0)])
   const x0 = await left(page, 'Lift me')
-  const p = await center(cardByText(page, 'Lift me'))
-  await touchDrag(page, p, { x: p.x + 70, y: p.y + 30 }, { hold: 550 })
+  const card = cardByText(page, 'Lift me'), p = await center(card), finger = new Fingers(page)
+  await finger.press(0, p)
+  // Observe the lift before moving instead of racing a fixed wall-clock sleep.
+  await expect(card).toHaveClass(/selected/)
+  for (let i = 1; i <= 8; i++) await finger.move(0, { x: p.x + 70 * i / 8, y: p.y + 30 * i / 8 })
+  await finger.release(0)
   await expect.poll(() => left(page, 'Lift me')).toBeGreaterThan(x0 + 50)
   await expect(cardByText(page, 'Lift me')).toHaveClass(/selected/)
 })

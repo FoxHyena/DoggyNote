@@ -1,0 +1,30 @@
+{
+  "checkedAt": "2026-10-20T22:56:21.186Z",
+  "origin": "https://doggynote-stickers-qa.oreothehyena.workers.dev",
+  "replay": {
+    "kind": "Minimal handler-relevant sticker payload using an already processed real test update ID; original full Telegram body was not retained",
+    "attempts": [
+      {
+        "status": 200,
+        "ok": true,
+        "replyRequested": false
+      },
+      {
+        "status": 200,
+        "ok": true,
+        "replyRequested": false
+      }
+    ],
+    "pairingAndPendingUnchanged": true,
+    "directBotApiSendMessageCalled": false
+  },
+  "webhook": {
+    "matchesQA": true,
+    "pendingUpdateCount": 0,
+    "allowedUpdates": [
+      "message"
+    ],
+    "lastErrorDate": null,
+    "lastErrorMessage": null
+  }
+}

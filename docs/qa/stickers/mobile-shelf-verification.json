@@ -1,0 +1,37 @@
+{
+  "recordedAt": "2026-10-20T21:53:12.164511+00:00",
+  "baseCommit": "d4825c51a60121271749fea99be9aca706338be0",
+  "checks": {
+    "typecheck": "pass",
+    "unitIntegration": {
+      "files": 14,
+      "passed": 162
+    },
+    "build": "web/app/DMG pass",
+    "fullE2E": {
+      "passed": 439,
+      "skipped": 4,
+      "retries": 0,
+      "minutes": 4.9,
+      "command": "CI=1 PERF=1 STICKER_VISUAL_ROUND=26 pnpm test:e2e --workers=4 --retries=0"
+    },
+    "focusedRepeats": {
+      "passed": 27,
+      "retries": 0
+    }
+  },
+  "remainingNativeGate": "Exactly-one tray drag commit unverified; two native attempts armed placement with zero commits; final native screenshot failed cgWindowNotFound.",
+  "sourceSha256": {
+    "apps/web/src/App.tsx": "c32161b50174a11bfbb37e6e59d480e6320d3f8ea224682bd458b7a8427ec563",
+    "apps/web/src/ui/MobileDock.tsx": "33f88f208bb5d88fd9fa413dc951908712177fc9ff8e7b8295aab1e4b6cda80b",
+    "apps/web/src/ui/StickerTray.tsx": "30b0fe78f47e23051d04de51671af21edcf920984748e94cbebad2255c05890d",
+    "apps/web/src/ui/StickerControls.tsx": "6d6e5761b4ecd2db9989803a5e9c482c9c020729c406c89a6cf77799dbc7f93b",
+    "apps/web/src/ui/stickers.css": "35af3938c3a51c7573f2f386df2b785cbbe9ca8bab76876de931f80f1578a1e3",
+    "apps/web/src/state/stickers.ts": "04b1f5bd78975badf428cc9bcd789617a0bfbf27ced5cd1ad77b95d1c133f208",
+    "apps/web/e2e/sticker-helpers.ts": "f2af43233a86dd6a31e103490ab478040240088619d38580a661f6a59aa91bd4",
+    "apps/web/e2e/mobile-stickers.spec.ts": "6a7a163ca92fdc4853cd132d12bba6792cfbc5c529094e5f55d86c9209eb90a5",
+    "apps/web/e2e/agents.spec.ts": "7d5fa0a0ad4b7678720adea62059bf7f30df830b6f0f07fddb49d5c9600b4793",
+    "apps/web/e2e/mobile-gestures.spec.ts": "3b8f7c8daf42c284c0880e6b2d05a13d538e91668a321318bdedee029921c617",
+    "apps/web/e2e/mobile-shell.spec.ts": "86fa6ba220671434d5969674cc467449c1947bc714efbd1cca21c87f4b6c485b"
+  }
+}

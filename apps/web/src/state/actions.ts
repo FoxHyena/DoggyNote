@@ -122,7 +122,7 @@ export function trashSelection() {
     if (!o) continue
     // Connections have no trash view; they're simply removed (undo brings them back).
     if (o.kind === 'connection') patches[id] = { purged: true }
-    else if (o.kind === 'card') patches[id] = { deletedAt: now }
+    else if (o.kind === 'card' || o.kind === 'sticker') patches[id] = { deletedAt: now }
   }
   doc.update(patches)
   clearSelection()
@@ -132,7 +132,7 @@ export function restoreCard(id: Id) {
   doc.update({ [id]: { deletedAt: null } })
 }
 
-export function emptyTrash(cards: Card[]) {
+export function emptyTrash(cards: Obj[]) {
   const patches: Record<Id, Partial<Obj>> = {}
   for (const c of cards) patches[c.id] = { purged: true }
   doc.update(patches)
@@ -183,7 +183,7 @@ export function connect(from: Id, to: Id, sides: { fromSide?: Side; toSide?: Sid
 }
 
 export function selectAll() {
-  select(doc.cardsOn(boardId()).filter((c) => !c.columnId).map((c) => c.id))
+  select([...doc.cardsOn(boardId()), ...doc.stickersOn(boardId())].filter((c) => c.kind === 'sticker' || !c.columnId).map((c) => c.id))
 }
 
 /** Move a card to another board (e.g. out of the Toy box) at a point or into a column. One undo step. */
