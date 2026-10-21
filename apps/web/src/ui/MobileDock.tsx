@@ -37,24 +37,7 @@ export function MobileDock(props: { readOnly: boolean }) {
 }
 
 export function MobileStickerButton() {
-  const toggle = () => stickerTrayOpen() ? setStickerTrayOpen(false) : openStickers()
-  // A finger's tap is handled at touchend. Chromium can drop the click it would
-  // synthesise (seen right after a pinch and a rotation: pointerup, touchend, then
-  // nothing), so a real tap went unanswered. Cancelling touchend also stops that
-  // click from arriving later and landing on the tray that just opened here.
-  let touchStart: { x: number; y: number } | null = null
-  const onTouchStart = (e: TouchEvent) => {
-    const t = e.touches.length === 1 ? e.touches[0] : null
-    touchStart = t ? { x: t.clientX, y: t.clientY } : null
-  }
-  const onTouchEnd = (e: TouchEvent) => {
-    const start = touchStart, t = e.changedTouches[0]
-    touchStart = null
-    if (!start || !t || e.touches.length || Math.hypot(t.clientX - start.x, t.clientY - start.y) > 10) return
-    e.preventDefault()
-    toggle()
-  }
-  return <Show when={!armedSticker()}><button class="mobile-sticker-launcher" data-testid="mobile-stickers" aria-label="Stickers" aria-expanded={stickerTrayOpen()} aria-controls="sticker-tray" aria-description={suggestions.length ? suggestions.length === 1 ? 'Pack found in Telegram' : `${suggestions.length} packs found in Telegram` : undefined} on:touchstart={onTouchStart} on:touchend={onTouchEnd} on:touchcancel={() => { touchStart = null }} onClick={toggle}><Icon size={25}><path d="M4 4h16v10l-6 6H4Z M14 20v-6h6 M8 9h.01 M15 9h.01 M8 12q4 5 8 0" /></Icon><Show when={suggestions.length}><span class="sticker-found-dot" data-testid="sticker-found-badge" aria-hidden="true" /></Show></button></Show>
+  return <Show when={!armedSticker()}><button class="mobile-sticker-launcher" data-testid="mobile-stickers" aria-label="Stickers" aria-expanded={stickerTrayOpen()} aria-controls="sticker-tray" aria-description={suggestions.length ? suggestions.length === 1 ? 'Pack found in Telegram' : `${suggestions.length} packs found in Telegram` : undefined} onClick={() => stickerTrayOpen() ? setStickerTrayOpen(false) : openStickers()}><Icon size={25}><path d="M4 4h16v10l-6 6H4Z M14 20v-6h6 M8 9h.01 M15 9h.01 M8 12q4 5 8 0" /></Icon><Show when={suggestions.length}><span class="sticker-found-dot" data-testid="sticker-found-badge" aria-hidden="true" /></Show></button></Show>
 }
 
 function AddButton() {

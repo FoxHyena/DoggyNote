@@ -70,7 +70,12 @@ test('phone scroll and preview never place; tap, cancel, move, resize, rotate an
   // The second finger cancels an in-progress sticker transform before canvas pinch.
   const f = new Fingers(page), c = await center(page.getByTestId('placed-sticker'))
   await f.press(0, c); await f.move(0, { x: c.x + 20, y: c.y })
-  await f.press(1, { x: c.x + 80, y: c.y + 80 }); await f.move(1, { x: c.x + 110, y: c.y + 110 }); await f.release(1); await f.release(0)
+  await f.press(1, { x: c.x + 80, y: c.y + 80 }); await f.move(1, { x: c.x + 110, y: c.y + 110 })
+  // The fingers come to rest before lifting, as a real pinch does. A release mid-motion
+  // starts a fling in Chromium, and the next tap (the Stickers button below) would only
+  // stop that fling and never click. Chromium counts a finger as stopped after 40ms.
+  await page.waitForTimeout(100)
+  await f.release(1); await f.release(0)
   const after = await stickerState(page)
   expect(after.x).toBe(before.x); expect(after.w).toBe(before.w); expect(after.angle).toBe(before.angle)
   await waitForSync(page)

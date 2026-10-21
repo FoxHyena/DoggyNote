@@ -2,7 +2,6 @@ import { createSignal } from 'solid-js'
 import type { Obj } from '@doggynote/core'
 import * as doc from './doc.ts'
 import * as idb from './idb.ts'
-import { showToast } from './toast.ts'
 import { ApiError, api } from './api.ts'
 import { accessRevision, canEditBoard, refreshAccess } from './access.ts'
 import { loadRecovery, preserveActiveEdit, preserveDenied } from './recovery.ts'
@@ -50,10 +49,7 @@ async function push() {
     const pending = doc.pendingOutbox().slice(0, PUSH_CHUNK)
     if (!pending.length) return
     try {
-      const result = await api<{ lockedIds?: string[] }>('/api/sync', { method: 'POST', json: { changes: pending.map((p) => ({ id: p.id, patch: { ...p.patch, id: p.id } })) } })
-      // The server kept a locked card's layout and saved the rest. Acknowledging the
-      // send drops the move here too; the next pull brings the locked position back.
-      if (result?.lockedIds?.length) showToast('A position was locked in another session. Its layout was kept; your other edits are saved.')
+      await api('/api/sync', { method: 'POST', json: { changes: pending.map((p) => ({ id: p.id, patch: { ...p.patch, id: p.id } })) } })
     } catch (error) {
       if (error instanceof ApiError && error.status === 403 && Array.isArray(error.details.deniedIds)) {
         await preserveDenied(error.details.deniedIds as string[], error.message)
@@ -107,11 +103,10 @@ async function pull() {
       if ((object as { hidden?: boolean }).hidden) return true
       const pending = queued.get(object.id)
       const restoring = pending?.noteRestore || (pending && 'deletedAt' in pending && pending.deletedAt === null) || (pending?.purged === false && !pending.noteUpdate)
-      // Emptying Buried bones queues a purge for something already deleted. The echo of
-      // that earlier delete must not divert the purge into recovery: it has to reach the
-      // server, or a deleted comment's text is never wiped.
-      const purging = pending?.purged === true
-      return (object.deletedAt || object.purged) && !restoring && !purging
+      // Our own delete or purge (Empty Buried bones) must still reach the server,
+      // or a deleted comment keeps its words there.
+      const removing = pending?.purged === true || (typeof pending?.deletedAt === 'number' && pending.deletedAt > 0)
+      return (object.deletedAt || object.purged) && !restoring && !removing
     }).map((object) => object.id)
     // A moved/private or removed row can arrive before a queued write is tried.
     // Preserve inactive drafts too, before receiveRemote drops the local copy.
