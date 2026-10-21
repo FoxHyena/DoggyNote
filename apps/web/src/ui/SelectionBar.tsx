@@ -110,8 +110,13 @@ export function SelectionBar() {
     const below = br.y + 14
     if (above >= 8) return { left, top: above }
     if (below + BAR <= v.height - 8 && clearOfControls(below)) return { left, top: below }
-    // No room on either side: sit at the top of the window. That may cover the top
-    // of a tall selection, but never its footer, caption controls or resize corner.
+    // No room on either side. If the selection runs off the bottom of the window, sit
+    // at the bottom: its header and controls stay clear and its resize corner is off
+    // screen anyway. Otherwise sit at the top, clear of its footer and resize corner.
+    if (br.y > v.height) {
+      const bottom = v.height - BAR - 8
+      return { left, top: clearOfControls(bottom) ? bottom : controlsTop - BAR - 12 }
+    }
     return { left, top: 8 }
   })
 
