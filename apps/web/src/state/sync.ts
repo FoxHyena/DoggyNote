@@ -103,7 +103,10 @@ async function pull() {
       if ((object as { hidden?: boolean }).hidden) return true
       const pending = queued.get(object.id)
       const restoring = pending?.noteRestore || (pending && 'deletedAt' in pending && pending.deletedAt === null) || (pending?.purged === false && !pending.noteUpdate)
-      return (object.deletedAt || object.purged) && !restoring
+      // Our own delete or purge (Empty Buried bones) must still reach the server,
+      // or a deleted comment keeps its words there.
+      const removing = pending?.purged === true || (typeof pending?.deletedAt === 'number' && pending.deletedAt > 0)
+      return (object.deletedAt || object.purged) && !restoring && !removing
     }).map((object) => object.id)
     // A moved/private or removed row can arrive before a queued write is tried.
     // Preserve inactive drafts too, before receiveRemote drops the local copy.
