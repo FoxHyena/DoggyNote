@@ -5,6 +5,8 @@ import { at, waitForSync } from './helpers.ts'
 import { Fingers, center, longPress, touchDrag } from './touch.ts'
 import { importFixturePack, openStickerTray, stickerBoard, stickerRingPoint, stickerState } from './sticker-helpers.ts'
 
+test.use({ trace: 'retain-on-failure' })
+
 test('phone scroll and preview never place; tap, cancel, move, resize, rotate and pinch remain distinct', async ({ page, request }) => {
   await stickerBoard(page, request); await importFixturePack(page)
   const tray = page.getByTestId('sticker-tray')
