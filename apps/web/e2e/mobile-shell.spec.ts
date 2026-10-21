@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
-import { cardByText, freshBoard, waitForSync } from './helpers.ts'
+import { cardByText, freshBoard, postSync, waitForSync } from './helpers.ts'
 import { Fingers, center, longPress, note, seedCards, tapOn } from './touch.ts'
 
 // The phone shell: a thumb dock instead of the rail, an Add sheet, menus and
@@ -164,7 +164,8 @@ test('the back chevron goes up a level', async ({ page }) => {
   const parent = page.url().split('/').at(-1)!
   const parentName = (await page.getByTestId('board-name').textContent())!
   const child = crypto.randomUUID()
-  expect((await page.request.post('/api/sync', { data: { changes: [{ id: child, patch: { id: child, kind: 'board', parentId: parent, title: 'Puppy class', icon: 'bone', color: 'none', createdAt: Date.now() } }] } })).ok()).toBe(true)
+  const created = await postSync(page.request, { data: { changes: [{ id: child, patch: { id: child, kind: 'board', parentId: parent, title: 'Puppy class', icon: 'bone', color: 'none', createdAt: Date.now() } }] } })
+  expect(created.ok(), await created.text()).toBe(true)
   await page.goto(`/#/b/${child}`)
   await page.reload()
   await expect(page.getByTestId('board-name')).toHaveText('Puppy class')

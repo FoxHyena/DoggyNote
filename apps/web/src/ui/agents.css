@@ -119,4 +119,4 @@
   .agents-proposal-list.single .agents-proposal-choice { display: none; }
   .agents-preview-button { position: sticky; bottom: 0; z-index: 1; box-shadow: 0 8px 0 var(--dn-panel), 0 -10px 12px var(--dn-panel); }
 }
-
+.agents-preview-sticker { position: absolute; pointer-events: none; }

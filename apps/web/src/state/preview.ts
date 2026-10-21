@@ -97,7 +97,7 @@ export function enterPreview(detail: ProposalDetail) {
       badges.set(change.id, badge)
       counts[badge]++
     }
-    const board = next.kind === 'card' || next.kind === 'connection' ? next.boardId : null
+    const board = next.kind === 'card' || next.kind === 'connection' || next.kind === 'sticker' ? next.boardId : null
     if (board && !boards.includes(board)) boards.push(board)
   }
   if (!boards.length) boards.push(boardId())

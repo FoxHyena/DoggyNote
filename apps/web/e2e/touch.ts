@@ -52,7 +52,10 @@ export class Fingers {
       const w = window as unknown as { __touchTargets?: Map<number, Element> }
       const targets = (w.__touchTargets ??= new Map())
       if (pointer === 'pointerdown') targets.set(id, document.elementFromPoint(p.x, p.y) ?? document.body)
-      const target = targets.get(id) ?? document.body
+      // The canvas captures real pointers. A synthetic one can't be captured, so when a
+      // re-render replaces the touched element, deliver to the canvas as capture would.
+      const touched = targets.get(id)
+      const target = touched?.isConnected ? touched : document.querySelector('[data-testid="canvas"]') ?? document.body
       target.dispatchEvent(new PointerEvent(pointer, { pointerId: 100 + id, pointerType: 'touch', isPrimary: id === 0, clientX: p.x, clientY: p.y, bubbles: true, cancelable: true, composed: true, button: pointer === 'pointermove' ? -1 : 0, buttons: pointer === 'pointerup' ? 0 : 1 }))
       if (pointer === 'pointerup') {
         targets.delete(id)

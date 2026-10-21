@@ -3,7 +3,7 @@ import { validSwatchFields } from '@doggynote/core'
 import { Hono } from 'hono'
 import { LABEL_FIELD, validLabelField } from '@doggynote/core'
 import { isSketchContent } from '@doggynote/core'
-import { isReservedId } from '@doggynote/core/agent'
+import { stickerObjectSchema, isReservedId } from '@doggynote/core/agent'
 import { isInkMark } from '@doggynote/core'
 import type { AppEnv } from './env.ts'
 import { accessGuard, bumpAccess, loadAccess, newBoardAccess, type Access } from './access.ts'
@@ -12,7 +12,7 @@ import { noteRevisionGuard, prepareSyncedNotes, syncedNoteCapabilities } from '.
 // Push: field patches, merged per top-level field (last write to arrive wins).
 // Pull: every object whose seq is above the client's cursor.
 
-export const KINDS = new Set(['board', 'card', 'connection', 'comment', 'stroke'])
+export const KINDS = new Set(['board', 'card', 'connection', 'comment', 'stroke', 'sticker'])
 const KEY = /^[a-zA-Z][a-zA-Z0-9]{0,31}$/
 // ':' is for namespaced ids like "toybox:<userId>".
 const ID = /^[a-zA-Z0-9_:-]{1,64}$/
@@ -313,6 +313,24 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
             const uploader = await db.prepare('SELECT created_by FROM assets WHERE id=?1 ORDER BY created_at,size LIMIT 1').bind(assetId).first<{ created_by: string }>()
             if (uploader && uploader.created_by !== userId) {
               const { results: refs } = await db.prepare("SELECT board_id,owner_id FROM objects WHERE kind='card' AND json_extract(data,'$.content.assetId')=?1 AND COALESCE(json_extract(data,'$.purged'),0)=0").bind(assetId).all<{ board_id: string; owner_id: string | null }>()
+              if (!refs.some((r) => (!r.owner_id || r.owner_id === userId) && readable(r.board_id))) ok = false
+            }
+          }
+        }
+      }
+      if (o.kind === 'sticker') {
+        if (!stickerObjectSchema.safeParse(o).success) ok = false
+        const content = o.content as { assetId?: string } | undefined
+        if (!o.purged && JSON.stringify(prev?.data.content) !== JSON.stringify(content)) {
+          const assetId = content?.assetId
+          const source = await db.prepare("SELECT s.value FROM sticker_packs p,json_each(p.manifest,'$.stickers') s WHERE json_extract(s.value,'$.assetId')=?1 AND json_extract(s.value,'$.available')=1").bind(assetId ?? '').first<{ value: string }>()
+          if (!source) ok = false
+          else {
+            const known = JSON.parse(source.value) as Record<string, unknown>
+            if (Object.keys(content ?? {}).some((key) => JSON.stringify(known[key]) !== JSON.stringify((content as Record<string, unknown>)[key]))) ok = false
+            const member = await db.prepare('SELECT 1 FROM sticker_memberships WHERE user_id=?1 AND pack_name=?2').bind(userId, String(known.packName).toLowerCase()).first()
+            if (!member) {
+              const { results: refs } = await db.prepare("SELECT board_id,owner_id FROM objects WHERE kind='sticker' AND json_extract(data,'$.content.assetId')=?1 AND COALESCE(json_extract(data,'$.purged'),0)=0").bind(assetId).all<{ board_id: string; owner_id: string | null }>()
               if (!refs.some((r) => (!r.owner_id || r.owner_id === userId) && readable(r.board_id))) ok = false
             }
           }

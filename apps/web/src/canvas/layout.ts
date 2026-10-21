@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js'
-import { canvasInkHeight, COLUMN_HEADER, columnMembers, isKnownCardType, type Card, type Id, type Rect } from '@doggynote/core'
+import { canvasInkHeight, COLUMN_HEADER, columnMembers, isKnownCardType, usableSticker, stickerBounds, type Card, type Id, type Rect } from '@doggynote/core'
 import { columnCollapsed } from '../state/columns.ts'
 import * as doc from '../state/doc.ts'
 
@@ -100,6 +100,8 @@ export function cardHeight(c: Card): number {
 
 /** World rect of a card, including cards stacked inside a column. */
 export function rectOf(id: Id): Rect | null {
+  const o = doc.get(id)
+  if (usableSticker(o)) return o.deletedAt || o.purged ? null : stickerBounds(o)
   const c = doc.getCard(id)
   if (!c || c.deletedAt || c.purged) return null
   if (c.columnId) {

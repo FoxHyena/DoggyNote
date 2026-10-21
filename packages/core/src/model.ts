@@ -178,7 +178,28 @@ export type Stroke = Base & InkMark & {
   cardId: Id
 }
 
-export type Obj = Card | Board | Connection | Comment | Stroke
+/** Independent board overlay. Width is the only size field: intrinsic aspect is immutable. */
+export type StickerAsset = {
+  assetId: Id
+  stickerId: string
+  packName: string
+  emoji: string
+  width: number
+  height: number
+  format: 'static' | 'tgs' | 'webm'
+}
+export type Sticker = Base & {
+  kind: 'sticker'
+  boardId: Id
+  x: number
+  y: number
+  w: number
+  angle: number
+  z: number
+  content: StickerAsset
+}
+
+export type Obj = Card | Board | Connection | Comment | Stroke | Sticker
 
 export const HOME_BOARD_ID = 'home'
 

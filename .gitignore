@@ -15,6 +15,7 @@ playwright-report
 **/e2e/.auth
 dist-desktop
 dist-native-*
+dist-stickers-hosted-qa
 apps/desktop/release
 /tmp/
 

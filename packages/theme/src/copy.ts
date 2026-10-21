@@ -23,6 +23,38 @@ export const COPY = {
   /** A card made by a newer DoggyNote than this one. */
   unknownCard: 'This card needs a newer DoggyNote. Update to see it.',
   fetchHint: 'Sniff out any board, note, to-do or link by a word in it.',
+  telegramBot: {
+    connect: [
+      'Woof! 🐾 To connect, open DoggyNote → Stickers → Add pack → Send a sticker in Telegram, then use its connection link.',
+      'Follow your nose! 🐶 To connect, open DoggyNote → Stickers → Add pack → Send a sticker in Telegram, then use its connection link.',
+      'Ready for a sticker fetch? 🦴 To connect, open DoggyNote → Stickers → Add pack → Send a sticker in Telegram, then use its connection link.',
+    ],
+    confirm: [
+      'Almost in the pack! 🐾 Return to DoggyNote and confirm your Telegram account. Then send one sticker here.',
+      'One last pawprint! 🐶 Return to DoggyNote and confirm your Telegram account. Then send one sticker here.',
+      'Found your trail! 🦴 Return to DoggyNote and confirm your Telegram account. Then send one sticker here.',
+    ],
+    connected: [
+      'Welcome to the pack! 🐾 Connected to DoggyNote. Send one sticker from the pack you want to add.',
+      'Leash clipped, ready to fetch! 🐶 Connected to DoggyNote. Send one sticker from the pack you want to add.',
+      'Tail wags all round! 🦴 Connected to DoggyNote. Send one sticker from the pack you want to add.',
+    ],
+    expired: [
+      'That trail went cold. 🐾 This connection link is unavailable or expired. In DoggyNote, cancel the connection and start again.',
+      'This link wandered off. 🐶 This connection link is unavailable or expired. In DoggyNote, cancel the connection and start again.',
+      'Time for a fresh sniff. 🦴 This connection link is unavailable or expired. In DoggyNote, cancel the connection and start again.',
+    ],
+    received: [
+      'Fetched your sticker! 🐾 Return to DoggyNote to preview its pack and choose Add pack.',
+      'A fresh find for the pack! 🦴 Return to DoggyNote to preview its pack and choose Add pack.',
+      'Tail-wagging delivery! 🐶 Return to DoggyNote to preview its pack and choose Add pack.',
+    ],
+    missing: [
+      'This sticker lost its pack tag. 🐾 It has no pack information. In DoggyNote, choose Add pack and paste a Telegram pack link instead.',
+      'My nose needs another clue. 🐶 This sticker has no pack information. In DoggyNote, choose Add pack and paste a Telegram pack link instead.',
+      'A loose sticker! 🦴 This sticker has no pack information. In DoggyNote, choose Add pack and paste a Telegram pack link instead.',
+    ],
+  },
   /** Movie cards. */
   movieSearch: 'Sniff out a movie or show…',
   movieNoMatch: 'No scent of that one. Try another title?',

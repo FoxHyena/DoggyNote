@@ -1,0 +1,9 @@
+# Required for desktop cross-origin image credentials. Use a private random value locally.
+ASSET_TOKEN_SECRET=
+
+# Optional Telegram sticker imports. Keep real values in ignored .dev.vars.
+TELEGRAM_BOT_TOKEN=
+# Username without @, obtained from the same bot's getMe response.
+TELEGRAM_BOT_USERNAME=
+# Random secret (at least 32 characters) shared with Telegram setWebhook.secret_token.
+TELEGRAM_WEBHOOK_SECRET=

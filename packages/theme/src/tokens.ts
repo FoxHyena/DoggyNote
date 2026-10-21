@@ -16,6 +16,8 @@ export const SURFACE_TOKENS = [
   'selection',
   'gridDot', // background dots: quiet, but visible
   'scrim', // dims the app behind a phone sheet (translucent)
+  'stickerShadow', // hard, offset shadow under placed stickers (translucent)
+  'stickerOutline', // the die-cut border drawn around every sticker
   'diffAdded', // previewing an agent proposal: a card it adds
   'diffChanged', // …edits or moves
   'diffRemoved', // …buries
@@ -38,6 +40,8 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     selection: '#e8a849',
     gridDot: '#3d3934',
     scrim: '#0b0a0999',
+    stickerShadow: '#00000099',
+    stickerOutline: '#ffffff',
     diffAdded: '#62c48c',
     diffChanged: '#74a9e6',
     diffRemoved: '#ee7f6f',
@@ -56,6 +60,8 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     selection: '#b06c10',
     gridDot: '#d3cabe',
     scrim: '#2a252159',
+    stickerShadow: '#2a252129',
+    stickerOutline: '#ffffff',
     diffAdded: '#2d7a4c',
     diffChanged: '#2c66a8',
     diffRemoved: '#b0392b',

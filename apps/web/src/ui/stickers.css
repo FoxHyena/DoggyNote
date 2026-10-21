@@ -1,0 +1,270 @@
+/* Sticker surfaces inherit the app palette; silhouette shadows never frame an image box. */
+.sticker-tray { position: absolute; z-index: 40; left: 14px; top: 14px; width: 358px; max-width: calc(100% - 28px); max-height: calc(100% - 100px); display: flex; flex-direction: column; border: 1px solid var(--dn-border); border-radius: 18px; background: var(--dn-panel); color: var(--dn-text); box-shadow: 0 12px 36px color-mix(in srgb, var(--dn-text) 12%, transparent); overflow: hidden; }
+.sticker-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; flex-shrink: 0; }
+.sticker-head h2 { margin: 0; font-size: 18px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sticker-head-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.sticker-tray .sticker-pin { color: var(--dn-text-muted); }
+/* Pinned reads at once, hovered or not: accent, tinted and a filled pin. */
+html .sticker-tray .sticker-pin[aria-pressed='true'], html[data-input='mouse'] .sticker-tray .sticker-pin[aria-pressed='true']:hover:not(:disabled) { color: var(--dn-accent); border-color: var(--dn-selection); background: color-mix(in srgb, var(--dn-accent) 14%, transparent); }
+.sticker-tray .sticker-pin[aria-pressed='true'] svg path { fill: currentColor; }
+.sticker-preview-heading { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
+.sticker-back-icon { rotate: 180deg; }
+.sticker-tray button, .sticker-tray input, .sticker-controls button, .sticker-controls input { font: inherit; }
+.sticker-tray button, .sticker-controls button, .sticker-placement button { min-height: 34px; }
+.sticker-tray button:focus-visible, .sticker-tray a:focus-visible, .sticker-controls :focus-visible, .sticker-placement :focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 2px; }
+.sticker-tray input { min-width: 0; width: 100%; border: 1px solid var(--dn-border); border-radius: 9px; background: var(--dn-card); color: var(--dn-text); padding: 10px; box-sizing: border-box; }
+.sticker-search { display: flex; align-items: center; gap: 8px; padding: 0 12px 10px; }
+.sticker-search input { flex: 1; width: 0; font-size: 13px; }
+.sticker-search button { flex-shrink: 0; min-height: 36px; padding: 6px 10px; border: 1px solid var(--dn-border); border-radius: 9px; background: var(--dn-card); color: var(--dn-text); font-size: 12px; font-weight: 500; }
+.sticker-pack-strip { display: flex; align-items: center; gap: 4px; overflow-x: auto; flex-shrink: 0; padding: 4px 12px 10px; scrollbar-width: thin; }
+.sticker-pack-strip button { height: 42px; min-width: 44px; flex-shrink: 0; border: 1px solid transparent; border-radius: 10px; padding: 4px 8px; background: transparent; color: var(--dn-text-muted); font-size: 12px; cursor: pointer; }
+.sticker-pack-strip button.active { border-color: var(--dn-selection); background: var(--dn-card-hover); color: var(--dn-text); }
+.sticker-pack-strip img { width: 32px; height: 32px; object-fit: contain; }
+.sticker-pack-title { display: flex; gap: 12px; justify-content: space-between; align-items: center; padding: 0 14px 6px; font-size: 13px; }
+.sticker-pack-title strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sticker-scroll { overflow-y: auto; scrollbar-gutter: stable; overscroll-behavior: contain; min-height: 60px; max-height: 342px; padding: 6px 12px 12px; touch-action: pan-y; scrollbar-width: thin; }
+.sticker-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.sticker-tile { position: relative; min-width: 0; display: flex; flex-direction: column; align-items: stretch; }
+.sticker-pick { display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 1; padding: 7px; background: transparent; color: var(--dn-text); border: 1px solid transparent; border-radius: 12px; cursor: grab; touch-action: pan-y; -webkit-touch-callout: none; user-select: none; }
+.sticker-pick:hover { background: var(--dn-card-hover); }
+.sticker-pick img { width: 100%; height: 100%; object-fit: contain; filter: url(#dn-sticker-outline-thin) drop-shadow(1px 1px 0 var(--dn-sticker-shadow)); pointer-events: none; }
+.sticker-pick:disabled { opacity: .6; cursor: default; }
+.sticker-favorite-mark { position: absolute; right: 2px; top: 1px; color: var(--dn-accent); pointer-events: none; }
+.sticker-empty { padding: 18px 8px 26px; text-align: center; }
+.sticker-empty > span { font-size: 40px; color: var(--dn-accent); }
+.sticker-tray h3 { font-size: 16px; margin: 12px 0 8px; }
+.sticker-empty p, .sticker-add p, .sticker-bot p, .sticker-detail p, .sticker-pack-summary p { font-size: 13px; color: var(--dn-text-muted); line-height: 1.5; }
+.sticker-loading-collection { margin: 0; padding: 32px 16px; text-align: center; font-size: 13px; color: var(--dn-text-muted); }
+.sticker-empty small { display: block; margin-top: 14px; font-size: 11px; color: var(--dn-text-muted); overflow-wrap: anywhere; }
+.sticker-footer { font-size: 11px; line-height: 1.5; color: var(--dn-text-muted); border-top: 1px solid var(--dn-border); padding: 10px 14px; flex-shrink: 0; }
+.sticker-add, .sticker-bot { display: flex; flex-direction: column; gap: 16px; padding: 4px 16px 16px; overflow-y: auto; min-height: 0; overscroll-behavior: contain; }
+.sticker-flow-intro { display: grid; gap: 6px; }
+.sticker-tray .sticker-flow-intro h3, .sticker-flow-intro p { margin: 0; }
+.sticker-tray .sticker-primary-action { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 44px; box-sizing: border-box; font-size: 13px; font-weight: 600; line-height: 1.4; text-align: center; text-decoration: none; }
+.sticker-eyebrow { color: var(--dn-text-muted); font-size: 11px; line-height: 1.5; font-weight: 500; }
+.sticker-import-alternative { display: grid; gap: 10px; padding-top: 18px; border-top: 1px solid var(--dn-border); }
+.sticker-telegram-option { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px; border: 1px solid var(--dn-border); border-radius: 12px; background: var(--dn-card); color: var(--dn-text); cursor: pointer; text-align: left; }
+.sticker-telegram-option > span { display: grid; gap: 5px; flex: 1; min-width: 0; }
+.sticker-telegram-option strong { font-size: 13px; font-weight: 500; overflow-wrap: anywhere; }
+.sticker-telegram-option small { color: var(--dn-text-muted); font-size: 12px; line-height: 1.5; }
+.sticker-telegram-option > svg { color: var(--dn-text-muted); flex-shrink: 0; }
+.sticker-telegram-option:hover { background: var(--dn-card-hover); }
+.sticker-detail { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.sticker-detail-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.sticker-add form { display: grid; gap: 8px; }
+.sticker-add form .sticker-primary-action { margin-top: 4px; }
+.sticker-add label { font-size: 12px; font-weight: 500; }
+.sticker-preview-pack { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+.sticker-pack-summary { padding: 4px 16px 16px; display: grid; gap: 6px; flex-shrink: 0; }
+.sticker-tray .sticker-pack-summary h3 { margin: 0; overflow-wrap: anywhere; line-height: 1.4; }
+.sticker-pack-summary > span { color: var(--dn-text-muted); font-size: 12px; }
+.sticker-pack-attribution { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 8px 12px; margin-top: 4px; font-size: 12px; }
+.sticker-pack-summary a { color: var(--dn-accent); }
+.sticker-pack-summary p { margin: 4px 0 0; font-size: 12px; }
+.sticker-added-label { display: inline-flex; align-items: center; gap: 4px; color: var(--dn-text-muted); }
+.sticker-added-label svg { width: 14px; height: 14px; }
+.sticker-pack-recovery { display: grid; gap: 4px; }
+.sticker-pack-recovery button { justify-self: start; }
+.sticker-preview-pack > .sticker-scroll { flex: 1; border-top: 1px solid var(--dn-border); padding-top: 12px; }
+.sticker-pack-actions { display: grid; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--dn-border); flex-shrink: 0; }
+.sticker-pack-actions p { margin: 0; font-size: 12px; line-height: 1.5; color: var(--dn-text-muted); }
+.sticker-large { height: min(252px, 32dvh); display: flex; align-items: center; justify-content: center; margin: 4px 24px 16px; }
+.sticker-large img { width: 100%; height: 100%; object-fit: contain; filter: url(#dn-sticker-outline) drop-shadow(2px 2px 0 var(--dn-sticker-shadow)); }
+.sticker-source { display: flex; align-items: center; gap: 12px; width: calc(100% - 32px); margin: 0 16px; padding: 12px 0; border: 0; border-top: 1px solid var(--dn-border); background: transparent; color: var(--dn-text); text-align: left; cursor: pointer; }
+.sticker-source-copy { display: grid; gap: 3px; min-width: 0; flex: 1; }
+.sticker-source-copy > span { color: var(--dn-text-muted); font-size: 11px; }
+.sticker-source-copy > strong { font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.sticker-source > svg { flex-shrink: 0; color: var(--dn-text-muted); }
+.sticker-source:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+.sticker-actions { display: flex; align-items: stretch; gap: 8px; padding: 8px 16px 16px; flex-shrink: 0; }
+.sticker-place-button { flex: 1; min-height: 44px !important; }
+.sticker-detail .sticker-favorite-button { flex: 0 0 44px; min-width: 44px; min-height: 44px; border: 1px solid var(--dn-border); border-radius: 10px; }
+.sticker-detail .sticker-favorite-button[aria-pressed='true'] { color: var(--dn-accent); }
+.sticker-favorite-button[aria-pressed='true'] svg { fill: currentColor; }
+.sticker-detail-notice { margin: 0 16px 8px; }
+.sticker-error { margin: 0 12px 8px; padding: 10px; background: var(--dn-card); border: 1px solid var(--dn-border); border-radius: 8px; color: var(--dn-text); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.sticker-error button { margin-left: 6px; }
+.sticker-status { margin: 0; padding: 8px 14px; font-size: 12px; color: var(--dn-text-muted); }
+.sticker-load { display: flex; flex-direction: column; font-size: 24px; }
+.sticker-load small { font-size: 10px; }
+.sticker-connection, .sticker-pending { display: grid; gap: 12px; min-width: 0; padding: 16px; border: 1px solid var(--dn-border); border-radius: 12px; background: var(--dn-card); }
+.sticker-bot h4, .sticker-bot p { margin: 0; }
+.sticker-bot h4 { font-size: 14px; line-height: 1.5; font-weight: 600; overflow-wrap: anywhere; }
+.sticker-connection-steps { margin: 0; padding-left: 18px; display: grid; gap: 6px; color: var(--dn-text-muted); font-size: 13px; line-height: 1.5; }
+.sticker-pairing-link { font-size: 12px; color: var(--dn-text-muted); min-width: 0; }
+.sticker-pairing-link summary { cursor: pointer; padding: 5px 0; }
+.sticker-pairing-link summary:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 2px; }
+.sticker-pairing-link input { margin-top: 8px; }
+.sticker-bot .sticker-connection-wait { padding-top: 12px; border-top: 1px solid var(--dn-border); font-size: 12px; }
+.sticker-account-name { font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; }
+.sticker-tray .sticker-secondary-action { justify-content: center; min-height: 40px; width: 100%; border: 1px solid var(--dn-border); }
+.sticker-tray .sticker-quiet-action { align-self: center; justify-content: center; font-size: 12px; }
+.sticker-bot > .sticker-quiet-action { margin-top: -12px; }
+.sticker-connection-heading { display: flex; gap: 8px; align-items: center; font-size: 13px; line-height: 1.5; }
+.sticker-connection-heading svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--dn-accent); }
+.sticker-connection-heading strong { flex: 1; overflow-wrap: anywhere; min-width: 0; font-weight: 500; }
+.sticker-tray .sticker-disconnect { flex-shrink: 0; margin: -6px -8px -6px 0; font-size: 12px; color: var(--dn-text-muted); }
+.sticker-tray .sticker-disconnect:hover { color: var(--dn-text); }
+/* A pack sent to the bot, one click from opening the tray. */
+.sticker-found-dot { position: absolute; top: 6px; right: calc(50% - 16px); width: 9px; height: 9px; border-radius: 50%; background: var(--dn-accent); box-shadow: 0 0 0 2px var(--dn-panel); pointer-events: none; }
+.mobile-sticker-launcher .sticker-found-dot { top: 9px; right: 9px; }
+.sticker-suggestions { flex-shrink: 0; list-style: none; margin: 0 12px 10px; padding: 2px 0; border: 1px solid var(--dn-selection); border-radius: 12px; background: color-mix(in srgb, var(--dn-accent) 6%, var(--dn-panel)); max-height: 168px; overflow-y: auto; }
+.sticker-add .sticker-suggestions, .sticker-bot .sticker-suggestions { margin: 0; }
+.sticker-suggestion { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; padding: 6px 4px 6px 10px; }
+.sticker-suggestion + .sticker-suggestion { border-top: 1px solid var(--dn-border); }
+.sticker-suggestion-icon { position: relative; width: 36px; height: 36px; display: grid; place-items: center; }
+.sticker-suggestion-icon .sticker-image { width: 26px; height: 26px; }
+.sticker-suggestion-placeholder { width: 10px; height: 10px; border-radius: 50%; background: var(--dn-border); }
+.sticker-ring-progress { position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; fill: none; stroke-width: 3; }
+.sticker-ring-progress circle { stroke: var(--dn-border); }
+.sticker-ring-progress .sticker-ring-fill { stroke: var(--dn-accent); stroke-linecap: round; transition: stroke-dasharray 300ms ease-out; }
+.sticker-suggestion-copy { min-width: 0; display: grid; line-height: 1.35; }
+.sticker-suggestion-copy strong { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sticker-suggestion-copy small { font-size: 11px; color: var(--dn-text-muted); font-variant-numeric: tabular-nums; }
+.sticker-suggestion-actions { display: flex; align-items: center; gap: 2px; }
+.sticker-tray .sticker-suggestion-actions .icon-btn { min-height: 30px; width: 30px; padding: 0; display: grid; place-items: center; color: var(--dn-text-muted); }
+.sticker-tray .sticker-suggestion-actions .icon-btn:hover:not(:disabled) { color: var(--dn-text); }
+.sticker-tray .sticker-suggestion-add:not(:disabled) { color: var(--dn-accent); }
+.sticker-tray .sticker-suggestion-actions .icon-btn:disabled { opacity: .4; }
+.sticker-pending { background: transparent; gap: 8px; }
+.sticker-pending .sticker-primary-action { margin-top: 6px; }
+.sticker-pending .sticker-quiet-action { justify-self: center; }
+.sticker-layer { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; }
+.card-layer { position: absolute; left: 0; top: 0; z-index: 0; }
+.viewport > .world { z-index: 1; }
+.viewport > .lod-layer { z-index: 0; }
+.viewport > .marquee { z-index: 2; }
+/* A die-cut white border (the SVG filter in StickerLayer), then a hard shadow from a top-left light.
+   Both sit outside the rotation, so turning a sticker never turns its light. */
+.placed-sticker { position: absolute; pointer-events: none; transition: filter 160ms ease-out; filter: url(#dn-sticker-outline) drop-shadow(1.5px 1.5px 0 var(--dn-sticker-shadow)); }
+.sticker-rotation { position: absolute; inset: 0; transform-origin: center; }
+.sticker-visual { position: absolute; inset: 0; transition: scale 160ms ease-out; }
+.sticker-visual img, .sticker-unavailable { width: 100%; height: 100%; object-fit: contain; display: block; }
+.sticker-unavailable { text-align: center; font-size: 28px; }
+.placed-sticker.lifting { filter: url(#dn-sticker-outline) drop-shadow(3px 3px 0 var(--dn-sticker-shadow)); }
+.placed-sticker.lifting .sticker-visual { scale: 1.035; }
+.sticker-transform-ring { position: absolute; overflow: visible; pointer-events: none; }
+/* Reset rotation sits on the ring at its top-left and keeps its screen size at any zoom. */
+.sticker-ring-reset { position: absolute; width: 28px; height: 28px; margin: -14px 0 0 -14px; padding: 0; display: grid; place-items: center; scale: var(--sticker-ui-scale); pointer-events: auto; cursor: pointer; border: 1.5px solid var(--dn-selection); border-radius: 50%; background: var(--dn-panel); color: var(--dn-text); }
+.sticker-ring-reset:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 2px; }
+html[data-input='touch'] .sticker-ring-reset { width: 40px; height: 40px; margin: -20px 0 0 -20px; }
+.sticker-ring-line { fill: none; stroke: var(--dn-selection); stroke-width: calc(1.5px * var(--sticker-ui-scale)); }
+.sticker-ring-hit { fill: none; stroke: transparent; stroke-width: calc(18px * var(--sticker-ui-scale)); pointer-events: stroke; cursor: grab; touch-action: none; }
+.sticker-ring-hit:active { cursor: grabbing; }
+.sticker-ring-hit:focus-visible { outline: none; stroke: color-mix(in srgb, var(--dn-selection) 25%, transparent); }
+.sticker-ring-grip { fill: var(--dn-panel); stroke: var(--dn-selection); stroke-width: calc(1.5px * var(--sticker-ui-scale)); pointer-events: none; }
+.sticker-accessible-pick { position: absolute; left: 50%; top: 50%; width: 1px; height: 1px; padding: 0; border: 0; opacity: 0; pointer-events: none; }
+.sticker-ghost { position: fixed; z-index: 90; width: 112px; height: 112px; margin: -56px 0 0 -56px; pointer-events: none; filter: url(#dn-sticker-outline) drop-shadow(3px 3px 0 var(--dn-sticker-shadow)); }
+.sticker-ghost img { width: 100%; height: 100%; object-fit: contain; }
+.sticker-placement { position: absolute; top: 14px; left: 50%; translate: -50% 0; z-index: 40; max-width: calc(100% - 24px); box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; padding: 8px 12px; border-radius: 14px; border: 1px solid var(--dn-selection); background: var(--dn-panel); color: var(--dn-text); font-size: 13px; }
+.sticker-placement img { width: 36px; height: 36px; object-fit: contain; }
+.sticker-controls { color: var(--dn-text); font-size: 12px; }
+/* Floating, .selection-bar supplies the position, surface and pop-in. */
+.sticker-controls.selection-bar { z-index: 35; gap: 6px; padding: 6px; overflow: visible; }
+.sticker-bar-actions { display: flex; align-items: center; gap: 2px; }
+.sticker-bar-actions .bar-sep { margin: 0 4px; }
+.sticker-controls .sticker-bar-btn { width: 32px; min-height: 32px; padding: 0; justify-content: center; }
+.sticker-bar-label { display: none; }
+.sticker-controls-touch.selection-bar .sticker-bar-btn { width: 44px; min-height: 44px; }
+/* Phones: a sheet along the bottom of the board, fields on top and labelled actions below. */
+.sticker-controls-sheet { position: absolute; z-index: 35; left: 8px; right: 8px; bottom: 8px; display: grid; gap: 8px; padding: 10px; border: 1px solid var(--dn-border); border-radius: 16px; background: var(--dn-panel); box-shadow: 0 4px 16px color-mix(in srgb, var(--dn-text) 10%, transparent); }
+.sticker-controls-sheet > .bar-sep, .sticker-controls-sheet .sticker-bar-actions .bar-sep { display: none; }
+.sticker-controls-sheet .sticker-bar-actions { gap: 4px; }
+.sticker-controls-sheet .sticker-bar-btn { flex: 1 1 0; width: auto; min-width: 0; min-height: 54px; flex-direction: column; gap: 3px; padding: 4px 2px; font-size: 11px; border-radius: 12px; }
+.sticker-controls-sheet .sticker-bar-label { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+html[data-input='touch'] .sticker-tray button, html[data-input='touch'] .sticker-placement button { min-height: 44px; }
+html[data-input='touch'] .sticker-ring-hit { stroke-width: calc(28px * var(--sticker-ui-scale)); }
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  .sticker-tray { left: 8px; right: 8px; top: auto; bottom: 8px; width: auto; max-width: none; max-height: min(62dvh, calc(100% - 24px)); border-radius: 20px; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .sticker-head { padding: 12px 14px 10px; }
+  .sticker-scroll { max-height: 26dvh; }
+  .sticker-grid { gap: 4px 8px; }
+  .sticker-placement { width: calc(100% - 16px); top: 8px; }
+  .sticker-placement span { flex: 1; }
+  .sticker-large { height: 20dvh; }
+  .sticker-tray input { font-size: 16px; }
+}
+@media (max-height: 500px) {
+  .sticker-tray { max-height: calc(100% - 24px); }
+  .sticker-footer { display: none; }
+  .sticker-detail-content { display: grid; grid-template-columns: minmax(70px, 30%) minmax(0, 1fr); gap: 8px 16px; align-items: center; padding: 0 16px; }
+  .sticker-detail .sticker-large { height: min(110px, 26dvh); margin: 0; }
+  .sticker-detail .sticker-source { margin: 0; width: 100%; border-top: 0; }
+  .sticker-detail-notice { grid-column: 1 / -1; margin: 0 0 8px; }
+  .sticker-controls-sheet { max-width: 340px; }
+  .sticker-pack-summary { max-height: 90px; overflow-y: auto; padding-bottom: 8px; }
+  .sticker-preview-pack > .sticker-scroll { min-height: 44px; }
+  .sticker-pack-actions { padding-top: 8px; padding-bottom: 8px; }
+}
+@media (pointer: coarse) and (max-height: 500px) and (min-width: 600px) {
+  .sticker-preview-pack { display: grid; grid-template-columns: minmax(160px, 35%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .sticker-pack-summary { grid-column: 1; grid-row: 1; max-height: none; min-height: 0; align-content: start; }
+  .sticker-preview-pack > .sticker-scroll { grid-column: 2; grid-row: 1 / 3; max-height: none; border-top: 0; border-left: 1px solid var(--dn-border); }
+  .sticker-pack-actions { grid-column: 1; grid-row: 2; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sticker-visual, .placed-sticker, .sticker-ring-progress .sticker-ring-fill { transition: none; }
+  .placed-sticker.lifting .sticker-visual { scale: 1; }
+}
+@media (pointer: coarse) and (max-height: 500px) and (min-width: 600px) {
+  /* Share the first row with search, leaving room for complete artwork. */
+  .sticker-browsing .sticker-head { position: absolute; right: 8px; top: 6px; padding: 0; }
+  .sticker-browsing .sticker-head h2 { display: none; }
+  .sticker-browsing .sticker-search { padding: 6px 60px 6px 12px; }
+  .sticker-browsing .sticker-pack-strip { padding: 0 12px 6px; }
+  .sticker-browsing .sticker-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  .sticker-browsing .sticker-scroll { min-height: 90px; padding-top: 4px; padding-bottom: 8px; }
+}
+.sticker-image { position: relative; width: 100%; height: 100%; display: inline-flex; align-items: center; justify-content: center; }
+.sticker-image > img { width: 100%; height: 100%; object-fit: contain; }
+.sticker-image.playing > img { visibility: hidden; }
+.sticker-animation { position: absolute; inset: 0; pointer-events: none; }
+.sticker-animation canvas, .sticker-animation video { width: 100% !important; height: 100% !important; object-fit: contain; }
+.sticker-placement .sticker-image { width: 36px; height: 36px; }
+.sticker-pack-strip .sticker-image { width: 32px; height: 32px; }
+/* Selection chrome has its own stacking context: choosing a lower sticker never raises its art. */
+.sticker-selection-layer { position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none; }
+.sticker-selection-object { position: absolute; pointer-events: none; }
+.sticker-availability { padding: 0 14px 8px; font-size: 12px; color: var(--dn-text-muted); display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+
+
+/* A thumb-reachable mobile launcher and a sideways sticker shelf above it. */
+.mobile-sticker-launcher { display: none; }
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  .mobile-sticker-launcher { display: grid; place-items: center; position: absolute; z-index: 41; right: max(14px, env(safe-area-inset-right)); bottom: 14px; width: 52px; height: 52px; padding: 0; cursor: pointer; border: 1px solid var(--dn-border); border-radius: 18px; background: var(--dn-panel); color: var(--dn-text); box-shadow: 0 4px 16px color-mix(in srgb, var(--dn-text) 12%, transparent); touch-action: manipulation; }
+  .mobile-sticker-launcher { -webkit-tap-highlight-color: transparent; }
+  .mobile-sticker-launcher:hover { background: var(--dn-panel); }
+  .mobile-sticker-launcher[aria-expanded='true'] { color: var(--dn-accent); border-color: var(--dn-selection); background: color-mix(in srgb, var(--dn-accent) 8%, var(--dn-panel)); }
+  .mobile-sticker-launcher:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 3px; }
+  body:has(.edit-dock) .mobile-sticker-launcher { visibility: hidden; }
+  .stage:has(.sticker-tray:not(.sticker-shelf)) .mobile-sticker-launcher { visibility: hidden; }
+  .stage:has(.sticker-controls-sheet):not(:has(.sticker-tray)) .mobile-sticker-launcher { bottom: calc(var(--dn-sticker-sheet, 140px) + 20px); }
+  .sticker-shelf { bottom: 76px; max-height: min(48dvh, calc(100% - 90px)); padding-bottom: 0; }
+  .sticker-shelf .sticker-head { position: absolute; right: 8px; top: 6px; padding: 0; }
+  .sticker-shelf .sticker-head h2 { display: none; }
+  .sticker-shelf .sticker-search { padding: 6px 60px 6px 12px; }
+  .sticker-shelf .sticker-pack-strip { padding: 0 12px 4px; }
+  .sticker-shelf .sticker-pack-title { padding-bottom: 0; }
+  .sticker-shelf .sticker-scroll { flex-shrink: 0; height: 96px; min-height: 96px; max-height: 96px; overflow-x: auto; overflow-y: hidden; padding: 4px 12px 8px; box-sizing: border-box; touch-action: pan-x; }
+  .sticker-shelf .sticker-grid { display: flex; gap: 8px; width: max-content; }
+  .sticker-shelf .sticker-tile { width: 80px; flex: 0 0 80px; }
+  .sticker-shelf .sticker-pick { touch-action: pan-x; }
+  .sticker-shelf .sticker-footer { padding: 6px 12px; }
+}
+@media (pointer: coarse) and (max-height: 500px) and (min-width: 600px) {
+  .sticker-shelf { bottom: 8px; right: 76px; max-height: calc(100% - 16px); }
+  .sticker-shelf .sticker-search { padding-top: 4px; padding-bottom: 4px; }
+  .sticker-shelf .sticker-pack-strip { position: absolute; top: 4px; left: 45%; right: 58px; padding: 0; max-height: 44px; }
+  .sticker-shelf .sticker-search { padding-right: 58%; }
+  .sticker-shelf .sticker-pack-title { padding-top: 2px; }
+  .sticker-shelf .sticker-scroll { height: 84px; min-height: 84px; max-height: 84px; }
+  .sticker-shelf .sticker-tile { width: 68px; flex-basis: 68px; }
+  .stage:has(.sticker-controls) .mobile-sticker-launcher { bottom: 14px; }
+}
+html[data-input='touch'] .sticker-tray .sticker-suggestion-actions .icon-btn { width: 44px; min-height: 44px; }
+.sticker-shelf .sticker-scroll { scrollbar-gutter: auto; }
+.sticker-outline-defs { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
+.sticker-pack-opening { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 48px 16px; color: var(--dn-text-muted); font-size: 13px; }
+.sticker-spinner { width: 18px; height: 18px; box-sizing: border-box; border: 2px solid var(--dn-border); border-top-color: var(--dn-accent); border-radius: 50%; animation: sticker-spin 800ms linear infinite; }
+@keyframes sticker-spin { to { rotate: 360deg; } }
+@media (prefers-reduced-motion: reduce) { .sticker-spinner { animation-duration: 2400ms; } }

@@ -1,7 +1,7 @@
 import { installCanvasPanel } from './canvasPanel.ts'
 import './canvas-entry.css'
 import { For, Show, createMemo } from 'solid-js'
-import { cardLabel, type Card } from '@doggynote/core'
+import { cardLabel, type Card, type Sticker } from '@doggynote/core'
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { emptyTrash, restoreCard } from '../state/actions.ts'
@@ -9,7 +9,11 @@ import { purgeComments, restoreComment } from '../state/comments.ts'
 import { boardId, setTrashOpen, trashOpen } from '../state/ui.ts'
 import { Icon, ToolIcons } from './icons.tsx'
 
-export const describeCard = (c: Card): string => cardLabel(c, (id) => boardDisplayTitle(doc.getBoard(id), 'Board'))
+/** A short label; stickers name their emoji and pack, and a malformed (synced) one gets a generic label. */
+export function describeCard(c: Card | Sticker): string {
+  if (c.kind !== 'sticker') return cardLabel(c, (id) => boardDisplayTitle(doc.getBoard(id), 'Board'))
+  try { return `${c.content.emoji || 'Sticker'} · ${c.content.packName}` } catch { return 'Sticker' }
+}
 
 export function TrashPanel() {
   let panel: HTMLElement | undefined
@@ -31,7 +35,7 @@ export function TrashPanel() {
             <For each={items()}>
               {(c) => (
                 <li class="trash-item" data-testid="trash-item">
-                  <span class="trash-type">{c.type}</span>
+                  <span class="trash-type">{c.kind === 'sticker' ? 'sticker' : c.type}</span>
                   <span class="trash-text">{describeCard(c)}</span>
                   <button class="bar-btn" data-testid="restore" title="Dig it back up" onClick={() => restoreCard(c.id)}>
                     <Icon size={16}>{ToolIcons.restore()}</Icon>

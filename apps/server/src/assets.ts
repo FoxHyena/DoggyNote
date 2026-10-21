@@ -36,6 +36,8 @@ assets.get('/assets/token', requireUser, async (c) => {
 assets.put('/assets/:id/:size', requireUser, async (c) => {
   const { id, size } = c.req.param()
   if (!UUID.test(id) || !SIZES.has(size)) return c.json({ error: 'bad asset path' }, 400)
+  const telegram = await c.env.DB.prepare("SELECT 1 FROM sticker_packs p,json_each(p.manifest,'$.stickers') s WHERE json_extract(s.value,'$.assetId')=?1").bind(id).first()
+  if (telegram) return c.json({ error: 'Telegram assets are managed by the server' }, 403)
   const uploader = await c.env.DB.prepare('SELECT created_by FROM assets WHERE id=?1 ORDER BY created_at,size LIMIT 1').bind(id).first<{ created_by: string }>()
   if (uploader && uploader.created_by !== c.get('user').id) return c.json({ error: 'Only the uploader can add asset renditions' }, 403)
   const type = (c.req.header('content-type') ?? '').split(';')[0].trim()
@@ -61,10 +63,14 @@ type Access = 'ok' | 'unauthenticated' | 'forbidden'
 async function privateToSomeoneElse(c: Context<AppEnv>, assetId: string, userId: string, isAdmin = false): Promise<boolean> {
   const a = await loadAccess(c.env.DB, { id: userId, isAdmin })
   const { results } = await c.env.DB.prepare(
-    "SELECT board_id, owner_id, data FROM objects WHERE kind='card' AND json_extract(data, '$.content.assetId')=?1",
+    "SELECT board_id, owner_id, data FROM objects WHERE kind IN ('card','sticker') AND json_extract(data, '$.content.assetId')=?1",
   ).bind(assetId).all<{ board_id: string; owner_id: string | null; data: string }>()
+  // A private preview or collection can read its own cached bytes. Cache existence
+  // and original uploader identity alone never authorize a sticker asset.
+  const source = await c.env.DB.prepare("SELECT p.name FROM sticker_packs p,json_each(p.manifest,'$.stickers') s WHERE json_extract(s.value,'$.assetId')=?1").bind(assetId).first<{ name: string }>()
+  if (source && await c.env.DB.prepare('SELECT 1 FROM sticker_memberships WHERE user_id=?1 AND pack_name=?2 UNION SELECT 1 FROM sticker_previews WHERE user_id=?1 AND pack_name=?2 AND expires_at>?3').bind(userId, source.name, Date.now()).first()) return false
   if (results.some((r) => (!r.owner_id || r.owner_id === userId) && a.canRead(r.board_id) && !(JSON.parse(r.data) as { purged?: boolean }).purged)) return false
-  if (!results.length) {
+  if (!source && !results.length) {
     return !(await c.env.DB.prepare('SELECT 1 FROM assets WHERE id=?1 AND created_by=?2').bind(assetId, userId).first())
   }
   return true
@@ -76,13 +82,13 @@ async function canRead(c: Context<AppEnv>, assetId: string): Promise<Access> {
     const resolved = await resolveShare(c.env.DB, share)
     if (!resolved) return 'unauthenticated' // unknown or turned off
     const { results } = await c.env.DB.prepare(
-      "SELECT board_id, data FROM objects WHERE kind = 'card' AND json_extract(data, '$.content.assetId') = ?1",
+      "SELECT board_id, data FROM objects WHERE kind IN ('card','sticker') AND json_extract(data, '$.content.assetId') = ?1",
     )
       .bind(assetId)
       .all<{ board_id: string; data: string }>()
     const shown = results.some((r) => {
       const card = JSON.parse(r.data) as { deletedAt?: number | null; purged?: boolean }
-      return !card.purged && !card.deletedAt && resolved.sharedBoards.has(r.board_id) && resolved.objects.some((o) => o.kind === 'card' && o.boardId === r.board_id && (o as { content?: { assetId?: string } }).content?.assetId === assetId)
+      return !card.purged && !card.deletedAt && resolved.sharedBoards.has(r.board_id) && resolved.objects.some((o) => (o.kind === 'card' || o.kind === 'sticker') && o.boardId === r.board_id && (o as { content?: { assetId?: string } }).content?.assetId === assetId)
     })
     return shown ? 'ok' : 'forbidden'
   }
@@ -145,6 +151,8 @@ export function contentDisposition(name: string): string {
 assets.put('/files/:id', requireUser, async (c) => {
   const id = c.req.param('id')
   if (!UUID.test(id)) return c.json({ error: 'bad file id' }, 400)
+  const telegram = await c.env.DB.prepare("SELECT 1 FROM sticker_packs p,json_each(p.manifest,'$.stickers') s WHERE json_extract(s.value,'$.assetId')=?1").bind(id).first()
+  if (telegram) return c.json({ error: 'Telegram assets are managed by the server' }, 403)
   const uploader = await c.env.DB.prepare('SELECT created_by FROM assets WHERE id=?1 ORDER BY created_at,size LIMIT 1').bind(id).first<{ created_by: string }>()
   if (uploader && uploader.created_by !== c.get('user').id) return c.json({ error: 'Only the uploader can add this file' }, 403)
   const len = Number(c.req.header('content-length') ?? NaN)

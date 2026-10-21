@@ -1,4 +1,7 @@
 export type Env = {
+  TELEGRAM_BOT_TOKEN?: string
+  TELEGRAM_BOT_USERNAME?: string
+  TELEGRAM_WEBHOOK_SECRET?: string
   DB: D1Database
   BUCKET: R2Bucket
   ASSETS?: Fetcher

@@ -209,7 +209,11 @@ export function installClipboard(opts: { readOnly: boolean }) {
     if ((key === 'c' || key === 'x') && selection().size) {
       if (key === 'x' && opts.readOnly) return
       const clip = clipOfSelection()
-      if (!clip) return
+      if (!clip) {
+        // Stickers alone: the canvas writes them; the proxy only makes the native copy fire.
+        if (key === 'c' && [...selection()].some((id) => doc.get(id)?.kind === 'sticker')) focusProxy(' ')
+        return
+      }
       pending = { clip, cut: key === 'x' }
       focusProxy(clipText(clip, boardTitle))
     } else if (key === 'v' && !opts.readOnly) {

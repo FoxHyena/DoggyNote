@@ -157,6 +157,12 @@ async function validateChanges(db: D1Database, access: Access, credential: Crede
       const existingId = before ? assetOf(before) : undefined
       if (assetId !== existingId && ![...all.values()].some((r) => assetOf(r.object) === assetId && readable(access, credential, user.id, r))) error('Use an asset already visible within this connection’s boards')
     }
+    // A sticker can only reuse sticker artwork already visible within the connection's boards.
+    if (after.kind === 'sticker') {
+      const assetId = after.content.assetId
+      const existingId = before?.kind === 'sticker' ? before.content?.assetId : null
+      if (assetId !== existingId && ![...all.values()].some((r) => r.object.kind === 'sticker' && r.object.content?.assetId === assetId && readable(access, credential, user.id, r))) error('Use a sticker already visible within this connection’s boards')
+    }
     // Protect server-stamped identity while allowing an unchanged foreign
     // comment to follow its card between boards.
     const old = before as unknown as Record<string, unknown> | null
@@ -371,7 +377,7 @@ async function applyProposal(c: Context<AgentEnv>, reverse: boolean) {
     for (const row of current.values()) {
       const o = row.object
       if (ids.has(o.id) || !active(o)) continue
-      const references = o.kind === 'board' ? [o.parentId] : o.kind === 'comment' || o.kind === 'stroke' ? [o.cardId, o.boardId] : o.kind === 'connection' ? [o.from, o.to, o.boardId] : [o.boardId, o.columnId, ...(o.type === 'board' ? [o.content.boardId] : [])]
+      const references = o.kind === 'board' ? [o.parentId] : o.kind === 'comment' || o.kind === 'stroke' ? [o.cardId, o.boardId] : o.kind === 'connection' ? [o.from, o.to, o.boardId] : o.kind === 'sticker' ? [o.boardId] : [o.boardId, o.columnId, ...(o.type === 'board' ? [o.content.boardId] : [])]
       if (references.some((id) => id && created.has(id))) return c.json({ error: 'New content depends on this proposal. Move or remove it before reversing.' }, 409)
       if ((o.kind === 'comment' || o.kind === 'stroke') && changes.some((ch) => ch.after.kind === 'card' && ch.after.id === o.cardId && ch.after.boardId !== o.boardId)) return c.json({ error: 'New annotations or comments were added after this move. Prepare a new proposal to move the card safely.' }, 409)
     }
