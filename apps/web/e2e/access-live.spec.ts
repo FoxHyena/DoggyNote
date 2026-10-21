@@ -26,7 +26,7 @@ test('access revoked during typing preserves the latest text and leaves other bo
     await expect(cardByText(member, 'Before revocation')).toBeVisible()
     // Prevent the pending edit reaching the server, while permission refreshes remain online.
     await member.route('**/api/sync', (route) => route.request().method() === 'POST' ? route.abort('internetdisconnected') : route.continue())
-    await cardByText(member, 'Before revocation').click()
+    await cardByText(member, 'Before revocation').dblclick()
     await member.keyboard.press(`${MOD}+a`)
     await member.keyboard.type('Latest private typing must survive')
     const list = await (await owner.context.request.get(`/api/shares?boardId=${boardId}`)).json()
@@ -41,6 +41,15 @@ test('access revoked during typing preserves the latest text and leaves other bo
     const download = await downloaded
     const { readFile } = await import('node:fs/promises')
     expect(await readFile((await download.path())!, 'utf8')).toContain('Latest private typing must survive')
+    // Once saved elsewhere, the notice can be cleared (and Undo brings it back).
+    await member.getByTestId('discard-recovery').click()
+    await expect(member.getByTestId('download-recovery')).toHaveCount(0)
+    await member.getByTestId('toast-action').click()
+    // The toast sits outside the details panel, so reopen it.
+    if (!(await member.getByTestId('sync-details').isVisible())) await member.getByTestId('sync-status').click()
+    await expect(member.getByTestId('download-recovery')).toBeVisible()
+    await member.getByTestId('discard-recovery').click()
+    await expect(member.getByTestId('sync-status')).not.toHaveText('Review edits')
     await member.getByRole('button', { name: 'My Doghouse', exact: true }).click()
     await expect(member.getByTestId('canvas')).toBeVisible()
     await expect(member.getByTestId('tool-note')).toBeVisible()

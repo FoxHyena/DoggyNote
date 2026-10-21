@@ -174,7 +174,7 @@ test.describe('notes', () => {
 
   test('clicking a note edits it; bold formatting renders', async ({ page }) => {
     const note = await addNote(page, 'plain')
-    await note.click()
+    await note.dblclick()
     await expect(page.getByTestId('note-editor')).toBeVisible()
     await page.keyboard.press(`${MOD}+a`)
     await page.keyboard.press(`${MOD}+b`)

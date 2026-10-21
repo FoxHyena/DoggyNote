@@ -71,7 +71,7 @@ test('⌘D duplicates beside the original; a column brings its cards', async ({ 
 test('the Duplicate button does the same', async ({ page }) => {
   await seedCards(page, [note('Good boy', 0, 0)])
   await selectAllCards(page)
-  await page.getByTestId('duplicate').click()
+  await page.getByTestId('duplicate-selection').click()
   await expect(page.locator('[data-testid=card]', { hasText: 'Good boy' })).toHaveCount(2)
 })
 
@@ -124,7 +124,7 @@ test('cut then paste on another board moves the very same card, comments and all
 
 test('pasting over a column drops the cards into it', async ({ page }) => {
   await seedCards(page, [{ type: 'column', x: 400, y: 0, w: 280, content: { title: 'Ideas' } }, note('Squeaky toy', 0, 0)])
-  await cardByText(page, 'Squeaky toy').click()
+  await cardByText(page, 'Squeaky toy').dblclick()
   await expect(page.getByTestId('note-editor')).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page.getByTestId('note-editor')).toHaveCount(0)
@@ -143,6 +143,9 @@ test('⌘⇧V pastes words as a plain note, without a link preview', async ({ pa
     dt.setData('text/plain', text)
     document.activeElement!.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }))
   }, text)
+  // The system clipboard outlives a test: empty it, or the keys below would paste
+  // whatever an earlier test in this worker copied.
+  await page.evaluate(() => navigator.clipboard.writeText(''))
   const p = await at(page, 0.5, 0.5)
   await page.mouse.move(p.x, p.y)
   await page.keyboard.press(`${MOD}+Shift+V`)
@@ -159,7 +162,7 @@ test('⌘⇧V pastes words as a plain note, without a link preview', async ({ pa
 
 test('click into a note, shift-click another: both are selected and ⌘D duplicates them', async ({ page }) => {
   await seedCards(page, [note('First bone', 0, 0), note('Second bone', 300, 0)])
-  await cardByText(page, 'First bone').click()
+  await cardByText(page, 'First bone').dblclick()
   await expect(page.getByTestId('note-editor')).toBeVisible()
   await cardByText(page, 'Second bone').click({ modifiers: ['Shift'] })
   await expect(page.getByTestId('note-editor')).toHaveCount(0)

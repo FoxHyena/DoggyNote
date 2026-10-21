@@ -215,7 +215,7 @@ test('ticked and open task boxes sit on their text line, reading and editing', a
     const t = range.getClientRects()[0]
     return r.top + r.height / 2 - (t.top + t.height / 2)
   }), box)
-  for (const [box, open] of [['.task-check', () => {}], ['.cm-md-task', () => note.locator('.rich p', { hasText: 'Walkies' }).click()]] as const) {
+  for (const [box, open] of [['.task-check', () => {}], ['.cm-md-task', () => note.locator('.rich p', { hasText: 'Walkies' }).dblclick()]] as const) {
     await open()
     await expect(note.locator(box)).toHaveCount(2)
     const [unticked, ticked] = await offsets(box)
