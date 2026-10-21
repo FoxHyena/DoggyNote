@@ -51,6 +51,9 @@ function stageSelection(world: HTMLElement, ids: Id[]) {
   const connections = world.querySelector('svg.connections')
   if (connections) scene.append(connections.cloneNode(true))
   for (const id of ids) {
+    // Stickers already sit free on the world with their own placement: copy as they are.
+    const sticker = doc.get(id)?.kind === 'sticker' ? world.querySelector(`[data-sticker-id="${id}"]`) : null
+    if (sticker) { scene.append(sticker.cloneNode(true)); continue }
     const el = cardEl(id), rect = rectOf(id)
     if (!el || !rect) throw new Error('Show the selected cards on the board before exporting them.')
     const clone = el.cloneNode(true) as HTMLElement
@@ -99,7 +102,8 @@ export async function renderPng(opts: ExportOptions): Promise<Rendered> {
   endCanvasDrawing()
   const ids = scopeIds(opts.scope)
   if (!ids.length) throw new Error(opts.scope === 'selection' ? 'Select some cards first.' : 'This board is empty.')
-  const keep = exportCardIds(doc.cardsOn(boardId()), ids)
+  // Cards (with their column members) plus any stickers in scope.
+  const keep = new Set([...exportCardIds(doc.cardsOn(boardId()), ids), ...ids.filter((id) => doc.get(id)?.kind === 'sticker')])
   const prevSelection = [...selection()]
   endEdit()
   clearSelection()
