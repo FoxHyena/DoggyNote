@@ -143,6 +143,9 @@ test('⌘⇧V pastes words as a plain note, without a link preview', async ({ pa
     dt.setData('text/plain', text)
     document.activeElement!.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }))
   }, text)
+  // The system clipboard outlives a test: empty it, or the keys below would paste
+  // whatever an earlier test in this worker copied.
+  await page.evaluate(() => navigator.clipboard.writeText(''))
   const p = await at(page, 0.5, 0.5)
   await page.mouse.move(p.x, p.y)
   await page.keyboard.press(`${MOD}+Shift+V`)
