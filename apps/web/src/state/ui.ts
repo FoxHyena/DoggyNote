@@ -32,6 +32,9 @@ export const clearSelection = () => {
 let editSnapshot: Record<Id, Partial<Obj>> | null = null
 let editIsNew = false
 const endEditHooks = new Set<(id: Id) => void>()
+const editFlushers = new Set<(id: Id) => void>()
+export function onFlushEdit(fn: (id: Id) => void) { editFlushers.add(fn); return () => editFlushers.delete(fn) }
+export function flushEdit() { const id = editingId(); if (id) for (const flush of editFlushers) flush(id) }
 let checkpointTimer: ReturnType<typeof setInterval> | null = null
 let checkpointSnapshot: Record<Id, Partial<Obj>> = {}
 
@@ -56,7 +59,8 @@ export function beginEdit(id: Id, opts: { isNew?: boolean } = {}) {
   if (!doc.canWriteObject(doc.get(id))) return
   if (editingId() === id) return
   endEdit()
-  editSnapshot = { [id]: doc.snapshot(id, ['content']) }
+  // Notes have author-local CRDT undo; a whole-content snapshot would undo peers too.
+  editSnapshot = { [id]: doc.getCard(id)?.type === 'note' ? {} : doc.snapshot(id, ['content']) }
   doc.markBusy([id])
   // A board card's title lives on the board object.
   const card = doc.getCard(id)
@@ -67,6 +71,7 @@ export function beginEdit(id: Id, opts: { isNew?: boolean } = {}) {
     doc.markBusy([bid])
   }
   editIsNew = !!opts.isNew
+  doc.setNewNoteEdit(opts.isNew && card?.type === 'note' ? id : null)
   checkpointSnapshot = structuredClone(editSnapshot)
   checkpointTimer = setInterval(checkpointEdit, 500)
   setEditingId(id)
@@ -82,6 +87,7 @@ export function onEndEdit(fn: (id: Id) => void) {
 export function endEdit() {
   const id = editingId()
   if (!id) return
+  flushEdit()
   if (checkpointTimer) clearInterval(checkpointTimer)
   checkpointTimer = null
   checkpointSnapshot = {}
@@ -95,6 +101,7 @@ export function endEdit() {
     else doc.commitFrom(editSnapshot)
   }
   doc.unmarkBusy(Object.keys(editSnapshot ?? { [id]: 1 }))
+  doc.setNewNoteEdit(null)
   editSnapshot = null
   editIsNew = false
 }
@@ -103,6 +110,8 @@ export const editIsNewCard = () => editIsNew
 
 /** Permission was removed; the caller preserves unsynced text before cancelling. */
 export function cancelEdit() {
+  flushEdit()
+  doc.setNewNoteEdit(null)
   if (checkpointTimer) clearInterval(checkpointTimer)
   checkpointTimer = null
   const ids = Object.keys(editSnapshot ?? {})

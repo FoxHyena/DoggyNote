@@ -55,7 +55,7 @@ jobs:
         run: pnpm --filter web exec playwright install --with-deps ${{ matrix.browser }}
       # Starts the prod build, the Worker on a fresh local D1/R2, the desktop
       # flavour of the build and the link-preview fixtures (see playwright.config.ts).
-      - run: pnpm test:e2e ${{ matrix.projects }} --shard=${{ matrix.shard }}
+      - run: xvfb-run --auto-servernum pnpm test:e2e ${{ matrix.projects }} --shard=${{ matrix.shard }}
       - if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:

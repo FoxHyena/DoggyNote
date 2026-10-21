@@ -15,6 +15,9 @@ import { defaultKeymap, history, historyKeymap, insertNewline } from '@codemirro
 import { syntaxTree } from '@codemirror/language'
 import { insertNewlineContinueMarkup, markdown, markdownKeymap, markdownLanguage } from '@codemirror/lang-markdown'
 import { indentListItems } from '@doggynote/core'
+import type * as Y from 'yjs'
+import { yCollab, yUndoManagerKeymap } from 'y-codemirror.next'
+import type { Awareness } from 'y-protocols/awareness'
 
 // ---- live preview ------------------------------------------------------------
 
@@ -371,17 +374,24 @@ export type NoteEditor = {
   typeText(text: string): void
   selectAll(): void
   backspace(): void
+  flush(): void
   destroy(): void
 }
 
 export function createEditor(
   mount: HTMLElement,
   md: string,
-  opts: { onChange: (md: string) => void; onExit: () => void; placeAt?: { x: number; y: number } },
+  opts: { onChange: (md: string) => void; onExit: () => void; onComposition?: (active: boolean) => void; placeAt?: { x: number; y: number }; shared?: { text: Y.Text; awareness: Awareness; undoManager: Y.UndoManager } },
 ): NoteEditor {
+  let compositionEnd: ReturnType<typeof setTimeout> | undefined
   const run = (cmd: StateCommand) => (v: EditorView) => cmd({ state: v.state, dispatch: v.dispatch })
   const extensions: Extension[] = [
-    history(),
+    EditorView.domEventHandlers({
+      compositionstart() { clearTimeout(compositionEnd); opts.onComposition?.(true) },
+      // Native compositionend can precede its final DOM input transaction.
+      compositionend() { compositionEnd = setTimeout(() => opts.onComposition?.(false), 50) },
+    }),
+    ...(opts.shared ? [yCollab(opts.shared.text, opts.shared.awareness, { undoManager: opts.shared.undoManager })] : [history()]),
     markdown({ base: markdownLanguage, addKeymap: false }),
     livePreview,
     EditorView.lineWrapping,
@@ -397,7 +407,7 @@ export function createEditor(
       { key: 'Backspace', run: run(deleteHeadingMarkBackward) },
       { key: 'Backspace', run: run(deleteListMarkBackward) },
       ...markdownKeymap,
-      ...historyKeymap,
+      ...(opts.shared ? yUndoManagerKeymap : historyKeymap),
       ...defaultKeymap,
     ]),
     EditorView.updateListener.of((u) => {
@@ -410,9 +420,14 @@ export function createEditor(
   const pos = opts.placeAt ? view.posAtCoords(opts.placeAt) : null
   view.focus()
   view.dispatch({ selection: { anchor: pos ?? view.state.doc.length } })
+  // CM can postpone native DOM input until the next animation frame. Its
+  // observer has no public flush API; keep this bridge isolated and covered by
+  // the rapid-exit, reload, IME and slow-IDB regressions when upgrading CM.
+  const flush = () => (view as unknown as { observer: { forceFlush(): void } }).observer.forceFlush()
 
   return {
     view,
+    flush,
     run(cmd) {
       commands[cmd]({ state: view.state, dispatch: view.dispatch })
       view.focus()
@@ -432,6 +447,6 @@ export function createEditor(
       if (from !== to) view.dispatch(view.state.replaceSelection(''))
       else if (from > 0) view.dispatch({ changes: { from: from - 1, to: from } })
     },
-    destroy: () => view.destroy(),
+    destroy: () => { clearTimeout(compositionEnd); flush(); view.destroy(); opts.onComposition?.(false) },
   }
 }

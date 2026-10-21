@@ -1,10 +1,9 @@
 name: Release
 
-# Every merge to main: test, stage compatible Mac artifacts, then deploy
-# the Worker + web app and publish the release. APP_VERSION selects its updater.
+# Release is an explicit action after a merge: test, stage compatible Mac
+# artifacts, then deploy the Worker + web app and publish the release.
+# APP_VERSION selects its updater.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:

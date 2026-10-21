@@ -69,6 +69,10 @@ test('desktop: sign in with a Keychain token, sync cross-origin, open links in t
   await authed
   await waitForSync(page)
 
+  await page.getByTestId('collaborators').click()
+  await expect(page.getByTestId('live-status')).toHaveText('Live')
+  await page.keyboard.press('Escape')
+
   // Relaunch: still signed in from the Keychain.
   await page.reload()
   await expect(cardByText(page, 'from the desktop')).toBeVisible()

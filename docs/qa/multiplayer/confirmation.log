@@ -1,0 +1,394 @@
+[WebServer] (node:71338) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:72955) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [plugin builtin:vite-reporter] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[WebServer] (node:74019) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:74179) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:74547) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:74727) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:75296) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:75344) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:75364) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:74706) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:76048) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:76049) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [plugin builtin:vite-reporter] 
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[WebServer] (node:76083) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:76085) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:76097) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 28 tests using 2 workers
+
+(node:76099) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:76100) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [webkit] › e2e/multiplayer-visual.spec.ts:5:1 › collaboration visual evidence @visual (3.8s)
+[WebServer] 10:38:24 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 10:38:24 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 10:38:24 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 10:38:24 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+  ✓   2 [webkit] › e2e/multiplayer.spec.ts:27:1 › members, live cursors, selections, pings and following work without manual refresh (6.1s)
+[WebServer] 10:38:26 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 10:38:26 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+  ✓   3 [webkit] › e2e/multiplayer.spec.ts:57:1 › two authors type in one note, merge within one second, and undo only their own typing (3.2s)
+  ✓   5 [webkit] › e2e/multiplayer.spec.ts:99:1 › live drag previews clear on commit and committed changes arrive within one second (2.5s)
+  ✓   4 [webkit] › e2e/multiplayer.spec.ts:78:1 › offline edits survive reload and merge with an online author (4.2s)
+[WebServer] 10:38:30 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 10:38:30 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+  ✓   7 [webkit] › e2e/multiplayer.spec.ts:156:1 › presence groups sessions and leaves the board after navigation or session revocation (1.5s)
+  ✓   6 [webkit] › e2e/multiplayer.spec.ts:113:1 › viewers can follow and ping, while forged edit presence and writes are refused (2.4s)
+[WebServer] 10:38:32 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 10:38:32 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+  -   9 [webkit] › e2e/multiplayer.spec.ts:205:1 › IME composition survives a remote edit before committing
+  ✓  10 [webkit] › e2e/multiplayer.spec.ts:230:1 › HTTP sync keeps collaborative text working when the live room is unavailable (2.2s)
+  ✓  11 [webkit] › e2e/multiplayer.spec.ts:242:1 › removing a note during typing closes its editor and retains the latest draft (2.3s)
+  ✓   8 [webkit] › e2e/multiplayer.spec.ts:176:1 › concurrent unicode inserts and formatting converge without moving the other author’s caret (7.8s)
+  ✓  12 [webkit] › e2e/multiplayer.spec.ts:259:1 › competing drags and a resize converge, while cancellation and deletion clear previews (4.7s)
+  ✓  13 [webkit] › e2e/multiplayer.spec.ts:290:1 › keyboard ping restores focus and an off-screen ping is visible and announced without moving the camera (2.3s)
+(node:76542) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  14 [webkit] › e2e/multiplayer.spec.ts:312:1 › an older queued note replacement becomes a recovery draft instead of overwriting collaborative text (2.1s)
+[WebServer] 10:38:43 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 10:38:43 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+(node:76610) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  15 [chromium] › e2e/multiplayer-visual.spec.ts:5:1 › collaboration visual evidence @visual (2.9s)
+[WebServer] 10:38:48 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 10:38:48 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+  ✓  17 [chromium] › e2e/multiplayer.spec.ts:57:1 › two authors type in one note, merge within one second, and undo only their own typing (2.7s)
+  ✓  16 [chromium] › e2e/multiplayer.spec.ts:27:1 › members, live cursors, selections, pings and following work without manual refresh (5.7s)
+[WebServer] 10:38:50 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 10:38:50 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 10:38:52 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 10:38:52 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+  ✓  18 [chromium] › e2e/multiplayer.spec.ts:78:1 › offline edits survive reload and merge with an online author (3.6s)
+[WebServer] 10:38:52 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 10:38:52 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+  ✓  19 [chromium] › e2e/multiplayer.spec.ts:99:1 › live drag previews clear on commit and committed changes arrive within one second (2.1s)
+  ✓  21 [chromium] › e2e/multiplayer.spec.ts:156:1 › presence groups sessions and leaves the board after navigation or session revocation (1.5s)
+[WebServer] 10:38:54 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 10:38:54 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 10:38:54 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 10:38:54 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+  ✓  20 [chromium] › e2e/multiplayer.spec.ts:113:1 › viewers can follow and ping, while forged edit presence and writes are refused (2.4s)
+  ✓  22 [chromium] › e2e/multiplayer.spec.ts:176:1 › concurrent unicode inserts and formatting converge without moving the other author’s caret (2.5s)
+[WebServer] 10:38:56 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 10:38:56 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+  ✓  23 [chromium] › e2e/multiplayer.spec.ts:205:1 › IME composition survives a remote edit before committing (3.3s)
+  ✓  24 [chromium] › e2e/multiplayer.spec.ts:230:1 › HTTP sync keeps collaborative text working when the live room is unavailable (1.9s)
+  ✓  25 [chromium] › e2e/multiplayer.spec.ts:242:1 › removing a note during typing closes its editor and retains the latest draft (1.8s)
+  ✓  27 [chromium] › e2e/multiplayer.spec.ts:290:1 › keyboard ping restores focus and an off-screen ping is visible and announced without moving the camera (1.8s)
+[WebServer] 10:39:01 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 10:39:01 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 10:39:01 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 10:39:01 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+  ✓  26 [chromium] › e2e/multiplayer.spec.ts:259:1 › competing drags and a resize converge, while cancellation and deletion clear previews (3.8s)
+[WebServer] 10:39:01 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 10:39:01 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+  ✓  28 [chromium] › e2e/multiplayer.spec.ts:312:1 › an older queued note replacement becomes a recovery draft instead of overwriting collaborative text (1.4s)
+
+  1 skipped
+  27 passed (1.4m)

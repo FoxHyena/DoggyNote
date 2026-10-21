@@ -1,5 +1,6 @@
 // Dog-themed names for app concepts. One place, so the UI and tests agree.
 export const COPY = {
+  lookHere: 'Look here',
   appName: 'DoggyNote',
   home: 'Doghouse',
   trash: 'Buried bones',

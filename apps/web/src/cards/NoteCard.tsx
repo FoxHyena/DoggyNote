@@ -1,12 +1,13 @@
 import { For, Show, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
 import { noteMarkdown, parseMarkdown, toggleTask, type Card } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
-import { camera, editIsNewCard, endEdit, onEndEdit } from '../state/ui.ts'
+import { camera, editIsNewCard, endEdit, onEndEdit, onFlushEdit } from '../state/ui.ts'
 import { RichText } from '../editor/RichText.tsx'
 import { takeEditCaret } from '../canvas/Canvas.tsx'
 import type { CardProps } from '../canvas/CardView.tsx'
 import type { FormatCommand, NoteEditor as Editor } from '../editor/codemirror.ts'
 import { touch } from '../state/device.ts'
+import { noteAwareness, updateAwareness } from '../state/realtime.ts'
 
 // Brand-new notes left empty disappear instead of littering the board.
 onEndEdit((id) => {
@@ -18,7 +19,7 @@ export function NoteCard(props: CardProps<'note'>) {
   const source = () => noteMarkdown(props.card)
   const parsed = createMemo(() => parseMarkdown(source()))
   // Ticking a task in the rendered note edits its markdown line (one undo step).
-  const toggle = (line: number) => doc.update({ [props.card.id]: { content: { md: toggleTask(source(), line) } } as Partial<Card> })
+  const toggle = (line: number) => { if (doc.canWriteObject(props.card)) doc.update({ [props.card.id]: { content: { md: toggleTask(source(), line) } } as Partial<Card> }) }
   return (
     <Show when={!props.lod} fallback={<div class="lod-box" style={{ height: `${Math.max(24, props.card.h - 24)}px` }} />}>
       <div class="note-body">
@@ -49,7 +50,9 @@ function NoteEditor(props: { card: Card<'note'> }) {
   let mount!: HTMLDivElement
   let editor: Editor | null = null
   let disposed = false
+  let shared: ReturnType<typeof noteAwareness> | null = null
   const id = props.card.id
+  onCleanup(onFlushEdit((active) => { if (active === id) editor?.flush() }))
 
   // Keys that arrive before ProseMirror has mounted land in this buffer as a
   // list of actions, replayed in order once the editor exists.
@@ -85,9 +88,15 @@ function NoteEditor(props: { card: Card<'note'> }) {
     if (disposed) return
     const box = mount.getBoundingClientRect()
     const z = camera().zoom
-    editor = createEditor(mount, noteMarkdown(props.card), {
+    const text = doc.noteDoc(id).getText('markdown')
+    shared = noteAwareness(id)
+    const undoManager = doc.noteUndo(id)
+    undoManager.stopCapturing()
+    editor = createEditor(mount, text.toString(), {
+      shared: { text, awareness: shared.awareness, undoManager },
+      onComposition: (active) => { doc.setNoteComposing(id, active); if (!active) updateAwareness() },
       placeAt: rel ? { x: box.left + rel.x * z, y: box.top + rel.y * z } : undefined,
-      onChange: (md: string) => doc.transient(id, { content: { md } } as Partial<Card>),
+      onChange: () => {}, // yCollab writes through the document's durable update listener.
       onExit: () => endEdit(),
     })
     setActiveNoteEditor(editor)
@@ -107,6 +116,8 @@ function NoteEditor(props: { card: Card<'note'> }) {
     disposed = true
     if (activeNoteEditor() === editor) setActiveNoteEditor(null)
     editor?.destroy()
+    doc.finishNoteEdit(id)
+    shared?.dispose()
   })
 
   return (

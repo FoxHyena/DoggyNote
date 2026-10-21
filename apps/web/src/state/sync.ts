@@ -98,6 +98,21 @@ async function pull() {
       if (accessRevision() !== res.accessRevision) await refreshAccess()
       continue
     }
+    const queued = new Map(doc.pendingOutbox().map((change) => [change.id, change.patch]))
+    const removed = res.objects.filter((object) => {
+      if ((object as { hidden?: boolean }).hidden) return true
+      const pending = queued.get(object.id)
+      const restoring = pending?.noteRestore || (pending && 'deletedAt' in pending && pending.deletedAt === null) || (pending?.purged === false && !pending.noteUpdate)
+      return (object.deletedAt || object.purged) && !restoring
+    }).map((object) => object.id)
+    // A moved/private or removed row can arrive before a queued write is tried.
+    // Preserve inactive drafts too, before receiveRemote drops the local copy.
+    await preserveDenied(removed, 'This object was removed or moved out of your access. Your unsent edits are preserved here.')
+    const active = editingId()
+    if (active && removed.includes(active)) {
+      await preserveActiveEdit(active, 'This note was removed while you were editing. Your text is preserved here.')
+      cancelEdit()
+    }
     if (snapshot) snapshot.push(...res.objects.filter((object) => !(object as { hidden?: boolean }).hidden))
     else doc.receiveRemote(res.objects)
     cursor = res.cursor
@@ -121,6 +136,7 @@ async function pull() {
       doc.reconcileSnapshot(snapshot, writable)
     }
     syncedAccessRevision = res.accessRevision
+    await doc.settleNoteCompositions()
     await doc.flush()
     await idb.putMany('meta', [['cursor', cursor], ['syncedAccessRevision', syncedAccessRevision]])
     return
@@ -173,7 +189,7 @@ export function syncNow(): Promise<void> {
 function schedulePush() {
   setPendingCount(doc.outboxSize())
   if (pushTimer) clearTimeout(pushTimer)
-  pushTimer = setTimeout(() => void syncNow(), 600)
+  pushTimer = setTimeout(() => void syncNow(), 100)
 }
 
 /** Start background sync. `first` settles after the first round; `fresh` means this device never synced. */

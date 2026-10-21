@@ -1,7 +1,11 @@
-import { Hono } from 'hono'
+import { Hono, type Context } from 'hono'
 import { stickerObjectSchema, isReservedId } from '@doggynote/core/agent'
 import type { AppEnv } from './env.ts'
 import { accessGuard, bumpAccess, loadAccess, newBoardAccess, type Access } from './access.ts'
+import { prepareNote } from './notes.ts'
+import { notifyRooms } from './realtime.ts'
+import { decodeUpdate, encodeUpdate, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
+import * as Y from 'yjs'
 
 // Push: field patches, merged per top-level field (last write to arrive wins).
 // Pull: every object whose seq is above the client's cursor.
@@ -34,7 +38,7 @@ export function parseChanges(body: unknown): IncomingChange[] | string {
     const p = patch as Record<string, unknown>
     if ('id' in p && p.id !== id) return `id mismatch for ${id}`
     if ('kind' in p && !KINDS.has(p.kind as string)) return `bad kind for ${id}`
-    if (JSON.stringify(p).length > MAX_OBJECT_BYTES) return `object ${id} too large`
+    if (JSON.stringify({ ...p, noteUpdate: undefined }).length > MAX_OBJECT_BYTES) return `object ${id} too large`
     out.push({ id, patch: p })
   }
   return out
@@ -73,7 +77,7 @@ export function ownerFor(id: string, boardId: string | null): string | null {
   return null
 }
 
-type Existing = { data: string; id: string; kind: string; board_id: string | null; owner_id: string | null; author_id: string | null; deleted_at: number | null; purged: number | null }
+type Existing = { data: string; id: string; seq: number; kind: string; board_id: string | null; owner_id: string | null; author_id: string | null; deleted_at: number | null; purged: number | null; note_state: string | null; note_revision: number | null }
 
 // ---- comments ------------------------------------------------------------------
 // The author of a comment is whoever is signed in when it's created: the server
@@ -122,9 +126,23 @@ export function deletedCommentOwner(
 }
 
 export const sync = new Hono<AppEnv>()
+// Aggregate operational data only: never log bodies, note identifiers or tokens.
+sync.use('*', async (c, next) => {
+  if (c.req.method !== 'POST') return next()
+  const start = Date.now()
+  try { await next() } finally {
+    console.info(JSON.stringify({ event: 'collaboration_sync', status: c.error ? 500 : c.res.status, durationMs: Date.now() - start }))
+  }
+})
 
-sync.post('/sync', async (c) => {
-  const parsed = parseChanges(await c.req.json().catch(() => null))
+async function pushSync(c: Context<AppEnv>) {
+  const body = await c.req.json().catch(() => null)
+  const noteId = c.req.param('noteId')
+  let vector: Uint8Array | undefined
+  if (noteId && body?.stateVector !== undefined) {
+    try { vector = decodeUpdate(body.stateVector); Y.decodeStateVector(vector) } catch { return c.json({ error: 'Invalid state vector' }, 400) }
+  }
+  const parsed = parseChanges(noteId ? { changes: [{ id: noteId, patch: { noteUpdate: body?.update } }] } : body)
   if (typeof parsed === 'string') return c.json({ error: parsed }, 400)
   if (!parsed.length) return c.json({ ok: true })
   const db = c.env.DB
@@ -139,7 +157,7 @@ sync.post('/sync', async (c) => {
     const chunk = ids.slice(i, i + 90)
     const { results } = await db
       .prepare(
-        `SELECT data, id, kind, board_id, owner_id, json_extract(data, '$.authorId') AS author_id, json_extract(data, '$.deletedAt') AS deleted_at, json_extract(data, '$.purged') AS purged FROM objects WHERE id IN (${chunk.map((_, j) => `?${j + 1}`).join(',')})`,
+        `SELECT o.data, o.id, o.seq, o.kind, o.board_id, o.owner_id, json_extract(o.data, '$.authorId') AS author_id, json_extract(o.data, '$.deletedAt') AS deleted_at, json_extract(o.data, '$.purged') AS purged, n.state AS note_state, n.revision AS note_revision FROM objects o LEFT JOIN note_states n ON n.id=o.id WHERE o.id IN (${chunk.map((_, j) => `?${j + 1}`).join(',')})`,
       )
       .bind(...chunk)
       .all<Existing>()
@@ -154,6 +172,23 @@ sync.post('/sync', async (c) => {
   for (let i = 0; i < newIds.length; i += 90) stmts.push(accessGuard(db, access.revision, newIds.slice(i, i + 90)))
   for (const { id, patch } of parsed) {
     const prev = existing.get(id)
+    if ('noteState' in patch) return c.json({ error: 'noteState is server-owned' }, 400)
+    if ('noteUpdate' in patch && (typeof patch.noteUpdate !== 'string' || !patch.noteUpdate)) return c.json({ error: 'Invalid note update' }, 400)
+    const prospective = { ...(prev ? JSON.parse(prev.data) : {}), ...patch }
+    const restoring = patch.noteRestore === true
+    if ('noteRestore' in patch && (!restoring || prospective.kind !== 'card' || prospective.type !== 'note' || patch.purged !== false || !patch.noteUpdate || (prev?.deleted_at && patch.deletedAt !== null && patch.deletedAt !== 0))) return c.json({ error: 'Invalid note restoration' }, 400)
+    delete patch.noteRestore
+    let note: Awaited<ReturnType<typeof prepareNote>> | undefined
+    if (prospective.kind === 'card' && prospective.type === 'note' && ('content' in patch || 'noteUpdate' in patch)) {
+      if (prev && (prev.deleted_at || prev.purged) && 'noteUpdate' in patch && !restoring) return c.json({ error: 'This note was removed', deniedIds: [id] }, 403)
+      if (prev && 'content' in patch && !('noteUpdate' in patch)) return c.json({ error: 'Notes require collaborative updates', deniedIds: [id] }, 403)
+      try {
+        note = await prepareNote(db, id, noteMarkdown(prospective as Card<'note'>), patch.noteUpdate as string | undefined, prev?.seq ?? 0, prev?.note_state ? { state: prev.note_state, revision: prev.note_revision! } : null)
+      } catch { return c.json({ error: 'Invalid or oversized note update' }, 400) }
+      delete patch.noteUpdate
+      patch.content = { md: note.md }
+      stmts.push(note.guard)
+    } else if ('noteUpdate' in patch) return c.json({ error: 'Only notes accept text updates' }, 400)
     if (prev?.owner_id && prev.owner_id !== user) return c.json({ error: "That's private to someone else" }, 403)
     const kind = typeof patch.kind === 'string' ? patch.kind : (prev?.kind ?? 'card')
     const denied = stampComment(patch, prev, kind, me)
@@ -165,15 +200,25 @@ sync.post('/sync', async (c) => {
     const { sql, args } = upsertSql(patch)
     stmts.push(db.prepare("UPDATE counters SET value = value + 1 WHERE name = 'seq'"))
     stmts.push(db.prepare(sql).bind(id, kind, boardId, JSON.stringify({ ...patch, id }), now, user, owner, ...args))
+    if (note) stmts.push(note.write)
     if (kind === 'board' && !prev && !id.startsWith('toybox:')) stmts.push(newBoardAccess(db, id, user))
     if ((kind === 'board' && (!prev || 'parentId' in patch)) || (prev && boardId && boardId !== prev.board_id) || (kind === 'comment' && ('deletedAt' in patch || 'purged' in patch))) stmts.push(bumpAccess(db))
   }
   try { await db.batch(stmts) } catch (e) {
     if (String(e).includes('Access changed')) return c.json({ error: 'Access changed; refresh and retry' }, 409)
+    if (String(e).includes('Note changed')) return c.json({ error: 'Note changed; retry' }, 409)
     throw e
   }
+  await notifyRooms(c.env, parsed.flatMap(({ id, patch }) => [String(patch.boardId ?? existing.get(id)?.board_id ?? (patch.kind === 'board' ? id : '')), existing.get(id)?.board_id ?? '']))
+  if (noteId) {
+    const row = await db.prepare('SELECT state FROM note_states WHERE id=?1').bind(noteId).first<{ state: string }>()
+    const document = noteDocument(row?.state)
+    try { return c.json({ ok: true, update: encodeUpdate(Y.encodeStateAsUpdate(document, vector)) }) } finally { document.destroy() }
+  }
   return c.json({ ok: true, count: parsed.length })
-})
+}
+sync.post('/sync', pushSync)
+sync.post('/notes/:noteId/sync', pushSync)
 
 sync.get('/sync', async (c) => {
   c.header('cache-control', 'no-store')
@@ -182,16 +227,36 @@ sync.get('/sync', async (c) => {
   const since = Math.max(0, Number(c.req.query('since') ?? 0) || 0)
   // The client restarts at zero after observing reset. Keeping the supplied
   // cursor supports pagination while it collects the replacement snapshot.
-  const { results } = await c.env.DB.prepare('SELECT id, kind, board_id, data, seq, owner_id FROM objects WHERE seq > ?1 ORDER BY seq LIMIT ?2')
+  const { results } = await c.env.DB.prepare('SELECT o.id, o.kind, o.board_id, o.data, o.seq, o.owner_id, n.state AS note_state FROM objects o LEFT JOIN note_states n ON n.id=o.id WHERE o.seq > ?1 ORDER BY o.seq LIMIT ?2')
     .bind(since, PULL_LIMIT)
-    .all<{ id: string; kind: string; board_id: string | null; data: string; seq: number; owner_id: string | null }>()
-  const objects = results.flatMap((r) => {
+    .all<{ id: string; kind: string; board_id: string | null; data: string; seq: number; owner_id: string | null; note_state: string | null }>()
+  const legacyNotes = results.filter((r) => !r.note_state && (!r.owner_id || r.owner_id === c.get('user').id) && a.canRead(r.board_id ?? '') && JSON.parse(r.data).type === 'note' && !JSON.parse(r.data).purged)
+  for (let i = 0; i < legacyNotes.length; i += 90) {
+    const chunk = legacyNotes.slice(i, i + 90)
+    await c.env.DB.batch(chunk.map((r) => {
+      const document = noteDocument()
+      replaceText(document.getText('markdown'), noteMarkdown(JSON.parse(r.data)))
+      const state = noteState(document); document.destroy()
+      return c.env.DB.prepare('INSERT OR IGNORE INTO note_states(id,state,revision) SELECT ?1,?2,1 WHERE EXISTS(SELECT 1 FROM objects WHERE id=?1 AND seq=?3)').bind(r.id, state, r.seq)
+    }))
+    const { results: seeded } = await c.env.DB.prepare(`SELECT id,state FROM note_states WHERE id IN (${chunk.map((_, j) => `?${j + 1}`).join(',')})`).bind(...chunk.map((r) => r.id)).all<{ id: string; state: string }>()
+    for (const row of chunk) row.note_state = seeded.find((n) => n.id === row.id)?.state ?? null
+  }
+  const objects: Record<string, unknown>[] = []
+  for (const r of results) {
     const readable = (!r.owner_id || r.owner_id === c.get('user').id) && a.canRead(r.kind === 'board' ? r.id : r.board_id ?? '')
-    if (readable) return [JSON.parse(r.data)]
+    if (readable) {
+      const object = JSON.parse(r.data)
+      if (object.kind === 'card' && object.type === 'note' && !object.purged) {
+        if (r.note_state) object.noteState = r.note_state
+      }
+      objects.push(object)
+      continue
+    }
     // Authorized snapshots contain only readable IDs; deltas retain the old
     // privacy stub behavior to evict objects moved between boards.
-    return reset ? [] : [{ id: r.id, hidden: true }]
-  })
+    if (!reset) objects.push({ id: r.id, hidden: true })
+  }
   const cursor = results.length ? results[results.length - 1].seq : since
   const epoch = (await c.env.DB.prepare("SELECT value FROM meta WHERE key = 'epoch'").first<{ value: string }>())?.value ?? ''
   return c.json({ objects, cursor, more: results.length === PULL_LIMIT, epoch, accessRevision: a.revision, reset })

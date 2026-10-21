@@ -15,6 +15,7 @@
     "@doggynote/core": "workspace:*",
     "@doggynote/theme": "workspace:*",
     "hono": "^4.10.0",
+    "yjs": "^13.6.33",
     "zod": "^4.6.7"
   },
   "devDependencies": {

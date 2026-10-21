@@ -32,7 +32,7 @@ It's designed to stay fast on big boards. The Mac app is a small native app (abo
 - **Select before opening**: click a board to select it, Enter to rename, and double-click or choose Open to go inside. View-only links open boards with one click.
 
 **Working together**
-- **Live sync** between people and devices, merged field by field, so two people editing different parts of a card don't overwrite each other.
+- **Live collaboration:** type together in Markdown notes, see people, cursors and selections, preview drags and resizes, follow a friend's view, and point somewhere with **Look here**. Note typing merges through Yjs; other card fields retain their existing merge rules.
 - **Works offline.** Edits wait on your device and sync when you're back.
 - **Comment threads** on any card: replies, resolve/reopen, and edit or delete your own messages.
 - **View-only share links**: anyone can look, nobody can edit. Turn a link off at any time.
@@ -95,7 +95,7 @@ pnpm test:e2e                     # Playwright end-to-end tests, WebKit + Chromi
 
 Every pull request runs typecheck, unit tests, the full end-to-end suite on WebKit and Chromium, and a performance check. Merging to `main` stages signed Mac artifacts, then deploys the server and web app. Each Worker advertises the staged updater matching its own version, so a new desktop is exposed together with its compatible server. The fallback updater and GitHub release publish after deployment. [`CLAUDE.md`](CLAUDE.md) holds the project's rules: colours, performance, privacy and API compatibility.
 
-For this access-control migration, deploy migrations `0005`–`0008` with the new Worker and web app. Desktop versions below `0.2.0`, and clients without sync protocol 2, are prompted to update; their pending local changes are retained. Migration, QA evidence and implementation progress are recorded in [the feature tracker](docs/feature-expansion-progress.md).
+For multiplayer, apply migrations through `0012_multiplayer.sql` and release the Worker, web app and compatible desktop updater together. Desktop versions below `0.3.0`, and clients without sync protocol 3, are prompted to update. Older queued note replacements become recovery drafts. [Multiplayer architecture, release ordering and rollback limits](docs/multiplayer.md) describe the coordinated release; deployment remains a separate action.
 
 The Worker needs one secret, `ASSET_TOKEN_SECRET`, which signs image and file URLs for the desktop app. `deploy:all` generates it if it's missing. To set it by hand, run `openssl rand -base64 32 | pnpm --filter server exec wrangler secret put ASSET_TOKEN_SECRET`. The security review and its open items are in [`docs/security-review-2026-10.md`](docs/security-review-2026-10.md).
 

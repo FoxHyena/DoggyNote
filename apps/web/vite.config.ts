@@ -61,6 +61,6 @@ function homeScreen(): Plugin {
 export default defineConfig({
   plugins: [solid(), homeScreen()],
   // The Worker (wrangler dev) serves /api in development and e2e.
-  server: { proxy: { '/api': api } },
-  preview: { proxy: { '/api': api } },
+  server: { proxy: { '/api': { target: api, ws: true } } },
+  preview: { proxy: { '/api': { target: api, ws: true } } },
 })

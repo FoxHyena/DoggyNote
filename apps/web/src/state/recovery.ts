@@ -4,6 +4,7 @@ import * as doc from './doc.ts'
 import type { Obj } from '@doggynote/core'
 import { isTauri } from './platform.ts'
 import { showToast } from './toast.ts'
+import { flushEdit } from './ui.ts'
 
 type Recovery = { id: string; patch: Partial<Obj>; object?: Obj; reason: string; savedAt: number }
 export const [recoverableChanges, setRecoverableChanges] = createSignal<Recovery[]>([])
@@ -15,6 +16,8 @@ export async function loadRecovery() {
 
 /** Keep denied edits durable before removing them from the outgoing queue. */
 export async function preserveDenied(ids: string[], reason: string) {
+  if (!ids.length) return
+  flushEdit()
   const denied = new Set(ids)
   const pending = doc.pendingOutbox().filter((change) => denied.has(change.id))
   if (!pending.length) return
@@ -47,6 +50,7 @@ export async function downloadRecovery() {
 }
 
 export async function preserveActiveEdit(id: string, reason: string) {
+  flushEdit()
   const object = doc.base(id)
   if (!object) return
   const copy = JSON.parse(JSON.stringify(object)) as Obj

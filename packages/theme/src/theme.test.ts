@@ -11,6 +11,12 @@ describe('contrast', () => {
 
   for (const t of THEMES) {
     const s = surfaces[t]
+    it(`${t}: collaborator labels and outlines are readable`, () => {
+      for (const color of [s.personSky, s.personBall, s.personLilac, s.personCollar, s.personGold, s.personPeach]) {
+        expect(contrast(s.personInk, color)).toBeGreaterThanOrEqual(4.5)
+        for (const bg of [s.bg, s.card]) expect(contrast(color, bg)).toBeGreaterThanOrEqual(3)
+      }
+    })
     it(`${t}: body text clears 4.5:1 on canvas, panel and card`, () => {
       for (const bg of [s.bg, s.panel, s.card, s.cardHover]) expect(contrast(s.text, bg)).toBeGreaterThanOrEqual(4.5)
     })

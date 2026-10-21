@@ -10,6 +10,7 @@ import { accessRoutes } from './access.ts'
 import { desktop } from './desktop.ts'
 import { isFetchableUrl, proxyImage, unfurl } from './unfurl.ts'
 import { movies } from './movies.ts'
+import { realtime } from './realtime.ts'
 
 export type { Env } from './env.ts'
 
@@ -45,6 +46,7 @@ app.use('*', async (c, next) => {
     })
   }
   await next()
+  if (c.res.status === 101) return // Upgrade responses have immutable headers.
   // Always vary on Origin: otherwise a browser can reuse a cached no-CORS copy
   // (e.g. from an <img>) for a later CORS request and fail it.
   c.res.headers.append('vary', 'origin')
@@ -78,12 +80,17 @@ app.route('/', assets)
 app.route('/', shares)
 app.route('/', accessRoutes)
 app.route('/', agents)
+app.route('/', realtime)
 app.route('/', desktop)
 
 const authed = new Hono<AppEnv>()
 authed.use('*', requireUser)
 authed.use('/sync', async (c, next) => {
-  if (c.req.header('x-doggynote-protocol') !== '2') return c.json({ error: 'Update DoggyNote to use private boards. Your local changes are preserved.', updateRequired: true }, 426)
+  if (c.req.header('x-doggynote-protocol') !== '3') return c.json({ error: 'Update DoggyNote to edit together. Your local changes are preserved.', updateRequired: true }, 426)
+  await next()
+})
+authed.use('/notes/*', async (c, next) => {
+  if (c.req.header('x-doggynote-protocol') !== '3') return c.json({ error: 'Update DoggyNote to edit together', updateRequired: true }, 426)
   await next()
 })
 authed.route('/', users)
