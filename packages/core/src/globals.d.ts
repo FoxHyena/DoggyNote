@@ -7,5 +7,7 @@ declare class URL {
   readonly protocol: string
   readonly hostname: string
   readonly pathname: string
+  readonly username: string
+  readonly password: string
 }
 declare function structuredClone<T>(v: T): T

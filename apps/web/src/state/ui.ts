@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js'
+import { batch, createSignal } from 'solid-js'
 import { HOME_BOARD_ID, type Camera, type Id, type Obj } from '@doggynote/core'
 import * as doc from './doc.ts'
 
@@ -6,6 +6,19 @@ import * as doc from './doc.ts'
 
 export const [selection, setSelection] = createSignal<ReadonlySet<Id>>(new Set())
 export const [editingId, setEditingId] = createSignal<Id | null>(null)
+/** Focus is presentation of the same note, never a second document. */
+export const [focusedNoteId, setFocusedNoteId] = createSignal<Id | null>(null)
+let editSession = 0
+export const currentEditSession = () => editSession
+export function focusNote(id: Id) {
+  const card = doc.getCard(id)
+  if (card?.type !== 'note' || card.deletedAt || card.purged) return
+  batch(() => {
+    if (doc.canEditNoteBody(card)) beginEdit(id)
+    else endEdit()
+    setFocusedNoteId(id)
+  })
+}
 export const [camera, setCamera] = createSignal<Camera>({ x: -200, y: -150, zoom: 1 })
 export const [viewport, setViewport] = createSignal({ width: 1, height: 1, left: 0, top: 0 })
 /** Line tool: next two card clicks create a connection. */
@@ -39,9 +52,11 @@ export function checkpointEdit() {
   if (!editSnapshot) return
   for (const [id, initial] of Object.entries(editSnapshot)) {
     const current = doc.snapshot(id, Object.keys(initial))
-    if (JSON.stringify(current) === JSON.stringify(checkpointSnapshot[id])) continue
+    const previous = checkpointSnapshot[id] as Record<string, unknown> | undefined
+    const changed = Object.fromEntries(Object.entries(current).filter(([key, value]) => JSON.stringify(value) !== JSON.stringify(previous?.[key])))
+    if (!Object.keys(changed).length) continue
     checkpointSnapshot[id] = current
-    doc.checkpoint(id, current)
+    doc.checkpoint(id, changed as Partial<Obj>)
   }
 }
 
@@ -54,10 +69,18 @@ doc.onTransient((id, patch) => {
 
 export function beginEdit(id: Id, opts: { isNew?: boolean } = {}) {
   if (!doc.canWriteObject(doc.get(id))) return
+  const note = doc.getCard(id)
+  if (note?.type === 'note' && !doc.canEditNoteBody(note)) {
+    endEdit()
+    select([id])
+    return
+  }
   if (editingId() === id) return
   endEdit()
-  editSnapshot = { [id]: doc.snapshot(id, ['content']) }
-  doc.markBusy([id])
+  editSession++
+  const fields = doc.getCard(id)?.type === 'image' ? ['imageCaption', 'imageSourceUrl'] : doc.getCard(id)?.type === 'swatch' ? ['swatchHex', 'swatchName', 'swatchCaption', 'swatchHexDraft'] : ['content']
+  editSnapshot = Object.fromEntries((note?.type === 'note' ? doc.noteBodyMembers(note) : [{ id }]).map((member) => [member.id, doc.snapshot(member.id, fields)]))
+  doc.markBusy(Object.keys(editSnapshot))
   // A board card's title lives on the board object.
   const card = doc.getCard(id)
   if (card?.type === 'board') {
@@ -85,7 +108,7 @@ export function endEdit() {
   if (checkpointTimer) clearInterval(checkpointTimer)
   checkpointTimer = null
   checkpointSnapshot = {}
-  setEditingId(null)
+  batch(() => { setFocusedNoteId(null); setEditingId(null) })
   for (const h of endEditHooks) h(id)
   const card = doc.get(id)
   if (editSnapshot && card && !card.purged) {
@@ -106,7 +129,7 @@ export function cancelEdit() {
   if (checkpointTimer) clearInterval(checkpointTimer)
   checkpointTimer = null
   const ids = Object.keys(editSnapshot ?? {})
-  setEditingId(null)
+  batch(() => { setFocusedNoteId(null); setEditingId(null) })
   editSnapshot = null
   checkpointSnapshot = {}
   editIsNew = false
@@ -165,6 +188,7 @@ if (location.hash.match(/^#\/b\//)) rememberBoard(boardId())
 export function openBoard(id: Id) {
   // A proposal preview keeps you on its boards until you leave it.
   if (doc.previewing()) return
+  setFocusedNoteId(null)
   endEdit()
   clearSelection()
   // Switch now; hashchange fires later and would let a fast click land on the old board.
@@ -176,6 +200,7 @@ export function openBoard(id: Id) {
 window.addEventListener('hashchange', () => {
   const id = boardFromHash()
   if (id === boardId()) return
+  setFocusedNoteId(null)
   endEdit()
   clearSelection()
   setBoardIdSignal(id)

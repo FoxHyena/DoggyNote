@@ -1,0 +1,51 @@
+import { expect, test } from '@playwright/test'
+import { at, freshBoard, waitForSync } from './helpers.ts'
+
+// touchscreen.tap is native touch input on both engines. Longer WebKit touch
+// gestures are covered separately by the repository's synthetic Fingers helper.
+test('phone Draw entry keeps controls reachable and tap marks support erase, Undo and reopen', async ({ page }, info) => {
+  await freshBoard(page, 'Canvas drawing touch correction')
+  await page.getByTestId('dock-add').tap()
+  await page.getByTestId('add-draw').tap()
+  const tools = page.getByTestId('canvas-ink-tools')
+  await expect(tools).toBeVisible()
+  await expect(page.getByTestId('add-sheet')).toHaveCount(0)
+  const box = (await tools.boundingBox())!
+  const size = page.viewportSize()!
+  expect(box.x).toBeGreaterThanOrEqual(0)
+  expect(box.x + box.width).toBeLessThanOrEqual(size.width)
+  expect(box.y).toBeGreaterThanOrEqual(0)
+  expect(box.y + box.height).toBeLessThanOrEqual(size.height)
+  const p = await at(page, .35, .2), q = { x: p.x + 80, y: p.y + 45 }
+  expect(q.y).toBeLessThan(box.y)
+  const marks = page.locator('[data-testid="card"][data-type="ink"]')
+  await page.touchscreen.tap(p.x, p.y)
+  await expect(marks).toHaveCount(1)
+  await tools.getByRole('button', { name: 'Highlighter', exact: true }).tap()
+  await tools.getByRole('button', { name: 'Blue', exact: true }).tap()
+  await page.touchscreen.tap(q.x, q.y)
+  await expect(marks).toHaveCount(2)
+  await expect(marks.last().locator('path')).toHaveAttribute('stroke-opacity', '0.3')
+  await tools.getByRole('button', { name: 'Eraser', exact: true }).tap()
+  await page.touchscreen.tap(p.x, p.y)
+  await expect(marks).toHaveCount(1)
+  await tools.getByRole('button', { name: 'Undo', exact: true }).tap()
+  await expect(marks).toHaveCount(2)
+  await tools.getByRole('button', { name: 'Redo', exact: true }).tap()
+  await expect(marks).toHaveCount(1)
+  await tools.getByRole('button', { name: 'Undo', exact: true }).tap()
+  const shot = info.outputPath('phone-drawing-correction.png')
+  await page.screenshot({ path: shot, scale: 'css' })
+  await info.attach('phone-drawing-correction.png', { path: shot, contentType: 'image/png' })
+  await tools.getByRole('button', { name: 'Done', exact: true }).tap()
+  await expect(tools).toHaveCount(0)
+  await page.touchscreen.tap(p.x, p.y)
+  await expect(marks.first()).toHaveClass(/selected/)
+  await page.getByTestId('edit-canvas-ink').tap()
+  await expect(page.getByTestId('stroke-editor')).toBeVisible()
+  await page.getByTestId('stroke-editor').getByRole('button', { name: 'Done', exact: true }).tap()
+  await waitForSync(page)
+  await page.reload()
+  await expect(marks).toHaveCount(2)
+  await expect(marks.locator('[data-stroke-id]')).toHaveCount(2)
+})

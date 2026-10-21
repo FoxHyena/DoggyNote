@@ -1,0 +1,147 @@
+{
+  "slug": "duplicate-and-reuse-layouts",
+  "category": "working-on-boards",
+  "kind": "task",
+  "title": "Duplicate boards and reuse layouts",
+  "summary": "Explore an independent copy or start a new board from a reusable layout.",
+  "status": "draft",
+  "order": 60,
+  "benefit": "Keep useful research structures while giving each new project room to change.",
+  "outcome": "You have an independent board or selection whose edits leave the original unchanged.",
+  "sections": [
+    {
+      "id": "how-copies-work",
+      "title": "What an independent copy includes",
+      "paragraphs": [
+        "An independent copy keeps the content and layout while giving the copied items their own identities. For example, duplicate a research board with notes, images, columns, nested boards and connectors, then develop a different direction in the copy.",
+        "A whole-board copy includes the board's nested board tree. Shortcuts to other projects keep their existing destinations; those other projects are not duplicated. Images and files keep valid asset references. Discussion stays on the original, so a copy never presents old comments as new posts.",
+        "Copied synced notes remain linked to other copied instances in the same copied tree or selection. Their shared text is independent of the original group. A copied single instance becomes an independent note. Creating an explicit synced copy is a separate action."
+      ]
+    },
+    {
+      "id": "copy-a-selection",
+      "title": "Duplicate cards or a selection",
+      "flow": {
+        "entry": "Open an editable board and select the cards you want to reuse. Finish text editing to show the selection controls.",
+        "steps": [
+          {
+            "action": "Choose Duplicate in the selection controls, or press Command+D on Mac or Control+D in a browser on other systems.",
+            "result": "Independent copies appear slightly offset and become the current selection."
+          },
+          {
+            "action": "Edit or move a copied card.",
+            "result": "The original card keeps its own text and layout."
+          }
+        ],
+        "completion": "The copies use the board's normal local save and sync behavior. A selected column includes its members. A member copied without its column becomes a free card. Connectors copy when both endpoints are included.",
+        "correction": "Use Undo once to remove the complete duplication, or Redo to restore it."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/duplicate-and-reuse-layouts/selected-research-cards.png",
+          "alt": "Selected research note, two columns and nested board, with Duplicate visible in the selection controls.",
+          "caption": "Select cards, then choose Duplicate to create independent copies.",
+          "width": 1440,
+          "height": 900
+        }
+      ]
+    },
+    {
+      "id": "copy-a-board",
+      "title": "Duplicate a complete board tree",
+      "flow": {
+        "entry": "Open the source board and choose More board actions.",
+        "steps": [
+          {
+            "action": "Choose Duplicate board, then give the copy a name.",
+            "result": "The dialog explains that the copy is private and independent, and that discussion stays on the original."
+          },
+          {
+            "action": "Choose Create private copy.",
+            "result": "DoggyNote checks the complete board tree, opens the copied board, and adds a tile to your personal home."
+          },
+          {
+            "action": "Open a copied nested board or change a copied note.",
+            "result": "You work inside the independent tree; the source remains available unchanged."
+          }
+        ],
+        "completion": "New private copies do not inherit the source's public links or access grants. Check Save status before closing if saving reports a problem.",
+        "correction": "Cancel while the copy is being prepared to leave the source unchanged. One Undo reverses the copied graph and returns you to the previous board."
+      }
+    },
+    {
+      "id": "start-from-a-template",
+      "title": "Start with Research, Moodboard or Project brief",
+      "flow": {
+        "entry": "Choose More board actions, then Templates.",
+        "steps": [
+          {
+            "action": "Choose Research, Moodboard or Project brief.",
+            "result": "The selected starter suggests a name and a useful structure for the task."
+          },
+          {
+            "action": "Adjust the new board name and choose Create board.",
+            "result": "A new private board opens with independent starter content, ready to change."
+          }
+        ],
+        "completion": "Each creation is independent, even when you use the same template repeatedly. Find the new board from your personal home.",
+        "correction": "Cancel to return without creating a board, or Undo the completed creation in one step."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/duplicate-and-reuse-layouts/choose-research-starter.png",
+          "alt": "Research is selected in Templates; the new board name and Create board button remain visible below a scrolling list of personal layouts.",
+          "caption": "Choose a starter, adjust the name, then choose Create board. The name and creation controls stay visible while the choices scroll.",
+          "width": 720,
+          "height": 900
+        },
+        {
+          "src": "/docs/assets/duplicate-and-reuse-layouts/research-starter-board.png",
+          "alt": "New private Research board containing a research question, reference and findings columns, and a nested Deeper research board.",
+          "caption": "The Research starter opens an independent board with a question, sources, findings and room for deeper research.",
+          "width": 1440,
+          "height": 900
+        }
+      ]
+    },
+    {
+      "id": "save-a-personal-layout",
+      "title": "Save your own layout for later",
+      "flow": {
+        "entry": "Open a useful board, then choose More board actions and Save as template.",
+        "steps": [
+          {
+            "action": "Enter a layout name and choose Save layout.",
+            "result": "A private independent snapshot is added to Personal layouts. The source board stays open."
+          },
+          {
+            "action": "Open Templates, choose your saved layout, enter a new board name, and choose Create board.",
+            "result": "A fresh independent copy opens. Later changes to the new board, source board and saved layout do not overwrite one another."
+          }
+        ],
+        "completion": "Personal layouts survive reload and sync with your account. Empty boards can be saved too. Saved layouts are snapshots, so changes made to the source after saving do not update them.",
+        "correction": "Use Remove beside a saved layout to take it out of the library. Undo restores it. Removing the layout does not delete boards you already created from it."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/duplicate-and-reuse-layouts/reuse-personal-layout-phone.png",
+          "alt": "Phone Templates dialog showing a selected private saved layout, a new board name, and the Create board button.",
+          "caption": "Choose a personal layout and name its independent new board. Scroll the choices to browse more saved layouts.",
+          "width": 360,
+          "height": 900
+        }
+      ]
+    },
+    {
+      "id": "availability-and-correction",
+      "title": "Access, offline use and interruptions",
+      "paragraphs": [
+        "Duplicating a selection needs edit access to its destination board. A whole board or saved layout needs access to every canonical descendant; an inaccessible descendant causes an error instead of silently creating an incomplete tree.",
+        "Ordinary local card selections can duplicate while offline. Copying a board tree or saving or reusing a personal layout needs connectivity and a completed sync so DoggyNote can check the complete source. Built-in starters are available locally once the app is loaded.",
+        "If preparation fails, keep the original open, check your connection or access, and try again. Canceling preparation does not change the original. Completed copies use the same save, retry and recovery controls as other board edits.",
+        "Use the Undo offer before making another change, or use keyboard Undo for your latest change. If a collaborator changes a copied item or adds a stroke that Undo would hide, DoggyNote may keep the whole copy and explain why Undo was skipped. A skipped Undo keeps you on the copied board."
+      ]
+    }
+  ],
+  "related": []
+}

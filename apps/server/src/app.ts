@@ -3,6 +3,7 @@ import type { AppEnv } from './env.ts'
 import { auth, requireUser, users } from './auth.ts'
 import { stickers, telegramWebhook } from './stickers.ts'
 import { sync } from './sync.ts'
+import { copies } from './copies.ts'
 import { assets } from './assets.ts'
 import { shares } from './shares.ts'
 import { agents } from './agents.ts'
@@ -90,6 +91,7 @@ authed.route('/', users)
 authed.route('/', sync)
 authed.route('/', stickers)
 authed.route('/', movies)
+authed.route('/', copies)
 authed.get('/unfurl', async (c) => {
   const target = isFetchableUrl(c.req.query('url') ?? '')
   if (!target) return c.json({ error: 'Only http(s) links can be previewed' }, 400)

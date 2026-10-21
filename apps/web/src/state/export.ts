@@ -5,7 +5,10 @@ import * as doc from './doc.ts'
 import { API_BASE, apiRaw, hasBearer } from './api.ts'
 import { isTauri } from './platform.ts'
 import { boardId, clearSelection, endEdit, select, selection } from './ui.ts'
-import { rectOf } from '../canvas/layout.ts'
+import { connectionEndpoint } from './columns.ts'
+import { cardEl, rectOf, setPersistingHeights } from '../canvas/layout.ts'
+import { exportCardIds, exportRootIds } from './exportScope.ts'
+import { endCanvasDrawing } from './canvasDrawing.ts'
 
 // Export the board (or the selection) as a PNG. While `exporting` is on, the
 // canvas mounts every card at full detail (no culling, no overview mode); the
@@ -24,12 +27,41 @@ const MAX_PIXELS = 16_000_000
 
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r(null)))
 
-/** Free cards in scope (cards inside a column come with their column). */
+/** Selected members are roots unless their containing column is selected too. */
 function scopeIds(scope: ExportOptions['scope']): Id[] {
-  const free = [...doc.cardsOn(boardId()).filter((c) => !c.columnId), ...doc.stickersOn(boardId())]
-  if (scope === 'board') return free.map((c) => c.id)
   const sel = selection()
-  return free.filter((c) => sel.has(c.id)).map((c) => c.id)
+  // Stickers are free board overlays: all of them for the board, selected ones otherwise.
+  const stickers = doc.stickersOn(boardId()).filter((s) => scope === 'board' || sel.has(s.id)).map((s) => s.id)
+  return [...exportRootIds(doc.cardsOn(boardId()), scope, sel), ...stickers]
+}
+
+/**
+ * A nested selection needs its own scene: filtering out its live column would
+ * also filter out the selected child. Clone only requested roots into an
+ * offscreen world, retaining card classes and measured world bounds.
+ * The live layout, column membership and collapsed state never change.
+ */
+function stageSelection(world: HTMLElement, ids: Id[]) {
+  const container = document.createElement('div')
+  container.setAttribute('aria-hidden', 'true')
+  container.inert = true
+  container.style.cssText = 'position:fixed;left:-100000px;top:0;pointer-events:none'
+  const scene = world.cloneNode(false) as HTMLElement
+  scene.removeAttribute('data-testid')
+  const connections = world.querySelector('svg.connections')
+  if (connections) scene.append(connections.cloneNode(true))
+  for (const id of ids) {
+    const el = cardEl(id), rect = rectOf(id)
+    if (!el || !rect) throw new Error('Show the selected cards on the board before exporting them.')
+    const clone = el.cloneNode(true) as HTMLElement
+    clone.classList.add('free')
+    Object.assign(clone.style, { position: 'absolute', left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.w}px`, height: `${rect.h}px` })
+    scene.append(clone)
+  }
+  for (const el of scene.querySelectorAll('[data-testid]')) el.removeAttribute('data-testid')
+  container.append(scene)
+  document.body.append(container)
+  return { scene, container }
 }
 
 /** Waits (up to ~5 s) until every image shows its final size. */
@@ -64,14 +96,17 @@ async function viaProxy(url: string): Promise<string | false> {
 export type Rendered = { blob: Blob; width: number; height: number; scale: number }
 
 export async function renderPng(opts: ExportOptions): Promise<Rendered> {
+  endCanvasDrawing()
   const ids = scopeIds(opts.scope)
   if (!ids.length) throw new Error(opts.scope === 'selection' ? 'Select some cards first.' : 'This board is empty.')
-  const keep = new Set(ids)
+  const keep = exportCardIds(doc.cardsOn(boardId()), ids)
   const prevSelection = [...selection()]
   endEdit()
   clearSelection()
   setExportScale(opts.scale)
+  setPersistingHeights(false)
   setExporting(true)
+  let staged: ReturnType<typeof stageSelection> | undefined
   try {
     await nextFrame()
     await nextFrame()
@@ -80,7 +115,8 @@ export async function renderPng(opts: ExportOptions): Promise<Rendered> {
     await imagesReady(world)
 
     const rects = ids.map((id) => rectOf(id)).filter((r): r is Rect => !!r)
-    const b = union(rects)!
+    const b = union(rects)
+    if (!b) throw new Error('Show the selected cards on the board before exporting them.')
     const box = { x: Math.floor(b.x - PAD), y: Math.floor(b.y - PAD), w: Math.ceil(b.w + PAD * 2), h: Math.ceil(b.h + PAD * 2) }
     const scale = Math.min(opts.scale, Math.sqrt(MAX_PIXELS / (box.w * box.h)))
     if (scale < 0.25) throw new Error('This is too big to export as one picture. Try exporting a selection.')
@@ -88,7 +124,7 @@ export async function renderPng(opts: ExportOptions): Promise<Rendered> {
     const root = getComputedStyle(document.documentElement)
     const keepNode = (n: Node) => {
       if (!(n instanceof Element)) return true
-      if (n.matches('.connect-handle, .resize-handle, .comment-badge, .grid-glow, .sticker-selection-layer, .sticker-selection, .sticker-accessible-pick')) return false
+      if (n.matches('.connect-handle, .resize-handle, .comment-badge, .column-toggle, .position-lock-badge, .grid-glow, .canvas-ink-preview, [data-export-exclude], [data-editor-chrome], .sticker-selection-layer, .sticker-selection, .sticker-accessible-pick')) return false
       const sticker = n.getAttribute('data-sticker-id')
       if (sticker && !keep.has(sticker)) return false
       const card = n.getAttribute('data-card-id')
@@ -96,13 +132,16 @@ export async function renderPng(opts: ExportOptions): Promise<Rendered> {
       const conn = n.getAttribute('data-connection-id')
       if (conn) {
         const c = doc.get(conn)
-        if (!c || c.kind !== 'connection' || !keep.has(c.from) || !keep.has(c.to)) return false
+        if (!c || c.kind !== 'connection') return false
+        const inScope = (id: Id) => { const endpoint = connectionEndpoint(id); return !!endpoint && (keep.has(endpoint) || keep.has(doc.getCard(endpoint)?.columnId ?? '')) }
+        if (!inScope(c.from) || !inScope(c.to)) return false
       }
       return true
     }
 
+    if (opts.scope === 'selection' && ids.some((id) => doc.getCard(id)?.columnId)) staged = stageSelection(world, ids)
     const { domToCanvas } = await import('modern-screenshot')
-    const shot = await domToCanvas(world, {
+    const shot = await domToCanvas(staged?.scene ?? world, {
       width: box.w,
       height: box.h,
       scale,
@@ -139,6 +178,8 @@ export async function renderPng(opts: ExportOptions): Promise<Rendered> {
     if (!blob) throw new Error('Export failed')
     return { blob, width: out.width, height: out.height, scale }
   } finally {
+    setPersistingHeights(true)
+    staged?.container.remove()
     setExporting(false)
     if (prevSelection.length) select(prevSelection)
   }

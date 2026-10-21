@@ -22,7 +22,7 @@ It's designed to stay fast on big boards. The Mac app is a small native app (abo
 **On the board**
 - **Notes in Markdown** with live preview: headings, bold, lists, checklists and links render as you type.
 - **To-do lists**, **columns** that cards snap into, and **boards inside boards** with icons and colours.
-- **Images**: paste, drop or upload. Several sizes are stored, so zoomed-out boards stay light.
+- **Images**: paste, drop or upload, then add a caption and an optional source link. Captions stay visible in PNG exports. Several sizes are stored, so zoomed-out boards stay light.
 - **Links** unfurl into previews with title, description and image.
 - **Files** up to 50 MB (PDFs, docs, zips…). PDFs show their first page.
 - **Connectors** between cards, snapping to the middle of each side.
@@ -69,6 +69,8 @@ It's designed to stay fast on big boards. The Mac app is a small native app (abo
 - **Accounts:** ask an admin for a signup invitation. Admins create and revoke invitations under **Account → Manage people**; public signup is disabled.
 
 Personal boards are private by default; nested boards inherit access from their parents. Server admins can administer ordinary boards, while each person's Inbox remains private even from other admins. Existing installations keep their shared home and current members when migrated; new accounts are not added to that legacy space automatically. Editing links can optionally offer signup when their owner enables it.
+
+Public help lives at [notepad.dog/docs](https://notepad.dog/docs). To add a guide, follow the [documentation authoring guide](docs/authoring/README.md).
 
 ## How it's built
 

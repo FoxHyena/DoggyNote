@@ -1,0 +1,12 @@
+.sketch-card { display: flex; flex-direction: column; min-height: 80px; overflow: hidden; border-radius: inherit; }
+.sketch-paper { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--sketch-paper); color: var(--sketch-ink); border: 1px solid var(--dn-text-muted); }
+.sketch-paper.transparent { background: transparent; }
+.sketch-paper > svg { display: block; width: 100%; height: 100%; }
+.sketch-empty { position: absolute; inset: 0; display: grid; place-items: center; padding: 12px; text-align: center; color: var(--sketch-ink); font-size: 13px; pointer-events: none; }
+/* The right padding keeps the title field clear of the resize corner. */
+.sketch-caption { display: flex; gap: 8px; align-items: center; height: 36px; flex: 0 0 36px; min-width: 0; padding: 4px 28px 4px 8px; color: var(--c-text); background: var(--c-bg); }
+.sketch-caption > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sketch-caption input { min-width: 0; width: 100%; padding: 3px; border: 1px solid transparent; border-radius: 3px; background: transparent; color: inherit; font: inherit; font-size: 13px; }
+.sketch-caption input:hover { border-color: var(--dn-border); }
+.sketch-caption input:focus-visible, .sketch-caption button:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 1px; }
+.sketch-caption button { flex-shrink: 0; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--dn-border); background: var(--dn-panel); color: var(--dn-text); font: inherit; font-size: 12px; cursor: pointer; }

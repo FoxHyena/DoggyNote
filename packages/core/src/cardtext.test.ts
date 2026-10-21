@@ -17,9 +17,17 @@ describe('card text', () => {
 
   it('degrades for card types from a newer app', () => {
     expect(isKnownCardType('note')).toBe(true)
+    expect(isKnownCardType('swatch')).toBe(true)
     expect(isKnownCardType('hologram')).toBe(false)
     expect(cardText(card('hologram', {}))).toBe('')
     expect(cardLabel(card('hologram', {}), () => '')).toBe('Card')
+  })
+  it('recognizes creative cards and retains their search and trash descriptions', () => {
+    expect(isKnownCardType('ink')).toBe(true)
+    expect(isKnownCardType('sketch')).toBe(true)
+    expect(cardLabel(card('ink', { width: 100, height: 80 }), () => '')).toBe('Canvas drawing')
+    expect(cardText(card('sketch', { title: 'Opening frame', width: 320, height: 240, background: 'paper' }))).toBe('Opening frame')
+    expect(cardLabel(card('sketch', { title: '' }), () => '')).toBe('Sketch')
   })
 })
 
@@ -29,4 +37,23 @@ describe('malformed synced cards', () => {
     expect(typeof cardLabel(card('note', null), () => '')).toBe('string')
     expect(cardLabel(card('board', null), () => '')).toBe('Card')
   })
+})
+
+it('keeps additive image-caption and creative descriptions in the shared text path', () => {
+  const image = card('image', { caption: 'Legacy caption' })
+  expect(cardText({ ...image, imageCaption: 'Current caption' } as unknown as Card)).toBe('Current caption')
+  expect(cardLabel({ ...image, imageCaption: 'Current caption' } as unknown as Card, () => '')).toBe('Current caption')
+  expect(cardText({ ...image, imageCaption: '' } as unknown as Card)).toBe('')
+  expect(cardLabel({ ...image, imageCaption: '' } as unknown as Card, () => '')).toBe('Image')
+  expect(cardText({ ...card('swatch', {}), swatchName: 'Forest', swatchHex: '#2F5D50', swatchCaption: 'Packaging' } as unknown as Card)).toBe('Forest\n#2F5D50\nPackaging')
+  expect(cardLabel({ ...card('swatch', {}), swatchName: {}, swatchHex: '#2F5D50' } as unknown as Card, () => '')).toBe('#2F5D50')
+  expect(cardText(card('sketch', { title: 'Opening scene sketch' }))).toBe('Opening scene sketch')
+  expect(cardText(card('future', { title: { bad: true } }))).toBe('')
+})
+
+it('keeps independent image caption/source fields searchable after baseline integration', () => {
+  const image = { ...card('image', { assetId: 'asset', width: 800, height: 500, caption: 'Legacy caption' }), imageCaption: 'Warm side lighting', imageSourceUrl: 'https://example.test/original' } as Card<'image'>
+  expect(cardText(image)).toBe('Warm side lighting\nhttps://example.test/original')
+  expect(cardLabel(image, () => '')).toBe('Warm side lighting')
+  expect(cardText({ ...image, imageCaption: '', imageSourceUrl: 'file:///private/asset' })).toBe('')
 })

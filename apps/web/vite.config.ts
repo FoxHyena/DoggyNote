@@ -1,5 +1,6 @@
 import { defineConfig, type Plugin } from 'vite'
 import solid from 'vite-plugin-solid'
+import { docsContentPlugin } from './scripts/docs-content.mjs'
 // Relative, so the config bundler compiles it (the workspace package is TS source).
 import { surfaces } from '../../packages/theme/src/tokens.ts'
 import { COPY } from '../../packages/theme/src/copy.ts'
@@ -59,7 +60,7 @@ function homeScreen(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [solid(), homeScreen()],
+  plugins: [solid(), homeScreen(), docsContentPlugin()],
   // The Worker (wrangler dev) serves /api in development and e2e.
   server: { proxy: { '/api': api } },
   preview: { proxy: { '/api': api } },

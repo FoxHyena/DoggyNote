@@ -18,7 +18,7 @@ const LOREM = 'Good dogs fetch ideas, chew on them, and bring back better ones. 
 
 async function seed(page: Page): Promise<string> {
   return page.evaluate(
-    async ({ NOTES, IMAGES, COLS, LOREM }) => {
+    async ({ NOTES, IMAGES, COLS, LOREM, imageMetadata }) => {
       const id = () => crypto.randomUUID()
       const boardId = id()
       const now = Date.now()
@@ -73,7 +73,7 @@ async function seed(page: Page): Promise<string> {
         const isImage = i % Math.round(total / IMAGES) === 0 && imageIds.length > 0
         const base = { id: id(), kind: 'card', boardId, x: col * 300, y: row * 280, w: 260, z: i + 1, color: 'none', columnId: null, order: 0, createdAt: now }
         if (isImage) {
-          objs.push({ ...base, type: 'image', h: 195, content: { assetId: imageIds.pop(), width: 1600, height: 1200, sizes: ['thumb', 'small', 'medium', 'full'] } })
+          objs.push({ ...base, ...(imageMetadata ? { imageCaption: `Lighting reference #${i}: warm side light for the opening scene.`, imageSourceUrl: 'https://example.com/original-reference' } : {}), type: 'image', h: imageMetadata ? 310 : 195, content: { assetId: imageIds.pop(), width: 1600, height: 1200, sizes: ['thumb', 'small', 'medium', 'full'] } })
         } else {
           const text = LOREM.repeat(1 + (i % 3))
           objs.push({
@@ -97,7 +97,7 @@ async function seed(page: Page): Promise<string> {
       }
       return boardId
     },
-    { NOTES, IMAGES, COLS, LOREM },
+    { NOTES, IMAGES, COLS, LOREM, imageMetadata: process.env.PERF_IMAGE_METADATA === '1' },
   )
 }
 

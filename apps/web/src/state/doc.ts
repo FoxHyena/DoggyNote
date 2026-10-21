@@ -2,7 +2,16 @@ import { batch, createMemo, createRoot, createSignal } from 'solid-js'
 import { createStore, unwrap } from 'solid-js/store'
 import {
   HOME_BOARD_ID,
+  canvasInkHasContent,
+  changesPosition,
+  positionLocks,
+  POSITION_FIELDS,
+  linkedNotes,
+  noteGroupId,
+  noteMarkdown,
   UndoStack,
+  isInkMark,
+  sortedInkStrokes,
   diff,
   type Board,
   type Card,
@@ -12,10 +21,12 @@ import {
   type Id,
   type Obj,
   type Transaction,
+  type Stroke,
   type Sticker,
   usableSticker,
 } from '@doggynote/core'
 import * as idb from './idb.ts'
+import { setToastAction, showToast } from './toast.ts'
 
 // The document store. Every edit goes through `commit` (undoable) or `silent`
 // (not undoable, e.g. measured heights, unfurled link titles). Both apply the
@@ -55,7 +66,8 @@ export const [localSaveError, setLocalSaveError] = createSignal<string | null>(n
 export const [lastLocalSave, setLastLocalSave] = createSignal<number | null>(null)
 
 /** id → merged patch not yet acknowledged by the server. */
-const outbox = new Map<Id, Partial<Obj>>()
+type OutboxPatch = Partial<Obj> & { noteBodyEdit?: { groupId: string; md: string } }
+const outbox = new Map<Id, OutboxPatch>()
 /** Retain creation ownership across the gap between push acknowledgement and access refresh. */
 export const localBoardCreations = new Set<Id>()
 const outboxListeners = new Set<() => void>()
@@ -66,6 +78,9 @@ const dirtyObjs = new Set<Id>()
 const dirtyOutbox = new Set<Id>()
 let flushTimer: ReturnType<typeof setTimeout> | null = null
 let flushing: Promise<void> | null = null
+// History is local and in memory. Keep the original child IDs for owner-only
+// burial/restore commands without adding fields to synced document objects.
+const historyOwnerStrokes = new WeakMap<Transaction, Map<Id, Set<Id>>>()
 
 export const get = (id: Id | null | undefined): Obj | undefined => {
   if (!id) return undefined
@@ -84,6 +99,19 @@ export const getBoard = (id: Id | null | undefined) => {
 export const isReadOnly = () => readOnly
 export const canUndo = () => (undoTick(), undoStack.canUndo)
 export const canRedo = () => (undoTick(), undoStack.canRedo)
+const belongsToDrawing = (tx: Transaction | undefined, cardId: Id) => !!tx?.length && tx.every((c) => {
+  const o = get(c.id)
+  return o?.kind === 'stroke' && o.cardId === cardId
+})
+export const canUndoDrawing = (cardId: Id) => (undoTick(), belongsToDrawing(undoStack.peek(), cardId))
+export const canRedoDrawing = (cardId: Id) => (undoTick(), belongsToDrawing(undoStack.peekRedo(), cardId))
+
+function historyChanged() {
+  // An Undo offer describes the previous command. Once history changes, its
+  // button must not silently undo a different command. Keyboard Undo remains.
+  setToastAction(null)
+  setUndoTick((n) => n + 1)
+}
 
 function applyPatchToStore(id: Id, patch: Partial<Obj>) {
   if (state.objs[id]) setState('objs', id, patch as Obj)
@@ -94,12 +122,68 @@ function record(id: Id, patch: Partial<Obj>) {
   if (!persist) return
   if (patch.kind === 'board') localBoardCreations.add(id)
   dirtyObjs.add(id)
-  outbox.set(id, { ...(outbox.get(id) ?? {}), ...structuredClone(unwrap(patch)) } as Partial<Obj>)
+  const outgoing = structuredClone(unwrap(patch)) as OutboxPatch
+  const groupId = noteGroupId(getCard(id))
+  if (groupId && 'content' in outgoing && !('noteGroupId' in outgoing)) {
+    outgoing.noteBodyEdit = { groupId, md: (outgoing as Partial<Card<'note'>>).content!.md }
+    delete (outgoing as Partial<Card>).content
+  }
+  const prior = { ...(outbox.get(id) ?? {}) }
+  if ('noteGroupId' in outgoing && prior.noteBodyEdit) {
+    delete prior.noteBodyEdit
+    if (!('content' in outgoing)) (outgoing as Partial<Card>).content = structuredClone(unwrap(getCard(id)!.content))
+  }
+  outbox.set(id, { ...prior, ...outgoing } as OutboxPatch)
   dirtyOutbox.add(id)
   scheduleFlush()
 }
 
+export const noteBodyMembers = (card: Card) => linkedNotes(Object.values(state.objs), card)
+export function canEditNoteBody(card: Card | undefined): boolean {
+  return !!card && canWriteObject(card) && (!noteGroupId(card) || (!card.noteBodyReadOnly && noteBodyMembers(card).every((member) => canWriteObject(member) && !member.noteBodyReadOnly)))
+}
+
+/** Re-evaluate membership when replaying Undo: it must never detach a group. */
+function expandNoteBodies(tx: Transaction): Transaction {
+  const expanded = new Map(tx.filter((change) => !change.sharedBodyGroup || change.sharedBodyGroup === noteGroupId(getCard(change.id))).map((change) => [change.id, change]))
+  for (const change of [...expanded.values()]) {
+    const card = getCard(change.id)
+    if (!card || !noteGroupId(card) || !('content' in change.after) || 'noteGroupId' in change.after) continue
+    if (!canEditNoteBody(card)) return []
+    change.sharedBodyGroup = noteGroupId(card)!
+    for (const member of noteBodyMembers(card)) {
+      const existing = expanded.get(member.id)
+      if (existing && ('noteGroupId' in existing.after || existing.after.purged)) continue
+      const next = { ...existing?.after, content: structuredClone(unwrap((change.after as Partial<Card>).content)) }
+      const delta = diff(member, next as Partial<Obj>)
+      if (delta) expanded.set(member.id, { sharedBodyGroup: noteGroupId(card)!, id: member.id, before: { ...delta.before, ...existing?.before } as Partial<Obj>, after: next as Partial<Obj> })
+    }
+  }
+  return [...expanded.values()]
+}
+
+/** Replaying a linked copy must adopt the source's current body, not its old creation snapshot. */
+function refreshLinkedCreations(tx: Transaction): Transaction {
+  if (!tx.some((c) => c.before.purged && (c.after as Partial<Card>).noteGroupId)) return tx
+  const bodies = new Map<string, string>()
+  for (const object of Object.values(state.objs)) {
+    const group = noteGroupId(object)
+    if (group && !object.purged) bodies.set(group, noteMarkdown(object as Card<'note'>))
+  }
+  for (const c of tx) {
+    const source = getCard(c.id), group = (c.after as Partial<Card>).noteGroupId
+    if (source?.type === 'note' && !source.purged && typeof group === 'string' && !('content' in c.after)) bodies.set(group, noteMarkdown(source as Card<'note'>))
+  }
+  return tx.map((c) => {
+    const group = (c.after as Partial<Card>).noteGroupId
+    return c.before.purged && typeof group === 'string' && bodies.has(group)
+      ? { ...c, after: { ...c.after, content: { md: bodies.get(group)! } } as Partial<Obj> }
+      : c
+  })
+}
+
 function applyTx(tx: Transaction) {
+  tx = expandNoteBodies(refreshLinkedCreations(tx))
   batch(() => {
     for (const c of tx) {
       applyPatchToStore(c.id, c.after)
@@ -109,9 +193,29 @@ function applyTx(tx: Transaction) {
   for (const l of outboxListeners) l()
 }
 
+/** Layout guards are independent of card renderers, including future creative kinds. */
+function layoutAllowed(tx: Transaction): boolean {
+  if (tx.every((ch) => { const c = getCard(ch.id); return !c || !changesPosition(c, ch.after as Partial<Card>, true) })) return true
+  const cards = Object.values(state.objs).filter((o): o is Card => o.kind === 'card')
+  const byId = new Map(tx.map((ch) => [ch.id, ch]))
+  // An explicit unlock in this command is deliberate. Content/height changes are allowed.
+  const nextLocks = positionLocks(cards.map((c) => {
+    const change = byId.get(c.id)
+    return change && 'positionLocked' in change.after && (change.after as Partial<Card>).positionLocked !== true ? { ...c, positionLocked: false } : c
+  }))
+  return tx.every((ch) => {
+    const c = getCard(ch.id)
+    if (!c || !changesPosition(c, ch.after as Partial<Card>, true)) return true
+    const target = (ch.after as Partial<Card>).columnId
+    return !nextLocks.has(c.id) && (!target || !nextLocks.has(target))
+  })
+}
+
 /** Apply a transaction and push it onto the undo stack. */
 export function commit(tx: Transaction) {
-  if (readOnly || previewing() || !tx.length) return
+  if (readOnly || previewing() || !tx.length || !layoutAllowed(tx)) return
+  tx = expandNoteBodies(tx)
+  if (!tx.length) return
   if (writeGuard && tx.some((c) => state.objs[c.id] && !writeGuard!({ ...state.objs[c.id], ...c.after, id: c.id } as Obj))) return
   if (writeGuard) {
     const freshBoards = new Map(tx.filter((change) => !state.objs[change.id] && change.after.kind === 'board').map((change) => [change.id, change.after as Board]))
@@ -129,9 +233,10 @@ export function commit(tx: Transaction) {
       return object.kind === 'board' ? !writableBoard(change.id) : !writableBoard(object.boardId)
     })) return
   }
+  rememberOwnerStrokes(tx)
   applyTx(tx)
   undoStack.push(tx)
-  setUndoTick((n) => n + 1)
+  historyChanged()
 }
 
 /** Build changes from `{id: fields}` against current values and commit them. */
@@ -190,6 +295,7 @@ export function amendOrCommit(id: Id, snap: Partial<Obj>) {
   const patch: Record<string, unknown> = {}
   for (const k of Object.keys(snap)) patch[k] = structuredClone(cur[k])
   if (undoStack.amendTop(id, patch)) {
+    historyChanged()
     record(id, patch as Partial<Obj>)
     for (const l of outboxListeners) l()
   } else commitFrom({ [id]: snap })
@@ -233,7 +339,7 @@ export function discardNew(id: Id) {
   const top = undoStack.peek()
   if (top && top.length === 1 && top[0].id === id && top[0].before.purged) {
     undoStack.dropTop()
-    setUndoTick((n) => n + 1)
+    historyChanged()
   }
   silent({ [id]: { purged: true } })
 }
@@ -241,8 +347,12 @@ export function discardNew(id: Id) {
 /** Store only. Commit the final value with `commitFrom` when the gesture ends. */
 export function transient(id: Id, patch: Partial<Obj>) {
   if (previewing()) return
-  if (!canWriteObject(state.objs[id])) return
-  applyPatchToStore(id, patch)
+  if (!canWriteObject(state.objs[id]) || !layoutAllowed([{ id, before: {}, after: patch }])) return
+  const card = getCard(id)
+  if (card && noteGroupId(card) && 'content' in patch) {
+    if (!canEditNoteBody(card)) return
+    batch(() => { for (const member of noteBodyMembers(card)) applyPatchToStore(member.id, { content: patch.content } as Partial<Card>) })
+  } else applyPatchToStore(id, patch)
   for (const listener of transientListeners) listener(id, patch)
 }
 
@@ -250,6 +360,8 @@ export function transient(id: Id, patch: Partial<Obj>) {
 export function checkpoint(id: Id, patch: Partial<Obj>) {
   if (previewing()) return
   if (!canWriteObject(get(id))) return
+  const card = getCard(id)
+  if (card && noteGroupId(card) && 'content' in patch && !canEditNoteBody(card)) return
   record(id, patch)
   for (const listener of outboxListeners) listener()
 }
@@ -257,7 +369,7 @@ export function checkpoint(id: Id, patch: Partial<Obj>) {
 /** Commit the difference between `snapshot` (values before the gesture) and the current store. False if nothing changed. */
 export function commitFrom(snapshot: Record<Id, Partial<Obj>>): boolean {
   if (previewing()) return false
-  const tx: Change[] = []
+  let tx: Change[] = []
   for (const [id, before] of Object.entries(snapshot)) {
     if (!canWriteObject(state.objs[id])) continue
     const cur = state.objs[id] as unknown as Record<string, unknown>
@@ -273,12 +385,14 @@ export function commitFrom(snapshot: Record<Id, Partial<Obj>>): boolean {
     }
     if (Object.keys(a).length) tx.push({ id, before: b as Partial<Obj>, after: a as Partial<Obj> })
   }
-  if (!tx.length) return false
+  tx = expandNoteBodies(tx)
+  if (!tx.length || !layoutAllowed(tx)) return false
   // Already in the store; persist + record undo.
+  rememberOwnerStrokes(tx)
   for (const c of tx) record(c.id, c.after)
   for (const l of outboxListeners) l()
   undoStack.push(tx)
-  setUndoTick((n) => n + 1)
+  historyChanged()
   return true
 }
 
@@ -290,18 +404,92 @@ export function snapshot(id: Id, keys: string[]): Partial<Obj> {
   return s as Partial<Obj>
 }
 
+function rememberOwnerStrokes(tx: Transaction) {
+  const owners = new Map<Id, Card>()
+  for (const change of tx) {
+    const card = getCard(change.id)
+    if (card && ['image', 'sketch', 'ink'].includes(card.type) && 'deletedAt' in change.after) owners.set(card.id, card)
+  }
+  if (!owners.size) return
+  const children = new Map<Id, Set<Id>>([...owners.keys()].map((id) => [id, new Set<Id>()]))
+  for (const object of Object.values(state.objs)) {
+    if (object.kind !== 'stroke' || object.deletedAt || object.purged) continue
+    const owner = owners.get(object.cardId)
+    if (owner?.boardId === object.boardId && isInkMark(object)) children.get(owner.id)!.add(object.id)
+  }
+  historyOwnerStrokes.set(tx, children)
+}
+
+function historyKeepsCollaboratorStrokes(tx: Transaction, original: Transaction | undefined): boolean {
+  const removals = new Map<Id, { card: Card; purge: boolean }>()
+  const after = new Map(tx.map((change) => [change.id, change.after]))
+  for (const change of tx) {
+    const card = getCard(change.id)
+    if (card && ['image', 'sketch', 'ink'].includes(card.type) && (change.after.purged || change.after.deletedAt)) removals.set(card.id, { card, purge: change.after.purged === true })
+  }
+  if (!removals.size) return true
+  const known = original ? historyOwnerStrokes.get(original) : undefined
+  for (const object of Object.values(state.objs)) {
+    if (object.kind !== 'stroke' || object.deletedAt || object.purged) continue
+    const owner = removals.get(object.cardId)
+    if (!owner || owner.card.boardId !== object.boardId || !isInkMark(object)) continue
+    const next = after.get(object.id)
+    if (next?.purged || next?.deletedAt) continue
+    // Creation Undo removes its own marks in the same transaction. Owner-only
+    // Bury Redo may retain its original marks, but cannot hide a later addition.
+    if (owner.purge || !known?.get(owner.card.id)?.has(object.id)) return false
+  }
+  return true
+}
+
+function historyAllowed(tx: Transaction, original: Transaction | undefined): boolean {
+  if (readOnly || !layoutAllowed(tx)) return false
+  if (!historyKeepsCollaboratorStrokes(tx, original)) return false
+  const creations = new Set(original?.filter((change) => change.before.purged === true).map((change) => change.id))
+  return tx.every((change) => {
+    const current = state.objs[change.id]
+    if (!canWriteObject(current)) return false
+    if (current.kind === 'stroke') {
+      // Undo one person's erase only while that exact erasure still applies.
+      // A newer collaborator tombstone must not be silently cleared.
+      return ['deletedAt', 'purged'].every((key) => !(key in change.after) || JSON.stringify((current as unknown as Record<string, unknown>)[key] ?? null) === JSON.stringify((change.before as Record<string, unknown>)[key] ?? null))
+    }
+    if (current.kind !== 'card' || (current.purged && change.before.purged === true)) return true
+    // Creation Undo must not remove a note another session continued. The
+    // inverse's before body includes initial typing folded into creation;
+    // measurements and unrelated metadata never make that body stale.
+    if (current.type === 'note' && change.after.purged === true && creations.has(change.id) && 'content' in change.before
+      && noteMarkdown(current as Card<'note'>) !== noteMarkdown(change.before as Card<'note'>)) return false
+    // Geometry undo is conditional: don't overwrite a newer collaborator move.
+    return [...POSITION_FIELDS, 'h'].every((key) => !(key in change.after) || JSON.stringify((current as unknown as Record<string, unknown>)[key] ?? null) === JSON.stringify((change.before as Record<string, unknown>)[key] ?? null))
+  })
+}
+/** History must not detach an instance that another session deliberately regrouped. */
+function replay(tx: Transaction) {
+  const linksChanged = tx.some((change) => 'noteGroupId' in change.before && (getCard(change.id)?.noteGroupId ?? null) !== ((change.before as Partial<Card>).noteGroupId ?? null))
+  if (linksChanged) {
+    showToast('A note’s links changed elsewhere. This undo or redo was skipped.')
+    return
+  }
+  applyTx(tx)
+}
+
 export function undo() {
   if (previewing()) return
+  const original = undoStack.peek()
   const tx = undoStack.undo()
-  if (tx && (!writeGuard || tx.every((change) => state.objs[change.id] && writeGuard!(state.objs[change.id])))) applyTx(tx)
-  setUndoTick((n) => n + 1)
+  if (tx && historyAllowed(tx, original)) replay(tx)
+  else if (tx) { undoStack.redo(); showToast('Cannot undo because this item changed or is no longer editable.') }
+  historyChanged()
 }
 
 export function redo() {
   if (previewing()) return
+  const original = undoStack.peekRedo()
   const tx = undoStack.redo()
-  if (tx && (!writeGuard || tx.every((change) => state.objs[change.id] && writeGuard!(state.objs[change.id])))) applyTx(tx)
-  setUndoTick((n) => n + 1)
+  if (tx && historyAllowed(tx, original)) replay(tx)
+  else if (tx) { undoStack.undo(); showToast('Cannot redo because this item changed or is no longer editable.') }
+  historyChanged()
 }
 
 function scheduleFlush() {
@@ -362,7 +550,7 @@ export function ackOutbox(sent: { id: Id; patch: Partial<Obj> }[]) {
     if (!cur) continue
     const rest: Record<string, unknown> = {}
     for (const [k, v] of Object.entries(cur)) {
-      if (JSON.stringify(v ?? null) !== JSON.stringify((s.patch as Record<string, unknown>)[k] ?? null)) rest[k] = v
+      if (!(k in s.patch) || JSON.stringify(v ?? null) !== JSON.stringify((s.patch as Record<string, unknown>)[k] ?? null)) rest[k] = v
     }
     if (Object.keys(rest).length) outbox.set(s.id, rest as Partial<Obj>)
     else outbox.delete(s.id)
@@ -419,7 +607,12 @@ export function receiveRemote(rows: Obj[]) {
         continue
       }
       const pending = outbox.get(row.id)
-      const merged = pending ? { ...row, ...pending } : row
+      const local = pending ? { ...pending } : null
+      if (local?.noteBodyEdit) {
+        if (noteGroupId(row) === local.noteBodyEdit.groupId) (local as Partial<Card<'note'>>).content = { md: local.noteBodyEdit.md }
+        delete local.noteBodyEdit
+      }
+      const merged = local ? { ...row, ...local } : row
       // Replace rather than merge: the server row is complete.
       setState('objs', row.id, merged as Obj)
       for (const k of Object.keys(state.objs[row.id])) {
@@ -429,6 +622,14 @@ export function receiveRemote(rows: Obj[]) {
     }
   })
   scheduleFlush()
+}
+
+/** A server lock rejects only layout fields; retain unrelated pending content. */
+export function reconcileLockedPositions(ids: string[], rows: Obj[], sent: { id: Id; patch: Partial<Obj> }[]) {
+  const rejected = new Set(ids)
+  const fields = new Set<string>(POSITION_FIELDS)
+  ackOutbox(sent.filter((s) => rejected.has(s.id)).map((s) => ({ id: s.id, patch: Object.fromEntries(Object.entries(s.patch).filter(([key]) => fields.has(key))) as Partial<Obj> })))
+  receiveRemote(rows)
 }
 
 // ---- lifecycle ------------------------------------------------------------
@@ -499,6 +700,7 @@ type Index = {
   boards: Board[]
   /** cardId → live messages, oldest first. */
   comments: Map<Id, Comment[]>
+  strokes: Map<Id, Stroke[]>
 }
 
 /**
@@ -512,6 +714,7 @@ export const index = createRoot(() =>
     const connections = new Map<Id, Connection[]>()
     const boards: Board[] = []
     const comments = new Map<Id, Comment[]>()
+    const strokes = new Map<Id, Stroke[]>()
     const shown = overlay.objs
     const all = shown ? [...Object.values(state.objs).filter((o) => !(o.id in shown)), ...Object.values(shown)] : Object.values(state.objs)
     for (const o of all) {
@@ -533,16 +736,30 @@ export const index = createRoot(() =>
         const list = comments.get(o.cardId)
         if (list) list.push(o)
         else comments.set(o.cardId, [o])
+      } else if (o.kind === 'stroke') {
+        const list = strokes.get(o.cardId)
+        if (list) list.push(o)
+        else strokes.set(o.cardId, [o])
       }
     }
     for (const list of comments.values()) list.sort((a, b) => a.createdAt - b.createdAt)
-    return { cards, stickers, connections, boards, comments }
+    // An erased ink owner keeps its identity: another session may still be
+    // adding a stroke to it. Empty owners contribute no invisible layout or
+    // export bounds, and reappear on Undo or the next concurrent addition.
+    for (const [board, list] of cards) cards.set(board, list.filter((c) => c.type !== 'ink' || canvasInkHasContent(c.id, c.boardId, strokes.get(c.id) ?? [])))
+    return { cards, stickers, connections, boards, comments, strokes }
   }),
 )
 
 export const cardsOn = (boardId: Id): Card[] => index().cards.get(boardId) ?? []
 export const connectionsOn = (boardId: Id): Connection[] => index().connections.get(boardId) ?? []
 export const commentsOn = (cardId: Id): Comment[] => index().comments.get(cardId) ?? []
+/** Defensively validate synced marks before rendering. Hidden owners never expose marks. */
+export const strokesOn = (cardId: Id): Stroke[] => {
+  const card = getCard(cardId)
+  if (!card || card.purged || card.deletedAt) return []
+  return sortedInkStrokes((index().strokes.get(cardId) ?? []).filter((s) => s.boardId === card.boardId && isInkMark(s)))
+}
 
 /** Trashed (soft-deleted, not purged) cards on a board. Not memoised; read when the panel opens. */
 export function trashedOn(boardId: Id): (Card | Sticker)[] {

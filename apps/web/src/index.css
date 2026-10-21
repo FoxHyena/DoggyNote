@@ -352,11 +352,11 @@ html[data-input="mouse"] .menu-item:hover {
   border: 1px solid var(--dn-border);
 }
 
-:root[data-theme='light'] .card:not(.card-board) {
+:root[data-theme='light'] .card:not(.card-board):not(.card-ink) {
   box-shadow: 0 1px 2px rgb(60 40 20 / 0.12), 0 0 0 1px rgb(60 40 20 / 0.06);
 }
 
-.card.colored:not(.card-board):not(.card-column) {
+.card.colored:not(.card-board):not(.card-column):not(.card-ink) {
   background: var(--c-bg);
   color: var(--c-text);
 }
@@ -480,8 +480,8 @@ html[data-input='mouse'] .connect-handle:hover {
 /* Faded enough to read as going, still legible. */
 .card[data-preview='removed'] > :not(.preview-chip) { opacity: 0.78; }
 /* The change Next change is on: a heavier outline with a tinted band inside it.
-   As specific as the light theme's card shadow, which would replace the band. */
-:root .card[data-preview][data-preview-current] {
+   More specific than the light theme's card shadow, which would replace the band. */
+:root .card[data-preview][data-preview-current]:not(.card-board):not(.card-ink) {
   outline-width: 3px;
   outline-offset: 5px;
   box-shadow: 0 0 0 5px color-mix(in srgb, var(--preview-colour) 30%, transparent);
@@ -723,6 +723,11 @@ html[data-input='mouse'] .connect-handle:hover {
 .note-editor .cm-md-taskslot .cm-md-task { margin: 0; }
 /* List lines indent by depth, as .rich lists do, with a hanging indent for wraps. */
 .note-editor .cm-md-li { padding-left: calc(var(--li-depth) * 1.3em) !important; text-indent: -1.3em; }
+/* Match the rendered note (.rich): blank lines become the paragraph gap, headings get their margins. */
+.note-editor .cm-line.cm-md-gap { line-height: 0.4em; }
+.note-editor .cm-line.cm-md-h1,
+.note-editor .cm-line.cm-md-h2,
+.note-editor .cm-line.cm-md-h3 { padding: 0.2em 0 0.35em; }
 .note-editor .cm-md-task {
   margin: 0 6px 0 0;
   accent-color: var(--dn-accent);
@@ -1071,7 +1076,7 @@ html[data-input="mouse"] .board-card:hover .board-tile {
 
 .card-image {
   background: var(--dn-card-hover);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .image-card img {
@@ -1146,7 +1151,11 @@ html[data-input="mouse"] .link-title:hover {
 }
 
 .column-head {
-  padding: 10px 12px 8px;
+  position: relative;
+  height: calc(var(--column-header) - 2px);
+  box-sizing: border-box;
+  /* Same room on both sides, so the title and count centre under the card, not beside the chevron. */
+  padding: 10px 46px 8px;
   text-align: center;
   border-radius: 6px 6px 0 0;
 }
@@ -1158,7 +1167,29 @@ html[data-input="mouse"] .link-title:hover {
 
 .column-title {
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+.column-heading { min-width: 0; }
+.column-toggle {
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.column-toggle:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+.column-toggle:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: -2px; }
+.column.collapsed .column-head { border-radius: 6px; }
 
 .column-title-input {
   text-align: center;
@@ -1446,6 +1477,9 @@ html[data-input="mouse"] .sync-status:hover {
   height: auto;
   background: transparent;
 }
+
+/* A failed native close must stay actionable above active content editors. */
+.exit-save-backdrop, .auth-backdrop { z-index: 2000; }
 
 .dialog {
   width: min(460px, 100%);
@@ -2315,7 +2349,7 @@ html[data-input='mouse'] [data-tooltip]:hover::after, [data-tooltip]:focus-visib
   .topbar { display: grid; grid-template-columns: 1fr; gap: 0; padding: 4px 8px; }
   .topbar-left { width: 100%; }
   .topbar-right { justify-content: flex-end; width: 100%; }
-  .topbar .board-navigation .icon-btn-label, .boards-caret { display: none; }
+  .topbar .board-navigation .icon-btn-label, .topbar .boards-caret { display: none; }
   .topbar .crumb.current { max-width: 54vw; }
   .topbar .board-heading { gap: 2px; }
   .topbar .share-permission { font-size: 10px; padding: 0 3px; }
@@ -2346,3 +2380,40 @@ html[data-input='mouse'] [data-tooltip]:hover::after, [data-tooltip]:focus-visib
 @media (pointer: coarse) and (max-width: 599px) {
   .app { grid-template-rows: 104px 1fr; }
 }
+
+/* Image viewport geometry stays independent of the metadata footer. */
+.image-card { overflow: hidden; border-radius: 6px; }
+.card-image:has(.image-metadata) > .image-card { border-radius: 6px 6px 0 0; }
+.image-metadata { border-radius: 0 0 6px 6px; position: relative; padding: 10px 12px; background: var(--dn-card); color: var(--dn-text); font-size: 13px; line-height: 1.5; }
+.image-caption { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.image-metadata[data-expanded='true'] .image-caption { display: block; overflow: visible; }
+.image-source { display: block; margin-top: 6px; color: var(--dn-accent); overflow-wrap: anywhere; }
+.image-source-help { margin: 4px 0 8px; font-size: 12px; color: var(--dn-text-muted); overflow-wrap: anywhere; }
+.image-optional { font-weight: 400; color: var(--dn-text-muted); }
+.image-card { position: relative; }
+/* Editing stays readable even for a tiny image or a narrow canvas card. */
+@media (max-width: 719px) { .image-source-action-label { display: none; } }
+@media (max-width: 599px) {
+}
+
+/* An SVG chevron centred on the label, not a text glyph sitting on the baseline. */
+.boards-caret { display: inline-grid; place-items: center; margin-left: -2px; color: var(--dn-text-muted); }
+.recovery-actions { display: flex; gap: 6px; margin-bottom: 10px; }
+
+/* Image caption: read mode has a quiet pencil; editing happens in place under the image. */
+.image-text-button { padding: 4px 0; color: var(--dn-text-muted); background: transparent; border: 0; font: inherit; text-decoration: underline; cursor: pointer; }
+.image-edit { position: absolute; top: 6px; right: 6px; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px; color: var(--dn-text-muted); background: transparent; cursor: pointer; opacity: 0; transition: opacity 120ms; }
+.card-image:hover .image-edit, .card-image.selected .image-edit, .image-edit:focus-visible { opacity: 1; }
+html[data-input='mouse'] .image-edit:hover { color: var(--dn-text); background: var(--dn-card-hover); }
+html[data-input='touch'] .image-edit { opacity: 1; width: 44px; height: 44px; top: 0; right: 0; }
+.image-metadata-inline { display: grid; gap: 6px; }
+.image-metadata-inline textarea, .image-metadata-inline input { box-sizing: border-box; width: 100%; min-width: 0; margin: 0; padding: 0; border: 0; color: inherit; background: transparent; font: inherit; resize: none; overflow: hidden; outline: none; }
+.image-metadata-inline input { padding: 3px 0; color: var(--dn-accent); font-size: 12px; border-top: 1px solid var(--dn-border); }
+.image-metadata-inline input::placeholder, .image-metadata-inline textarea::placeholder { color: var(--dn-text-muted); }
+.image-metadata-inline input[aria-invalid='true'] { text-decoration: underline wavy var(--dn-accent); }
+.image-source-row { display: flex; align-items: center; gap: 6px; }
+.image-edit-done { display: grid; place-items: center; flex: none; width: 24px; height: 24px; padding: 0; border: 1px solid var(--dn-border); border-radius: 6px; color: var(--dn-text); background: transparent; cursor: pointer; }
+@media (pointer: coarse) { .image-metadata-inline textarea, .image-metadata-inline input { font-size: 16px; } .image-edit-done { width: 44px; height: 44px; } }
+
+/* A column body mid-slide: clip its cards and keep their layout to itself. */
+.column-body.sliding { overflow: hidden; contain: layout paint; will-change: height; }

@@ -1,0 +1,55 @@
+import { expect, test } from '@playwright/test'
+import { resolve } from 'node:path'
+import { freshBoard, MOD, postSync, waitForSync } from './helpers.ts'
+
+test('capture labels and cross-board search states for visual review', async ({ page }, info) => {
+  test.skip(!process.env.LOOP4_VISUAL_ROUND, 'Explicit evidence capture; screenshots require separate visual inspection')
+  test.setTimeout(120_000)
+  const round = process.env.LOOP4_VISUAL_ROUND!
+  const output = resolve('../../docs/qa/loop-04', `visual-round-${round}`, info.project.name)
+  await freshBoard(page, `Label visual QA round ${round} — a long descriptive research board title`)
+  const boardId = decodeURIComponent(new URL(page.url()).hash.split('/')[2])
+  const labels = Array.from({ length: 9 }, (_, i) => ({ id: crypto.randomUUID().replaceAll('-', ''), name: i === 0 ? 'Lighting' : i === 1 ? 'Question' : i === 2 ? 'Long research label with a deliberately descriptive category name' : `Reference category ${i + 1}` }))
+  const metadata = Object.fromEntries(labels.flatMap((l, i) => [[`labelName${l.id}`, l.name], [`labelColor${l.id}`, ['sky', 'gold', 'lilac'][i % 3]]]))
+  const ids = [crypto.randomUUID(), crypto.randomUUID()]
+  const changes = [{ id: boardId, patch: metadata }, ...ids.map((id, i) => ({ id, patch: { id, kind: 'card', type: 'note', boardId, x: i ? 360 : 40, y: 70, w: i ? 260 : 180, h: 140, z: i + 1, color: 'none', createdAt: Date.now(), content: { md: i ? 'Unresolved opening-scene question with long content to inspect the selection context.' : 'Warm side lighting reference with several labels on a narrow card.' }, ...Object.fromEntries(labels.filter((_, j) => !i || j < 2).map((label) => [`label${label.id}`, true])) } }))]
+  const response = await postSync(page.request, { data: { changes } })
+  expect(response.ok(), await response.text()).toBe(true)
+  await page.evaluate((id) => localStorage.setItem(`doggynote.cam.${id}`, JSON.stringify({ x: 0, y: 0, zoom: 1 })), boardId)
+  await page.reload()
+  for (const width of [360, 600, 720, 1440]) for (const theme of ['light', 'dark']) {
+    await page.setViewportSize({ width, height: 720 })
+    await page.evaluate((mode) => localStorage.setItem('doggynote.theme', mode), theme)
+    await page.reload()
+    const card = page.locator(`[data-card-id="${ids[0]}"]`)
+    await expect(card).toBeVisible()
+    await page.screenshot({ path: `${output}/${width}-${theme}-populated.png`, animations: 'disabled' })
+    await card.click()
+    await page.keyboard.press('Escape')
+    await page.getByTestId('labels-button').click()
+    const dialog = page.getByTestId('labels-dialog')
+    await expect(dialog).toBeVisible()
+    await page.getByLabel('Label name', { exact: true }).fill('lighting')
+    await page.getByRole('button', { name: 'Create', exact: true }).click()
+    await expect(page.getByRole('alert')).toContainText('already exists')
+    await page.screenshot({ path: `${output}/${width}-${theme}-labels-validation.png`, animations: 'disabled' })
+    expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true)
+    const box = await dialog.boundingBox()
+    expect(box!.x).toBeGreaterThanOrEqual(0)
+    expect(box!.x + box!.width).toBeLessThanOrEqual(width + 1)
+    expect(box!.y + box!.height).toBeLessThanOrEqual(721)
+    await page.getByLabel('Close labels').click()
+    await page.getByTestId('open-fetch').click()
+    await page.getByTestId('fetch-input').fill('Lighting')
+    await expect(page.getByTestId('fetch-hit').filter({ hasText: 'Warm side lighting reference' })).toBeVisible()
+    await page.screenshot({ path: `${output}/${width}-${theme}-search-results.png`, animations: 'disabled' })
+    await page.getByTestId('fetch-input').fill('No-such-label-visual-qa')
+    await expect(page.getByTestId('fetch-hit')).toHaveCount(0)
+    await page.screenshot({ path: `${output}/${width}-${theme}-no-results.png`, animations: 'disabled' })
+    await page.keyboard.press('Escape')
+  }
+  await page.setViewportSize({ width: 1440, height: 720 })
+  await page.keyboard.press(`${MOD}+a`)
+  await page.screenshot({ path: `${output}/1440-multiselection.png`, animations: 'disabled' })
+  await waitForSync(page)
+})

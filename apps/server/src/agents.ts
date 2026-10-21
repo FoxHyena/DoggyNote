@@ -5,6 +5,8 @@ import type { AppEnv, User } from './env.ts'
 import { requireUser } from './auth.ts'
 import { randomToken, sha256Hex } from './crypto.ts'
 import { loadAccess, type Access } from './access.ts'
+import { checkPositionLocks } from './position.ts'
+import { prepareSyncedNotes } from './synced-notes.ts'
 import { deniedChanges, ownerFor, deletedCommentOwner, stampComment } from './sync.ts'
 
 const assetOf = (o: { kind: string; content?: unknown }): string | undefined => (o.kind === 'card' ? (o.content as { assetId?: string } | undefined)?.assetId : undefined)
@@ -70,7 +72,12 @@ export async function prepareAgentChanges(db: D1Database, access: Access, creden
     if (previous && !readable(access, credential, user.id, previous)) error('Object is outside this connection’s scope')
     if (operation.action === 'create' && /^(home|toybox)(:|$)/.test(id)) error('Reserved board identifier')
     let after: AgentObject
-    if ('object' in operation) after = structuredClone(operation.object)
+    if ('object' in operation) {
+      // Older clients replace whole objects without knowing label fields. Keep
+      // them unless explicitly changed; null/false is the deliberate removal.
+      const labels = previous ? Object.fromEntries(Object.entries(previous.object).filter(([key]) => /^(labelName|labelColor|label)[a-f0-9]{32}$/.test(key))) : {}
+      after = { ...labels, ...structuredClone(operation.object) } as AgentObject
+    }
     else after = { ...previous!.object, deletedAt: operation.action === 'trash' ? Date.now() : null }
     if (operation.action === 'create') after.createdAt = Date.now()
     if (after.purged) error('Permanent deletion is unavailable to agents')
@@ -97,7 +104,7 @@ export async function prepareAgentChanges(db: D1Database, access: Access, creden
   for (const row of all.values()) {
     if (!readable(access, credential, user.id, row)) continue
     const o = row.object
-    if (o.kind === 'comment') {
+    if (o.kind === 'comment' || o.kind === 'stroke') {
       const card = next(o.cardId)
       if (card?.kind === 'card' && card.boardId !== o.boardId && !changes.has(o.id)) changes.set(o.id, { id: o.id, before: o, after: { ...o, boardId: card.boardId }, expectedRevision: row.revision })
     }
@@ -108,9 +115,25 @@ export async function prepareAgentChanges(db: D1Database, access: Access, creden
       }
     }
   }
+  // Expand shared Markdown into the review itself, so approval never hides
+  // cross-board side effects and scoped connections cannot write outside scope.
+  const shared = await prepareSyncedNotes(db, access, user.id, [...changes.values()].map(agentPatch))
+  if (shared.deniedIds.length) error('Shared note body is not editable with this access')
+  for (const change of shared.changes) {
+    const existing = changes.get(change.id), previous = all.get(change.id)
+    const base = existing?.after ?? previous?.object
+    if (!base) error('Related note is unavailable')
+    changes.set(change.id, { id: change.id, before: existing?.before ?? previous?.object ?? null, after: { ...base, ...change.patch } as AgentObject, expectedRevision: existing?.expectedRevision ?? previous?.revision ?? null })
+  }
   if (changes.size > 200) error('This proposal affects more than 200 objects; split it into smaller changes')
   await validateChanges(db, access, credential, user, [...changes.values()])
   return [...changes.values()]
+}
+
+function agentPatch(change: AgentChange) {
+  const old = change.before as unknown as Record<string, unknown> | null
+  const next = change.after as unknown as Record<string, unknown>
+  return { id: change.id, patch: old ? Object.fromEntries([...new Set([...Object.keys(old), ...Object.keys(next)])].filter((key) => !(old[key] == null && next[key] == null) && JSON.stringify(old[key]) !== JSON.stringify(next[key])).map((key) => [key, next[key] ?? null])) : { ...next } }
 }
 
 async function validateChanges(db: D1Database, access: Access, credential: Credential, user: User, changes: AgentChange[]) {
@@ -158,6 +181,15 @@ async function validateChanges(db: D1Database, access: Access, credential: Crede
   })
   const denied = await deniedChanges(db, access, user.id, patches)
   if (denied.length) error('A related board, card, comment or asset is no longer editable')
+  const positions = await checkPositionLocks(db, patches)
+  if (positions.lockedIds.length) error('A position is locked. Include an explicit unlock before changing its layout.')
+  const shared = await prepareSyncedNotes(db, access, user.id, patches)
+  if (shared.deniedIds.length) error('Shared note body is not editable with this access')
+  for (const change of shared.changes) {
+    const reviewed = changes.find((ch) => ch.id === change.id)
+    if (!reviewed || ('content' in change.patch && JSON.stringify((reviewed.after as { content?: unknown }).content) !== JSON.stringify(change.patch.content))) error('Shared notes changed. Prepare a new proposal to review every affected instance.')
+  }
+  return shared.revision
 }
 
 export const agents = new Hono<AgentEnv>()
@@ -345,9 +377,9 @@ async function applyProposal(c: Context<AgentEnv>, reverse: boolean) {
     for (const row of current.values()) {
       const o = row.object
       if (ids.has(o.id) || !active(o)) continue
-      const references = o.kind === 'board' ? [o.parentId] : o.kind === 'comment' ? [o.cardId, o.boardId] : o.kind === 'connection' ? [o.from, o.to, o.boardId] : o.kind === 'sticker' ? [o.boardId] : [o.boardId, o.columnId, ...(o.type === 'board' ? [o.content.boardId] : [])]
+      const references = o.kind === 'board' ? [o.parentId] : o.kind === 'comment' || o.kind === 'stroke' ? [o.cardId, o.boardId] : o.kind === 'connection' ? [o.from, o.to, o.boardId] : o.kind === 'sticker' ? [o.boardId] : [o.boardId, o.columnId, ...(o.type === 'board' ? [o.content.boardId] : [])]
       if (references.some((id) => id && created.has(id))) return c.json({ error: 'New content depends on this proposal. Move or remove it before reversing.' }, 409)
-      if (o.kind === 'comment' && changes.some((ch) => ch.after.kind === 'card' && ch.after.id === o.cardId && ch.after.boardId !== o.boardId)) return c.json({ error: 'New comments were added after this move. Prepare a new proposal to move the card safely.' }, 409)
+      if ((o.kind === 'comment' || o.kind === 'stroke') && changes.some((ch) => ch.after.kind === 'card' && ch.after.id === o.cardId && ch.after.boardId !== o.boardId)) return c.json({ error: 'New annotations or comments were added after this move. Prepare a new proposal to move the card safely.' }, 409)
     }
     if (created.size) {
       // Ordinary new cards need not change access_revision. Recheck new
@@ -363,20 +395,26 @@ async function applyProposal(c: Context<AgentEnv>, reverse: boolean) {
     if (moved.length) {
       const changedIds = [...ids].map((id) => `'${id}'`).join(',')
       const references = moved.map((ch) => `(json_extract(data,'$.cardId')='${ch.id}' AND json_extract(data,'$.boardId')<>'${onBoard(ch.after)}')`).join(' OR ')
-      dependencyGuard += ` AND NOT EXISTS(SELECT 1 FROM objects WHERE kind='comment' AND id NOT IN (${changedIds}) AND COALESCE(json_extract(data,'$.deletedAt'),0)=0 AND COALESCE(json_extract(data,'$.purged'),0)=0 AND (${references}))`
+      dependencyGuard += ` AND NOT EXISTS(SELECT 1 FROM objects WHERE kind IN ('comment','stroke') AND id NOT IN (${changedIds}) AND COALESCE(json_extract(data,'$.deletedAt'),0)=0 AND COALESCE(json_extract(data,'$.purged'),0)=0 AND (${references}))`
     }
   }
   const a = await loadAccess(db, c.get('user'))
-  try { await validateChanges(db, a, credential, c.get('user'), changes) }
+  let noteRevision: number
+  try { noteRevision = await validateChanges(db, a, credential, c.get('user'), changes) }
   catch (e) { return c.json({ error: e instanceof Error ? e.message : 'Board access changed' }, 403) }
+  const positionSnapshot = await checkPositionLocks(db, changes.map((ch) => ({ id: ch.id, patch: ch.after as unknown as Record<string, unknown> })))
+  if (positionSnapshot.lockedIds.length) return c.json({ error: 'A position is locked. Unlock before changing its layout.' }, 409)
+  if ([...positionSnapshot.versions.keys()].some((id) => !SAFE_ID.test(id))) return c.json({ error: 'Invalid board identifier' }, 409)
+  const positionGuard = [...positionSnapshot.versions].map(([id, version]) => `(SELECT COALESCE(SUM(seq),0) FROM objects WHERE kind='card' AND board_id='${id}')=${Number(version)}`).join(' AND ') || '1'
   const guard = changes.map((ch) => ch.expectedRevision === null ? `NOT EXISTS(SELECT 1 FROM objects WHERE id='${ch.id}')` : `EXISTS(SELECT 1 FROM objects WHERE id='${ch.id}' AND seq=${Number(ch.expectedRevision)})`).join(' AND ')
   const gate = `EXISTS(SELECT 1 FROM agent_proposals WHERE id=?1 AND status='${transitional}')`
   const credentialGuard = reverse ? '' : 'AND EXISTS(SELECT 1 FROM agent_credentials WHERE id=?3 AND revoked_at IS NULL AND expires_at>?4)'
-  const gateStatement = db.prepare(`UPDATE agent_proposals SET status='${transitional}' WHERE id=?1 AND status='${previous}' AND ${guard} AND ${dependencyGuard} AND (SELECT value FROM counters WHERE name='access_revision')=?2 ${credentialGuard}`)
+  const gateStatement = db.prepare(`UPDATE agent_proposals SET status='${transitional}' WHERE id=?1 AND status='${previous}' AND ${guard} AND ${dependencyGuard} AND ${positionGuard} AND (SELECT value FROM counters WHERE name='seq')=${noteRevision} AND (SELECT value FROM counters WHERE name='access_revision')=?2 ${credentialGuard}`)
   const stmts = [reverse ? gateStatement.bind(p.id, Number(a.revision)) : gateStatement.bind(p.id, Number(a.revision), credential.id, now)]
   let accessChanged = false
   for (const ch of changes) {
     const o = ch.after
+    if (o.kind === 'card' && o.type === 'note' && (o.noteGroupId || (ch.before?.kind === 'card' && ch.before.type === 'note' && ch.before.noteGroupId))) accessChanged = true
     const owner = ownerFor(o.id, o.kind === 'board' ? null : o.boardId) ?? deletedCommentOwner(o.kind, o as unknown as Record<string, unknown>, ch.before ? { kind: ch.before.kind, author_id: ch.before.kind === 'comment' ? ch.before.authorId : null, deleted_at: ch.before.deletedAt ?? null, purged: ch.before.purged ? 1 : 0 } : undefined, c.get('user').id)
     stmts.push(db.prepare(`UPDATE counters SET value=value+1 WHERE name='seq' AND ${gate}`).bind(p.id))
     stmts.push(db.prepare(`INSERT INTO objects(id,kind,board_id,data,seq,updated_at,updated_by,owner_id) SELECT ?2,?3,?4,?5,(SELECT value FROM counters WHERE name='seq'),?6,?7,?8 WHERE ${gate} ON CONFLICT(id) DO UPDATE SET data=excluded.data,board_id=excluded.board_id,seq=excluded.seq,updated_at=excluded.updated_at,updated_by=excluded.updated_by,owner_id=excluded.owner_id`).bind(p.id, o.id, o.kind, o.kind === 'board' ? null : o.boardId, JSON.stringify(o), now, c.get('user').id, owner))

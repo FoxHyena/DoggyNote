@@ -5,11 +5,11 @@ import type { Id, Obj } from './model.ts'
  * in `after`, so applying `before` undoes it. Creating an object is
  * `before: { purged: true }`, `after: <whole object>`.
  */
-export type Change = { id: Id; before: Partial<Obj>; after: Partial<Obj> }
+export type Change = { sharedBodyGroup?: string; id: Id; before: Partial<Obj>; after: Partial<Obj> }
 export type Transaction = Change[]
 
 export function invert(tx: Transaction): Transaction {
-  return tx.map((c) => ({ id: c.id, before: c.after, after: c.before })).reverse()
+  return tx.map((c) => ({ ...c, before: c.after, after: c.before })).reverse()
 }
 
 /** Build a change from the current object and the fields to set. Unchanged keys are dropped. */
@@ -88,6 +88,10 @@ export class UndoStack {
   /** The newest transaction, if any (read-only peek). */
   peek(): Transaction | undefined {
     return this.done[this.done.length - 1]
+  }
+
+  peekRedo(): Transaction | undefined {
+    return this.undone[this.undone.length - 1]
   }
 
   dropTop() {

@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 import { describe, expect, it } from 'vitest'
 import { accessGuard, loadAccess } from './access.ts'
-import { deniedChanges } from './sync.ts'
+import { deniedChanges, strokeLifecycleStatements } from './sync.ts'
+import { inkBounds } from '@doggynote/core'
 import { resolveShare } from './shares.ts'
 
 /** Execute the production migrations and authorization SQL on actual SQLite. */
@@ -254,6 +255,184 @@ describe('private-board migration and authorization', () => {
       await expect(accessGuard(db, '1', ['private']).run()).rejects.toThrow('Access changed')
       sql.exec("UPDATE counters SET value=2 WHERE name='access_revision'")
       await expect(accessGuard(db, '1').run()).rejects.toThrow('Access changed')
+    } finally { sql.close() }
+  })
+})
+
+it('label definitions and memberships obey board ownership, view grants, identity and revocation', async () => {
+  const { sql, db, grant } = fixture()
+  const token = 'a'.repeat(32)
+  try {
+    sql.prepare("UPDATE objects SET data=json_set(data,?,?) WHERE id='private'").run(`$.labelName${token}`, 'Lighting')
+    sql.prepare("INSERT INTO objects(id,kind,board_id,data,seq,updated_at) VALUES('reference','card','private',?,2,1)").run(JSON.stringify({ id: 'reference', kind: 'card', type: 'note', boardId: 'private', content: { md: 'Real reference' }, [`label${token}`]: true }))
+    const owner = await loadAccess(db, { id: 'new', isAdmin: false })
+    const changes = [
+      { id: 'private', patch: { [`labelName${token}`]: 'Lighting references' } },
+      { id: 'reference', patch: { [`label${token}`]: false } },
+    ]
+    expect(await deniedChanges(db, owner, 'new', changes)).toEqual([])
+    expect(await deniedChanges(db, owner, 'new', [{ id: 'reference', patch: { [`labelName${token}`]: 'wrong placement' } }])).toEqual(['reference'])
+    expect(await deniedChanges(db, owner, 'new', [{ id: 'reference', patch: { [`label${'b'.repeat(32)}`]: true } }])).toEqual(['reference'])
+    grant('labels-view', false)
+    sql.exec("UPDATE board_grants SET permission='view' WHERE id='labels-view'")
+    const viewer = await loadAccess(db, { id: 'guest', isAdmin: false })
+    expect(viewer.canRead('private')).toBe(true)
+    expect(await deniedChanges(db, viewer, 'guest', changes)).toEqual(['private', 'reference'])
+    sql.exec("UPDATE board_grants SET permission='edit' WHERE id='labels-view'")
+    expect(await deniedChanges(db, await loadAccess(db, { id: 'guest', isAdmin: false }), 'guest', changes)).toEqual([])
+    sql.exec("UPDATE board_grants SET revoked_at=1 WHERE id='labels-view'")
+    const revoked = await loadAccess(db, { id: 'guest', isAdmin: false })
+    expect(revoked.canRead('private')).toBe(false)
+    expect(await deniedChanges(db, revoked, 'guest', changes)).toEqual(['private', 'reference'])
+    expect(await deniedChanges(db, await loadAccess(db, { id: 'admin', isAdmin: true }), 'admin', changes)).toEqual(['private', 'reference'])
+  } finally { sql.close() }
+})
+
+it('authorizes swatches on their board and rejects malformed document colors', async () => {
+  const { sql, db } = fixture()
+  try {
+    const owner = await loadAccess(db, { id: 'new', isAdmin: false })
+    const guest = await loadAccess(db, { id: 'guest', isAdmin: false })
+    const patch = { kind: 'card', type: 'swatch', boardId: 'private', content: {}, swatchHex: '#2F5D50', swatchName: 'Forest', swatchCaption: 'Primary packaging', swatchHexDraft: '#2F' }
+    expect(await deniedChanges(db, owner, 'new', [{ id: 'color', patch }])).toEqual([])
+    expect(await deniedChanges(db, guest, 'guest', [{ id: 'color', patch }])).toEqual(['color'])
+    for (const malformed of [{ swatchHex: '#123' }, { swatchHex: 'url(no)' }, { swatchName: {} }, { swatchCaption: 1 }, { swatchHexDraft: [] }]) {
+      expect(await deniedChanges(db, owner, 'new', [{ id: 'color', patch: { ...patch, ...malformed } }])).toEqual(['color'])
+    }
+    sql.exec("INSERT INTO board_grants(id,board_id,user_id,permission,include_children,created_by,created_at) VALUES ('viewer','private','guest','view',1,'new',1)")
+    const viewer = await loadAccess(db, { id: 'guest', isAdmin: false })
+    expect(viewer.canRead('private')).toBe(true)
+    expect(await deniedChanges(db, viewer, 'guest', [{ id: 'color', patch }])).toEqual(['color'])
+  } finally { sql.close() }
+})
+
+describe('editable image stroke ownership', () => {
+  const image = { id: 'image', kind: 'card', type: 'image', boardId: 'private', content: { assetId: '', width: 400, height: 300 }, createdAt: 1 }
+  const points = [{ x: 20, y: 30 }, { x: 100, y: 200 }]
+  const mark = { id: 'mark', kind: 'stroke', boardId: 'private', cardId: 'image', tool: 'pen', color: '#D7263D', width: 6, opacity: 1, points, bounds: inkBounds(points, 6), order: 1, createdAt: 1 }
+  it('requires editable owner and board correspondence, rejects malformed geometry/reparenting', async () => {
+    const { sql, db } = fixture()
+    const put = (o: Record<string, unknown>) => sql.prepare('INSERT INTO objects(id,kind,board_id,data,seq,updated_at) VALUES (?,?,?,?,1,1)').run(o.id as string, o.kind as string, o.boardId as string, JSON.stringify(o))
+    try {
+      put(image)
+      const owner = await loadAccess(db, { id: 'new', isAdmin: false })
+      const stranger = await loadAccess(db, { id: 'guest', isAdmin: false })
+      expect(await deniedChanges(db, owner, 'new', [{ id: mark.id, patch: mark }])).toEqual([])
+      expect(await deniedChanges(db, stranger, 'guest', [{ id: mark.id, patch: mark }])).toEqual(['mark'])
+      for (const patch of [{ ...mark, boardId: 'inner' }, { ...mark, width: Infinity }, { ...mark, points: [{ x: 401, y: 2 }] }, { ...mark, cardId: 'missing' }]) expect(await deniedChanges(db, owner, 'new', [{ id: mark.id, patch }])).toEqual(['mark'])
+      put(mark)
+      put({ ...image, id: 'other' })
+      expect(await deniedChanges(db, owner, 'new', [{ id: 'mark', patch: { cardId: 'other' } }])).toEqual(['mark'])
+      expect(await deniedChanges(db, owner, 'new', [{ id: 'mark', patch: { deletedAt: 5 } }])).toEqual([])
+      expect(await deniedChanges(db, owner, 'new', [{ id: 'image', patch: { purged: true } }, { id: 'mark', patch: { purged: true } }])).toEqual([])
+      expect(await deniedChanges(db, owner, 'new', [{ id: 'image', patch: { deletedAt: 10 } }, { id: 'mark', patch: { deletedAt: 10 } }])).toEqual([])
+    } finally { sql.close() }
+  })
+  it('atomically follows old-client parent moves, preserves deleted marks, and assigns unique pull sequences', async () => {
+    const { sql, db } = fixture()
+    try {
+      // More than the pull page size: sharing a seq would skip marks on pagination.
+      const put = sql.prepare('INSERT INTO objects(id,kind,board_id,data,seq,updated_at) VALUES (?,?,?,?,1,1)')
+      for (let i = 0; i < 1005; i++) {
+        const o = { ...mark, id: `stroke-${i}`, deletedAt: i === 0 ? 2 : null }
+        put.run(o.id, o.kind, o.boardId, JSON.stringify(o))
+      }
+      for (const statement of strokeLifecycleStatements(db, 'image', 'toybox:new', false, 5, 'new')) await statement.run()
+      const rows = sql.prepare("SELECT board_id,owner_id,data,seq FROM objects WHERE kind='stroke'").all()
+      expect(rows).toHaveLength(1005)
+      expect(new Set(rows.map((r) => r.seq)).size).toBe(1005)
+      expect(rows.every((r) => r.board_id === 'toybox:new' && r.owner_id === 'new' && JSON.parse(r.data as string).boardId === 'toybox:new')).toBe(true)
+      expect(JSON.parse(rows.find((r) => (r.data as string).includes('stroke-0"'))!.data as string).deletedAt).toBe(2)
+      for (const statement of strokeLifecycleStatements(db, 'image', 'toybox:new', true, 6, 'new')) await statement.run()
+      expect(sql.prepare("SELECT count(*) AS n FROM objects WHERE kind='stroke' AND json_extract(data,'$.purged')=1").get()?.n).toBe(1005)
+    } finally { sql.close() }
+  })
+  it('shares visible live-owner strokes, hides them on trash, and restores editable geometry', async () => {
+    const { sql, db } = fixture()
+    try {
+      for (const o of [image, mark]) sql.prepare('INSERT INTO objects(id,kind,board_id,data,seq,updated_at) VALUES (?,?,?,?,1,1)').run(o.id, o.kind, o.boardId, JSON.stringify(o))
+      sql.exec("INSERT INTO shares(token,board_id,permission,created_by,created_at) VALUES ('stroke-share','private','view','new',1)")
+      expect((await resolveShare(db, 'stroke-share'))?.objects.some((o) => o.id === 'mark')).toBe(true)
+      sql.exec("UPDATE objects SET data=json_set(data,'$.deletedAt',10) WHERE id='image'")
+      expect((await resolveShare(db, 'stroke-share'))?.objects.some((o) => o.id === 'mark')).toBe(false)
+      sql.exec("UPDATE objects SET data=json_set(data,'$.deletedAt',NULL) WHERE id='image'")
+      expect((await resolveShare(db, 'stroke-share'))?.objects.find((o) => o.id === 'mark')).toMatchObject({ points, cardId: 'image' })
+    } finally { sql.close() }
+  })
+})
+
+it('sketch cards enforce private board access, view-only protection and bounded content on the server', async () => {
+  const { sql, db } = fixture()
+  try {
+    const card = { id: 'sketch', kind: 'card', type: 'sketch', boardId: 'private', x: 0, y: 0, w: 320, h: 240, z: 1, color: 'none', createdAt: 1, content: { title: 'Storyboard', width: 320, height: 240, background: 'paper' } }
+    const change = [{ id: card.id, patch: card }]
+    const owner = await loadAccess(db, { id: 'new', isAdmin: false })
+    expect(await deniedChanges(db, owner, 'new', change)).toEqual([])
+    const stranger = await loadAccess(db, { id: 'guest', isAdmin: false })
+    expect(await deniedChanges(db, stranger, 'guest', change)).toEqual(['sketch'])
+    sql.exec("INSERT INTO board_grants(id,board_id,user_id,permission,include_children,created_by,created_at) VALUES ('sketch-view','private','guest','view',1,'new',1)")
+    const viewer = await loadAccess(db, { id: 'guest', isAdmin: false })
+    expect(viewer.canRead('private')).toBe(true)
+    expect(await deniedChanges(db, viewer, 'guest', change)).toEqual(['sketch'])
+    for (const content of [{ ...card.content, width: 0 }, { ...card.content, height: 10001 }, { ...card.content, title: 4 }, { ...card.content, background: 'url(bad)' }]) {
+      expect(await deniedChanges(db, owner, 'new', [{ id: card.id, patch: { ...card, content } }])).toEqual(['sketch'])
+    }
+  } finally { sql.close() }
+})
+
+it('admits editable sketch strokes only within their authorized logical owner', async () => {
+  const { sql, db } = fixture()
+  try {
+    const sketch = { id: 'sketch-owner', kind: 'card', type: 'sketch', boardId: 'private', x: 0, y: 0, w: 320, h: 240, z: 1, color: 'none', createdAt: 1, content: { title: 'Frame', width: 320, height: 240, background: 'paper' } }
+    const points = [{ x: 10, y: 20 }, { x: 300, y: 220 }]
+    const mark = { id: 'sketch-mark', kind: 'stroke', boardId: 'private', cardId: sketch.id, createdAt: 1, tool: 'pen', color: '#D7263D', width: 6, opacity: 1, order: 1, points, bounds: inkBounds(points, 6) }
+    const owner = await loadAccess(db, { id: 'new', isAdmin: false })
+    const changes = [sketch, mark].map((patch) => ({ id: patch.id, patch }))
+    expect(await deniedChanges(db, owner, 'new', changes)).toEqual([])
+    for (const patch of [{ ...mark, boardId: 'inner' }, { ...mark, cardId: 'missing' }, { ...mark, points: [{ x: 321, y: 20 }], bounds: inkBounds([{ x: 321, y: 20 }], 6) }]) {
+      expect(await deniedChanges(db, owner, 'new', [{ id: sketch.id, patch: sketch }, { id: mark.id, patch }])).toContain(mark.id)
+    }
+    sql.exec("INSERT INTO board_grants(id,board_id,user_id,permission,include_children,created_by,created_at) VALUES ('sketch-stroke-view','private','guest','view',1,'new',1)")
+    const viewer = await loadAccess(db, { id: 'guest', isAdmin: false })
+    expect(await deniedChanges(db, viewer, 'guest', changes)).toEqual([sketch.id, mark.id])
+  } finally { sql.close() }
+})
+
+it('allows reversible sketch graph removal but cannot revive a stroke under a trashed owner', async () => {
+  const { sql, db } = fixture()
+  try {
+    const sketch = { id: 'sketch-owner', kind: 'card', type: 'sketch', boardId: 'private', x: 0, y: 0, w: 320, h: 240, z: 1, color: 'none', createdAt: 1, content: { title: 'Frame', width: 320, height: 240, background: 'paper' } }
+    const points = [{ x: 10, y: 20 }, { x: 300, y: 220 }]
+    const mark = { id: 'sketch-mark', kind: 'stroke', boardId: 'private', cardId: sketch.id, createdAt: 1, tool: 'pen', color: '#D7263D', width: 6, opacity: 1, order: 1, points, bounds: inkBounds(points, 6) }
+    for (const o of [sketch, mark]) sql.prepare('INSERT INTO objects(id,kind,board_id,data,seq,updated_at) VALUES (?,?,?,?,1,1)').run(o.id, o.kind, o.boardId, JSON.stringify(o))
+    const owner = await loadAccess(db, { id: 'new', isAdmin: false })
+    const remove = [{ id: sketch.id, patch: { deletedAt: 10 } }, { id: mark.id, patch: { deletedAt: 10 } }]
+    expect(await deniedChanges(db, owner, 'new', remove)).toEqual([])
+    expect(await deniedChanges(db, owner, 'new', [remove[0]!, { id: mark.id, patch: { color: '#245FE5' } }])).toEqual([mark.id])
+    expect(await deniedChanges(db, await loadAccess(db, { id: 'guest', isAdmin: false }), 'guest', remove)).toEqual([sketch.id, mark.id])
+    sql.prepare("UPDATE objects SET data=json_set(data,'$.deletedAt',10) WHERE id IN (?,?)").run(sketch.id, mark.id)
+    expect(await deniedChanges(db, owner, 'new', [{ id: mark.id, patch: { deletedAt: null } }])).toEqual([mark.id])
+    expect(await deniedChanges(db, owner, 'new', [{ id: sketch.id, patch: { deletedAt: null } }, { id: mark.id, patch: { deletedAt: null } }])).toEqual([])
+  } finally { sql.close() }
+})
+
+describe('board-space ink envelopes', () => {
+  it('accepts a gesture envelope plus stroke, rejects columns and permits coherent erase before the first push', async () => {
+    const { sql, db } = fixture()
+    try {
+      const owner = await loadAccess(db, { id: 'new', isAdmin: false })
+      const ink = { id: 'ink', kind: 'card', type: 'ink', boardId: 'private', x: 40, y: 60, w: 125, h: 5, z: 1, color: 'none', columnId: null, content: { width: 125, height: 5 }, createdAt: 1 }
+      const points = [{ x: 2.5, y: 2.5 }, { x: 122.5, y: 2.5 }]
+      const stroke = { id: 'ink-stroke', kind: 'stroke', cardId: 'ink', boardId: 'private', tool: 'pen', color: '#D7263D', width: 3, opacity: 1, points, bounds: inkBounds(points, 3), order: 1, createdAt: 1 }
+      const writes = [ink, stroke].map((o) => ({ id: o.id, patch: o }))
+      expect(await deniedChanges(db, owner, 'new', writes)).toEqual([])
+      expect(await deniedChanges(db, owner, 'new', [{ id: ink.id, patch: { ...ink, columnId: 'some-column' } }])).toContain('ink')
+      expect(await deniedChanges(db, owner, 'new', [{ id: ink.id, patch: { ...ink, content: { width: Infinity, height: 5 } } }])).toContain('ink')
+      // Creation and erasing may coalesce in the outbox before either has synced.
+      expect(await deniedChanges(db, owner, 'new', writes.map((w) => ({ id: w.id, patch: { ...w.patch, deletedAt: 10 } })))).toEqual([])
+      expect(await deniedChanges(db, owner, 'new', [{ id: ink.id, patch: { ...ink, deletedAt: 10 } }, { id: stroke.id, patch: stroke }])).toContain('ink-stroke')
+      const stranger = await loadAccess(db, { id: 'guest', isAdmin: false })
+      expect(await deniedChanges(db, stranger, 'guest', writes)).toEqual(['ink', 'ink-stroke'])
     } finally { sql.close() }
   })
 })

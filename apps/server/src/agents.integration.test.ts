@@ -208,3 +208,47 @@ it('rejects reversal when a comment is added to a moved card immediately before 
     expect((f.sql.prepare("SELECT board_id FROM objects WHERE id='note'").get() as { board_id: string }).board_id).toBe('child')
   } finally { f.sql.close() }
 })
+
+it('older agent replacements preserve omitted labels and explicit tombstones remove them', async () => {
+  const f = await fixture()
+  const token = 'a'.repeat(32)
+  try {
+    const card = { ...f.card('labelled', 'A labelled reference'), [`label${token}`]: true }
+    // Seed a board definition and item as an existing client would sync them.
+    f.sql.prepare("UPDATE objects SET data=json_set(data,?,?) WHERE id='root'").run(`$.labelName${token}`, 'Lighting')
+    f.sql.prepare("INSERT INTO objects(id,kind,board_id,data,seq,updated_at) VALUES('labelled','card','root',?,2,1)").run(JSON.stringify(card))
+    f.sql.exec("UPDATE counters SET value=2 WHERE name='seq'")
+    const propose = async (key: string, object: object, revision: number) => {
+      const staged = await f.request('/agent/proposals', { idempotencyKey: key, label: 'Update labelled reference', operations: [{ action: 'replace', expectedRevision: revision, object }] }, f.token)
+      expect(staged.status, await staged.clone().text()).toBe(201)
+      const { id } = await staged.json() as { id: string }
+      expect((await f.request(`/agent-proposals/${id}/approve`, {})).status).toBe(200)
+    }
+    await propose('old-client-labels', f.card('labelled', 'Updated body'), 2)
+    const row = () => f.sql.prepare("SELECT data,seq FROM objects WHERE id='labelled'").get() as { data: string; seq: number }
+    expect(JSON.parse(row().data)[`label${token}`]).toBe(true)
+    await propose('explicit-remove-label', { ...f.card('labelled', 'Updated body'), [`label${token}`]: false }, row().seq)
+    expect(JSON.parse(row().data)[`label${token}`]).toBe(false)
+  } finally { f.sql.close() }
+})
+
+it('includes every synced-body change in proposal preview, approval and reversal', async () => {
+  const f = await fixture()
+  try {
+    const creation = await f.request('/agent/proposals', { idempotencyKey: 'create-synced-notes', label: 'Create synced notes', operations: ['one', 'two'].map((id) => ({ action: 'create', object: { ...f.card(id, 'Shared brief'), noteGroupId: 'brief-group' } })) }, f.token)
+    expect(creation.status).toBe(201)
+    const { id: creationId } = await creation.json() as { id: string }
+    expect((await f.request(`/agent-proposals/${creationId}/approve`, {})).status).toBe(200)
+    const before = f.sql.prepare("SELECT data,seq FROM objects WHERE id='one'").get() as { data: string; seq: number }
+    const replace = await f.request('/agent/proposals', { idempotencyKey: 'edit-synced-notes', label: 'Update the brief', operations: [{ action: 'replace', expectedRevision: before.seq, object: { ...JSON.parse(before.data), content: { md: 'Revised brief' } } }] }, f.token)
+    expect(replace.status).toBe(201)
+    const { id, changedObjects } = await replace.json() as { id: string; changedObjects: number }
+    expect(changedObjects).toBe(2)
+    const preview = await (await f.request(`/agent-proposals/${id}`)).json() as { proposal: { changes: { after: { content: { md: string } } }[] } }
+    expect(preview.proposal.changes.map((ch) => ch.after.content.md)).toEqual(['Revised brief', 'Revised brief'])
+    expect((await f.request(`/agent-proposals/${id}/approve`, {})).status).toBe(200)
+    expect(JSON.parse((f.sql.prepare("SELECT data FROM objects WHERE id='two'").get() as { data: string }).data).content.md).toBe('Revised brief')
+    expect((await f.request(`/agent-proposals/${id}/reverse`, {})).status).toBe(200)
+    expect(JSON.parse((f.sql.prepare("SELECT data FROM objects WHERE id='two'").get() as { data: string }).data).content.md).toBe('Shared brief')
+  } finally { f.sql.close() }
+})

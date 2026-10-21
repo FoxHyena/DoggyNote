@@ -9,7 +9,7 @@
 // boxes and rules always render; nested list items indent by depth. Hidden
 // ranges are atomic, so Backspace can't silently eat a marker.
 
-import { EditorSelection, EditorState, RangeSetBuilder, type Extension, type Range, type SelectionRange, type StateCommand } from '@codemirror/state'
+import { EditorSelection, EditorState, RangeSetBuilder, StateEffect, type Extension, type Range, type SelectionRange, type StateCommand } from '@codemirror/state'
 import { Decoration, EditorView, ViewPlugin, WidgetType, keymap, type DecorationSet, type ViewUpdate } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap, insertNewline } from '@codemirror/commands'
 import { syntaxTree } from '@codemirror/language'
@@ -75,6 +75,7 @@ class CheckboxWidget extends WidgetType {
 
 const hidden = Decoration.replace({})
 const faded = Decoration.mark({ class: 'cm-md-mark' })
+const gap = Decoration.line({ class: 'cm-md-gap' })
 const MARK_CLASS: Record<string, string> = {
   StrongEmphasis: 'cm-md-strong',
   Emphasis: 'cm-md-em',
@@ -175,6 +176,15 @@ function buildDecorations(view: EditorView): { decorations: DecorationSet; atomi
       const first = item.from === line.from + lead
       if (lead) out.push(hidden.range(line.from, line.from + lead))
       out.push(Decoration.line({ class: 'cm-md-li', attributes: { style: `--li-depth: ${depth + 1}` + (first ? '' : '; text-indent: 0') } }).range(line.from))
+    }
+  }
+  // A blank line between blocks is spacing, not a line of text: shrink it to the
+  // gap the rendered note uses, unless the caret is on it.
+  for (const { from, to } of view.visibleRanges) {
+    for (let pos = from; pos <= to; ) {
+      const line = lineOf(pos)
+      if (!line.length && !touched(line.from, line.to) && line.number > 1 && line.number < state.doc.lines) out.push(gap.range(line.from))
+      pos = line.to + 1
     }
   }
   const decorations = Decoration.set(out, true)
@@ -377,7 +387,7 @@ export type NoteEditor = {
 export function createEditor(
   mount: HTMLElement,
   md: string,
-  opts: { onChange: (md: string) => void; onExit: () => void; placeAt?: { x: number; y: number } },
+  opts: { onChange: (md: string) => void; onExit: () => void; placeAt?: { x: number; y: number }; state?: EditorState; selection?: { anchor: number; head: number } },
 ): NoteEditor {
   const run = (cmd: StateCommand) => (v: EditorView) => cmd({ state: v.state, dispatch: v.dispatch })
   const extensions: Extension[] = [
@@ -404,12 +414,15 @@ export function createEditor(
       if (u.docChanged) opts.onChange(u.state.doc.toString())
     }),
   ]
-  const view = new EditorView({ parent: mount, state: EditorState.create({ doc: md, extensions }) })
+  const view = new EditorView({ parent: mount, state: opts.state?.doc.toString() === md ? opts.state.update({ effects: StateEffect.reconfigure.of(extensions) }).state : EditorState.create({ doc: md, extensions }) })
   // Put the caret where the user clicked, else at the end. Measured before focus:
   // unfocused, every marker is hidden, so the layout matches the note they tapped.
   const pos = opts.placeAt ? view.posAtCoords(opts.placeAt) : null
   view.focus()
-  view.dispatch({ selection: { anchor: pos ?? view.state.doc.length } })
+  if (!opts.state || opts.state.doc.toString() !== md) {
+    const clamp = (n: number) => Math.max(0, Math.min(md.length, n))
+    view.dispatch({ selection: opts.selection ? { anchor: clamp(opts.selection.anchor), head: clamp(opts.selection.head) } : { anchor: pos ?? view.state.doc.length } })
+  }
 
   return {
     view,

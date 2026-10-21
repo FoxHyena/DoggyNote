@@ -1,19 +1,21 @@
 import './canvas-entry.css'
 import { touch } from '../state/device.ts'
 import { For, Show, createMemo, createSignal, createEffect, onCleanup, onMount } from 'solid-js'
-import { HOME_BOARD_ID, cardText, type Id } from '@doggynote/core'
+import { HOME_BOARD_ID, boardLabels, cardLabel, cardText, type Id } from '@doggynote/core'
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
-import { openBoard, select, setPaletteOpen, viewport } from '../state/ui.ts'
-import { animateCamera } from '../canvas/Canvas.tsx'
-import { cardHeight } from '../canvas/layout.ts'
+import { openBoard, setPaletteOpen } from '../state/ui.ts'
+import { revealCard } from '../state/columns.ts'
+import { canReadBoard, refreshAccess } from '../state/access.ts'
+import { showToast } from '../state/toast.ts'
 import { BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
 
 // ⌘K "Fetch": search every board title and card text, jump to the result.
 
-type Hit = { kind: 'board' | 'card'; id: Id; boardId: Id; title: string; snippet: string; score: number }
+export type Hit = { kind: 'board' | 'card'; id: Id; boardId: Id; title: string; snippet: string; score: number }
 
-const boardTitle = (id: Id) => (id === HOME_BOARD_ID ? COPY.home : boardDisplayTitle(doc.getBoard(id)))
+const readable = (id: Id) => !!doc.getBoard(id) && !doc.getBoard(id)?.deletedAt && !doc.getBoard(id)?.purged && (doc.isReadOnly() || canReadBoard(id))
+const boardTitle = (id: Id) => !readable(id) ? 'Unavailable board' : id === HOME_BOARD_ID ? COPY.home : boardDisplayTitle(doc.getBoard(id))
 
 export function search(query: string, limit = 30): Hit[] {
   const q = query.trim().toLowerCase()
@@ -21,38 +23,41 @@ export function search(query: string, limit = 30): Hit[] {
   const hits: Hit[] = []
   const idx = doc.index()
   for (const b of idx.boards) {
+    if (!readable(b.id)) continue
     const t = (b.id === HOME_BOARD_ID ? COPY.home : boardDisplayTitle(b)).toLowerCase()
     const at = t.indexOf(q)
-    if (at >= 0) hits.push({ kind: 'board', id: b.id, boardId: b.id, title: boardTitle(b.id), snippet: b.parentId ? `in ${boardTitle(b.parentId)}` : '', score: at === 0 ? 3 : 2 })
+    if (at >= 0) hits.push({ kind: 'board', id: b.id, boardId: b.id, title: boardTitle(b.id), snippet: b.parentId && readable(b.parentId) ? `in ${boardTitle(b.parentId)}` : '', score: at === 0 ? 3 : 2 })
   }
   for (const [bid, cards] of idx.cards) {
+    if (!readable(bid)) continue
+    const labels = boardLabels(doc.getBoard(bid))
     for (const c of cards) {
-      const text = cardText(c)
+      const text = c.type === 'board' ? cardLabel(c, boardTitle) : cardText(c)
       const at = text.toLowerCase().indexOf(q)
-      if (at < 0) continue
-      const line = text.slice(0, at).lastIndexOf('\n') + 1
-      const end = text.indexOf('\n', at)
+      const matchingLabels = labels.filter((label) => c[`label${label.id}`] === true && label.name.toLowerCase().includes(q))
+      if (at < 0 && !matchingLabels.length) continue
+      const line = text.slice(0, Math.max(0, at)).lastIndexOf('\n') + 1
+      const end = text.indexOf('\n', Math.max(0, at))
       const snippet = text.slice(Math.max(line, at - 40), end < 0 ? undefined : Math.min(end, at + 80))
-      hits.push({ kind: 'card', id: c.id, boardId: bid, title: snippet || text.slice(0, 80), snippet: `${c.type} in ${boardTitle(bid)}`, score: at === 0 ? 1.5 : 1 })
+      hits.push({ kind: 'card', id: c.id, boardId: bid, title: (at < 0 ? text.split('\n')[0] : snippet) || text.slice(0, 80) || `${c.type} item`, snippet: `${c.type} in ${boardTitle(bid)}${matchingLabels.length ? ` · ${matchingLabels.map((l) => l.name).join(', ')}` : ''}`, score: matchingLabels.length ? 2 : at === 0 ? 1.5 : 1 })
     }
   }
   return hits.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title)).slice(0, limit)
 }
 
-export function jumpTo(hit: Hit) {
+export async function jumpTo(hit: Hit) {
+  if (!doc.isReadOnly() && navigator.onLine) {
+    try { await refreshAccess() } catch { showToast('Could not check board access. Try again.'); return }
+  }
+  const item = doc.get(hit.id)
+  if (!readable(hit.boardId) || !item || item.deletedAt || item.purged || (item.kind === 'card' && item.boardId !== hit.boardId)) {
+    showToast('This item is no longer available. Search again.')
+    return
+  }
   setPaletteOpen(false)
   openBoard(hit.boardId)
   if (hit.kind === 'board') return
-  // After the board switch has set its camera, centre on the card.
-  setTimeout(() => {
-    const c = doc.getCard(hit.id)
-    if (!c) return
-    const target = c.columnId ? (doc.getCard(c.columnId) ?? c) : c
-    const v = viewport()
-    const zoom = 1
-    animateCamera({ x: target.x + target.w / 2 - v.width / 2 / zoom, y: target.y + cardHeight(target) / 2 - v.height / 2 / zoom, zoom })
-    select([c.id])
-  }, 30)
+  revealCard(hit.id)
 }
 
 export function FetchPalette() {
@@ -65,6 +70,7 @@ export function FetchPalette() {
   onMount(() => input.focus())
   onCleanup(() => queueMicrotask(() => { if (previousFocus?.isConnected) previousFocus.focus() }))
   createEffect(() => {
+    if (active() >= hits().length) setActive(0)
     const index = active()
     queueMicrotask(() => results?.querySelectorAll('[role="option"]')[index]?.scrollIntoView({ block: 'nearest' }))
   })
@@ -99,7 +105,7 @@ export function FetchPalette() {
             aria-controls="fetch-results"
             aria-activedescendant={hits()[active()] ? `fetch-hit-${active()}` : undefined}
             data-testid="fetch-input"
-            placeholder={touch() ? `${COPY.search} a board, note or link…` : `${COPY.search}… boards, notes, to-dos, links`}
+            placeholder={touch() ? `${COPY.search} a label, board or item…` : `${COPY.search}… labels, boards and items`}
             value={q()}
             onInput={(e) => {
               setQ(e.currentTarget.value)
@@ -124,7 +130,9 @@ export function FetchPalette() {
                   classList={{ active: i() === active() }}
                   data-testid="fetch-hit"
                   onPointerEnter={() => setActive(i())}
-                  onClick={() => jumpTo(h)}
+                  // A direct listener, not Solid's document-level delegation: touch
+                  // WebKit only turns a tap into a click on an element that listens itself.
+                  on:click={() => jumpTo(h)}
                 >
                   <span class="fetch-icon">
                     <Show when={h.kind === 'board'} fallback={<Icon size={16}>{ToolIcons.note()}</Icon>}>

@@ -8,6 +8,7 @@ import { checkSession, user } from './state/session.ts'
 import { SIZES, importImage, localBlob, markUploaded, type AssetSize } from './state/assets.ts'
 import { isTauri } from './state/platform.ts'
 import { createTheme } from './theme.ts'
+import { capturedImageSource } from './canvas/image-source.ts'
 import { IMAGE_TYPES } from './canvas/paste.ts'
 
 // Quick capture (#/capture): a tiny window that drops a note, link or image
@@ -114,6 +115,7 @@ export function Capture() {
     const images = [...(e.clipboardData?.files ?? [])].filter((f) => IMAGE_TYPES.test(f.type))
     if (!images.length || !u) return
     e.preventDefault()
+    const sourceUrl = e.clipboardData ? capturedImageSource(e.clipboardData) : null
     setState('saving')
     const cards: Card[] = []
     for (const f of images) {
@@ -123,9 +125,9 @@ export function Capture() {
         if (blob) await api(`/api/assets/${img.assetId}/${size}`, { method: 'PUT', body: blob, headers: { 'content-type': blob.type } })
       }
       await markUploaded(img.assetId)
-      const w = Math.min(DEFAULT_SIZE.image.w, img.width)
+      const w = Math.max(160, Math.min(DEFAULT_SIZE.image.w, img.width))
       cards.push(
-        baseCard('image', `toybox:${u.id}`, { assetId: img.assetId, width: img.width, height: img.height, sizes: img.sizes }, { w, h: Math.round((w * img.height) / img.width) }),
+        baseCard('image', `toybox:${u.id}`, { assetId: img.assetId, width: img.width, height: img.height, sizes: img.sizes }, { ...(sourceUrl ? { imageSourceUrl: sourceUrl } : {}), w, h: Math.round((w * img.height) / img.width) }),
       )
     }
     await save(cards)

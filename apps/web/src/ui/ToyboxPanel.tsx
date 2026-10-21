@@ -1,3 +1,4 @@
+import { capturedImageSource } from '../canvas/image-source.ts'
 import { installCanvasPanel } from './canvasPanel.ts'
 import './canvas-entry.css'
 import { For, Show, createSignal } from 'solid-js'
@@ -66,7 +67,7 @@ export function ToyboxPanel() {
     if (!tb || !dt) return
     if (dt.files.length) {
       e.preventDefault()
-      addAnyFiles([...dt.files], { x: 0, y: 0 }, tb)
+      addAnyFiles([...dt.files], { x: 0, y: 0 }, tb, capturedImageSource(dt))
     }
   }
 
@@ -75,7 +76,7 @@ export function ToyboxPanel() {
     const dt = e.dataTransfer
     if (!tb || !dt) return
     e.preventDefault()
-    if (addAnyFiles([...dt.files], { x: 0, y: 0 }, tb)) return
+    if (addAnyFiles([...dt.files], { x: 0, y: 0 }, tb, capturedImageSource(dt))) return
     const text = dt.getData('text/uri-list').split('\n').find((l) => l && !l.startsWith('#')) || dt.getData('text/plain')
     if (text) addText(text, { x: 0, y: 0 }, tb)
   }

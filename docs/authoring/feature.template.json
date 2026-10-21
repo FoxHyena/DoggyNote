@@ -1,0 +1,38 @@
+{
+  "slug": "your-feature",
+  "category": "working-on-boards",
+  "kind": "task",
+  "title": "Describe the user's goal",
+  "summary": "Explain what this guide helps the reader do in one short sentence.",
+  "status": "draft",
+  "order": 100,
+  "benefit": "Explain why this is useful.",
+  "outcome": "Describe the visible result the reader will create.",
+  "prerequisites": ["Include only relevant account, platform or permission requirements."],
+  "sections": [
+    {
+      "id": "overview",
+      "title": "How it works",
+      "paragraphs": ["Describe actual delivered behavior and a concrete example using synthetic content."]
+    },
+    {
+      "id": "try-it",
+      "title": "Try it on your board",
+      "flow": {
+        "entry": "Name the real place and control where the task starts.",
+        "steps": [
+          {"action": "Name one action using the control's exact label.", "result": "Describe the visible result of that action."}
+        ],
+        "completion": "Explain what is saved, when it persists and what reopening shows.",
+        "correction": "Explain Undo, cancel or another way to correct a mistake."
+      }
+    },
+    {
+      "id": "availability",
+      "title": "Availability and limits",
+      "paragraphs": ["State only verified limitations, relevant shortcuts and permission/platform differences. Omit this section if irrelevant."]
+    }
+  ],
+  "related": [],
+  "links": []
+}

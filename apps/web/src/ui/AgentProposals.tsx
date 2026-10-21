@@ -49,7 +49,7 @@ export function AgentProposals(props: { boardId: string; renderTrigger?: (contro
 
 const VERB: Record<Badge, string> = { added: 'New', changed: 'Edited', moved: 'Moved', removed: 'Buried' }
 
-const TYPE_WORD: Record<string, string> = { note: 'Note', todo: 'To-do list', board: 'Board', image: 'Picture', link: 'Link', column: 'Column', file: 'File', movie: 'Movie' }
+const TYPE_WORD: Record<string, string> = { note: 'Note', todo: 'To-do list', board: 'Board', image: 'Picture', link: 'Link', column: 'Column', file: 'File', movie: 'Movie', swatch: 'Colour', sketch: 'Sketch', ink: 'Drawing' }
 
 /** One line per change, in plain words: "New · Note · Snack budget". */
 function describe(change: Detail['proposal']['changes'][number], titleOf: (id: string) => string): { badge: Badge | null; text: string } {

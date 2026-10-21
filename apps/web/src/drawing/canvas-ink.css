@@ -1,0 +1,30 @@
+.card.card-ink,
+:root[data-theme='light'] .card.card-ink,
+.card.card-ink.colored,
+.card.card-ink.dragging {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+.card.card-ink { pointer-events: none; }
+.card-ink.selected { pointer-events: auto; }
+.card-ink .resize-handle, .card-ink .connect-handle { pointer-events: auto; }
+.canvas-ink-surface { position: relative; width: 100%; }
+.canvas-ink-preview { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; pointer-events: none; z-index: 2147483647; }
+.viewport.canvas-drawing { cursor: crosshair; }
+.canvas-drawing .card, .canvas-drawing .connections { pointer-events: none; }
+.canvas-ink-tools {
+  position: absolute; z-index: 50; top: 12px; left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: calc(100% - 24px); max-height: calc(100% - 88px); overflow: auto;
+  background: var(--dn-panel); color: var(--dn-text); border: 1px solid var(--dn-border);
+  border-radius: 12px; padding: 12px; box-shadow: 0 6px 24px var(--dn-scrim);
+  cursor: default;
+}
+.canvas-ink-mode { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; font-size: 13px; }
+.canvas-ink-mode span, .canvas-ink-correction span { color: var(--dn-text-muted); font-size: 12px; }
+.canvas-ink-correction { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.canvas-ink-tools :focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 3px; }
+@media (max-width: 599px) {
+  .canvas-ink-tools { top: auto; bottom: 72px; padding: 10px; }
+  .canvas-ink-tools .ink-tools { gap: 8px; }
+}

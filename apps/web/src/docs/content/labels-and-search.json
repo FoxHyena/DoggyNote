@@ -1,0 +1,159 @@
+{
+  "slug": "labels-and-search",
+  "category": "working-on-boards",
+  "kind": "task",
+  "title": "Organize and find items with labels",
+  "summary": "Label related items and find them across the boards you can access.",
+  "status": "draft",
+  "order": 40,
+  "benefit": "Keep references and open questions easy to find without moving them out of context.",
+  "outcome": "References share a reusable label, and a search takes you to a matching item even inside a collapsed column.",
+  "prerequisites": [
+    "Edit access to a board to create or change labels; view access is enough to read labels and search accessible content."
+  ],
+  "sections": [
+    {
+      "id": "how-labels-work",
+      "title": "Use one label for related items",
+      "paragraphs": [
+        "Labels add a small coloured name to an item. For example, label reference material Lighting and unresolved notes Question, then use Fetch to find matching items across boards.",
+        "A label belongs to its board. Reusing it on that board keeps its identity: renaming or recolouring it updates every use there. Labels with the same name on different boards are independent.",
+        "Label names can contain up to 80 characters. Long names wrap on the item rather than covering nearby content."
+      ],
+      "figures": [
+        {
+          "src": "/docs/assets/labels-and-search/narrow-labelled-reference.png",
+          "alt": "A narrow reference card shows Lighting, Question and seven additional labels wrapped inside its width.",
+          "caption": "Long names and several labels wrap within the item.",
+          "width": 360,
+          "height": 720
+        }
+      ]
+    },
+    {
+      "id": "create-a-label",
+      "title": "Create and apply a label",
+      "flow": {
+        "entry": "Select an item on an editable board. If a note is being edited, finish the edit with Escape first. On a phone, tap an item once to select it.",
+        "steps": [
+          {
+            "action": "Choose Labels in the selection toolbar.",
+            "result": "The label dialog lists this board's labels and shows how many items are selected."
+          },
+          {
+            "action": "Enter a name such as Lighting, choose a colour if you want, and choose Create.",
+            "result": "The new label is applied to the selected item. Its chip appears on the item and its checkbox is selected in the dialog."
+          },
+          {
+            "action": "Choose Done to return to the selection. On a phone, choose the selection sheet's Done button when you want the main navigation again.",
+            "result": "The label stays visible on the item, and you can continue working on the board."
+          }
+        ],
+        "completion": "Committed label changes save with the board and sync to your other signed-in sessions.",
+        "correction": "Undo reverses the most recent change; Redo restores it. If a label name already exists on this board, reuse its checkbox instead of creating another copy."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/labels-and-search/reusable-labels-dialog.png",
+          "alt": "The Labels dialog shows shared usage counts, selected labels and guidance to reuse an existing name.",
+          "caption": "Reuse a name from the list when the dialog reports that it already exists.",
+          "width": 720,
+          "height": 720
+        }
+      ]
+    },
+    {
+      "id": "reuse-labels",
+      "title": "Reuse a label on several items",
+      "flow": {
+        "entry": "Select another item, or select several items together. Shift-click changes a desktop selection; on touch, use Select in the selection toolbar.",
+        "steps": [
+          {
+            "action": "Open Labels and select the checkbox beside an existing label.",
+            "result": "The same label is applied to every selected item. A partially selected checkbox means only some selected items currently use it."
+          },
+          {
+            "action": "Clear a selected label's checkbox when you want to remove it from the selected items.",
+            "result": "Those items lose the label. Its definition remains available for reuse on this board."
+          }
+        ],
+        "completion": "The number beside each label counts its live uses on this board, including items inside collapsed columns. Trashed items do not count.",
+        "correction": "Undo restores the previous assignments for the selection in one step."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/labels-and-search/labelled-selection.png",
+          "alt": "Two selected notes share Lighting and Question labels, with the Labels control in the selection toolbar.",
+          "caption": "Open Labels with several items selected to update their assignments together.",
+          "width": 1440,
+          "height": 720
+        }
+      ]
+    },
+    {
+      "id": "search-across-boards",
+      "title": "Find a labelled item across boards",
+      "flow": {
+        "entry": "Open Fetch from the search button, or press Command-K on a Mac or Control-K on a PC.",
+        "steps": [
+          {
+            "action": "Type Lighting, or another label name.",
+            "result": "Matches show real item text or a description, the containing board, and any matching label. Fetch also searches board titles and item text."
+          },
+          {
+            "action": "Choose a result, or use the arrow keys and Enter.",
+            "result": "DoggyNote opens the item's board, selects the item, and centres it. A collapsed column expands to reveal its matching member."
+          }
+        ],
+        "completion": "Search includes content you can access across boards. An unused label definition does not appear as an item result.",
+        "correction": "Escape closes Fetch without navigating. If an item becomes unavailable or access cannot be checked, retry the search instead of assuming the jump succeeded."
+      },
+      "callout": {
+        "title": "Exploring a view-only board",
+        "text": "You can reveal a matching item without editing the board. View-only column expansion is local to the session; editable-board expansion is saved and can be undone."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/labels-and-search/label-search-results.png",
+          "alt": "Fetch shows two real notes returned by a Lighting label search, with their containing board context.",
+          "caption": "Search results keep the matching item text and its board context together.",
+          "width": 720,
+          "height": 720
+        }
+      ]
+    },
+    {
+      "id": "rename-or-remove",
+      "title": "Rename, recolour or remove a label",
+      "flow": {
+        "entry": "Select an item and open Labels on the board whose labels you want to change.",
+        "steps": [
+          {
+            "action": "Choose Rename beside Lighting, enter Lighting references, and choose Save name.",
+            "result": "Every use of that label on this board shows the new name, and Fetch uses it for matching. Independent labels on other boards keep their own names."
+          },
+          {
+            "action": "Choose a different colour from the menu beside the label.",
+            "result": "Every use on this board updates its colour without changing the assignments."
+          },
+          {
+            "action": "Choose Remove beside a label when you want to remove it from the whole board.",
+            "result": "Its chips disappear from all items on the board. Clearing a checkbox instead removes it only from the selected items."
+          }
+        ],
+        "completion": "The saved name and colour are shared by this label's uses on its board.",
+        "correction": "Undo restores a removed label and its previous uses. Redo reapplies the removal. While renaming, Cancel or Escape abandons the unfinished name without changing the saved label."
+      }
+    },
+    {
+      "id": "saving-and-access",
+      "title": "Saving and access",
+      "paragraphs": [
+        "Saved labels return when you reopen the board or app. View-only users can read labels but cannot change their names, colours or assignments.",
+        "Label metadata, usage counts and search results follow board access. Private Inbox content stays private. When the app learns that access was removed, inaccessible search results disappear; an online jump checks access again.",
+        "Moving an item to another board reuses a destination label with the same name or creates an independent destination label. Other boards' labels are not renamed by that move."
+      ]
+    }
+  ],
+  "related": []
+}

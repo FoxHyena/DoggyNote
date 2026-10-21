@@ -40,3 +40,24 @@ it('takes movie cards that name their title, with or without fetched details', (
   for (const content of [{ kind: 'movie', title: 'Something good' }, { kind: 'movie', title: 'x', imdbId: 'nm0000190' }, { ...full, info: { ...full.info, providers: { region: 'US', link: 'javascript:alert(1)' } } }, { ...full, poster: 'https://example.com/p.jpg' }])
     expect(agentObjectSchema.safeParse({ ...card, content }).success).toBe(false)
 })
+
+it('preserves optional position locks in typed agent snapshots', () => {
+  for (const positionLocked of [true, false, null, undefined]) expect(agentObjectSchema.safeParse({ ...note, positionLocked }).success).toBe(true)
+  expect(agentObjectSchema.safeParse({ ...note, positionLocked: 'true' }).success).toBe(false)
+})
+
+it('accepts per-field column collapse state and rejects malformed values or collapse on other kinds', () => {
+  const column = { ...note, type: 'column', content: { title: 'References' }, collapsed: true }
+  expect(agentObjectSchema.safeParse(column).success).toBe(true)
+  expect(agentObjectSchema.safeParse({ ...column, collapsed: null }).success).toBe(true)
+  expect(agentObjectSchema.safeParse({ ...column, collapsed: 'true' }).success).toBe(false)
+  expect(agentObjectSchema.safeParse({ ...note, collapsed: true }).success).toBe(false)
+})
+
+it('keeps canvas ink finite, bounded and outside column flow', () => {
+  const ink = { ...note, type: 'ink', columnId: null, content: { width: 200, height: 120 } }
+  expect(agentObjectSchema.safeParse(ink).success).toBe(true)
+  expect(agentObjectSchema.safeParse({ ...ink, columnId: 'column-1' }).success).toBe(false)
+  expect(agentObjectSchema.safeParse({ ...ink, content: { width: 0, height: 120 } }).success).toBe(false)
+  expect(agentObjectSchema.safeParse({ ...ink, content: { width: 9000, height: 120 } }).success).toBe(false)
+})

@@ -11,6 +11,20 @@ async function contained(panel: Locator, page: Page) {
   await panel.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished.catch(() => undefined))))
   const box = (await panel.boundingBox())!
   const viewport = page.viewportSize()!
+  await test.info().attach(`panel-geometry-${await panel.getAttribute('data-testid')}-${viewport.width}`, {
+    body: JSON.stringify(await panel.evaluate((element) => {
+      const describe = (node: Element) => {
+        const css = getComputedStyle(node), rect = node.getBoundingClientRect()
+        return { className: node.className, rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+          clientWidth: node.clientWidth, scrollWidth: node.scrollWidth, width: css.width,
+          maxWidth: css.maxWidth, padding: css.padding, margin: css.margin, overflowX: css.overflowX }
+      }
+      return { panel: describe(element), viewport: { width: innerWidth, height: innerHeight },
+        headers: [...element.querySelectorAll('.share-head, .dialog-head, .agents-heading')].map(describe),
+        stylesheets: [...document.styleSheets].map((sheet) => sheet.href) }
+    }), null, 2),
+    contentType: 'application/json',
+  })
   if (viewport.width < 600) {
     // Phones: a sheet across the bottom edge, below the top of the screen.
     expect(Math.abs(box.x)).toBeLessThanOrEqual(1)

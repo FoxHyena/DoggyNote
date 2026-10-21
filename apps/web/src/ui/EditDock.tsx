@@ -1,6 +1,6 @@
 import { For, Show } from 'solid-js'
 import * as doc from '../state/doc.ts'
-import { clearSelection, editingId, endEdit } from '../state/ui.ts'
+import { clearSelection, editingId, endEdit, focusNote, focusedNoteId } from '../state/ui.ts'
 import { touch } from '../state/device.ts'
 import { FORMAT, activeNoteEditor } from '../cards/NoteCard.tsx'
 import { Icon, ToolIcons } from './icons.tsx'
@@ -23,9 +23,10 @@ export function EditDock() {
     if (!(e.target as Element).closest('.edit-done')) e.preventDefault()
   }
   return (
-    <Show when={touch() && card()}>
+    <Show when={touch() && card() && !focusedNoteId() && card()!.type !== 'image' && card()!.type !== 'swatch' && card()!.type !== 'sketch'}>
       <div class="edit-dock" data-testid="edit-dock" data-nodrag onPointerDown={keep}>
         <Show when={card()!.type === 'note'}>
+          <button class="bar-btn" onPointerDown={(e) => { e.preventDefault(); focusNote(card()!.id) }} onClick={(e) => { if (e.detail === 0) focusNote(card()!.id) }}>Focus</button>
           <div class="edit-dock-tools" role="toolbar" aria-label="Formatting">
             <For each={DOCK_ORDER.map((cmd) => FORMAT.find((f) => f.cmd === cmd)!)}>
               {(f) => (

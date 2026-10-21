@@ -2,6 +2,7 @@ import './canvas-entry.css'
 import { Show, createSignal, type JSX } from 'solid-js'
 import { COPY } from '@doggynote/theme'
 import { login, type User } from '../state/session.ts'
+import { isTauri } from '../state/platform.ts'
 import { ApiError } from '../state/api.ts'
 import { BoardIconSvg } from './icons.tsx'
 
@@ -32,6 +33,7 @@ export function Login(props: { onLogin: (u: User) => void; introduction?: JSX.El
         </div>
         <h1>{COPY.appName}</h1>
         <p class="login-sub">Sign in to fetch your boards.</p>
+        <p class="login-docs"><a href={isTauri ? 'https://notepad.dog/docs' : '/docs'}>Read the documentation</a></p>
         {props.introduction}
         <label>
           Username

@@ -1,13 +1,16 @@
 import { cacheStickerAlpha } from '../ui/StickerImage.tsx'
-import { createEffect, createSignal, onCleanup, onMount } from 'solid-js'
-import { intersects, stickerBounds, stickerHeight, worldToScreen, type Card, type Rect } from '@doggynote/core'
+import { createEffect, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
+import { swatchHex, fitSketch, sketchContent, sketchPaperColor, inkPath, intersects, stickerBounds, stickerHeight, worldToScreen, type Card, type Rect } from '@doggynote/core'
+import { cardColors } from '@doggynote/theme'
 import { theme as themeSignal } from '../theme.ts'
 import * as doc from '../state/doc.ts'
 import { boardId, camera, selection, viewport } from '../state/ui.ts'
+import { columnCollapsed } from '../state/columns.ts'
 import { columnChildren } from '../state/actions.ts'
 import { assetUrl } from '../state/api.ts'
 import { acquireUrl, releaseUrl } from '../state/assets.ts'
 import { COLUMN_HEADER, COLUMN_INSET, cardHeight } from './layout.ts'
+import { canvasErasing } from '../state/canvasDrawing.ts'
 
 // Zoomed out, a board can put a thousand cards on screen. As DOM that costs
 // ~60 ms a frame (the browser re-layerizes every card); drawn into one canvas
@@ -137,6 +140,28 @@ export function LodLayer() {
     queueMicrotask(() => setPalette(readPalette()))
   })
 
+  // Document work is independent of the camera. Validate and compile paths on
+  // document changes; panning reuses them without walking reactive points or
+  // reparsing SVG paths for every visible stroke on every frame.
+  const cards = createMemo(() => {
+    const all = doc.cardsOn(boardId())
+    for (const c of all) {
+      void (c.x, c.y, c.w, c.h, c.z, c.color, c.columnId, c.order, c.swatchHex, columnCollapsed(c))
+      if (c.type === 'ink' || c.type === 'sketch' || c.type === 'image') void c.content
+    }
+    return all.filter(c => !c.columnId).sort((a, b) => (a.z ?? 0) - (b.z ?? 0))
+  })
+  const drawings = createMemo(() => {
+    const result = new Map<string, { id: string; color: string; width: number; opacity: number; path: Path2D }[]>()
+    for (const c of doc.cardsOn(boardId())) {
+      if (c.type !== 'ink' && c.type !== 'image' && c.type !== 'sketch') continue
+      // strokesOn tracks validity, point coordinates, order and lifecycle.
+      // Every dependency remains reactive even when the owner stays mounted.
+      result.set(c.id, doc.strokesOn(c.id).map(s => ({ id: s.id, color: s.color, width: s.width, opacity: s.opacity, path: new Path2D(inkPath(s)) })))
+    }
+    return result
+  })
+
   let frame = 0
   const draw = () => {
     frame = 0
@@ -155,12 +180,26 @@ export function LodLayer() {
     const view: Rect = { x: cam.x, y: cam.y, w: v.width / cam.zoom, h: v.height / cam.zoom }
     const z = cam.zoom
     const sel = selection()
-    const cards = doc
-      .cardsOn(boardId())
-      .filter((c) => !c.columnId)
-      .sort((a, b) => (a.z ?? 0) - (b.z ?? 0))
+    const drawStrokes = (id: string, previewErasure = false) => {
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round'
+      for (const s of drawings().get(id) ?? []) {
+        if (previewErasure && canvasErasing().has(s.id)) continue
+        ctx.strokeStyle = s.color; ctx.lineWidth = s.width; ctx.globalAlpha = s.opacity
+        ctx.stroke(s.path)
+      }
+    }
 
     const drawCard = (c: Card, x: number, y: number, w: number, h: number) => {
+      if (c.type === 'ink') {
+        const logical = (c as Card<'ink'>).content
+        if (!(logical?.width > 0 && logical?.height > 0)) return
+        ctx.save()
+        ctx.translate(x, y)
+        ctx.scale(w / logical.width, h / logical.height)
+        drawStrokes(c.id, true)
+        ctx.restore()
+        return
+      }
       const bg = c.color && c.color !== 'none' ? pal[`${c.color}-bg`] : pal.card
       if (c.type === 'board') {
         // Synced data: tolerate a card whose content is missing.
@@ -173,13 +212,49 @@ export function LodLayer() {
         ctx.fillRect(x + w * 0.2, y + h * 0.1 + s + h * 0.08, w * 0.6, Math.max(1, h * 0.06))
         return
       }
+      if (c.type === 'sketch') {
+        const paper = sketchContent(c.content)
+        const paperHeight = Math.max(1, h - 36 * z)
+        const fit = fitSketch(paper.width, paper.height, w, paperHeight)
+        ctx.save()
+        ctx.beginPath(); ctx.rect(x, y, w, paperHeight); ctx.clip()
+        const fill = sketchPaperColor(paper.background, cardColors.light.none.bg)
+        if (fill) {
+          ctx.fillStyle = fill
+          ctx.fillRect(x, y, w, paperHeight)
+        }
+        ctx.translate(x + fit.x, y + fit.y)
+        ctx.scale(fit.scale, fit.scale)
+        drawStrokes(c.id)
+        ctx.restore()
+        ctx.strokeStyle = pal.muted; ctx.lineWidth = 1
+        ctx.strokeRect(x, y, w, paperHeight)
+        return
+      }
       if (c.type === 'image') {
-        const assetId = (c as Card<'image'>).content?.assetId
+        const image = c as Card<'image'>
+        const assetId = image.content?.assetId
+        const ratio = image.content?.height / image.content?.width
+        const imageH = Number.isFinite(ratio) && ratio > 0 ? Math.min(h, w * ratio) : h
         const t = typeof assetId === 'string' ? thumb(assetId) : null
-        if (t && atlas) ctx.drawImage(atlas, t.sx, t.sy, t.sw, t.sh, x, y, w, h)
+        if (t && atlas) ctx.drawImage(atlas, t.sx, t.sy, t.sw, t.sh, x, y, w, imageH)
         else {
           ctx.fillStyle = pal.border
-          ctx.fillRect(x, y, w, h)
+          ctx.fillRect(x, y, w, imageH)
+        }
+        if (h > imageH) {
+          ctx.fillStyle = pal.card
+          ctx.fillRect(x, y + imageH, w, h - imageH)
+          ctx.fillStyle = pal.muted
+          ctx.globalAlpha = 0.35
+          ctx.fillRect(x + w * 0.05, y + imageH + (h - imageH) * 0.3, w * 0.8, Math.max(1, (h - imageH) * 0.15))
+          ctx.globalAlpha = 1
+        }
+        if (image.content?.width > 0 && image.content?.height > 0) {
+          ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, imageH); ctx.clip()
+          ctx.translate(x, y); ctx.scale(w / image.content.width, imageH / image.content.height)
+          drawStrokes(c.id)
+          ctx.restore()
         }
         return
       }
@@ -239,12 +314,25 @@ export function LodLayer() {
           ctx.fillStyle = bg
           ctx.fillRect(x, y, w, Math.min(h, 50 * z))
         }
-        let cy = y + COLUMN_HEADER * z
+        if (columnCollapsed(c)) {
+          ctx.fillStyle = pal.muted
+          ctx.font = `${Math.max(1, 12 * z)}px sans-serif`
+          ctx.fillText(typeof (c as Card<'column'>).content?.title === 'string' ? (c as Card<'column'>).content.title || 'Column' : 'Column', x + 14 * z, y + 20 * z, w - 28 * z)
+          const count = columnChildren(c.id).length
+          ctx.fillText(`${count} ${count === 1 ? 'card' : 'cards'}`, x + 14 * z, y + 40 * z, w - 28 * z)
+          return
+        }
+        let cy = y + (COLUMN_HEADER + COLUMN_INSET - 1) * z
         for (const k of columnChildren(c.id)) {
           const kh = cardHeight(k) * z
-          drawCard(k, x + COLUMN_INSET * z, cy, w - COLUMN_INSET * 2 * z, kh)
+          drawCard(k, x + (COLUMN_INSET + 1) * z, cy, w - (COLUMN_INSET + 1) * 2 * z, kh)
           cy += kh + COLUMN_INSET * z
         }
+        return
+      }
+      if (c.type === 'swatch') {
+        ctx.fillStyle = swatchHex(c)
+        ctx.fillRect(x, y, w, Math.min(h, 112 * z))
         return
       }
       // Text-ish cards: a few bars where the lines would be.
@@ -260,7 +348,7 @@ export function LodLayer() {
       ctx.globalAlpha = 1
     }
 
-    for (const c of cards) {
+    for (const c of cards()) {
       const h = cardHeight(c)
       const r = { x: c.x, y: c.y, w: c.w, h }
       if (!intersects(view, r)) continue
@@ -290,6 +378,9 @@ export function LodLayer() {
     viewport()
     palette()
     selection()
+    canvasErasing()
+    cards()
+    drawings()
     thumbTick()
     for (const s of doc.stickersOn(boardId())) void (s.x, s.y, s.w, s.angle, s.z, s.content.assetId)
     for (const c of doc.cardsOn(boardId())) void (c.x, c.y, c.w, c.h, c.z, c.color, c.columnId, c.order)

@@ -2,6 +2,8 @@
 // One switch for every card type, so a new type registers in one place. Cards
 // from a newer app (an unknown type) fall through to the defaults.
 
+import { swatchDescription, swatchHex, swatchText } from './swatch.ts'
+import { imageCaption, imageSourceUrl } from './image.ts'
 import type { Card, Id } from './model.ts'
 import { mdToText, noteMarkdown } from './markdown.ts'
 
@@ -24,6 +26,8 @@ export const cardLabel = (c: Card, boardTitle: (boardId: Id) => string): string 
 
 function rawCardText(c: Card): string {
   switch (c.type) {
+    case 'swatch':
+      return swatchDescription(c)
     case 'note':
       return mdToText(noteMarkdown(c as Card<'note'>))
     case 'todo': {
@@ -36,21 +40,28 @@ function rawCardText(c: Card): string {
     }
     case 'column':
       return (c as Card<'column'>).content.title
+    case 'sketch':
+      return (c as Card<'sketch'>).content.title
     case 'image':
-      return (c as Card<'image'>).content.caption ?? ''
+      return [imageCaption(c as Card<'image'>), imageSourceUrl(c.imageSourceUrl)].filter(Boolean).join('\n')
     case 'file':
       return (c as Card<'file'>).content.name
     case 'movie': {
       const m = (c as Card<'movie'>).content
       return [m.title, m.year, m.info?.genres?.join(', '), m.info?.overview].filter(Boolean).join('\n')
     }
-    default:
-      return ''
+    default: {
+      const value = c as unknown as Record<string, unknown>
+      const content = value.content as Record<string, unknown> | null
+      return [value.swatchName, value.swatchHex, value.swatchCaption, content?.title].filter((text): text is string => typeof text === 'string').join('\n')
+    }
   }
 }
 
 function rawCardLabel(c: Card, boardTitle: (boardId: Id) => string): string {
   switch (c.type) {
+    case 'swatch':
+      return swatchText(c.swatchName) || swatchHex(c)
     case 'note':
       return mdToText(noteMarkdown(c as Card<'note'>)).split('\n')[0] || 'Empty note'
     case 'todo': {
@@ -60,7 +71,11 @@ function rawCardLabel(c: Card, boardTitle: (boardId: Id) => string): string {
     case 'board':
       return boardTitle((c as Card<'board'>).content.boardId)
     case 'image':
-      return (c as Card<'image'>).content.caption || 'Image'
+      return imageCaption(c as Card<'image'>).split('\n')[0] || 'Image'
+    case 'ink':
+      return 'Canvas drawing'
+    case 'sketch':
+      return (c as Card<'sketch'>).content.title || 'Sketch'
     case 'link': {
       const l = (c as Card<'link'>).content
       return l.title || l.url

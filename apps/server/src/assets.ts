@@ -126,6 +126,10 @@ assets.get('/assets/:id/:size', async (c) => {
   // Private: browsers may cache (bytes never change), shared caches and CDNs may not.
   headers.set('cache-control', 'private, max-age=31536000, immutable')
   headers.set('x-content-type-options', 'nosniff')
+  if (c.req.query('download') === '1') {
+    const ext = ({ 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' } as Record<string, string>)[headers.get('content-type') ?? ''] ?? 'image'
+    headers.set('content-disposition', contentDisposition(`original-${id}.${ext}`))
+  }
   return new Response(obj.body, { headers })
 })
 
