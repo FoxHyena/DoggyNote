@@ -1,6 +1,6 @@
 import { cacheStickerAlpha } from '../ui/StickerImage.tsx'
 import { createEffect, createSignal, onCleanup, onMount } from 'solid-js'
-import { intersects, stickerBounds, stickerHeight, worldToScreen, type Card, type Rect } from '@doggynote/core'
+import { intersects, swatchHex, stickerBounds, stickerHeight, worldToScreen, type Card, type Rect } from '@doggynote/core'
 import { theme as themeSignal } from '../theme.ts'
 import * as doc from '../state/doc.ts'
 import { boardId, camera, selection, viewport } from '../state/ui.ts'
@@ -214,6 +214,20 @@ export function LodLayer() {
         }
         return
       }
+      if (c.type === 'swatch') {
+        // The colour on top, the name/HEX strip under it, as on the card.
+        ctx.fillStyle = bg
+        roundRect(ctx, x, y, w, h, 3 * z * 4)
+        ctx.fill()
+        const ph = Math.min(h, 120 * z)
+        ctx.fillStyle = swatchHex(c as Card<'swatch'>)
+        ctx.fillRect(x, y, w, ph)
+        if (h - ph >= 1) {
+          ctx.fillStyle = pal.muted
+          ctx.fillRect(x + 12 * z, y + ph + (h - ph) * 0.4, w * 0.45, Math.max(1, 7 * z))
+        }
+        return
+      }
       const film = c.type === 'movie' ? (c as Card<'movie'>).content : null
       // A movie card with a title picked (an unpicked one draws like a text card).
       if (film && (film.tmdbId || film.imdbId)) {
@@ -331,7 +345,7 @@ export function LodLayer() {
     selection()
     thumbTick()
     for (const s of doc.stickersOn(boardId())) void (s.x, s.y, s.w, s.angle, s.z, s.content.assetId)
-    for (const c of doc.cardsOn(boardId())) void (c.x, c.y, c.w, c.h, c.z, c.color, c.columnId, c.order, columnCollapsed(c))
+    for (const c of doc.cardsOn(boardId())) void (c.x, c.y, c.w, c.h, c.z, c.color, c.columnId, c.order, columnCollapsed(c), c.type === 'swatch' && (c as Card<'swatch'>).content?.hex)
     if (!frame) frame = requestAnimationFrame(draw)
   })
   onCleanup(() => {

@@ -41,7 +41,7 @@ export function SelectionBar() {
   }
   const editable = () => {
     const c = sole()
-    return !!c && (c.type === 'note' || c.type === 'todo' || c.type === 'column' || c.type === 'image') && doc.canWriteObject(c)
+    return !!c && (c.type === 'note' || c.type === 'todo' || c.type === 'column' || c.type === 'image' || c.type === 'swatch') && doc.canWriteObject(c)
   }
   const canDuplicate = () => cards().length > 0 && cards().every((c) => doc.canWriteObject(c))
   const bury = () => {
@@ -143,7 +143,8 @@ export function SelectionBar() {
           </Show>
         </Show>
         <div class="bar-group bar-style">
-        <Show when={cards().length}>
+        {/* A colour card is its colour: the card tints are for everything else. */}
+        <Show when={cards().some((c) => c.type !== 'swatch')}>
           <div class="swatches" role="group" aria-label="Colour">
             <For each={CARD_COLORS}>
               {(c) => (

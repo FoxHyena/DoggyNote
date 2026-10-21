@@ -48,6 +48,7 @@ export const agentObjectSchema = z.discriminatedUnion('kind', [
     z.strictObject({ ...card, type: z.literal('image'), content: z.strictObject({ assetId: id, width: z.number().positive().finite(), height: z.number().positive().finite(), caption: z.string().max(10_000).optional(), sizes: z.array(rendition).max(4).optional() }) }),
     z.strictObject({ ...card, type: z.literal('file'), content: z.strictObject({ assetId: id, name: z.string().min(1).max(200), size: stamp.max(50 * 1024 * 1024), mime: z.string().max(200), status: z.enum(['ok']).optional(), thumb: z.strictObject({ width: z.number().positive().finite(), height: z.number().positive().finite() }).optional() }) }),
     z.strictObject({ ...card, type: z.literal('movie'), content: movieContent }),
+    z.strictObject({ ...card, type: z.literal('swatch'), content: z.strictObject({ hex: z.string().regex(/^#[0-9A-F]{6}$/), name: z.string().max(1000).optional() }) }),
   ]),
   z.strictObject({ ...common, kind: z.literal('connection'), boardId: id, from: id, to: id, fromSide: z.enum(['top', 'right', 'bottom', 'left']).nullable().optional(), toSide: z.enum(['top', 'right', 'bottom', 'left']).nullable().optional(), arrow: z.enum(['end', 'none']) }),
   z.strictObject({ ...common, kind: z.literal('comment'), boardId: id, cardId: id, authorId: id, author: z.string().max(32), text: z.string().max(20_000), editedAt: stamp.nullable().optional(), resolvedAt: stamp.nullable().optional() }),

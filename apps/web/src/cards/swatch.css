@@ -1,0 +1,30 @@
+/* Colour cards. Only the paint (and the preset dots) are document colour; text and controls use theme tokens. */
+.swatch-card { display: flex; flex-direction: column; }
+.swatch-paint { height: 120px; border-radius: 6px 6px 0 0; border-bottom: 1px solid var(--dn-border); }
+.swatch-meta { padding: 10px 12px 12px; min-width: 0; }
+.swatch-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.swatch-hex { display: block; font-size: 13px; line-height: 1.5; color: var(--dn-text-muted); user-select: text; -webkit-user-select: text; }
+
+/* The panel beside the card while it's being edited. */
+.swatch-panel { display: grid; gap: 10px; width: 232px; }
+.swatch-presets { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.swatch-dot { position: relative; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 1px solid var(--dn-border); border-radius: 50%; color: var(--dn-text-muted); background: transparent; cursor: pointer; }
+.swatch-dot.on { outline: 2px solid var(--dn-selection); outline-offset: 2px; }
+.swatch-dot:focus-visible, .swatch-custom:focus-within { outline: 2px solid var(--dn-selection); outline-offset: 2px; }
+.swatch-fields { display: flex; align-items: center; gap: 8px; }
+.swatch-custom { flex: none; border-style: dashed; }
+.swatch-custom.on { border-style: solid; }
+/* The real picker covers the dot, so a click or tap opens the system colour wheel. */
+.swatch-custom input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+.swatch-input { width: 100%; min-width: 0; padding: 5px 8px; border: 1px solid var(--dn-border); border-radius: 6px; color: var(--dn-text); background: var(--dn-bg); font: inherit; font-size: 13px; }
+.swatch-hex-input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-transform: uppercase; }
+.swatch-input:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 1px; }
+.swatch-input[aria-invalid='true'] { border-color: var(--dn-selection); }
+.swatch-input::placeholder { color: var(--dn-text-muted); }
+
+@media (pointer: coarse) {
+  .swatch-panel { width: 268px; }
+  .swatch-dot { width: 32px; height: 32px; }
+  .swatch-input { min-height: 40px; font-size: 16px; }
+}
+.card.card-swatch.editing { cursor: default; }

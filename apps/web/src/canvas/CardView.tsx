@@ -21,6 +21,7 @@ import { LinkCard } from '../cards/LinkCard.tsx'
 import { ColumnCard } from '../cards/ColumnCard.tsx'
 import { FileCard } from '../cards/FileCard.tsx'
 import { MovieCard } from '../cards/MovieCard.tsx'
+import { SwatchCard } from '../cards/SwatchCard.tsx'
 
 export type CardProps<T extends Card['type'] = Card['type']> = {
   card: Card<T>
@@ -120,6 +121,9 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         </Match>
         <Match when={props.card.type === 'movie'}>
           <MovieCard {...(props2() as CardProps<'movie'>)} />
+        </Match>
+        <Match when={props.card.type === 'swatch'}>
+          <SwatchCard {...(props2() as CardProps<'swatch'>)} />
         </Match>
         <Match when={props.card.type === 'column'}>
           <ColumnCard {...(props2() as CardProps<'column'>)} />

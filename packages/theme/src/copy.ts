@@ -58,6 +58,8 @@ export const COPY = {
   },
   /** Placeholder while typing an image's caption. */
   captionPlaceholder: 'Add a caption…',
+  /** Placeholder for a colour card's name. */
+  swatchNamePlaceholder: 'Name this shade…',
   /** Movie cards. */
   movieSearch: 'Sniff out a movie or show…',
   movieNoMatch: 'No scent of that one. Try another title?',
