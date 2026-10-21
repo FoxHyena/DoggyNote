@@ -1,4 +1,5 @@
 import * as doc from '../state/doc.ts'
+import { nudgeSelection } from '../state/position.ts'
 import { selectAll, trashSelection } from '../state/actions.ts'
 import {
   beginEdit,
@@ -28,8 +29,22 @@ export function installShortcuts(opts: { readOnly: boolean }) {
     const mod = e.metaKey || e.ctrlKey
     const typing = isTyping(e.target)
 
+    // Board controls can keep focus after closing a menu or dialog. Escape still
+    // dismisses canvas state; open menus and text fields keep their keys.
+    const target = e.target as Element | null
+    if (e.key === 'Escape' && !typing && !e.defaultPrevented && !opts.readOnly
+      && target?.closest?.('.topbar, .canvas-controls, .selection-bar')
+      && !target.closest('.menu, [role="menu"]')) {
+      e.preventDefault()
+      if (editingId()) endEdit()
+      else if (connectMode()) setConnectMode(null)
+      else if (trashOpen()) setTrashOpen(false)
+      else clearSelection()
+      return
+    }
+
     // Menu and toolbar buttons keep ordinary typing keys away from canvas edits.
-    if ((e.target as Element)?.closest?.('.menu, .topbar, .canvas-controls, .follow-banner') && !mod) {
+    if ((e.target as Element)?.closest?.('.menu, .topbar, .canvas-controls, .follow-banner, .selection-bar') && !mod) {
       if (e.key === 'Backspace') e.preventDefault()
       return
     }
@@ -64,6 +79,12 @@ export function installShortcuts(opts: { readOnly: boolean }) {
     }
     if (mod && e.key.toLowerCase() === 'y') return void (e.preventDefault(), doc.redo())
     if (mod && e.key.toLowerCase() === 'a') return void (e.preventDefault(), selectAll())
+    if (!mod && !e.altKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key) && selection().size) {
+      e.preventDefault()
+      const step = e.shiftKey ? 10 : 1
+      nudgeSelection(e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0, e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0)
+      return
+    }
     if (e.key === 'Delete' || e.key === 'Backspace') {
       if (selection().size) {
         e.preventDefault()

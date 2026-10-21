@@ -690,3 +690,36 @@ html[data-input='touch'] .share-panel .bar-btn:not(.share-tabs .bar-btn) { paddi
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 11.2c-2.1 0-3.1 2.8-4.6 4.4-1.3 1.4-1.1 3.5.5 4.1 1.5.6 2.7-.5 4.1-.5s2.7 1.1 4.1.5c1.6-.6 1.8-2.7.5-4.1-1.5-1.6-2.5-4.4-4.6-4.4Z'/%3E%3Cellipse cx='5.6' cy='10.2' rx='1.85' ry='2.5' transform='rotate(-30 5.6 10.2)'/%3E%3Cellipse cx='9.6' cy='6.7' rx='1.85' ry='2.5' transform='rotate(-10 9.6 6.7)'/%3E%3Cellipse cx='14.4' cy='6.7' rx='1.85' ry='2.5' transform='rotate(10 14.4 6.7)'/%3E%3Cellipse cx='18.4' cy='10.2' rx='1.85' ry='2.5' transform='rotate(30 18.4 10.2)'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 .trash-empty, .fetch-hint { text-align: center; }
+
+.selection-bar.docked .bar-position .bar-btn { min-height: 44px; }
+/* Mixed lock actions must not push the alignment picker off a phone screen. */
+.selection-bar.docked .bar-position { flex-wrap: wrap; overflow: visible; }
+
+/* Phones: icon actions are compact 44px targets on one row that scrolls sideways if it
+   must, so a few icons never stretch into rows of oversized cells. Labelled buttons
+   (Edit, More, …) keep their stacked icon-over-label shape. */
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  .selection-bar.docked .bar-actions { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; gap: 4px; }
+  .selection-bar.docked .bar-actions .bar-btn { flex: 0 0 auto; }
+  .selection-bar.docked .bar-actions .bar-btn:not(.bar-icon) { min-width: 56px; white-space: nowrap; }
+  .selection-bar.docked :is(.bar-actions, .bar-position) .bar-btn.bar-icon {
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 12px;
+  }
+  /* Done stays in reach at the end of the row while the actions scroll beneath it. */
+  .selection-bar.docked .bar-actions .bar-done {
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    margin-left: auto;
+    margin-top: 0;
+    align-self: center;
+    background: var(--dn-panel);
+    box-shadow: -8px 0 8px -4px var(--dn-panel);
+  }
+}

@@ -4,9 +4,8 @@ import { For, Show, createMemo, createSignal, createEffect, onCleanup, onMount }
 import { HOME_BOARD_ID, cardText, type Id } from '@doggynote/core'
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
-import { openBoard, select, setPaletteOpen, viewport } from '../state/ui.ts'
-import { animateCamera } from '../canvas/Canvas.tsx'
-import { cardHeight } from '../canvas/layout.ts'
+import { openBoard, setPaletteOpen } from '../state/ui.ts'
+import { revealCard } from '../state/columns.ts'
 import { BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
 
 // ⌘K "Fetch": search every board title and card text, jump to the result.
@@ -43,16 +42,8 @@ export function jumpTo(hit: Hit) {
   setPaletteOpen(false)
   openBoard(hit.boardId)
   if (hit.kind === 'board') return
-  // After the board switch has set its camera, centre on the card.
-  setTimeout(() => {
-    const c = doc.getCard(hit.id)
-    if (!c) return
-    const target = c.columnId ? (doc.getCard(c.columnId) ?? c) : c
-    const v = viewport()
-    const zoom = 1
-    animateCamera({ x: target.x + target.w / 2 - v.width / 2 / zoom, y: target.y + cardHeight(target) / 2 - v.height / 2 / zoom, zoom })
-    select([c.id])
-  }, 30)
+  // Opens a collapsed column if it hides the card, then centres and focuses it.
+  revealCard(hit.id)
 }
 
 export function FetchPalette() {
@@ -124,7 +115,9 @@ export function FetchPalette() {
                   classList={{ active: i() === active() }}
                   data-testid="fetch-hit"
                   onPointerEnter={() => setActive(i())}
-                  onClick={() => jumpTo(h)}
+                  // A direct listener, not Solid's document-level delegation: touch
+                  // WebKit only turns a tap into a click on an element that listens itself.
+                  on:click={() => jumpTo(h)}
                 >
                   <span class="fetch-icon">
                     <Show when={h.kind === 'board'} fallback={<Icon size={16}>{ToolIcons.note()}</Icon>}>

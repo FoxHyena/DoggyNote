@@ -96,6 +96,10 @@ html[data-input="mouse"] .tool:hover {
   animation: pop-in 140ms ease-out;
 }
 
+/* One line whenever it fits. A crowded selection on a narrow window wraps rather
+   than hiding actions behind a sideways scroll. DOM and keyboard order are unchanged. */
+.selection-bar:not(.docked) { flex-wrap: wrap; }
+
 @keyframes pop-in {
   from {
     opacity: 0;
@@ -576,3 +580,20 @@ html[data-input="mouse"] .fetch-close:hover { color: var(--dn-text); background:
 @media (pointer: coarse) {
   .fetch-close { min-width: 44px; min-height: 44px; }
 }
+
+/* Position controls stay first in the selection toolbar. */
+.bar-position { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.position-lock-status { color: var(--dn-text-muted); font-size: 12px; }
+.position-lock-badge { position: absolute; top: 6px; right: 6px; z-index: 2; border: 1px solid var(--dn-border); border-radius: 5px; background: var(--dn-panel); color: var(--dn-text); font-size: 16px; line-height: 20px; width: 22px; text-align: center; pointer-events: none; }
+
+/* Icon-only selection-bar actions and the align group. */
+.selection-bar .bar-icon { display: inline-grid; place-items: center; min-width: 32px; min-height: 32px; padding: 0; }
+/* Icon buttons sit edge to edge, so the pointer never drops into a gap between them. */
+.selection-bar:not(.docked) { gap: 0; }
+.selection-bar:not(.docked) .swatches { margin: 0 8px; }
+.selection-bar:not(.docked) .bar-sep { margin: 0 6px; }
+.selection-bar .bar-align { display: flex; }
+.dn-tooltip { position: fixed; z-index: 1000; max-width: 260px; padding: 4px 8px; border: 1px solid var(--dn-border); border-radius: 6px; background: var(--dn-panel); color: var(--dn-text); box-shadow: 0 4px 12px rgb(0 0 0 / 0.2); font-size: 12px; line-height: 1.35; white-space: normal; pointer-events: none; animation: tip-in 120ms ease-out; }
+/* Fades in where it stands: pop-in carries the toolbar's -50% centring shift. */
+@keyframes tip-in { from { opacity: 0; transform: translateY(2px); } }
+@media (prefers-reduced-motion: reduce) { .dn-tooltip { animation: none; } }

@@ -723,6 +723,11 @@ html[data-input='mouse'] .connect-handle:hover {
 .note-editor .cm-md-taskslot .cm-md-task { margin: 0; }
 /* List lines indent by depth, as .rich lists do, with a hanging indent for wraps. */
 .note-editor .cm-md-li { padding-left: calc(var(--li-depth) * 1.3em) !important; text-indent: -1.3em; }
+/* Match the rendered note (.rich): blank lines become the paragraph gap, headings get their margins. */
+.note-editor .cm-line.cm-md-gap { line-height: 0.4em; }
+.note-editor .cm-line.cm-md-h1,
+.note-editor .cm-line.cm-md-h2,
+.note-editor .cm-line.cm-md-h3 { padding: 0.2em 0 0.35em; }
 .note-editor .cm-md-task {
   margin: 0 6px 0 0;
   accent-color: var(--dn-accent);
@@ -1146,7 +1151,11 @@ html[data-input="mouse"] .link-title:hover {
 }
 
 .column-head {
-  padding: 10px 12px 8px;
+  position: relative;
+  height: calc(var(--column-header) - 2px);
+  box-sizing: border-box;
+  /* Same room on both sides, so the title and count centre under the card, not beside the chevron. */
+  padding: 10px 46px 8px;
   text-align: center;
   border-radius: 6px 6px 0 0;
 }
@@ -1158,7 +1167,29 @@ html[data-input="mouse"] .link-title:hover {
 
 .column-title {
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+.column-heading { min-width: 0; }
+.column-toggle {
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.column-toggle:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+.column-toggle:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: -2px; }
+.column.collapsed .column-head { border-radius: 6px; }
 
 .column-title-input {
   text-align: center;
@@ -2315,7 +2346,7 @@ html[data-input='mouse'] [data-tooltip]:hover::after, [data-tooltip]:focus-visib
   .topbar { display: grid; grid-template-columns: 1fr; gap: 0; padding: 4px 8px; }
   .topbar-left { width: 100%; }
   .topbar-right { justify-content: flex-end; width: 100%; }
-  .topbar .board-navigation .icon-btn-label, .boards-caret { display: none; }
+  .topbar .board-navigation .icon-btn-label, .topbar .boards-caret { display: none; }
   .topbar .crumb.current { max-width: 54vw; }
   .topbar .board-heading { gap: 2px; }
   .topbar .share-permission { font-size: 10px; padding: 0 3px; }
@@ -2346,3 +2377,10 @@ html[data-input='mouse'] [data-tooltip]:hover::after, [data-tooltip]:focus-visib
 @media (pointer: coarse) and (max-width: 599px) {
   .app { grid-template-rows: 104px 1fr; }
 }
+
+/* An SVG chevron centred on the label, not a text glyph sitting on the baseline. */
+.boards-caret { display: inline-grid; place-items: center; margin-left: -2px; color: var(--dn-text-muted); }
+.recovery-actions { display: flex; gap: 6px; margin-bottom: 10px; }
+
+/* A column body mid-slide: clip its cards and keep their layout to itself. */
+.column-body.sliding { overflow: hidden; contain: layout paint; will-change: height; }

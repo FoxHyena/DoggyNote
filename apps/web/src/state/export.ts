@@ -6,6 +6,7 @@ import { API_BASE, apiRaw, hasBearer } from './api.ts'
 import { isTauri } from './platform.ts'
 import { boardId, clearSelection, endEdit, select, selection } from './ui.ts'
 import { rectOf } from '../canvas/layout.ts'
+import { connectionEndpoint } from './columns.ts'
 
 // Export the board (or the selection) as a PNG. While `exporting` is on, the
 // canvas mounts every card at full detail (no culling, no overview mode); the
@@ -88,7 +89,7 @@ export async function renderPng(opts: ExportOptions): Promise<Rendered> {
     const root = getComputedStyle(document.documentElement)
     const keepNode = (n: Node) => {
       if (!(n instanceof Element)) return true
-      if (n.matches('.connect-handle, .resize-handle, .comment-badge, .grid-glow, .sticker-selection-layer, .sticker-selection, .sticker-accessible-pick')) return false
+      if (n.matches('.connect-handle, .resize-handle, .comment-badge, .column-toggle, .position-lock-badge, .grid-glow, .sticker-selection-layer, .sticker-selection, .sticker-accessible-pick')) return false
       const sticker = n.getAttribute('data-sticker-id')
       if (sticker && !keep.has(sticker)) return false
       const card = n.getAttribute('data-card-id')
@@ -96,7 +97,10 @@ export async function renderPng(opts: ExportOptions): Promise<Rendered> {
       const conn = n.getAttribute('data-connection-id')
       if (conn) {
         const c = doc.get(conn)
-        if (!c || c.kind !== 'connection' || !keep.has(c.from) || !keep.has(c.to)) return false
+        if (!c || c.kind !== 'connection') return false
+        // A member hidden in a collapsed column is drawn at its column.
+        const inScope = (id: Id) => { const endpoint = connectionEndpoint(id); return !!endpoint && (keep.has(endpoint) || keep.has(doc.getCard(endpoint)?.columnId ?? '')) }
+        if (!inScope(c.from) || !inScope(c.to)) return false
       }
       return true
     }

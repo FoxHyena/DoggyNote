@@ -2,6 +2,7 @@ import { createSignal } from 'solid-js'
 import type { Obj } from '@doggynote/core'
 import * as doc from './doc.ts'
 import * as idb from './idb.ts'
+import { showToast } from './toast.ts'
 import { ApiError, api } from './api.ts'
 import { accessRevision, canEditBoard, refreshAccess } from './access.ts'
 import { loadRecovery, preserveActiveEdit, preserveDenied } from './recovery.ts'
@@ -54,6 +55,11 @@ async function push() {
       if (error instanceof ApiError && error.status === 403 && Array.isArray(error.details.deniedIds)) {
         await preserveDenied(error.details.deniedIds as string[], error.message)
         await refreshAccess()
+        continue
+      }
+      if (error instanceof ApiError && error.status === 409 && Array.isArray(error.details.lockedIds) && Array.isArray(error.details.objects)) {
+        doc.reconcileLockedPositions(error.details.lockedIds as string[], error.details.objects as Obj[], pending)
+        showToast('A position was locked in another session. Its layout was kept; your content edits are still saved.')
         continue
       }
       if (error instanceof ApiError && error.status === 409) {
