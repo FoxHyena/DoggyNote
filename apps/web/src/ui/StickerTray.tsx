@@ -7,6 +7,7 @@ import { showToast } from '../state/toast.ts'
 import { openPack, packLoad, preparePack, readyCount } from '../state/packLoading.ts'
 import { armedSticker, armSticker, canvasStickerPoint, collectionLoaded, favoriteSticker, openStickers, packs, placeSticker, preferences, refreshStickers, refreshTelegram, selectedPack, setSelectedPack, setStickerGhost, setStickerTrayOpen, setStickerTrayPinned, stickerTrayOpen, stickerTrayPinned, STICKER_TOUCH_OFFSET, suggestions, trayScroll, trayHorizontalScroll, telegramStatus, type PackSticker, type TelegramStatus } from '../state/stickers.ts'
 import { StickerImage } from './StickerImage.tsx'
+import { StickerGrid } from './StickerGrid.tsx'
 import { stickerAt, stickerRingAt } from '../canvas/StickerLayer.tsx'
 import { BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
 
@@ -30,6 +31,7 @@ export function StickerTray() {
   let root: HTMLElement | undefined, scroll: HTMLDivElement | undefined, restoreFocus: HTMLElement | null = null
   let previewFocus: HTMLElement | null = null
   let previewAsset: string | null = null
+  let focusGridSticker: ((assetId: string) => void) | undefined
   let clearPreviewRelease = () => {}
   const guardPreviewRelease = () => {
     clearPreviewRelease()
@@ -53,6 +55,7 @@ export function StickerTray() {
   }
   onCleanup(() => clearPreviewRelease())
   const focusPreviewOrigin = () => {
+    if (previewAsset && focusGridSticker) { focusGridSticker(previewAsset); return }
     const target = previewFocus?.isConnected ? previewFocus : root?.querySelector<HTMLElement>(`[data-sticker-asset="${previewAsset}"]`)
     target?.focus({ preventScroll: true })
   }
@@ -99,6 +102,7 @@ export function StickerTray() {
     if (selectedPack() === 'recent') return list.filter((s) => pref.get(s.assetId)?.recentAt).sort((a, b) => (pref.get(b.assetId)?.recentAt ?? 0) - (pref.get(a.assetId)?.recentAt ?? 0)).slice(0, 48)
     return list.filter((s) => s.packName === selectedPack())
   })
+  const shelf = () => phone() && mode() === 'collection' && !large() && !error() && !busy() && shown().length > 0 && !suggestions.length
   const added = () => !!packs().find((p) => p.name.toLowerCase() === preview()?.name.toLowerCase())
   const backMode = () => mode() === 'pack' ? packReturnMode() : mode() === 'bot' ? 'add' : 'collection'
   const backLabel = () => ({ collection: 'Back to your collection', add: 'Back to add a pack', bot: 'Back to Telegram' })[backMode()]
@@ -222,7 +226,7 @@ export function StickerTray() {
     </div>
   }
   return <Show when={stickerTrayOpen()}>
-    <aside ref={root} id="sticker-tray" class="sticker-tray" classList={{ 'sticker-shelf': phone() && mode() === 'collection' && !large() && !error() && !busy() && shown().length > 0 && !suggestions.length, 'sticker-browsing': mode() === 'collection' && !large() && !error() && !busy() }} aria-label="Stickers" data-testid="sticker-tray" onPointerDown={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key !== 'Escape') e.stopPropagation() }}>
+    <aside ref={root} id="sticker-tray" class="sticker-tray" classList={{ 'sticker-shelf': shelf(), 'sticker-browsing': mode() === 'collection' && !large() && !error() && !busy() }} aria-label="Stickers" data-testid="sticker-tray" onPointerDown={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key !== 'Escape') e.stopPropagation() }}>
       <header class="sticker-head">
         <Show when={large()} fallback={<Show when={mode() !== 'collection'} fallback={<h2>Stickers</h2>}><div class="sticker-preview-heading"><button class="icon-btn" aria-label={backLabel()} onClick={() => changeMode(backMode())}><Icon class="sticker-back-icon">{ToolIcons.open()}</Icon></button><h2>{mode() === 'add' ? 'Add pack' : mode() === 'bot' ? 'Telegram' : 'Pack preview'}</h2></div></Show>}>
           <div class="sticker-preview-heading">
@@ -256,9 +260,10 @@ export function StickerTray() {
           <div class="sticker-pack-strip" aria-label="Your sticker packs"><button classList={{ active: selectedPack() === 'recent' }} aria-pressed={selectedPack() === 'recent'} onClick={() => choosePack('recent')}>Recent</button><button classList={{ active: selectedPack() === 'favorites' }} aria-pressed={selectedPack() === 'favorites'} onClick={() => choosePack('favorites')}>★ Favorites</button><For each={packs()}>{(p) => <button classList={{ active: selectedPack() === p.name }} aria-pressed={selectedPack() === p.name} aria-label={p.title} title={p.title} onClick={() => choosePack(p.name)}><Show when={p.stickers.find((s) => s.available)} keyed>{(s) => <StickerImage sticker={s} />}</Show></button>}</For></div>
           <Show when={currentPack()}><div class="sticker-pack-title"><strong>{currentPack()!.title}</strong><button class="bar-btn" aria-label={`Remove ${currentPack()!.title}`} onClick={remove}>Remove</button></div></Show>
           <Show when={currentPack()?.stickers.some((s) => !s.available)}><div class="sticker-availability"><span>{currentPack()!.stickers.filter((s) => s.available).length} of {currentPack()!.stickers.length} stickers ready.</span><button class="bar-btn" disabled={busy() || !!retrySeconds()} onClick={() => void resolvePack(currentPack()!.name)}>Retry unavailable stickers</button></div></Show>
-          <div class="sticker-scroll" ref={scroll} onScroll={saveScroll}>
-            <Show when={shown().length} fallback={<Show when={collectionLoaded() || packs().length} fallback={<p class="sticker-loading-collection" role="status">Loading your stickers…</p>}><div class="sticker-empty"><span aria-hidden="true">✦</span><h3>{query() ? 'No stickers found' : packs().length ? selectedPack() === 'favorites' ? 'Keep your favorites here' : 'Make your first mark' : 'Make room for a little fun'}</h3><p>{query() ? 'Try a pack name or an emoji from your collection.' : packs().length ? 'Choose a pack above. Stickers you place appear in Recent.' : 'Bring in a Telegram pack, then decorate your board.'}</p><Show when={!packs().length}><button class="primary-btn" onClick={() => changeMode('add')}>Add pack</button><small>Try t.me/addstickers/Animals</small></Show></div></Show>}><div class="sticker-grid"><For each={shown()}>{(s) => <Tile sticker={s} />}</For></div></Show>
-          </div>
+          <Show when={shown().length} fallback={<div class="sticker-scroll"><Show when={collectionLoaded() || packs().length} fallback={<p class="sticker-loading-collection" role="status">Loading your stickers…</p>}><div class="sticker-empty"><span aria-hidden="true">✦</span><h3>{query() ? 'No stickers found' : packs().length ? selectedPack() === 'favorites' ? 'Keep your favorites here' : 'Make your first mark' : 'Make room for a little fun'}</h3><p>{query() ? 'Try a pack name or an emoji from your collection.' : packs().length ? 'Choose a pack above. Stickers you place appear in Recent.' : 'Bring in a Telegram pack, then decorate your board.'}</p><Show when={!packs().length}><button class="primary-btn" onClick={() => changeMode('add')}>Add pack</button><small>Try t.me/addstickers/Animals</small></Show></div></Show></div>}>
+            <StickerGrid stickers={shown()} horizontal={shelf()} ref={(el) => { scroll = el }} focusRef={(focus) => { focusGridSticker = focus }} onScroll={saveScroll}
+              initialScroll={{ x: trayHorizontalScroll.get(selectedPack()) ?? 0, y: trayScroll.get(selectedPack()) ?? 0 }}>{(s) => <Tile sticker={s} />}</StickerGrid>
+          </Show>
         </Show>
         <Show when={mode() === 'add'}><div class="sticker-add">
           <div class="sticker-flow-intro"><h3>Add a sticker pack</h3><p>Preview a pack, then save it to your collection.</p></div>
@@ -284,7 +289,7 @@ export function StickerTray() {
             <Show when={preview()!.stickers.some((s) => !!s.animationError)}><p>Some animations use a transparent still. Every available sticker can be placed.</p></Show>
             <Show when={preview()!.stickers.some((s) => !s.available) && !preparingPreview()}><div class="sticker-pack-recovery"><p>Some stickers are unavailable. Your boards keep every sticker already placed.</p><button class="bar-btn" disabled={!!retrySeconds()} onClick={() => { setError(''); void preparePack(preview()!.name) }}>Retry unavailable stickers</button></div></Show>
           </div>
-          <div class="sticker-scroll"><div class="sticker-grid"><For each={preview()!.stickers}>{(s) => <Tile sticker={s} />}</For></div></div>
+          <StickerGrid stickers={preview()!.stickers} focusRef={(focus) => { focusGridSticker = focus }}>{(s) => <Tile sticker={s} />}</StickerGrid>
           <div class="sticker-pack-actions">
             <Show when={busy() || preparingPreview()}><p role="status">{busy() ? 'Saving pack…' : `Preparing stickers · ${readyCount(preview()!)} of ${preview()!.stickers.length} ready…`}</p></Show>
             <Show when={added()} fallback={<button class="primary-btn sticker-primary-action" disabled={busy() || !preview()!.stickers.some((s) => s.available)} onClick={addPack}>Add pack</button>}><button class="primary-btn sticker-primary-action" onClick={() => { choosePack(preview()!.name); changeMode('collection') }}>Open pack</button></Show>

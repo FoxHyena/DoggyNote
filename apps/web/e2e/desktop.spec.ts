@@ -2,6 +2,7 @@ import { waitForSync } from './helpers.ts'
 import { expect, test } from '@playwright/test'
 import { addNote, cardByText, freshBoard } from './helpers.ts'
 import { API_PORT, DESKTOP_PORT } from './ports.ts'
+import { openStickerTray } from './sticker-helpers.ts'
 
 // The desktop app's code path: no cookies, a bearer token kept by the native
 // side (Keychain), API calls cross-origin to the server. We stand in for the
@@ -153,6 +154,43 @@ test('desktop: zoomed-out overview draws image thumbnails loaded cross-origin', 
     .toBeGreaterThan(20)
   await page.waitForTimeout(500)
   await expect(page.getByTestId('lod-layer')).toHaveAttribute('data-thumbs', '1')
+})
+
+test('desktop: static sticker outlines load cross-origin with an asset token and survive overview zoom', async ({ page, context }) => {
+  await page.goto('/')
+  await page.getByLabel('Username').fill('rex')
+  await page.getByLabel('Password').fill('goodboy123')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page.getByTestId('canvas')).toBeVisible()
+  await freshBoard(page)
+  await openStickerTray(page)
+  const tray = page.getByTestId('sticker-tray')
+  await tray.getByRole('button', { name: 'Add pack', exact: true }).first().click()
+  await tray.getByLabel('Pack link or short name').fill('DoggyFixture')
+  const imageRequest = page.waitForRequest((r) => r.url().includes('/api/assets/') && r.url().includes('/thumb?t='))
+  await tray.getByRole('button', { name: 'Preview pack', exact: true }).click()
+  const image = tray.getByTestId('sticker-pick').first().locator('img')
+  await expect(image).toHaveAttribute('src', /^blob:/)
+  expect((await imageRequest).url()).toMatch(new RegExp(`^http://localhost:${API_PORT}/api/assets/`))
+  expect((await context.cookies()).filter((c) => c.name === 'dn_session')).toHaveLength(0)
+  await tray.getByRole('button', { name: /^(Add pack|Open pack)$/ }).click()
+  await expect(tray.locator('.sticker-pack-title')).toContainText('Doggy daydreams')
+  await tray.getByTestId('sticker-pick').first().focus()
+  await page.keyboard.press('Enter')
+  await page.getByRole('button', { name: 'Place at center', exact: true }).click()
+  await expect(page.getByTestId('placed-sticker').locator('img')).toHaveAttribute('src', /^blob:/)
+  await waitForSync(page)
+  const box = (await page.getByTestId('canvas').boundingBox())!
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.keyboard.down('Control')
+  for (let i = 0; i < 4; i++) await page.mouse.wheel(0, 80)
+  await page.keyboard.up('Control')
+  await expect(page.getByTestId('lod-layer')).toHaveAttribute('data-thumbs', '1')
+  await expect(page.getByRole('button', { name: 'Zoom: 10%', exact: true })).toBeVisible()
+  await page.getByTestId('zoom').click()
+  await page.getByRole('button', { name: 'Zoom to 100% ⌘0', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Zoom: 100%', exact: true })).toBeVisible()
+  await expect(page.getByTestId('placed-sticker').locator('img')).toHaveAttribute('src', /^blob:/)
 })
 
 test('desktop: a newer release downloads in the background, then restarts on request', async ({ page }) => {

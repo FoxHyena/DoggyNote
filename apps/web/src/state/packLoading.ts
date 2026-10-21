@@ -1,8 +1,9 @@
 import { createEffect, createRoot, untrack } from 'solid-js'
-import { createStore } from 'solid-js/store'
+import { createStore, reconcile } from 'solid-js/store'
 import { ApiError, api } from './api.ts'
 import { user } from './session.ts'
 import { packs, refreshStickers, suggestions, type StickerPack } from './stickers.ts'
+import { requestPool } from './requestPool.ts'
 
 /** One pack's preview manifest and preparation progress, shared by every view of it. */
 export type PackLoad = { pack: StickerPack; preparing: boolean; error: string; retryAt: number }
@@ -12,11 +13,15 @@ export const packLoad = (name: string | null | undefined): PackLoad | undefined 
 export const readyCount = (pack: StickerPack) => pack.stickers.filter((s) => s.available).length
 
 let generation = 0, running = 0
+let controller = new AbortController()
+// One budget for suggested packs and packs opened manually, not two per pack.
+const loadRequests = requestPool(2)
 const opening = new Map<string, Promise<StickerPack>>(), preparing = new Map<string, Promise<void>>()
 // Packs sent from Telegram start preparing as soon as the app sees them, two packs at a time.
 const queue: string[] = [], queued = new Set<string>()
 createRoot(() => createEffect(() => {
   user()?.id
+  controller.abort(); controller = new AbortController()
   generation++; opening.clear(); preparing.clear(); queue.length = 0; queued.clear(); running = 0
   untrack(() => setLoads(Object.fromEntries(Object.keys(loads).map((k) => [k, undefined])) as unknown as Record<string, PackLoad>))
 }))
@@ -29,9 +34,13 @@ export function openPack(name: string, fresh = false): Promise<StickerPack> {
   if (pending) return pending
   const current = generation
   const result = api<{ pack: StickerPack }>('/api/stickers/preview', { method: 'POST', json: { link: name } }).then(({ pack }) => {
-    if (current === generation) setLoads(key(pack.name), (old) => old ? { ...old, pack: merge(old.pack, pack) } : { preparing: false, error: '', retryAt: 0, pack })
+    if (current === generation) {
+      const k = key(pack.name)
+      if (loads[k]) updatePack(k, pack)
+      else setLoads(k, { preparing: false, error: '', retryAt: 0, pack })
+    }
     return pack
-  }).finally(() => opening.delete(k))
+  }).finally(() => { if (current === generation) opening.delete(k) })
   opening.set(k, result)
   return result
 }
@@ -39,7 +48,12 @@ export function openPack(name: string, fresh = false): Promise<StickerPack> {
 // Concurrent responses can be older snapshots: never roll a ready sticker back.
 function merge(old: StickerPack | undefined, next: StickerPack): StickerPack {
   const known = new Map(old?.stickers.map((s) => [s.assetId, s]))
-  return { ...next, stickers: next.stickers.map((s) => known.get(s.assetId)?.available ? known.get(s.assetId)! : s) }
+  return { ...next, stickers: next.stickers.map((s) => known.get(s.assetId)?.available && !s.available ? known.get(s.assetId)! : s) }
+}
+function updatePack(k: string, next: StickerPack) {
+  // Reconcile even unavailable entries: a new progress snapshot must not remount
+  // pending tiles, lose focus, or interrupt a held pointer.
+  setLoads(k, 'pack', reconcile(merge(loads[k]?.pack, next), { key: 'assetId' }))
 }
 
 /** Prepares a previewed pack's stickers in steps of three, two requests at a time. */
@@ -48,7 +62,7 @@ export function preparePack(name: string): Promise<void> {
   if (running) return running
   const load = loads[k]
   if (!load || load.retryAt > Date.now()) return Promise.resolve()
-  const current = generation, step = 3, pack = load.pack
+  const current = generation, signal = controller.signal, step = 3, pack = load.pack
   const ranges = Array.from({ length: Math.ceil(pack.stickers.length / step) }, (_, i) => i * step)
     .filter((i) => pack.stickers.slice(i, i + step).some((s) => !s.available))
   setLoads(k, { preparing: true, error: '', retryAt: 0 })
@@ -57,8 +71,14 @@ export function preparePack(name: string): Promise<void> {
     while (current === generation && !failure && next < ranges.length) {
       const offset = ranges[next++]
       try {
-        const result = await api<{ pack: StickerPack }>(`/api/stickers/packs/${encodeURIComponent(pack.name)}/load`, { method: 'POST', json: { offset, count: step } })
-        if (current === generation) setLoads(k, 'pack', (old) => merge(old, result.pack))
+        await loadRequests(async () => {
+          // A sibling request may have been rate limited while this one waited.
+          if (failure || current !== generation) return
+          try {
+            const result = await api<{ pack: StickerPack }>(`/api/stickers/packs/${encodeURIComponent(pack.name)}/load`, { method: 'POST', json: { offset, count: step }, signal })
+            if (current === generation) updatePack(k, result.pack)
+          } catch (e) { failure ??= e }
+        }, signal)
       } catch (e) { failure ??= e }
     }
   }
@@ -72,7 +92,7 @@ export function preparePack(name: string): Promise<void> {
     })
     // A pack added while it was still preparing refreshes its collection entry once it finishes.
     if (packs().some((p) => key(p.name) === k)) void refreshStickers().catch(() => {})
-  }).finally(() => preparing.delete(k))
+  }).finally(() => { if (current === generation) preparing.delete(k) })
   preparing.set(k, work)
   return work
 }

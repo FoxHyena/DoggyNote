@@ -7,6 +7,8 @@ import { boardId, camera, selection, viewport } from '../state/ui.ts'
 import { columnChildren } from '../state/actions.ts'
 import { assetUrl } from '../state/api.ts'
 import { acquireUrl, releaseUrl } from '../state/assets.ts'
+import { acquireStickerOutline } from '../state/stickerOutline.ts'
+import { user } from '../state/session.ts'
 import { COLUMN_HEADER, COLUMN_INSET, cardHeight } from './layout.ts'
 
 // Zoomed out, a board can put a thousand cards on screen. As DOM that costs
@@ -42,6 +44,8 @@ const CELL_H = 84
 const COLS = 16
 type Slot = { sx: number; sy: number; sw: number; sh: number }
 const slots = new Map<string, Slot | 'loading'>()
+const outlineLoads = new Map<string, () => void>()
+let atlasGeneration = 0
 let atlas: HTMLCanvasElement | null = null
 let nextCell = 0
 const [thumbTick, setThumbTick] = createSignal(0)
@@ -64,10 +68,18 @@ function atlasFor(cell: number): HTMLCanvasElement {
   return atlas
 }
 
-function loadThumb(assetId: string, sticker = false) {
-  void acquireUrl(assetId, 'thumb')
-    .catch(() => assetUrl(assetId, 'thumb'))
+function loadThumb(assetId: string, key: string, sticker: boolean, outlined: boolean) {
+  const generation = atlasGeneration
+  const render = outlined ? acquireStickerOutline(assetId, user()?.id ?? null) : undefined
+  if (render) outlineLoads.set(key, render.release)
+  void (render?.url ?? acquireUrl(assetId, 'thumb').catch(() => assetUrl(assetId, 'thumb')))
     .then((src) => {
+      const release = () => {
+        if (outlineLoads.get(key) === render?.release) outlineLoads.delete(key)
+        if (render) render.release()
+        else if (src.startsWith('blob:')) releaseUrl(src)
+      }
+      if (generation !== atlasGeneration) { release(); return }
       // <img> rather than fetch(): it's the path that works everywhere, including
       // the desktop webview loading cross-origin from the server.
       const img = new Image()
@@ -75,7 +87,7 @@ function loadThumb(assetId: string, sticker = false) {
       // CORS-clean, so the atlas isn't tainted (the server allows the desktop origin).
       img.crossOrigin = 'anonymous'
       img.onload = () => {
-        if (slots.get(assetId) === 'loading') {
+        if (generation === atlasGeneration && slots.get(key) === 'loading') {
           if (sticker) cacheStickerAlpha(assetId, img)
           const scale = Math.min(CELL_W / img.naturalWidth, CELL_H / img.naturalHeight)
           const sw = Math.max(1, Math.round(img.naturalWidth * scale))
@@ -85,7 +97,7 @@ function loadThumb(assetId: string, sticker = false) {
           const sx = (cell % COLS) * CELL_W
           const sy = Math.floor(cell / COLS) * CELL_H
           a.getContext('2d')!.drawImage(img, sx, sy, sw, sh)
-          slots.set(assetId, { sx, sy, sw, sh })
+          slots.set(key, { sx, sy, sw, sh })
           setThumbsLoaded((n) => n + 1)
           setThumbTick((n) => n + 1)
         }
@@ -94,27 +106,36 @@ function loadThumb(assetId: string, sticker = false) {
         // reload it forever.
         img.onload = img.onerror = null
         img.src = ''
-        if (src.startsWith('blob:')) releaseUrl(src)
+        release()
       }
       img.onerror = () => {
-        slots.delete(assetId)
-        if (src.startsWith('blob:')) releaseUrl(src)
+        if (generation === atlasGeneration) slots.delete(key)
+        release()
       }
       img.src = src
+    }).catch(() => {
+      if (generation === atlasGeneration) slots.delete(key)
+      if (outlineLoads.get(key) === render?.release) outlineLoads.delete(key)
+      render?.release()
     })
 }
 
-function thumb(assetId: string, sticker = false): Slot | null {
-  const t = slots.get(assetId)
+function thumb(assetId: string, sticker = false, outlined = false): Slot | null {
+  // An image card can use the same source asset without the sticker decoration.
+  const key = outlined ? `outline:${assetId}` : assetId
+  const t = slots.get(key)
   if (t && t !== 'loading') return t
   if (!t) {
-    slots.set(assetId, 'loading')
-    loadThumb(assetId, sticker)
+    slots.set(key, 'loading')
+    loadThumb(assetId, key, sticker, outlined)
   }
   return null
 }
 
 function clearThumbs() {
+  atlasGeneration++
+  for (const release of outlineLoads.values()) release()
+  outlineLoads.clear()
   slots.clear()
   nextCell = 0
   if (atlas) atlas.width = atlas.height = 0
@@ -275,7 +296,7 @@ export function LodLayer() {
     // Stickers remain independent overlays above every ordinary card at overview.
     for (const s of [...doc.stickersOn(boardId())].sort((a, b) => a.z - b.z || a.id.localeCompare(b.id))) {
       if (!intersects(view, stickerBounds(s))) continue
-      const t = thumb(s.content.assetId, true)
+      const t = thumb(s.content.assetId, true, s.content.format === 'static')
       if (!t || !atlas) continue
       const h = stickerHeight(s), p = worldToScreen(cam, { x: s.x + s.w / 2, y: s.y + h / 2 })
       ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(s.angle * Math.PI / 180)
