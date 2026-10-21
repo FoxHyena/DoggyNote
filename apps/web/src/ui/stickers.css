@@ -1,5 +1,8 @@
 /* Sticker surfaces inherit the app palette. Static outlines are cached pixels. */
 .sticker-tray { position: absolute; z-index: 40; left: 14px; top: 14px; width: 358px; max-width: calc(100% - 28px); max-height: calc(100% - 100px); display: flex; flex-direction: column; border: 1px solid var(--dn-border); border-radius: 18px; background: var(--dn-panel); color: var(--dn-text); box-shadow: 0 12px 36px color-mix(in srgb, var(--dn-text) 12%, transparent); overflow: hidden; }
+/* Its own layer: while the board pans, .world is composited (will-change), and
+   WKWebView then painted placed stickers over the tray's grid. One small layer. */
+.sticker-tray { isolation: isolate; will-change: transform; }
 .sticker-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; flex-shrink: 0; }
 .sticker-head h2 { margin: 0; font-size: 18px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sticker-head-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }

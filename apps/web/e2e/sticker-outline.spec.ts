@@ -9,7 +9,7 @@ async function pixels(image: Locator) {
     const canvas = document.createElement('canvas'); canvas.width = img.naturalWidth; canvas.height = img.naturalHeight
     const ctx = canvas.getContext('2d')!; ctx.drawImage(img, 0, 0)
     const pixel = (x: number, y: number) => [...ctx.getImageData(x, y, 1, 1).data]
-    return { width: canvas.width, height: canvas.height, border: pixel(64, 131), center: pixel(131, 131), corner: pixel(0, 0) }
+    return { width: canvas.width, height: canvas.height, border: pixel(64, 131), center: pixel(131, 131), corner: pixel(0, 0), nearShadow: pixel(131, 21) }
   })
 }
 
@@ -19,6 +19,8 @@ test('static outlines are cached pixels, preserve transparency and leave animate
   const png = await page.evaluate(() => {
     const c = document.createElement('canvas'); c.width = c.height = 256
     const ctx = c.getContext('2d')!; ctx.fillStyle = '#e02020'; ctx.fillRect(64, 64, 128, 128)
+    // A faint, soft shadow band (10% alpha) must not grow a white halo.
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; ctx.fillRect(64, 20, 128, 30)
     return c.toDataURL('image/png').split(',')[1]
   })
   let sourceRequests = 0, workers = 0
@@ -31,7 +33,7 @@ test('static outlines are cached pixels, preserve transparency and leave animate
   const tray = page.getByTestId('sticker-tray'), images = tray.getByTestId('sticker-pick').locator('img')
   await expect.poll(() => images.evaluateAll((imgs: HTMLImageElement[]) => imgs.every((img) => img.complete && img.naturalWidth > 0))).toBe(true)
   const first = images.nth(0)
-  expect(await pixels(first)).toEqual({ width: 262, height: 262, border: [255, 255, 255, 255], center: [224, 32, 32, 255], corner: [0, 0, 0, 0] })
+  expect(await pixels(first)).toEqual({ width: 262, height: 262, border: [255, 255, 255, 255], center: [224, 32, 32, 255], corner: [0, 0, 0, 0], nearShadow: [0, 0, 0, 0] })
   await expect(first).toHaveAttribute('src', /^blob:/)
   await expect(images.nth(1)).toHaveAttribute('src', /\/api\/assets\/.*\/thumb/)
   await expect(images.nth(2)).toHaveAttribute('src', /\/api\/assets\/.*\/thumb/)
