@@ -1,0 +1,177 @@
+{
+  "command": "logs",
+  "browserId": "994a8e81-5fbb-4a6d-aace-6994f97c97e0",
+  "console": [
+    {
+      "level": "0",
+      "message": "[vite] connecting...",
+      "source": "http://localhost:5217/@vite/client",
+      "line": 935,
+      "timestamp": 1792560353720
+    },
+    {
+      "level": "0",
+      "message": "[vite] connected.",
+      "source": "http://localhost:5217/@vite/client",
+      "line": 1048,
+      "timestamp": 1792560353727
+    },
+    {
+      "level": "1",
+      "message": "%c[impeccable] 4 anti-patterns found color: oklch(84% 0.19 80.46); font-weight: bold",
+      "source": "http://localhost:8400/detect.js",
+      "line": 7908,
+      "timestamp": 1792560624787
+    },
+    {
+      "level": "1",
+      "message": "%cclipped-overflow-container%c main.stage clips a positioned child color: oklch(84% 0.19 80.46); font-weight: bold color: inherit [object HTMLElement]",
+      "source": "http://localhost:8400/detect.js",
+      "line": 7914,
+      "timestamp": 1792560624787
+    },
+    {
+      "level": "1",
+      "message": "%cgpt-thin-border-wide-shadow%c 1px border + 16px shadow blur color: oklch(84% 0.19 80.46); font-weight: bold color: inherit [object HTMLButtonElement]",
+      "source": "http://localhost:8400/detect.js",
+      "line": 7914,
+      "timestamp": 1792560624787
+    },
+    {
+      "level": "1",
+      "message": "%ctext-overflow%c button.icon-btn overflows its box by 34px color: oklch(84% 0.19 80.46); font-weight: bold color: inherit [object HTMLButtonElement]",
+      "source": "http://localhost:8400/detect.js",
+      "line": 7914,
+      "timestamp": 1792560624787
+    },
+    {
+      "level": "1",
+      "message": "%cflat-type-hierarchy%c Sizes: 10px, 11px, 12px, 14px, 16px (ratio 1.6:1) color: oklch(84% 0.19 80.46); font-weight: bold color: inherit [object HTMLBodyElement]",
+      "source": "http://localhost:8400/detect.js",
+      "line": 7914,
+      "timestamp": 1792560624787
+    },
+    {
+      "level": "1",
+      "message": "%clayout-transition%c transition: width color: oklch(84% 0.19 80.46); font-weight: bold color: inherit [object HTMLBodyElement]",
+      "source": "http://localhost:8400/detect.js",
+      "line": 7914,
+      "timestamp": 1792560624787
+    },
+    {
+      "level": "1",
+      "message": "console.groupEnd",
+      "source": "http://localhost:8400/detect.js",
+      "line": 7918,
+      "timestamp": 1792560624787
+    }
+  ],
+  "network": [
+    {
+      "url": "http://localhost:5217/api/access",
+      "type": "fetch",
+      "startTime": 160245,
+      "duration": 20.4000000001397,
+      "transferSize": 497
+    },
+    {
+      "url": "http://localhost:5217/api/sync?since=13&accessRevision=3",
+      "type": "fetch",
+      "startTime": 160266,
+      "duration": 9.199999999953434,
+      "transferSize": 408
+    },
+    {
+      "url": "http://localhost:5217/api/sync?since=13&accessRevision=3",
+      "type": "fetch",
+      "startTime": 160276.69999999995,
+      "duration": 8.400000000139698,
+      "transferSize": 408
+    },
+    {
+      "url": "http://localhost:5217/api/agent-proposals?boardId=home%3A8032bdfa-b689-4107-b3ea-a95ced0c6784",
+      "type": "fetch",
+      "startTime": 160330,
+      "duration": 7.100000000093132,
+      "transferSize": 336
+    },
+    {
+      "url": "http://localhost:5217/api/access",
+      "type": "fetch",
+      "startTime": 170245.80000000005,
+      "duration": 8.399999999906868,
+      "transferSize": 497
+    },
+    {
+      "url": "http://localhost:5217/api/sync?since=13&accessRevision=3",
+      "type": "fetch",
+      "startTime": 170254.80000000005,
+      "duration": 7.5,
+      "transferSize": 408
+    },
+    {
+      "url": "http://localhost:5217/api/sync?since=13&accessRevision=3",
+      "type": "fetch",
+      "startTime": 170263.40000000014,
+      "duration": 7.199999999953434,
+      "transferSize": 408
+    },
+    {
+      "url": "http://localhost:5217/api/agent-proposals?boardId=home%3A8032bdfa-b689-4107-b3ea-a95ced0c6784",
+      "type": "fetch",
+      "startTime": 170326.1000000001,
+      "duration": 4.899999999906868,
+      "transferSize": 336
+    },
+    {
+      "url": "http://localhost:5217/api/access",
+      "type": "fetch",
+      "startTime": 180245.40000000014,
+      "duration": 8.799999999813735,
+      "transferSize": 497
+    },
+    {
+      "url": "http://localhost:5217/api/sync?since=13&accessRevision=3",
+      "type": "fetch",
+      "startTime": 180254.80000000005,
+      "duration": 8.600000000093132,
+      "transferSize": 408
+    },
+    {
+      "url": "http://localhost:5217/api/sync?since=13&accessRevision=3",
+      "type": "fetch",
+      "startTime": 180264.80000000005,
+      "duration": 8.199999999953434,
+      "transferSize": 408
+    },
+    {
+      "url": "http://localhost:5217/api/agent-proposals?boardId=home%3A8032bdfa-b689-4107-b3ea-a95ced0c6784",
+      "type": "fetch",
+      "startTime": 180326.30000000005,
+      "duration": 5.699999999953434,
+      "transferSize": 336
+    },
+    {
+      "url": "http://localhost:5217/api/access",
+      "type": "fetch",
+      "startTime": 190245.5,
+      "duration": 14.100000000093132,
+      "transferSize": 497
+    },
+    {
+      "url": "http://localhost:5217/api/sync?since=13&accessRevision=3",
+      "type": "fetch",
+      "startTime": 190260.6000000001,
+      "duration": 11.300000000046566,
+      "transferSize": 408
+    },
+    {
+      "url": "http://localhost:5217/",
+      "method": "GET",
+      "type": "navigation",
+      "startTime": 0,
+      "duration": 221.9000000001397,
+      "transferSize": 1319
+    }
+  ]
+}

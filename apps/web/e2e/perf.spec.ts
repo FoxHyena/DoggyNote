@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { multiplayerLoad } from './multiplayer-load.ts'
 
 // Performance budget check: a 1,000-card board with 300 real images.
 //   - pan at 100% and pinch-zoom out to the whole board: p95 frame time < 16.7 ms
@@ -141,6 +142,7 @@ test('1,000 cards + 300 images: smooth pan and zoom, culled DOM, small heap @per
   await p.goto(`/#/b/${boardId}`)
   await expect(p.getByTestId('board-name')).toHaveText('Perf kennel')
   const loadMs = Date.now() - t0
+  const stopLoad = process.env.MULTIPLAYER_PERF ? await multiplayerLoad(p, browser, boardId) : null
 
   // Fit-to-board shows everything, zoomed out: low-detail mode, thumbnails only.
   await expect(p.getByTestId('canvas')).toHaveClass(/\blod\b/)
@@ -181,6 +183,7 @@ test('1,000 cards + 300 images: smooth pan and zoom, culled DOM, small heap @per
   // The display's own frame interval (60 Hz → 16.7 ms, 50 Hz → 20 ms).
   const frame = pan.p50
   const report = { loadMs, fitCards, bigImages, mountedAt100, pan, zoomOut, panFar, heapMB: Math.round(heapMB), nodes: m.Nodes }
+  if (stopLoad) await stopLoad()
   console.log('PERF', JSON.stringify(report))
   test.info().annotations.push({ type: 'perf', description: JSON.stringify(report) })
 

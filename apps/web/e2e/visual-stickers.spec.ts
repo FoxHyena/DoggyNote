@@ -9,7 +9,7 @@ const round = process.env.STICKER_VISUAL_ROUND ?? '1'
 async function capture(page: Page, engine: string, name: string) {
   const dir = resolve(`../../docs/qa/stickers/round-${round}`); mkdirSync(dir, { recursive: true })
   await page.mouse.move(1, 1)
-  await page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map((img) => img.decode().catch(() => {}))) })
+  await page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].filter((img) => { const r = img.getBoundingClientRect(); return r.width && r.height && r.right > 0 && r.bottom > 0 && r.left < innerWidth && r.top < innerHeight }).map((img) => img.decode().catch(() => {}))) })
   await page.screenshot({ path: resolve(dir, `${engine}-${name}.png`), animations: 'disabled' })
 }
 async function theme(page: Page, name: 'Light' | 'Dark') {

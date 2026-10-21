@@ -29,7 +29,7 @@ export function installShortcuts(opts: { readOnly: boolean }) {
     const typing = isTyping(e.target)
 
     // Menu and toolbar buttons keep ordinary typing keys away from canvas edits.
-    if ((e.target as Element)?.closest?.('.menu, .topbar, .canvas-controls') && !mod) {
+    if ((e.target as Element)?.closest?.('.menu, .topbar, .canvas-controls, .follow-banner') && !mod) {
       if (e.key === 'Backspace') e.preventDefault()
       return
     }

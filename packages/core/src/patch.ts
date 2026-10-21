@@ -90,6 +90,11 @@ export class UndoStack {
     return this.done[this.done.length - 1]
   }
 
+  /** The next redo, for coordinating a text editor's scoped undo history. */
+  peekRedo(): Transaction | undefined {
+    return this.undone[this.undone.length - 1]
+  }
+
   dropTop() {
     this.done.pop()
   }

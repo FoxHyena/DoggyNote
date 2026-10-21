@@ -9,3 +9,5 @@ declare class URL {
   readonly pathname: string
 }
 declare function structuredClone<T>(v: T): T
+declare function btoa(value: string): string
+declare function atob(value: string): string

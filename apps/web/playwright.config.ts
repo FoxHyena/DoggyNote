@@ -12,7 +12,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'list',
   globalSetup: './e2e/global-setup.ts',
-  use: { baseURL: `http://localhost:${WEB_PORT}`, storageState: AUTH_FILE, extraHTTPHeaders: { 'x-doggynote-protocol': '2' } },
+  use: { baseURL: `http://localhost:${WEB_PORT}`, storageState: AUTH_FILE, extraHTTPHeaders: { 'x-doggynote-protocol': '3' } },
   // WebKit is what Tauri runs on macOS; Chromium is what most share-link viewers use.
   // Phones and tablets run their own specs (mobile-*.spec.ts, tablet-*.spec.ts) with real touch emulation.
   projects: [

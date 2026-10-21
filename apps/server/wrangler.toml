@@ -33,4 +33,12 @@ bucket_name = "doggynote-assets"
 ALLOWED_ORIGINS = "tauri://localhost,http://tauri.localhost,https://tauri.localhost"
 # Oldest desktop version the API still supports. Bump only for a breaking API
 # change: older apps then show "update required" instead of misbehaving.
-MIN_CLIENT = "0.2.0"
+MIN_CLIENT = "0.3.0"
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "BoardRoom"
+
+[[migrations]]
+tag = "v1-rooms"
+new_sqlite_classes = ["BoardRoom"]
