@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Browser, type Page, type Route } from '@playwright/test'
 import { MOD, addNote, cardByText, freshBoard, postSync, pullAllObjects, waitForSync } from './helpers.ts'
 
 const surface = (page: Page) => page.getByTestId('focus-surface')
@@ -14,6 +14,20 @@ async function focus(page: Page) {
   await expect(surface(page)).toBeVisible()
   await expect(editor(page)).toBeFocused()
   await expect(page.getByTestId('note-editor')).toHaveCount(1)
+}
+
+/**
+ * The current board in a new context whose editor chunk goes through `handler`.
+ * Boot warms the editor chunk, and WebKit serves a reload from its memory cache
+ * without consulting routes, so the route has to exist before the first load.
+ */
+async function pageWithEditorRoute(page: Page, browser: Browser, handler: (route: Route) => Promise<void> | void) {
+  const context = await browser.newContext({ storageState: await page.context().storageState(), extraHTTPHeaders: { 'x-doggynote-protocol': '2' } })
+  await context.route('**/codemirror-*.js', handler)
+  const fresh = await context.newPage()
+  await fresh.goto(page.url())
+  await expect(fresh.getByTestId('canvas')).toBeVisible()
+  return fresh
 }
 
 test.beforeEach(async ({ page }) => { await freshBoard(page, `Focused writing ${crypto.randomUUID().slice(0, 6)}`) })
@@ -180,14 +194,12 @@ test('an empty new note can enter focus and rapid dismissal keeps the last chara
   expect(await stored(page, id)).toBe('')
 })
 
-test('typing and closing during editor loading checkpoints active Markdown', async ({ page }) => {
+test('typing and closing during editor loading checkpoints active Markdown', async ({ page: board, browser }) => {
   // Delay only the isolated page's editor chunk; the application remains usable.
   let release!: () => void
   const held = new Promise<void>((resolve) => { release = resolve })
-  await page.route('**/codemirror-*.js', async (route) => { await held; await route.continue() })
+  const page = await pageWithEditorRoute(board, browser, async (route) => { await held; await route.continue() })
   try {
-    await page.reload({ waitUntil: 'domcontentloaded' })
-    await expect(page.getByTestId('canvas')).toBeVisible()
     const box = (await page.getByTestId('canvas').boundingBox())!
     await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2)
     await expect(page.getByLabel('Note loading')).toBeFocused()
@@ -203,24 +215,28 @@ test('typing and closing during editor loading checkpoints active Markdown', asy
   } finally {
     release()
     // Wait for the held handler to finish before Playwright removes routes.
-    await page.unrouteAll({ behavior: 'wait' })
+    await page.context().unrouteAll({ behavior: 'wait' })
+    await page.context().close()
   }
 })
 
-test('failed formatting load offers editable Markdown with the same durable save path', async ({ page }) => {
-  await page.route('**/codemirror-*.js', (route) => route.abort('failed'))
-  await page.reload()
-  const box = (await page.getByTestId('canvas').boundingBox())!
-  await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2)
-  await expect(page.getByRole('status').filter({ hasText: 'Formatting is unavailable' })).toBeVisible()
-  await page.getByLabel('Note Markdown').fill('Fallback Markdown')
-  await page.getByTestId('focus-note').click()
-  await expect(surface(page).getByLabel('Note Markdown')).toBeVisible()
-  await surface(page).getByLabel('Note Markdown').fill('# Fallback brief\n\nStill saved.')
-  await surface(page).getByTestId('focus-return').click()
-  const id = (await noteId(page))!
-  expect(await stored(page, id)).toBe('# Fallback brief\n\nStill saved.')
-  await expect(page.getByTestId('card').locator('h1')).toHaveText('Fallback brief')
+test('failed formatting load offers editable Markdown with the same durable save path', async ({ page: board, browser }) => {
+  const page = await pageWithEditorRoute(board, browser, (route) => route.abort('failed'))
+  try {
+    const box = (await page.getByTestId('canvas').boundingBox())!
+    await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2)
+    await expect(page.getByRole('status').filter({ hasText: 'Formatting is unavailable' })).toBeVisible()
+    await page.getByLabel('Note Markdown').fill('Fallback Markdown')
+    await page.getByTestId('focus-note').click()
+    await expect(surface(page).getByLabel('Note Markdown')).toBeVisible()
+    await surface(page).getByLabel('Note Markdown').fill('# Fallback brief\n\nStill saved.')
+    await surface(page).getByTestId('focus-return').click()
+    const id = (await noteId(page))!
+    expect(await stored(page, id)).toBe('# Fallback brief\n\nStill saved.')
+    await expect(page.getByTestId('card').locator('h1')).toHaveText('Fallback brief')
+  } finally {
+    await page.context().close()
+  }
 })
 
 test('focused document stays readable inside the viewport at 360, 600, 720 and 1440 in both themes', async ({ page }, info) => {
