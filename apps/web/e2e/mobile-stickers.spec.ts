@@ -46,7 +46,13 @@ test('phone scroll and preview never place; tap, cancel, move, resize, rotate an
   const after = await stickerState(page)
   expect(after.x).toBe(before.x); expect(after.w).toBe(before.w); expect(after.angle).toBe(before.angle)
   await waitForSync(page)
-  await page.setViewportSize({ width: 844, height: 390 }); await openStickerTray(page)
+  await page.setViewportSize({ width: 844, height: 390 })
+  // Mobile Chromium updates its visual viewport after the resize command.
+  // Wait for the landscape touch coordinate space before tapping the launcher.
+  await expect.poll(() => page.evaluate(() => {
+    return { width: Math.round(visualViewport!.width), height: Math.round(visualViewport!.height) }
+  })).toEqual({ width: 844, height: 390 })
+  await openStickerTray(page)
   await page.screenshot({ path: resolve(dir, `${test.info().project.name}-landscape-tray.png`) })
   const bone = tray.getByRole('button', { name: /^Choose 🦴 from/ }).first()
   await bone.scrollIntoViewIfNeeded()
