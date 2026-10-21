@@ -95,7 +95,7 @@ export function installShortcuts(opts: { readOnly: boolean }) {
     if (e.key === 'Enter' && selection().size === 1) {
       const id = [...selection()][0]
       const c = doc.getCard(id)
-      if (c && c.type !== 'image') {
+      if (c) {
         e.preventDefault()
         beginEdit(id)
       }
