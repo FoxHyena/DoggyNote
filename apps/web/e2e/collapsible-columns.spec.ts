@@ -256,16 +256,16 @@ test('a collapsing column slides its edge over the cards inside, which hold stil
   const tops = () => body.evaluate((el) => [...el.querySelectorAll<HTMLElement>(':scope > [data-testid="card"]')].slice(0, 3).map((c) => [c.getBoundingClientRect().top, c.offsetHeight]))
   const before = await tops()
   const full = await body.evaluate((el) => el.offsetHeight)
-  await f.toggle.click()
-  // Freeze the slide halfway, as a frame mid-animation.
+  // Collapse and freeze the slide halfway in the same tick, as one frame mid-animation.
   const mid = await body.evaluate((el) => {
-    const anim = el.getAnimations()[0]!
+    el.closest('.column')!.querySelector<HTMLElement>('[data-testid="column-toggle"]')!.click()
+    const anim = el.getAnimations().find((a) => !(a instanceof CSSTransition) && !(a instanceof CSSAnimation))!
     anim.pause(); anim.currentTime = 120
     return el.offsetHeight
   })
   expect(mid).toBeGreaterThan(0)
   expect(mid).toBeLessThan(full)
   expect(await tops()).toEqual(before)
-  await body.evaluate((el) => el.getAnimations()[0]!.finish())
+  await body.evaluate((el) => el.getAnimations().forEach((a) => a.finish()))
   await expect(f.column.getByTestId('card')).toHaveCount(0)
 })
