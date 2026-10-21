@@ -1,5 +1,5 @@
 import { expect, type CDPSession, type Locator, type Page } from '@playwright/test'
-import { at, cardByText, waitForSync } from './helpers.ts'
+import { at, camera, cardByText, waitForSync } from './helpers.ts'
 
 // Touch input for phone and tablet specs. Taps are real touches on both engines
 // (page.touchscreen). Drags, long-presses and pinches are real CDP touch input
@@ -178,9 +178,19 @@ export async function seedCards(page: Page, list: Seed[], origin = { x: 24, y: 2
 /** Reload the board with a given camera. */
 export async function setCamera(page: Page, cam: { x: number; y: number; zoom: number }) {
   const boardId = boardOf(page)
-  await page.evaluate(({ boardId, cam }) => localStorage.setItem(`doggynote.cam.${boardId}`, JSON.stringify(cam)), { boardId, cam })
+  await page.evaluate(({ key, value }) => {
+    localStorage.setItem(key, value)
+    // The app saves its own camera 250 ms after it last moved. If that save is still
+    // pending, it lands before the reload and the board reopens where it was: stop
+    // this page (and only this page; the reload starts afresh) from writing the key.
+    const set = Storage.prototype.setItem
+    Storage.prototype.setItem = function (k: string, v: string) {
+      if (k !== key) set.call(this, k, v)
+    }
+  }, { key: `doggynote.cam.${boardId}`, value: JSON.stringify(cam) })
   await page.reload()
   await expect(page.getByTestId('canvas')).toBeVisible()
+  await expect.poll(async () => (await camera(page)).zoom, { message: 'camera not restored' }).toBeCloseTo(cam.zoom, 3)
   // The first pull after a reload can still replace what's drawn (the server prepares a
   // seeded note for shared editing on first read). Taps during that re-render are lost.
   await waitForSync(page)
