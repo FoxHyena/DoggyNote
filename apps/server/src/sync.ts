@@ -5,7 +5,7 @@ import { accessGuard, bumpAccess, loadAccess, newBoardAccess, type Access } from
 import { prepareNote } from './notes.ts'
 import { checkPositionLocks, dropLockedLayout, positionWriteGuards } from './position.ts'
 import { notifyRooms } from './realtime.ts'
-import { decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
+import { LABEL_FIELD, validLabelField, decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
 import * as Y from 'yjs'
 
 // Push: field patches, merged per top-level field (last write to arrive wins).
@@ -16,6 +16,8 @@ const KEY = /^[a-zA-Z][a-zA-Z0-9]{0,31}$/
 // ':' is for namespaced ids like "toybox:<userId>".
 const ID = /^[a-zA-Z0-9_:-]{1,64}$/
 export const MAX_CHANGES = 200
+// Each key is one bound SQL parameter (plus 7 fixed); D1 allows 100 per statement.
+const MAX_KEYS = 90
 const MAX_OBJECT_BYTES = 256 * 1024
 const PULL_LIMIT = 1000
 
@@ -35,8 +37,12 @@ export function parseChanges(body: unknown): IncomingChange[] | string {
     seen.add(id)
     if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return `bad patch for ${id}`
     const keys = Object.keys(patch)
-    if (!keys.length || keys.length > 40 || !keys.every((k) => KEY.test(k))) return `bad keys for ${id}`
+    if (!keys.length || keys.length > MAX_KEYS || !keys.every((k) => KEY.test(k))) return `bad keys for ${id}`
     const p = patch as Record<string, unknown>
+    for (const key of keys) {
+      const label = LABEL_FIELD.exec(key)
+      if (label && !validLabelField(label[1] === 'label' ? 'card' : 'board', key, p[key])) return `bad label field for ${id}`
+    }
     if ('id' in p && p.id !== id) return `id mismatch for ${id}`
     if ('positionLocked' in p && p.positionLocked !== null && typeof p.positionLocked !== 'boolean') return `bad position lock for ${id}`
     if ('kind' in p && !KINDS.has(p.kind as string)) return `bad kind for ${id}`
@@ -299,6 +305,8 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
     if (prev && o.kind !== prev.data.kind) ok = false
     if (!prev && !KINDS.has(o.kind as string)) ok = false
     if ('ownerId' in patch || 'owner_id' in patch || 'legacy' in patch) ok = false
+    // Label names and colours live on boards, memberships on cards.
+    for (const key of Object.keys(patch)) if (LABEL_FIELD.test(key) && !validLabelField(o.kind, key, patch[key])) ok = false
     if (id.startsWith('home:') && (!prev || ('parentId' in patch && (patch.parentId ?? null) !== (prev.data.parentId ?? null)) || patch.deletedAt || patch.purged)) ok = false
     if (id.startsWith('toybox:') && (id !== `toybox:${userId}` || o.kind !== 'board' || o.parentId != null)) ok = false
     if (o.kind === 'board') {

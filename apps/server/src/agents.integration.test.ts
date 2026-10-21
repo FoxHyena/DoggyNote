@@ -208,3 +208,23 @@ it('rejects reversal when a comment is added to a moved card immediately before 
     expect((f.sql.prepare("SELECT board_id FROM objects WHERE id='note'").get() as { board_id: string }).board_id).toBe('child')
   } finally { f.sql.close() }
 })
+
+it('agents never see labels, and their whole-object replacements keep them', async () => {
+  const f = await fixture()
+  try {
+    const token = 'a1b2c3d4e5f6'
+    f.sql.prepare("UPDATE objects SET data=json_set(data,?,?) WHERE id='root'").run(`$.labelName${token}`, 'Lighting')
+    f.sql.prepare("INSERT INTO objects(id,kind,board_id,data,seq,updated_at) VALUES('labelled','card','root',?,2,1)").run(JSON.stringify({ ...f.card('labelled', 'Before'), [`label${token}`]: true }))
+    f.sql.exec("UPDATE counters SET value=2 WHERE name='seq'")
+    const read = await (await f.request('/agent/boards/root', undefined, f.token)).json() as { board: { object: Record<string, unknown> }; objects: { object: Record<string, unknown>; revision: number }[] }
+    expect(read.board.object[`labelName${token}`]).toBeUndefined()
+    const card = read.objects.find((o) => o.object.id === 'labelled')!
+    expect(card.object[`label${token}`]).toBeUndefined()
+    const staged = await f.request('/agent/proposals', { idempotencyKey: 'keep-labels', label: 'Edit labelled', operations: [{ action: 'replace', expectedRevision: card.revision, object: { ...card.object, content: { md: 'After' } } }] }, f.token)
+    expect(staged.status).toBe(201)
+    const { id } = await staged.json() as { id: string }
+    expect((await f.request(`/agent-proposals/${id}/approve`, {})).status).toBe(200)
+    const stored = JSON.parse((f.sql.prepare("SELECT data FROM objects WHERE id='labelled'").get() as { data: string }).data)
+    expect(stored).toMatchObject({ content: { md: 'After' }, [`label${token}`]: true })
+  } finally { f.sql.close() }
+})

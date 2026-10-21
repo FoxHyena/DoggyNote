@@ -23,7 +23,7 @@ export const COPY = {
   installTitle: 'Keep DoggyNote on your phone',
   /** A card made by a newer DoggyNote than this one. */
   unknownCard: 'This card needs a newer DoggyNote. Update to see it.',
-  fetchHint: 'Sniff out any board, note, to-do or link by a word in it.',
+  fetchHint: 'Sniff out any board, note, to-do or link by a word in it or a label on it.',
   telegramBot: {
     connect: [
       'Woof! 🐾 To connect, open DoggyNote → Stickers → Add pack → Send a sticker in Telegram, then use its connection link.',

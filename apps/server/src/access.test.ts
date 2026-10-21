@@ -147,6 +147,17 @@ describe('private-board migration and authorization', () => {
       expect(await deniedChanges(db, await loadAccess(db, { id: 'new', isAdmin: false }), 'new', [{ id: 'toybox:new', patch: { kind: 'board', parentId: null, title: 'Toy box' } }])).toEqual([])
     } finally { sql.close() }
   })
+  it('keeps label names on boards and memberships on cards', async () => {
+    const { sql, db } = fixture()
+    try {
+      const owner = await loadAccess(db, { id: 'new', isAdmin: false })
+      const token = 'a1b2c3d4e5f6'
+      sql.prepare("INSERT INTO objects(id,kind,board_id,data,seq,updated_at) VALUES ('labelled','card','private',?,1,1)").run(JSON.stringify({ id: 'labelled', kind: 'card', type: 'note', boardId: 'private' }))
+      expect(await deniedChanges(db, owner, 'new', [{ id: 'private', patch: { [`labelName${token}`]: 'Lighting', [`labelColor${token}`]: 'sky' } }, { id: 'labelled', patch: { [`label${token}`]: true } }])).toEqual([])
+      expect(await deniedChanges(db, owner, 'new', [{ id: 'labelled', patch: { [`labelName${token}`]: 'Misplaced' } }])).toEqual(['labelled'])
+      expect(await deniedChanges(db, owner, 'new', [{ id: 'private', patch: { [`label${token}`]: true } }])).toEqual(['private'])
+    } finally { sql.close() }
+  })
   it('rejects nested columns and new relations to deleted cards', async () => {
     const { sql, db } = fixture()
     try {

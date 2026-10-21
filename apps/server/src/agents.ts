@@ -6,6 +6,12 @@ import { requireUser } from './auth.ts'
 import { randomToken, sha256Hex } from './crypto.ts'
 import { loadAccess, type Access } from './access.ts'
 import { deniedChanges, ownerFor, deletedCommentOwner, stampComment } from './sync.ts'
+import { LABEL_FIELD } from '@doggynote/core'
+
+// Agents don't handle labels yet: they never see label fields, and a whole-object
+// replacement keeps the ones already there.
+const labelFields = (o: object) => Object.fromEntries(Object.entries(o).filter(([key]) => LABEL_FIELD.test(key)))
+const withoutLabels = <T extends object>(o: T): T => Object.fromEntries(Object.entries(o).filter(([key]) => !LABEL_FIELD.test(key))) as T
 
 const assetOf = (o: { kind: string; content?: unknown }): string | undefined => (o.kind === 'card' ? (o.content as { assetId?: string } | undefined)?.assetId : undefined)
 
@@ -81,7 +87,7 @@ export async function prepareAgentChanges(db: D1Database, access: Access, creden
     if (previous && !readable(access, credential, user.id, previous)) error('Object is outside this connection’s scope')
     if (operation.action === 'create' && /^(home|toybox)(:|$)/.test(id)) error('Reserved board identifier')
     let after: AgentObject
-    if ('object' in operation) after = structuredClone(operation.object)
+    if ('object' in operation) after = { ...(previous ? labelFields(previous.object) : {}), ...structuredClone(operation.object) } as AgentObject
     else after = { ...previous!.object, deletedAt: operation.action === 'trash' ? Date.now() : null }
     if (operation.action === 'create') after.createdAt = Date.now()
     if (after.purged) error('Permanent deletion is unavailable to agents')
@@ -227,7 +233,7 @@ machine.use('*', async (c, next) => {
 machine.get('/boards', async (c) => {
   const a = await loadAccess(c.env.DB, c.get('user')), all = await records(c.env.DB)
   const query = (c.req.query('query') ?? '').toLowerCase().slice(0, 200)
-  return c.json({ boards: [...all.values()].filter((r) => r.object.kind === 'board' && active(r.object) && readable(a, c.get('agent'), c.get('user').id, r) && r.object.title.toLowerCase().includes(query)).map((r) => ({ object: r.object, revision: r.revision, url: `${new URL(c.req.url).origin}/#/b/${r.object.id}` })) })
+  return c.json({ boards: [...all.values()].filter((r) => r.object.kind === 'board' && active(r.object) && readable(a, c.get('agent'), c.get('user').id, r) && r.object.title.toLowerCase().includes(query)).map((r) => ({ object: withoutLabels(r.object), revision: r.revision, url: `${new URL(c.req.url).origin}/#/b/${r.object.id}` })) })
 })
 machine.get('/boards/:id', async (c) => {
   const a = await loadAccess(c.env.DB, c.get('user')), all = await records(c.env.DB), id = c.req.param('id')
@@ -236,7 +242,7 @@ machine.get('/boards/:id', async (c) => {
   const after = c.req.query('after') ?? ''
   const items = [...all.values()].filter((r) => onBoard(r.object) === id && readable(a, c.get('agent'), c.get('user').id, r) && active(r.object) && r.object.id > after).sort((l, r) => l.object.id < r.object.id ? -1 : l.object.id > r.object.id ? 1 : 0)
   const page = items.slice(0, 200)
-  return c.json({ board: { object: board.object, revision: board.revision }, objects: page.map((r) => ({ object: r.object, revision: r.revision })), nextCursor: items.length > page.length ? page.at(-1)!.object.id : null })
+  return c.json({ board: { object: withoutLabels(board.object), revision: board.revision }, objects: page.map((r) => ({ object: withoutLabels(r.object), revision: r.revision })), nextCursor: items.length > page.length ? page.at(-1)!.object.id : null })
 })
 machine.post('/proposals', async (c) => {
   if (c.get('agent').mode !== 'propose') return c.json({ error: 'This connection is read-only' }, 403)

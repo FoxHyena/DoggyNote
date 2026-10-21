@@ -1,11 +1,12 @@
 import './canvas-entry.css'
 import { touch } from '../state/device.ts'
 import { For, Show, createMemo, createSignal, createEffect, onCleanup, onMount } from 'solid-js'
-import { HOME_BOARD_ID, cardText, type Id } from '@doggynote/core'
+import { HOME_BOARD_ID, cardText, normalizeLabelName, type Id } from '@doggynote/core'
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { openBoard, setPaletteOpen } from '../state/ui.ts'
 import { revealCard } from '../state/columns.ts'
+import { hasLabel, labelsOn } from '../state/labels.ts'
 import { BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
 
 // ⌘K "Fetch": search every board title and card text, jump to the result.
@@ -24,15 +25,24 @@ export function search(query: string, limit = 30): Hit[] {
     const at = t.indexOf(q)
     if (at >= 0) hits.push({ kind: 'board', id: b.id, boardId: b.id, title: boardTitle(b.id), snippet: b.parentId ? `in ${boardTitle(b.parentId)}` : '', score: at === 0 ? 3 : 2 })
   }
+  const nq = normalizeLabelName(q)
   for (const [bid, cards] of idx.cards) {
+    // A card matches its labels' names too, e.g. "lighting" finds every card labelled Lighting.
+    const matching = labelsOn(bid).filter((l) => normalizeLabelName(l.name).includes(nq))
     for (const c of cards) {
       const text = cardText(c)
       const at = text.toLowerCase().indexOf(q)
-      if (at < 0) continue
+      const labels = matching.filter((l) => hasLabel(c, l.id))
+      if (at < 0 && !labels.length) continue
+      const where = `${c.type} in ${boardTitle(bid)}${labels.length ? ` · ${labels.map((l) => l.name).join(', ')}` : ''}`
+      if (at < 0) {
+        hits.push({ kind: 'card', id: c.id, boardId: bid, title: text.split('\n').find((line) => line.trim())?.slice(0, 80) || `Untitled ${c.type}`, snippet: where, score: 1.25 })
+        continue
+      }
       const line = text.slice(0, at).lastIndexOf('\n') + 1
       const end = text.indexOf('\n', at)
       const snippet = text.slice(Math.max(line, at - 40), end < 0 ? undefined : Math.min(end, at + 80))
-      hits.push({ kind: 'card', id: c.id, boardId: bid, title: snippet || text.slice(0, 80), snippet: `${c.type} in ${boardTitle(bid)}`, score: at === 0 ? 1.5 : 1 })
+      hits.push({ kind: 'card', id: c.id, boardId: bid, title: snippet || text.slice(0, 80), snippet: where, score: at === 0 ? 1.5 : 1 })
     }
   }
   return hits.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title)).slice(0, limit)
@@ -90,7 +100,7 @@ export function FetchPalette() {
             aria-controls="fetch-results"
             aria-activedescendant={hits()[active()] ? `fetch-hit-${active()}` : undefined}
             data-testid="fetch-input"
-            placeholder={touch() ? `${COPY.search} a board, note or link…` : `${COPY.search}… boards, notes, to-dos, links`}
+            placeholder={touch() ? `${COPY.search} a board, note or link…` : `${COPY.search}… boards, notes, to-dos, links, labels`}
             value={q()}
             onInput={(e) => {
               setQ(e.currentTarget.value)
