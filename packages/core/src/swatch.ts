@@ -5,10 +5,13 @@ import type { Card } from './model.ts'
 
 export const DEFAULT_SWATCH_HEX = '#2F5D50'
 
-/** The quick picks in a colour card's panel. Any other colour comes from the picker or the HEX field. */
+/**
+ * The quick picks in a colour card's panel: two rows of seven, the last slot
+ * being the custom picker. Any other colour comes from the picker or the HEX field.
+ */
 export const SWATCH_PRESETS = [
-  '#E5484D', '#F76B15', '#FFC53D', '#46A758', '#2F5D50', '#12A594', '#0090FF',
-  '#3E63DD', '#8E4EC6', '#D6409F', '#8D6E63', '#1C1C1C', '#8B8D98', '#FFFFFF',
+  '#E5484D', '#F76B15', '#FFC53D', '#46A758', '#2F5D50', '#0090FF', '#3E63DD',
+  '#8E4EC6', '#D6409F', '#8D6E63', '#1C1C1C', '#8B8D98', '#FFFFFF',
 ] as const
 
 /** `#abc`, `ABCDEF`, ` #aabbcc ` → `#AABBCC`. Anything else is null. */

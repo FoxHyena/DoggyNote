@@ -30,6 +30,18 @@ export function SwatchCard(props: CardProps<'swatch'>) {
   )
 }
 
+/** Arrow keys walk the seven-wide grid of dots (Safari's Tab skips buttons by default). */
+function moveAmongDots(e: KeyboardEvent & { currentTarget: HTMLElement }) {
+  const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key]
+  if (!step) return
+  const dots = [...e.currentTarget.querySelectorAll<HTMLElement>('button.swatch-dot, .swatch-custom input')]
+  const at = dots.findIndex((d) => d === document.activeElement)
+  const next = dots[at + step]
+  if (at < 0 || !next) return
+  e.preventDefault()
+  next.focus()
+}
+
 /** `<input type=color>` only takes lowercase #rrggbb. */
 const pickerValue = (hex: string) => hex.toLowerCase()
 
@@ -56,10 +68,12 @@ function SwatchPanel(props: { card: Card<'swatch'>; anchor: () => HTMLElement })
       label="Edit colour"
       testid="colour-panel"
       class="swatch-panel"
+      align="start"
       close={endEdit}
       follow={() => (camera(), props.card.x, props.card.y, props.card.w, props.card.h)}
     >
-      <div class="swatch-presets" role="group" aria-label="Preset colours">
+      {/* Seven columns: thirteen presets, then the custom picker in the last slot. */}
+      <div class="swatch-presets" role="group" aria-label="Colours" onKeyDown={moveAmongDots}>
         <For each={SWATCH_PRESETS}>
           {(p) => (
             <button
@@ -69,6 +83,7 @@ function SwatchPanel(props: { card: Card<'swatch'>; anchor: () => HTMLElement })
               style={{ background: p }}
               data-testid="colour-preset"
               data-hex={p}
+              data-autofocus={hex() === p || undefined}
               aria-label={p}
               aria-pressed={hex() === p}
               onClick={() => {
@@ -78,15 +93,14 @@ function SwatchPanel(props: { card: Card<'swatch'>; anchor: () => HTMLElement })
             />
           )}
         </For>
-      </div>
-      <div class="swatch-fields">
         <label class="swatch-dot swatch-custom" classList={{ on: custom() }} style={custom() ? { background: hex() } : undefined} data-tip="Custom colour">
           <Show when={!custom()}>
-            <Icon size={16}>{ToolIcons.plus()}</Icon>
+            <Icon size={14}>{ToolIcons.plus()}</Icon>
           </Show>
           <input
             type="color"
             data-testid="colour-picker"
+            data-autofocus={custom() || undefined}
             aria-label="Custom colour"
             value={pickerValue(hex())}
             onInput={(e) => {
@@ -97,6 +111,8 @@ function SwatchPanel(props: { card: Card<'swatch'>; anchor: () => HTMLElement })
             }}
           />
         </label>
+      </div>
+      <div class="swatch-fields">
         <input
           class="swatch-input swatch-hex-input"
           data-testid="colour-hex-input"
@@ -115,17 +131,17 @@ function SwatchPanel(props: { card: Card<'swatch'>; anchor: () => HTMLElement })
           onBlur={() => setDraft(null)}
           onKeyDown={done}
         />
+        <input
+          class="swatch-input swatch-name-input"
+          data-testid="colour-name-input"
+          aria-label="Name"
+          maxLength={1000}
+          placeholder={COPY.swatchNamePlaceholder}
+          value={swatchName(props.card)}
+          onInput={(e) => set({ name: e.currentTarget.value })}
+          onKeyDown={done}
+        />
       </div>
-      <input
-        class="swatch-input swatch-name-input"
-        data-testid="colour-name-input"
-        aria-label="Name"
-        maxLength={1000}
-        placeholder={COPY.swatchNamePlaceholder}
-        value={swatchName(props.card)}
-        onInput={(e) => set({ name: e.currentTarget.value })}
-        onKeyDown={done}
-      />
     </Popover>
   )
 }

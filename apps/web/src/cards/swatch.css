@@ -3,28 +3,70 @@
 .swatch-paint { height: 120px; border-radius: 6px 6px 0 0; border-bottom: 1px solid var(--dn-border); }
 .swatch-meta { padding: 10px 12px 12px; min-width: 0; }
 .swatch-name { margin: 0 0 2px; font-size: 14px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
-.swatch-hex { display: block; font-size: 13px; line-height: 1.5; color: var(--dn-text-muted); user-select: text; -webkit-user-select: text; }
+.swatch-hex { display: block; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--dn-text-muted); user-select: text; -webkit-user-select: text; }
+.card.card-swatch.editing { cursor: default; }
 
-/* The panel beside the card while it's being edited. */
-.swatch-panel { display: grid; gap: 10px; width: 232px; }
-.swatch-presets { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-.swatch-dot { position: relative; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 1px solid var(--dn-border); border-radius: 50%; color: var(--dn-text-muted); background: transparent; cursor: pointer; }
-.swatch-dot.on { outline: 2px solid var(--dn-selection); outline-offset: 2px; }
-.swatch-dot:focus-visible, .swatch-custom:focus-within { outline: 2px solid var(--dn-selection); outline-offset: 2px; }
-.swatch-fields { display: flex; align-items: center; gap: 8px; }
-.swatch-custom { flex: none; border-style: dashed; }
+/*
+ * The panel beside the card while it's being edited. One spacing step (--sw-gap)
+ * between dots, between rows and around the edge; the fields span exactly the
+ * width of the dot grid, so every edge lines up.
+ */
+.swatch-panel {
+  --sw-dot: 24px;
+  --sw-gap: 8px;
+  --sw-field: 32px;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+.swatch-panel *, .swatch-panel *::before, .swatch-panel *::after { box-sizing: border-box; }
+.swatch-presets { display: grid; grid-template-columns: repeat(7, var(--sw-dot)); gap: var(--sw-gap); }
+.swatch-dot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--sw-dot);
+  height: var(--sw-dot);
+  padding: 0;
+  border: 1px solid var(--dn-border);
+  border-radius: 50%;
+  color: var(--dn-text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+/* A thin ring, set off from the dot by the panel colour. */
+.swatch-dot.on { box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-selection); }
+.swatch-dot:focus-visible, .swatch-custom:has(input:focus-visible) { outline: none; box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-text); }
+/* Focus on the current colour: the same ring, a touch heavier. */
+.swatch-dot.on:focus-visible, .swatch-custom.on:has(input:focus-visible) { box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 4.5px var(--dn-selection); }
+html[data-input='mouse'] .swatch-dot:not(.on):hover { box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-border); }
+.swatch-custom { border-style: dashed; }
 .swatch-custom.on { border-style: solid; }
 /* The real picker covers the dot, so a click or tap opens the system colour wheel. */
 .swatch-custom input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0; cursor: pointer; }
-.swatch-input { width: 100%; min-width: 0; padding: 5px 8px; border: 1px solid var(--dn-border); border-radius: 6px; color: var(--dn-text); background: var(--dn-bg); font: inherit; font-size: 13px; }
-.swatch-hex-input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-transform: uppercase; }
-.swatch-input:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 1px; }
-.swatch-input[aria-invalid='true'] { border-color: var(--dn-selection); }
+
+.swatch-fields { display: grid; grid-template-columns: 5rem 1fr; gap: var(--sw-gap); width: calc(var(--sw-dot) * 7 + var(--sw-gap) * 6); }
+.swatch-input {
+  width: 100%;
+  min-width: 0;
+  height: var(--sw-field);
+  padding: 0 8px;
+  border: 1px solid var(--dn-border);
+  border-radius: 6px;
+  color: var(--dn-text);
+  background: var(--dn-bg);
+  font: inherit;
+  font-size: 13px;
+}
+.swatch-hex-input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; text-transform: uppercase; }
+.swatch-input:focus-visible { outline: none; border-color: var(--dn-selection); }
+.swatch-input[aria-invalid='true'] { border-color: var(--dn-selection); border-style: dashed; }
 .swatch-input::placeholder { color: var(--dn-text-muted); }
 
+/* Fingers: bigger dots, a 44px hit area around each, and 16px text so iOS doesn't zoom. */
 @media (pointer: coarse) {
-  .swatch-panel { width: 268px; }
-  .swatch-dot { width: 32px; height: 32px; }
-  .swatch-input { min-height: 40px; font-size: 16px; }
+  .swatch-panel { --sw-dot: 32px; --sw-gap: 10px; --sw-field: 40px; }
+  .swatch-dot::after { content: ''; position: absolute; inset: -6px; }
+  .swatch-input { font-size: 16px; }
+  .swatch-fields { grid-template-columns: 7rem 1fr; }
 }
-.card.card-swatch.editing { cursor: default; }

@@ -82,10 +82,11 @@ test('Escape closes the panel and keeps the colour; Enter reopens it; one undo t
   await page.keyboard.press('Enter')
   const panel = page.getByTestId('colour-panel')
   await expect(panel).toBeVisible()
-  // Keyboard reaches the presets; Space or Enter picks one.
-  await expect(panel.getByTestId('colour-preset').first()).toBeFocused()
+  // Focus starts on the current colour; arrow keys move along the dots and Space picks one.
+  await expect(panel.locator('[data-testid="colour-preset"][data-hex="#2F5D50"]')).toBeFocused()
+  await page.keyboard.press('ArrowRight')
   await page.keyboard.press('Space')
-  await expect(card.getByTestId('colour-hex')).toHaveText('#E5484D')
+  await expect(card.getByTestId('colour-hex')).toHaveText('#0090FF')
   await page.getByTestId('colour-name-input').fill('Collar red')
   // Backspace edits the name, not the board.
   await page.keyboard.press('Backspace')
@@ -93,7 +94,7 @@ test('Escape closes the panel and keeps the colour; Enter reopens it; one undo t
   await expect(panel).toHaveCount(0)
   await expect(card).toHaveCount(1)
   await expect(card.getByTestId('colour-name')).toHaveText('Collar re')
-  await expect(card.getByTestId('colour-hex')).toHaveText('#E5484D')
+  await expect(card.getByTestId('colour-hex')).toHaveText('#0090FF')
 
   await page.keyboard.press(`${MOD}+z`)
   await expect(card.getByTestId('colour-hex')).toHaveText('#2F5D50')
