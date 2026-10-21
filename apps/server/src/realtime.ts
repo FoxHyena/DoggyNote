@@ -4,7 +4,9 @@ import type { AppEnv, Env, User } from './env.ts'
 import { requireUser } from './auth.ts'
 import { loadAccess } from './access.ts'
 
-type Attachment = { member: LivePresence; hash: string; board: string; seen: number; last: number; lastPing?: number }
+type Attachment = { member: LivePresence; hash: string; board: string; seen: number; last: number; lastPing?: number; windowStart?: number; windowCount?: number }
+/** Clients send at most ~13 presence frames a second; this leaves room for bunching. */
+export const PRESENCE_PER_SECOND = 30
 type Ticket = { user: User; hash: string; board: string; expires: number; canEdit: boolean }
 function closeSocket(socket: WebSocket, code = 1000, reason?: string) {
   try { socket.close(code, reason) } catch { /* The transport may already be gone. */ }
@@ -156,7 +158,15 @@ export class BoardRoom {
       await this.broadcast()
       return
     }
-    if (data.type === 'presence' && Date.now() - a.last < 60) return
+    // Presence is a budget per second, not a minimum gap: clients send at most every
+    // 75ms, but network and CPU delays bunch frames, and dropping one loses the newest
+    // pointer or camera for good. Broadcasts are already coalesced below.
+    if (data.type === 'presence') {
+      const now = Date.now()
+      if (now - (a.windowStart ?? 0) >= 1000) { a.windowStart = now; a.windowCount = 0 }
+      a.windowCount = (a.windowCount ?? 0) + 1
+      if (a.windowCount > PRESENCE_PER_SECOND) return
+    }
     if (data.type === 'ping' && Date.now() - (a.lastPing ?? 0) < 1000) return
     a.seen = Date.now()
     if (data.type === 'presence') {

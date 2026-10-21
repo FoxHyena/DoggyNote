@@ -6,7 +6,7 @@ import * as Y from 'yjs'
 import { decodeUpdate, noteDocument, noteState } from '@doggynote/core'
 import { sync } from './sync.ts'
 import type { AppEnv, Env } from './env.ts'
-import { BoardRoom } from './realtime.ts'
+import { BoardRoom, PRESENCE_PER_SECOND } from './realtime.ts'
 
 function fixture() {
   const sql = new DatabaseSync(':memory:')
@@ -230,5 +230,22 @@ it('allows explicit creation redo but a stale update cannot clear a purged tombs
     expect((await f.snapshot()).content.md).toBe('baseline')
     const data = JSON.parse((f.sql.prepare("SELECT data FROM objects WHERE id='note'").get() as { data: string }).data)
     expect(data.purged).toBe(false); expect(data.noteRestore).toBeUndefined()
+  } finally { f.sql.close() }
+})
+
+it('keeps the newest of bunched presence frames, and caps a flood', async () => {
+  const f = roomFixture()
+  try {
+    f.ticket('bunched'); const s = f.socket()
+    await f.room.webSocketMessage(s.ws, JSON.stringify({ type: 'auth', ticket: 'bunched' }))
+    const frame = (y: number) => JSON.stringify({ type: 'presence', pointer: { x: 0, y }, selection: [], editing: null, camera: { x: 0, y, zoom: 1 }, width: 800, height: 600, previews: [], caret: null })
+    const cameraY = () => (s.attachment() as { member: { camera: { y: number } } }).member.camera.y
+    // Delays can deliver two frames together. The second is the newest state: keep it.
+    await f.room.webSocketMessage(s.ws, frame(1))
+    await f.room.webSocketMessage(s.ws, frame(2))
+    expect(cameraY()).toBe(2)
+    for (let i = 3; i <= PRESENCE_PER_SECOND + 10; i++) await f.room.webSocketMessage(s.ws, frame(i))
+    expect(cameraY()).toBe(PRESENCE_PER_SECOND)
+    await new Promise((resolve) => setTimeout(resolve, 100))
   } finally { f.sql.close() }
 })

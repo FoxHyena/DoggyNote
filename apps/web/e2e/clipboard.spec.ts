@@ -137,26 +137,32 @@ test('pasting over a column drops the cards into it', async ({ page }) => {
 
 test('⌘⇧V pastes words as a plain note, without a link preview', async ({ page }) => {
   // Test browsers don't run "paste and match style" for ⌘⇧V; real ones do. Press the
-  // real keys, then hand the focused paste target what the browser would.
-  const paste = (text: string) => page.evaluate((text) => {
-    const dt = new DataTransfer()
-    dt.setData('text/plain', text)
-    document.activeElement!.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }))
-  }, text)
-  // The system clipboard outlives a test: empty it, or the keys below would paste
-  // whatever an earlier test in this worker copied.
-  await page.evaluate(() => navigator.clipboard.writeText(''))
+  // real keys, and as V is released hand the focused paste target what the browser
+  // would. A real paste follows the keys at once; ⌘⇧V's plain mode lasts a second,
+  // which a slow CI runner could outlast between separate round trips.
+  // Native pastes are ignored: parallel workers share the system clipboard.
+  await page.evaluate(() => window.addEventListener('paste', (e) => { if (e.isTrusted) e.stopImmediatePropagation() }, true))
+  const pasteOnRelease = (texts: string[]) => page.evaluate((texts) => {
+    window.addEventListener('keyup', function up(e) {
+      if (e.key.toLowerCase() !== 'v') return
+      window.removeEventListener('keyup', up, true)
+      for (const text of texts) {
+        const dt = new DataTransfer()
+        dt.setData('text/plain', text)
+        document.activeElement!.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }))
+      }
+    }, true)
+  }, texts)
   const p = await at(page, 0.5, 0.5)
   await page.mouse.move(p.x, p.y)
-  await page.keyboard.press(`${MOD}+Shift+V`)
   // Linux browsers fire their own (empty) paste for the keys first.
-  await paste('')
-  await paste('https://example.com/dogs')
+  await pasteOnRelease(['', 'https://example.com/dogs'])
+  await page.keyboard.press(`${MOD}+Shift+V`)
   await expect(page.locator('[data-type=note]', { hasText: 'https://example.com/dogs' })).toBeVisible()
   await expect(page.locator('[data-type=link]')).toHaveCount(0)
   await clickEmpty(page)
+  await pasteOnRelease(['https://example.com/cats'])
   await page.keyboard.press(`${MOD}+V`)
-  await paste('https://example.com/cats')
   await expect(page.locator('[data-type=link]')).toHaveCount(1)
 })
 

@@ -1,5 +1,5 @@
 import { expect, type CDPSession, type Locator, type Page } from '@playwright/test'
-import { at, cardByText } from './helpers.ts'
+import { at, cardByText, waitForSync } from './helpers.ts'
 
 // Touch input for phone and tablet specs. Taps are real touches on both engines
 // (page.touchscreen). Drags, long-presses and pinches are real CDP touch input
@@ -86,7 +86,11 @@ export async function tap(page: Page, p: Pt) {
 
 /** Tap a locator at a point inside it (default: near its top-left, clear of handles). */
 export async function tapOn(page: Page, target: Locator, offset: Pt = { x: 30, y: 16 }) {
-  const b = await target.boundingBox()
+  // A re-render can swap the element out just as it's measured (no box): measure again.
+  type Box = Awaited<ReturnType<Locator['boundingBox']>>
+  let found: Box = null
+  await expect.poll(async () => !!(found = await target.boundingBox()) && found.width > 0 && found.height > 0, { message: 'nothing to tap' }).toBe(true)
+  const b = found as Box
   if (!b) throw new Error('nothing to tap')
   await tap(page, { x: b.x + Math.min(offset.x, b.width / 2), y: b.y + Math.min(offset.y, b.height / 2) })
 }
@@ -177,6 +181,9 @@ export async function setCamera(page: Page, cam: { x: number; y: number; zoom: n
   await page.evaluate(({ boardId, cam }) => localStorage.setItem(`doggynote.cam.${boardId}`, JSON.stringify(cam)), { boardId, cam })
   await page.reload()
   await expect(page.getByTestId('canvas')).toBeVisible()
+  // The first pull after a reload can still replace what's drawn (the server prepares a
+  // seeded note for shared editing on first read). Taps during that re-render are lost.
+  await waitForSync(page)
 }
 
 export const note = (md: string, x = 0, y = 0, extra: Partial<Seed> = {}): Seed => ({ type: 'note', x, y, content: { md }, ...extra })

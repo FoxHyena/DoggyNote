@@ -115,17 +115,25 @@ test('the caret lands on the word you tapped, even as the card glides in', async
   const card = cardByText(page, 'Saturday')
   await tapOn(page, card)
   const word = card.getByText('Leave at eight Saturday morning sharp')
-  const box = (await word.boundingBox())!
-  // Tap just inside "Saturday" (the 4th word).
-  const range = await word.evaluate((el) => {
-    const r = document.createRange()
-    const text = el.firstChild!
-    const i = text.textContent!.indexOf('Saturday')
-    r.setStart(text, i + 2)
-    r.setEnd(text, i + 3)
-    const b = r.getBoundingClientRect()
-    return { x: b.x + b.width / 2, y: b.y + b.height / 2 }
-  })
+  // Tap just inside "Saturday" (the 4th word). The first tap's re-render can replace the
+  // paragraph mid-measure; a detached one measures all zeros, so read again until the
+  // text is attached and laid out, with the word and its paragraph in one frame.
+  type Spot = { range: { x: number; y: number }; box: { y: number } }
+  let spot: Spot | null = null
+  await expect.poll(async () => {
+    spot = await word.evaluate((el): Spot | null => {
+      const r = document.createRange()
+      const text = el.firstChild!
+      const i = text.textContent!.indexOf('Saturday')
+      r.setStart(text, i + 2)
+      r.setEnd(text, i + 3)
+      const b = r.getBoundingClientRect(), e = el.getBoundingClientRect()
+      if (!el.isConnected || !b.height) return null
+      return { range: { x: b.x + b.width / 2, y: b.y + b.height / 2 }, box: { y: e.y } }
+    })
+    return spot
+  }).not.toBeNull()
+  const { range, box } = spot!
   expect(range.y).toBeGreaterThan(box.y)
   await tap(page, range)
   await expect(page.getByTestId('note-editor')).toBeFocused()
