@@ -26,7 +26,7 @@ export function installImageMetadataFailureDiagnostics() {
             footerEdit: 'button[aria-label="Edit image caption and source"]',
             toolbarEdit: '[data-testid="edit-image-metadata"]',
             toolbar: '[data-testid="selection-bar"]', controls: '[data-testid="canvas-controls"]',
-            editor: '[role="dialog"][aria-label="Image caption and source"]',
+            editor: '[role="group"][aria-label="Image caption and source"]',
           }
           const elements = Object.fromEntries(Object.entries(selectors).map(([name, selector]) => {
             const el = document.querySelector(selector)

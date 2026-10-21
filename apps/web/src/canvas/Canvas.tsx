@@ -1014,7 +1014,8 @@ export function Canvas(props: { readOnly: boolean }) {
         openBoard((card as Card<'board'>).content.boardId)
         return
       }
-      if (card?.type === 'sketch' && !lod() && doc.canWriteObject(card)) {
+      // A sketch opens its drawing; an image types its caption right under it.
+      if ((card?.type === 'sketch' || card?.type === 'image') && !lod() && doc.canWriteObject(card)) {
         e.preventDefault()
         lastPress = null
         beginEdit(card.id)

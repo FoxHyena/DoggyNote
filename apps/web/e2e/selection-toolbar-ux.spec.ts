@@ -262,3 +262,37 @@ test('a colour card edits in a panel beside it, not a full-screen dialog', async
   await card.dblclick()
   await expect(panel).toBeVisible()
 })
+
+test('an image caption is typed in place under the image, with a quiet pencil to reopen it', async ({ page }) => {
+  await freshBoard(page)
+  const { addImage } = await import('./image-metadata.helpers.ts')
+  await addImage(page)
+  await expect(page.locator('.dialog-backdrop')).toHaveCount(0)
+  const editor = page.getByRole('group', { name: 'Image caption and source' })
+  await expect(editor).toBeVisible()
+  await page.keyboard.type('Morning light on the dunes')
+  await page.keyboard.press('Escape')
+  await expect(page.getByTestId('image-caption')).toHaveText('Morning light on the dunes')
+  await expect(page.getByRole('button', { name: 'Edit image caption and source' })).toHaveText('')
+  await expect(page.locator('.image-text-button', { hasText: 'Edit' })).toHaveCount(0)
+  await clickEmpty(page)
+  await page.getByTestId('image-viewport').dblclick()
+  await expect(page.getByTestId('image-caption-input')).toBeFocused()
+})
+
+test('a column header centres its title and count, and collapse slides', async ({ page }) => {
+  await freshBoard(page)
+  await page.getByTestId('tool-column').click()
+  await page.keyboard.type('Centred')
+  await page.keyboard.press('Escape')
+  const column = page.locator('.card-column')
+  const head = (await column.locator('.column-head').boundingBox())!
+  const title = (await column.getByTestId('column-title').boundingBox())!
+  expect(Math.abs((title.x + title.width / 2) - (head.x + head.width / 2))).toBeLessThan(2)
+  const expanded = (await column.boundingBox())!.height
+  await column.getByTestId('column-toggle').click()
+  // Mid-slide the column is between its open and collapsed heights.
+  const mid = (await column.boundingBox())!.height
+  await expect.poll(async () => (await column.boundingBox())!.height).toBeLessThan(expanded)
+  expect(mid).toBeGreaterThan(58)
+})

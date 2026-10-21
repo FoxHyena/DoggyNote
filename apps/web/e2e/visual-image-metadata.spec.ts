@@ -52,19 +52,13 @@ for (const theme of ['Light', 'Dark'] as const) {
       expect(expandedBounds.y + expandedBounds.height).toBeLessThanOrEqual(page.viewportSize()!.height)
       await shot(page, info, `${theme.toLowerCase()}-${width}-expanded`)
       await page.getByRole('button', { name: 'Edit image caption and source' }).click()
-      const dialog = page.getByRole('dialog', { name: 'Image caption and source', exact: true })
+      // Edited in place under the image: no dialog, nothing overflowing sideways.
+      const dialog = page.getByRole('group', { name: 'Image caption and source', exact: true })
       await expect(dialog).toBeVisible()
-      const bounds = (await dialog.boundingBox())!
-      expect(bounds.x).toBeGreaterThanOrEqual(0)
-      expect(bounds.y).toBeGreaterThanOrEqual(0)
-      expect(bounds.x + bounds.width).toBeLessThanOrEqual(width)
-      expect(bounds.y + bounds.height).toBeLessThanOrEqual(page.viewportSize()!.height)
       expect(await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
       await expect(page.getByTestId('image-caption-input')).toBeFocused()
-      await page.keyboard.press('Shift+Tab')
-      await expect(page.getByTestId('image-metadata-done')).toBeFocused()
       await page.keyboard.press('Tab')
-      await expect(page.getByTestId('image-caption-input')).toBeFocused()
+      await expect(page.getByTestId('image-source-input')).toBeFocused()
       await shot(page, info, `${theme.toLowerCase()}-${width}-editor`)
       await page.keyboard.press('Escape')
       await expect(dialog).toHaveCount(0)
@@ -92,8 +86,8 @@ for (const theme of ['Light', 'Dark'] as const) {
     await page.getByRole('button', { name: 'Edit image caption and source' }).click()
     await page.getByTestId('image-source-input').fill('example.com/no-protocol')
     await expect(page.getByTestId('image-source-input')).toHaveAttribute('aria-invalid', 'true')
-    await expect(page.getByRole('alert')).toContainText('Invalid changes are not saved')
-    const dialog = (await page.getByRole('dialog', { name: 'Image caption and source', exact: true }).boundingBox())!
+    await expect(page.getByRole('alert')).toContainText("Invalid links aren't saved")
+    const dialog = (await page.getByRole('group', { name: 'Image caption and source', exact: true }).boundingBox())!
     await page.screenshot({ path: output('guide-invalid-source'), clip: { x: dialog.x - 12, y: dialog.y - 12, width: dialog.width + 24, height: dialog.height + 24 }, animations: 'disabled' })
     await page.keyboard.press('Escape')
     await expect(page.getByTestId('image-source')).toHaveAttribute('href', 'https://example.com/original-reference')

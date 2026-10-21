@@ -144,6 +144,8 @@ test('locked member allows collapse while alignment uses the visible header and 
     await expect(f.toggle).toHaveAttribute('aria-expanded', 'false')
   })
   await expect(page.getByTestId('unlock-column-layout')).toBeVisible()
+  // Collapse slides shut; measure once it has settled on the header.
+  await expect.poll(async () => (await f.column.boundingBox())!.height).toBe(58)
   const original = await f.column.boundingBox()
   await dragBy(page, f.column.getByTestId('column-title'), 80, 40)
   const afterDrag = await f.column.boundingBox()

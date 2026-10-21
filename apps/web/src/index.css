@@ -1154,8 +1154,8 @@ html[data-input="mouse"] .link-title:hover {
   position: relative;
   height: calc(var(--column-header) - 2px);
   box-sizing: border-box;
-  padding: 10px 12px 8px;
-  padding-left: 46px;
+  /* Same room on both sides, so the title and count centre under the card, not beside the chevron. */
+  padding: 10px 46px 8px;
   text-align: center;
   border-radius: 6px 6px 0 0;
 }
@@ -2388,27 +2388,29 @@ html[data-input='mouse'] [data-tooltip]:hover::after, [data-tooltip]:focus-visib
 .image-caption { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
 .image-metadata[data-expanded='true'] .image-caption { display: block; overflow: visible; }
 .image-source { display: block; margin-top: 6px; color: var(--dn-accent); overflow-wrap: anywhere; }
-.image-text-button { padding: 4px 0; color: var(--dn-text-muted); background: transparent; border: 0; font: inherit; text-decoration: underline; cursor: pointer; }
-.image-edit { display: block; margin-top: 4px; }
-.image-metadata-editor label { display: block; font-weight: 600; margin-bottom: 8px; }
-.image-metadata-editor textarea, .image-metadata-editor input { display: block; box-sizing: border-box; width: 100%; margin-top: 4px; padding: 6px 8px; border: 1px solid var(--dn-border); border-radius: 5px; background: var(--dn-bg); color: var(--dn-text); font: inherit; resize: vertical; }
-.image-metadata-editor textarea { min-height: 64px; max-height: 240px; }
-.image-metadata-editor input[aria-invalid='true'] { border-color: var(--dn-accent); }
 .image-source-help { margin: 4px 0 8px; font-size: 12px; color: var(--dn-text-muted); overflow-wrap: anywhere; }
 .image-optional { font-weight: 400; color: var(--dn-text-muted); }
 .image-card { position: relative; }
-.image-add-metadata { position: absolute; right: 8px; bottom: 8px; border: 1px solid var(--dn-border); border-radius: 6px; padding: 5px 8px; background: var(--dn-panel); color: var(--dn-text); font: inherit; font-size: 12px; cursor: pointer; }
 /* Editing stays readable even for a tiny image or a narrow canvas card. */
-.image-metadata-backdrop { z-index: 1000; }
-.image-metadata-editor { box-sizing: border-box; width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; border: 1px solid var(--dn-border); border-radius: 12px; padding: 20px; box-shadow: 0 12px 36px var(--dn-scrim); }
-.image-metadata-editor h2 { margin: 0 0 16px; font-size: 17px; }
-.image-metadata-editor textarea, .image-metadata-editor input { font-weight: 400; }
 @media (max-width: 719px) { .image-source-action-label { display: none; } }
 @media (max-width: 599px) {
-  .image-metadata-editor textarea, .image-metadata-editor input { font-size: 16px; }
 }
-html[data-input='touch'] .image-add-metadata { min-height: 44px; min-width: 44px; }
 
 /* An SVG chevron centred on the label, not a text glyph sitting on the baseline. */
 .boards-caret { display: inline-grid; place-items: center; margin-left: -2px; color: var(--dn-text-muted); }
 .recovery-actions { display: flex; gap: 6px; margin-bottom: 10px; }
+
+/* Image caption: read mode has a quiet pencil; editing happens in place under the image. */
+.image-text-button { padding: 4px 0; color: var(--dn-text-muted); background: transparent; border: 0; font: inherit; text-decoration: underline; cursor: pointer; }
+.image-edit { position: absolute; top: 6px; right: 6px; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px; color: var(--dn-text-muted); background: transparent; cursor: pointer; opacity: 0; transition: opacity 120ms; }
+.card-image:hover .image-edit, .card-image.selected .image-edit, .image-edit:focus-visible { opacity: 1; }
+html[data-input='mouse'] .image-edit:hover { color: var(--dn-text); background: var(--dn-card-hover); }
+html[data-input='touch'] .image-edit { opacity: 1; width: 44px; height: 44px; top: 0; right: 0; }
+.image-metadata-inline { display: grid; gap: 6px; }
+.image-metadata-inline textarea, .image-metadata-inline input { box-sizing: border-box; width: 100%; min-width: 0; margin: 0; padding: 0; border: 0; color: inherit; background: transparent; font: inherit; resize: none; overflow: hidden; outline: none; }
+.image-metadata-inline input { padding: 3px 0; color: var(--dn-accent); font-size: 12px; border-top: 1px solid var(--dn-border); }
+.image-metadata-inline input::placeholder, .image-metadata-inline textarea::placeholder { color: var(--dn-text-muted); }
+.image-metadata-inline input[aria-invalid='true'] { text-decoration: underline wavy var(--dn-accent); }
+.image-source-row { display: flex; align-items: center; gap: 6px; }
+.image-edit-done { display: grid; place-items: center; flex: none; width: 24px; height: 24px; padding: 0; border: 1px solid var(--dn-border); border-radius: 6px; color: var(--dn-text); background: transparent; cursor: pointer; }
+@media (pointer: coarse) { .image-metadata-inline textarea, .image-metadata-inline input { font-size: 16px; } .image-edit-done { width: 44px; height: 44px; } }
