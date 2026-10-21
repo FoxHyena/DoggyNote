@@ -84,6 +84,13 @@ export function registerCardEl(id: Id, el: HTMLElement) {
 
 export const cardEl = (id: Id) => els.get(id)
 
+/** Re-read one card after a paused animation, as if the observer had fired. */
+export function remeasure(el: HTMLElement | null | undefined) {
+  if (!el) return
+  ro.unobserve(el)
+  ro.observe(el)
+}
+
 export function cardHeight(c: Card): number {
   if (columnCollapsed(c)) return COLUMN_HEADER
   // On expansion a cached header measurement is never used.

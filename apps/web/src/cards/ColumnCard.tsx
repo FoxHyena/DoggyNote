@@ -6,19 +6,28 @@ import { endEdit } from '../state/ui.ts'
 import { columnChildren } from '../state/actions.ts'
 import { CardView, type CardProps } from '../canvas/CardView.tsx'
 import { dropTarget } from '../canvas/dnd.ts'
+import { remeasure, setMeasuring } from '../canvas/layout.ts'
 
 export function ColumnCard(props: CardProps<'column'>) {
   const collapsed = () => columnCollapsed(props.card)
   const title = () => typeof props.card.content?.title === 'string' ? props.card.content.title : ''
   const kids = createMemo(() => columnChildren(props.card.id))
-  // The body fades and slides shut before it unmounts, and back in after it mounts.
-  // Only opacity and transform animate: animating height re-measured the whole board every frame.
+  // The body slides shut before it unmounts, and slides open after it mounts. Board
+  // measuring pauses for the slide (it otherwise re-measured every card each frame)
+  // and catches up once at the end.
   const [open, setOpen] = createSignal(!collapsed())
   let body: HTMLDivElement | undefined
   let expanding = false
   const animate = () => !props.lod && !matchMedia('(prefers-reduced-motion: reduce)').matches
-  const shown = { opacity: 1, transform: 'translateY(0)' }, hidden = { opacity: 0, transform: 'translateY(-8px)' }
-  const slide = (el: HTMLElement, opening: boolean) => el.animate(opening ? [hidden, shown] : [shown, hidden], { duration: 140, easing: 'cubic-bezier(.2,.7,.3,1)' })
+  const slide = (el: HTMLElement, opening: boolean) => {
+    const full = { height: `${el.offsetHeight}px`, opacity: 1 }, shut = { height: '0px', opacity: 0 }
+    setMeasuring(false)
+    el.classList.add('sliding')
+    const anim = el.animate(opening ? [shut, full] : [full, shut], { duration: 200, easing: 'cubic-bezier(.2,.7,.3,1)' })
+    const done = () => { el.classList.remove('sliding'); setMeasuring(true); remeasure(el.closest<HTMLElement>('[data-card-id]')) }
+    anim.addEventListener('finish', done); anim.addEventListener('cancel', done)
+    return anim
+  }
   createEffect(on(collapsed, (shut) => {
     if (!shut) { expanding = !open(); setOpen(true); return }
     if (!body || !animate()) { setOpen(false); return }
