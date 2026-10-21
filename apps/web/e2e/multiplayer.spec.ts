@@ -419,6 +419,8 @@ test('an inactive offline draft is retained when another editor moves its note i
 
 test('right-clicking the canvas opens a compact Look here menu at the pointer', async ({ page }) => {
   await freshBoard(page)
+  // The menu only offers Look here once the board's live room is connected.
+  await live(page)
   const canvas = (await page.getByTestId('canvas').boundingBox())!
   const at = { x: canvas.x + canvas.width / 3, y: canvas.y + canvas.height / 3 }
   await page.mouse.click(at.x, at.y, { button: 'right' })
