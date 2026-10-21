@@ -98,6 +98,7 @@ export const ToolIcons: Record<string, () => JSX.Element> = {
       <rect x="9.5" y="9.5" width="5" height="5" rx="1" />
     </>
   ),
+  swatch: () => <><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M4 15h16M8 18h4" /></>,
   note: () => (
     <>
       <path d="M5 4h14v16H5z" />
@@ -170,8 +171,6 @@ export const ToolIcons: Record<string, () => JSX.Element> = {
   fit: () => <path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4" />,
   comment: () => <path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4.5 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" />,
   check: () => <path d="M5 12.5 10 17l9-10" />,
-  duplicate: () => <><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2M14 11v6M11 14h6" /></>,
-  more: () => <><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none" /></>,
   sliders: () => <><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" /></>,
   download: () => <path d="M12 4v12M7 11l5 5 5-5M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" />,
   upload: () => <path d="M12 16V4M7 9l5-5 5 5M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" />,
@@ -179,10 +178,43 @@ export const ToolIcons: Record<string, () => JSX.Element> = {
   info: () => <><circle cx="12" cy="12" r="8.5" /><path d="M12 11v5.5M12 7.8v.1" /></>,
   film: () => <><rect x="3" y="4.5" width="18" height="15" rx="2" /><path d="M7.5 4.5v15M16.5 4.5v15M3 9.5h4.5M3 14.5h4.5M16.5 9.5H21M16.5 14.5H21" /></>,
   external: () => <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />,
+  // A framed doodle (a card) vs. a pen trailing ink across the board.
+  sketch: () => <><rect x="3.5" y="4.5" width="17" height="15" rx="2" /><path d="M7 15c1.5-4 3-5 4-2s2.5 2 3.5-1 2-3 3-1" /></>,
+  draw: () => <><path d="M14.5 4.5l5 5L10 19l-5.5.5L5 14Z" /><path d="M12.5 6.5l5 5" /><path d="M3 21.5c2-1 3.5-1 5 0" /></>,
+  highlighter: () => <><path d="M9 14.5 16.5 7l3 3-7.5 7.5Z" /><path d="M9 14.5 7 19h4.5l1-1.5M14.5 9l3 3" /><path d="M3 21h8" /></>,
+  eraser: () => <><path d="M8.5 19.5 4 15a1.5 1.5 0 0 1 0-2.1l8.9-8.9a1.5 1.5 0 0 1 2.1 0l5 5a1.5 1.5 0 0 1 0 2.1L12.5 19.5Z" /><path d="M8.5 9.5l6 6M8.5 19.5H20" /></>,
+  chevronDown: () => <path d="m6 9 6 6 6-6" />,
+  expand: () => <path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" />,
+  shrink: () => <path d="M20 10h-6V4M4 14h6v6M14 10l7-7M10 14l-7 7" />,
+  alignLeft: () => <path d="M4 3v18M8 7h10M8 14h6" />,
+  alignCenterH: () => <path d="M12 3v18M6 7h12M8.5 14h7" />,
+  alignRight: () => <path d="M20 3v18M6 7h10M10 14h6" />,
+  alignTop: () => <path d="M3 4h18M7 8v10M14 8v6" />,
+  alignMiddleV: () => <path d="M3 12h18M7 6v12M14 8.5v7" />,
+  alignBottom: () => <path d="M3 20h18M7 6v10M14 10v6" />,
+  lock: () => <><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>,
+  unlock: () => <><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 7.5-2" /></>,
+  duplicate: () => <><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></>,
+  focus: () => <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5M9 12h6" />,
+  label: () => <><path d="M3.5 12.5V4.5a1 1 0 0 1 1-1h8l8 8-9 9Z" /><circle cx="8" cy="8" r="1.3" /></>,
+  copies: () => <><rect x="3" y="3" width="11" height="13" rx="2" /><rect x="10" y="8" width="11" height="13" rx="2" /></>,
+  annotate: () => <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M7 16l4-4 2 2 4-5" /></>,
+  more: () => <path d="M5.5 12h.1M12 12h.1M18.5 12h.1" stroke-width="3" />,
+  sun: () => <><circle cx="12" cy="12" r="4" /><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" /></>,
+  moon: () => <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" />,
   user: () => (
     <>
       <path d="M7 6 4 5 2.5 11c-.5 3 3 4 4.5 1M17 6l3-1 1.5 6c.5 3-3 4-4.5 1M7 6c3-2 7-2 10 0l1 8c.5 4-3 6-6 6s-6.5-2-6-6Z" />
       <path d="m10.5 13 1.5 1.5 1.5-1.5ZM12 15v2M8.5 10h.1M15.5 10h.1" />
     </>
   ),
+}
+
+/** A compact selection-bar action: icon only, named by its tooltip and accessible label. */
+export function IconButton(props: { testid: string; icon: () => JSX.Element; label: string; title?: string; pressed?: boolean; disabled?: boolean; onClick: (e: MouseEvent & { currentTarget: HTMLButtonElement }) => void; ref?: (el: HTMLButtonElement) => void; popup?: boolean; expanded?: boolean }) {
+  return (
+    <button ref={props.ref} class="bar-btn bar-icon" data-testid={props.testid} aria-label={props.label} data-tip={props.title ?? props.label} aria-pressed={props.pressed} aria-haspopup={props.popup ? 'dialog' : undefined} aria-expanded={props.popup ? !!props.expanded : undefined} disabled={props.disabled} onClick={(e) => props.onClick(e)}>
+      <Icon size={18}>{props.icon()}</Icon>
+    </button>
+  )
 }

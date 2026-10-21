@@ -9,6 +9,7 @@ import { ToyboxButton } from './ToyboxPanel.tsx'
 import { TOOLS, centrePlacement } from './Toolbar.tsx'
 import { Icon, ToolIcons } from './icons.tsx'
 import { installMenu } from './menu.ts'
+import { beginCanvasDrawing, endCanvasDrawing } from '../state/canvasDrawing.ts'
 
 // Phones: the creation rail becomes a thumb-height dock. ＋ opens a sheet of
 // everything you can add; Boards, Fetch, Inbox and Buried bones sit around it.
@@ -53,8 +54,10 @@ function AddButton() {
     const v = viewport()
     setCamera(zoomAt(camera(), { x: v.width / 2, y: v.height / 2.6 }, 1))
   }
-  const add = (type: CardType | 'line') => {
+  const add = (type: CardType | 'line' | 'draw') => {
     setOpen(false)
+    if (type === 'draw') return beginCanvasDrawing()
+    endCanvasDrawing()
     if (type === 'line') return setConnectMode(connectMode() ? null : { from: null })
     comeClose()
     // Synchronous, inside the tap, so a new note's editor gets the keyboard on iOS.

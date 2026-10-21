@@ -1,3 +1,4 @@
+import { DatabaseSync } from 'node:sqlite'
 import { describe, expect, it } from 'vitest'
 import { app } from './app.ts'
 import { hashPassword, sha256Hex, signAssetToken, verifyAssetToken, verifyPassword } from './crypto.ts'
@@ -36,6 +37,10 @@ describe('sync validation', () => {
   it('accepts namespaced ids like toybox:<user>', () => {
     expect(parseChanges({ changes: [{ id: 'toybox:abc-123', patch: { kind: 'board' } }] })).toHaveLength(1)
   })
+  it('validates optional position lock values without changing existing patch semantics', () => {
+    for (const positionLocked of [true, false, null]) expect(parseChanges({ changes: [{ id: 'a', patch: { positionLocked } }] })).toHaveLength(1)
+    expect(parseChanges({ changes: [{ id: 'a', patch: { positionLocked: 'true' } }] })).toBe('bad position lock for a')
+  })
   it('accepts well-formed patches', () => {
     expect(parseChanges({ changes: [{ id: 'abc-1', patch: { x: 1, content: { a: 1 } } }] })).toEqual([{ id: 'abc-1', patch: { x: 1, content: { a: 1 } } }])
   })
@@ -50,9 +55,9 @@ describe('sync validation', () => {
   })
   it('upsertSql sets each top-level key with a bound JSON value', () => {
     const { sql, args } = upsertSql({ id: 'a', x: 5, content: { t: 'hi' } })
-    expect(sql).toContain(`json_set(objects.data, '$.x', json(?8), '$.content', json(?9))`)
+    expect(sql).toContain(`json_set(objects.data, '$.x', json(?8 -> '$.x'), '$.content', json(?8 -> '$.content'))`)
     expect(sql).toContain('owner_id = ?7')
-    expect(args).toEqual(['5', '{"t":"hi"}'])
+    expect(args).toEqual(['{"x":5,"content":{"t":"hi"}}'])
   })
 })
 
@@ -247,4 +252,38 @@ describe('canonical host', () => {
     expect((await app.request('https://notepad.dog/api/health')).status).toBe(200)
     expect((await app.request('https://doggynote.oreothehyena.workers.dev/api/health')).status).toBe(200)
   })
+})
+
+it('validates label scalar patches and binds each field independently', () => {
+  const token = 'a'.repeat(32)
+  expect(parseChanges({ changes: [{ id: 'a', patch: { [`labelName${token}`]: 'Lighting', [`labelColor${token}`]: 'sky' } }] })).toHaveLength(1)
+  expect(parseChanges({ changes: [{ id: 'a', patch: { [`label${token}`]: false } }] })).toHaveLength(1)
+  for (const patch of [{ [`label${token}`]: 'true' }, { [`labelName${token}`]: '' }, { [`labelColor${token}`]: 'red' }, { labelBad: true }]) expect(parseChanges({ changes: [{ id: 'a', patch }] })).toBe('bad label field for a')
+  const { sql, args } = upsertSql({ [`label${token}`]: true })
+  expect(sql).toContain(`'$.label${token}', json(?8 -> '$.label${token}')`)
+  expect(args).toEqual([JSON.stringify({ [`label${token}`]: true })])
+})
+
+
+it('dense label patches preserve unrelated fields and scalar JSON types in actual SQLite', () => {
+  const db = new DatabaseSync(':memory:')
+  try {
+    db.exec("CREATE TABLE counters(name TEXT PRIMARY KEY,value INTEGER); INSERT INTO counters VALUES('seq',1); CREATE TABLE objects(id TEXT PRIMARY KEY,kind TEXT,board_id TEXT,data TEXT,seq INTEGER,updated_at INTEGER,updated_by TEXT,owner_id TEXT)")
+    db.prepare("INSERT INTO objects(id,kind,data) VALUES('board','board',?)").run(JSON.stringify({ title: 'Keep this title', content: { keep: true }, labelNameold: 'untouched' }))
+    const patch = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [`labelName${i.toString(16).padStart(32, '0')}`, `Label ${i}`]))
+    const { sql, args } = upsertSql({ ...patch, nested: { a: false }, unset: null, flag: true })
+    // The D1 adapter resolves repeated numbered placeholders to the same binding.
+    const bindings = ['board', 'board', null, JSON.stringify(patch), 1, 'owner', null, ...args]
+    const values: (string | number | null)[] = []
+    const query = sql.replace(/\?(\d+)/g, (_, n: string) => { values.push(bindings[Number(n) - 1] as string | number | null); return '?' })
+    db.prepare(query).run(...values)
+    const row = JSON.parse((db.prepare("SELECT data FROM objects WHERE id='board'").get() as { data: string }).data)
+    expect(row.title).toBe('Keep this title')
+    expect(row.content).toEqual({ keep: true })
+    expect(row.nested).toEqual({ a: false })
+    expect(row.unset).toBeNull()
+    expect(row.flag).toBe(true)
+    expect(row[Object.keys(patch)[99]]).toBe('Label 99')
+    expect(args).toHaveLength(1)
+  } finally { db.close() }
 })

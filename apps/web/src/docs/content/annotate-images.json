@@ -1,0 +1,123 @@
+{
+  "slug": "annotate-images",
+  "category": "writing-drawing",
+  "kind": "task",
+  "title": "Mark up an image",
+  "summary": "Circle, point to and highlight details while keeping your image editable.",
+  "status": "draft",
+  "order": 90,
+  "benefit": "Explain what matters in a reference without losing the image or its attribution.",
+  "outcome": "An image with editable marks that follow it around the board and appear in a board PNG.",
+  "prerequisites": [
+    "An image on a board you can edit.",
+    "A mouse or trackpad."
+  ],
+  "sections": [
+    {
+      "id": "how-it-works",
+      "title": "How image annotations work",
+      "paragraphs": [
+        "Annotations sit above the stored image as separate editable strokes. Use the pen for circles, handwritten notes and arrows, or a translucent highlighter to draw attention to a detail. Erasing removes complete strokes rather than painting over the image.",
+        "For example, circle a button in a reference screenshot, draw an arrow toward an awkward gap and highlight a useful detail. Finish editing, arrange the reference beside your notes, and return later to correct a mark."
+      ]
+    },
+    {
+      "id": "draw-marks",
+      "title": "Add marks to a reference",
+      "flow": {
+        "entry": "Select an image on an editable board and choose Annotate. With a mouse or trackpad, you can also double-click the image.",
+        "steps": [
+          {
+            "action": "Choose Pen, an ink colour and a width, then drag over the image.",
+            "result": "A mark appears under the pointer. One continuous gesture makes one stroke. Draw arrows with the pen; there is no separate arrow tool."
+          },
+          {
+            "action": "Choose Highlighter, select a colour and drag over a detail.",
+            "result": "A translucent mark draws attention to the detail while leaving the image visible."
+          },
+          {
+            "action": "Choose Done.",
+            "result": "The editor closes and the marks remain on the image card. Move or resize the image to arrange it on the board; its annotations follow the image and its caption and source remain below it."
+          }
+        ],
+        "completion": "Completed gestures use the normal local save and sync flow. Reopen Annotate to keep editing the marks. Offline edits wait on this device and sync when you reconnect.",
+        "correction": "Use Undo or Redo in the editor to correct a completed gesture. Escape cancels an unfinished gesture; when idle, Escape leaves completed marks in place and exits."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/annotate-images/drawing-marks.png",
+          "alt": "An image annotation editor showing a red circle around a blue button, a red arrow and a translucent yellow highlight.",
+          "caption": "Draw circles and arrows with the pen, and use the translucent highlighter to call attention to a detail.",
+          "width": 1280,
+          "height": 720
+        }
+      ]
+    },
+    {
+      "id": "correct-and-compare",
+      "title": "Erase or compare marks",
+      "flow": {
+        "entry": "Open Annotate on the image you want to change.",
+        "steps": [
+          {
+            "action": "Choose Eraser and drag across an unwanted mark.",
+            "result": "Each touched stroke disappears in full. A continuous erase drag is one Undo operation."
+          },
+          {
+            "action": "Choose Undo to restore the erased marks, or Redo to remove them again.",
+            "result": "The whole erase gesture is corrected. A newer collaborator change can prevent an older Undo from overwriting it."
+          },
+          {
+            "action": "Choose Hide annotations, then Show annotations.",
+            "result": "Compare the image with and without its marks. Hiding is temporary in the editor; board PNG export includes the annotations."
+          }
+        ],
+        "completion": "Choose Done to return to the board with completed corrections kept.",
+        "correction": "If you lose focus or the pointer gesture is interrupted, the unfinished gesture is cancelled. Completed marks remain."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/annotate-images/erase-undo-restored.png",
+          "alt": "The image annotation editor after Undo restores an erased red circle, with the red arrow and yellow highlight still visible.",
+          "caption": "One Undo restores the erased stroke. The original circle, arrow and highlight remain separately editable.",
+          "width": 1280,
+          "height": 720
+        }
+      ]
+    },
+    {
+      "id": "pan-and-zoom",
+      "title": "Inspect a detail",
+      "paragraphs": [
+        "Use the editor’s zoom controls to inspect a detail, and choose Fit to see the image again. Hold Space and drag to pan while zoomed in. The pointer position maps to the image, so the marks stay attached to the same details."
+      ]
+    },
+    {
+      "id": "download-and-export",
+      "title": "Keep the original or export the marks",
+      "paragraphs": [
+        "Choose Download original in the annotation editor to download the stored image without annotation marks. Use the board’s PNG export to include the image, its visible annotations and its caption. Editor controls are excluded from the PNG."
+      ],
+      "figures": [
+        {
+          "src": "/docs/assets/annotate-images/annotated-board-export.png",
+          "alt": "An exported board PNG containing the marked reference image with a red circle, arrow, yellow highlight, caption and source link below it.",
+          "caption": "Board PNG export includes the annotations and attribution, without the annotation editor’s controls.",
+          "width": 1288,
+          "height": 984
+        }
+      ]
+    },
+    {
+      "id": "availability-and-saving",
+      "title": "Access, saving and limits",
+      "paragraphs": [
+        "Users with edit access can annotate an image. View-only users can see the marks but cannot modify them. A position-locked image can still be annotated: the lock protects placement and size.",
+        "If device storage cannot save a completed mark, the editor shows a save problem and Retry saving. Keep DoggyNote open while resolving the problem. Save and sync details on the board show any remaining connection or access issue.",
+        "Mouse and trackpad are supported in this version. Pencil pressure and mobile drawing support are not promised. Annotation editing adds no crop, rotation or mirror controls."
+      ]
+    }
+  ],
+  "related": [],
+  "links": []
+}

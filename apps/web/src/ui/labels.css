@@ -1,0 +1,26 @@
+.card-labels { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 10px 9px; min-width: 0; }
+.label-chip { display: inline-block; max-width: 100%; border: 1px solid var(--dn-border); border-radius: 6px; padding: 2px 6px; font-size: 11px; line-height: 1.35; overflow-wrap: anywhere; white-space: normal; }
+.labels-menu { width: min(320px, calc(100vw - 16px)); }
+.labels-hint { margin: 0; padding: 4px 10px; font-size: 12px; line-height: 1.5; color: var(--dn-text-muted); }
+.label-form { display: flex; gap: 4px; padding: 2px 2px 6px; }
+.label-form input { flex: 1; min-width: 0; padding: 7px 9px; border: 1px solid var(--dn-border); border-radius: 7px; background: var(--dn-bg); color: var(--dn-text); font: inherit; font-size: 13px; }
+.labels-menu .bar-icon { display: inline-grid; place-items: center; min-width: 30px; min-height: 30px; padding: 0; }
+.labels-list { max-height: 260px; overflow: auto; overscroll-behavior: contain; }
+.label-row { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; padding: 2px 4px; border-radius: 6px; }
+html[data-input="mouse"] .label-row:hover:not(:has(.label-rename)) { background: var(--dn-card-hover); }
+.label-apply { display: flex; flex: 1 1 120px; align-items: center; min-width: 0; gap: 8px; padding: 4px; cursor: pointer; }
+.label-apply input { flex-shrink: 0; width: 16px; height: 16px; }
+.label-count { font-size: 12px; color: var(--dn-text-muted); }
+.label-dot { flex-shrink: 0; width: 20px; height: 20px; margin: 0 4px; padding: 0; border: 1px solid var(--dn-text-muted); border-radius: 50%; cursor: pointer; }
+.label-dot[aria-pressed='true'], .label-dot[aria-expanded='true'] { outline: 2px solid var(--dn-selection); outline-offset: 1px; }
+.label-dots { display: flex; flex-wrap: wrap; gap: 2px; width: 100%; padding: 4px 4px 6px 28px; }
+/* Inline rename: the row's chip becomes a field with save and cancel. */
+.label-rename { display: flex; flex: 1; align-items: center; gap: 4px; min-width: 0; padding: 4px; }
+.label-rename .bar-icon { border: 1px solid var(--dn-border); }
+.label-rename input { flex: 1; min-width: 0; padding: 5px 8px; outline-offset: -1px; border: 1px solid var(--dn-selection); border-radius: 6px; background: var(--dn-bg); color: var(--dn-text); font: inherit; font-size: 13px; }
+.label-create { padding: 2px 0; border-top: 1px solid var(--dn-border); }
+.label-create .label-dots { padding-left: 10px; }
+.label-history { display: flex; align-items: center; gap: 2px; padding-top: 4px; border-top: 1px solid var(--dn-border); }
+.label-history .labels-hint { margin-left: auto; }
+.labels-menu :focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 2px; }
+@media (pointer: coarse) { .label-dot { width: 32px; height: 32px; } .labels-menu .bar-icon { min-width: 44px; min-height: 44px; } }

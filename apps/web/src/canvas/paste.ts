@@ -5,6 +5,7 @@ import { unfurl } from '../state/unfurl.ts'
 import { resolveMovie } from '../state/movies.ts'
 import { revealCard } from './Canvas.tsx'
 import { select } from '../state/ui.ts'
+import { capturedImageSource } from './image-source.ts'
 import { addFiles } from '../state/files.ts'
 import { pasteClip, readClip, takePlainPaste } from '../state/clipboard.ts'
 
@@ -14,18 +15,18 @@ import { pasteClip, readClip, takePlainPaste } from '../state/clipboard.ts'
 export const IMAGE_TYPES = /^image\/(png|jpe?g|gif|webp|heic|heif|avif|bmp)$/i
 
 /** Add images as cards (on the current board, or `onBoard`, e.g. the Toy box). */
-export async function addImages(files: File[], at: Vec, onBoard?: Id): Promise<Id[]> {
+export async function addImages(files: File[], at: Vec, onBoard?: Id, sourceUrl?: string | null): Promise<Id[]> {
   const ids: Id[] = []
   let offset = 0
   for (const f of files) {
     try {
       const img = await importImage(f)
-      const w = Math.min(DEFAULT_SIZE.image.w, img.width)
+      const w = Math.max(160, Math.min(DEFAULT_SIZE.image.w, img.width))
       ids.push(
         createCard('image', { at: { x: at.x + offset, y: at.y + offset } }, {
           content: { assetId: img.assetId, width: img.width, height: img.height, sizes: img.sizes },
           edit: false,
-          extra: { w, h: Math.round((w * img.height) / img.width) },
+          extra: { ...(sourceUrl ? { imageSourceUrl: sourceUrl } : {}), w, h: Math.round((w * img.height) / img.width) },
           boardId: onBoard,
         }),
       )
@@ -67,11 +68,11 @@ export function addText(text: string, at: Vec, onBoard?: Id, title?: string) {
 }
 
 /** Images become image cards, anything else a file card. Returns false if there were no files. */
-export function addAnyFiles(files: File[], at: Vec, onBoard?: Id): boolean {
+export function addAnyFiles(files: File[], at: Vec, onBoard?: Id, sourceUrl?: string | null): boolean {
   if (!files.length) return false
   const images = files.filter((f) => IMAGE_TYPES.test(f.type))
   const others = files.filter((f) => !IMAGE_TYPES.test(f.type))
-  if (images.length) void addImages(images, at, onBoard)
+  if (images.length) void addImages(images, at, onBoard, sourceUrl)
   if (others.length) addFiles(others, { x: at.x + images.length * 24, y: at.y + images.length * 24 }, onBoard)
   return true
 }
@@ -92,7 +93,7 @@ export function handleCanvasPaste(e: ClipboardEvent, at: Vec, columnId?: Id): bo
     pasteClip(clip, at, { columnId })
     return true
   }
-  if (addAnyFiles([...dt.files], at)) return true
+  if (addAnyFiles([...dt.files], at, undefined, capturedImageSource(dt))) return true
   const text = dt.getData('text/plain')
   if (text) {
     addText(text, at)
@@ -104,7 +105,7 @@ export function handleCanvasPaste(e: ClipboardEvent, at: Vec, columnId?: Id): bo
 export function handleCanvasDrop(e: DragEvent, at: Vec) {
   const dt = e.dataTransfer
   if (!dt) return
-  if (addAnyFiles([...dt.files], at)) return
+  if (addAnyFiles([...dt.files], at, undefined, capturedImageSource(dt))) return
   const uri = dt.getData('text/uri-list').split('\n').find((l) => l && !l.startsWith('#'))
   if (uri) return void addText(uri, at)
   const text = dt.getData('text/plain')

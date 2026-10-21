@@ -1,0 +1,10 @@
+.popover { position: fixed; z-index: 900; width: max-content; min-width: 220px; max-width: min(340px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); overflow: auto; padding: 6px; border: 1px solid var(--dn-border); border-radius: 10px; color: var(--dn-text); background: var(--dn-panel); box-shadow: 0 8px 24px rgb(0 0 0 / 0.25); animation: tip-in 120ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .popover { animation: none; } }
+.popover-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 34px; padding: 6px 10px; border: 0; border-radius: 6px; color: inherit; background: transparent; font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+html[data-input="mouse"] .popover-item:hover:not(:disabled), .popover-item:focus-visible { background: var(--dn-card-hover); outline: none; }
+.popover-item:disabled { opacity: 0.5; cursor: default; }
+.popover-item small { display: block; color: var(--dn-text-muted); font-size: 11px; }
+.popover-sep { height: 1px; margin: 4px 2px; background: var(--dn-border); }
+.popover-field { display: flex; align-items: center; gap: 8px; padding: 4px 10px 6px; color: var(--dn-text-muted); font-size: 12px; }
+.popover-field select, .popover-field input { flex: 1; min-width: 0; padding: 6px 8px; border: 1px solid var(--dn-border); border-radius: 6px; color: var(--dn-text); background: var(--dn-bg); font: inherit; font-size: 13px; }
+@media (pointer: coarse) { .popover-item { min-height: 44px; } .popover-field select, .popover-field input { min-height: 40px; font-size: 16px; } }

@@ -8,6 +8,7 @@ import { boardId, setRootBoard } from './state/ui.ts'
 import { createTheme } from './theme.ts'
 import { ViewerMenu } from './ui/ViewerMenu.tsx'
 import { CanvasControls } from './ui/CanvasControls.tsx'
+import { FocusNote } from './ui/FocusNote.tsx'
 import { Canvas } from './canvas/Canvas.tsx'
 import { TopBar } from './ui/TopBar.tsx'
 import { Loader } from './ui/Loader.tsx'
@@ -55,6 +56,7 @@ export function Viewer(props: { token: string }) {
           <h1>This link has gone walkies</h1>
           <p>{notFoundMsg()}</p>
         </div>
+        <FocusNote />
       </Match>
       <Match when={data.latest}>
         <div class="app viewer" data-testid="viewer">
@@ -78,6 +80,7 @@ export function Viewer(props: { token: string }) {
             </a>
           </main>
         </div>
+        <FocusNote />
       </Match>
     </Switch>
   )

@@ -3,7 +3,7 @@ import * as doc from '../state/doc.ts'
 import { lastError, lastSyncAt, pendingCount, pendingUploadsCount, syncNow, syncState } from '../state/sync.ts'
 import './sync-status.css'
 import { Icon, ToolIcons } from './icons.tsx'
-import { downloadRecovery, recoverableChanges } from '../state/recovery.ts'
+import { discardRecovery, downloadRecovery, recoverableChanges } from '../state/recovery.ts'
 
 /** Network activity is deliberately separate from the quiet save-status control. */
 export function SyncStatus() {
@@ -78,7 +78,7 @@ export function SyncStatus() {
       <dl><dt>Changes waiting</dt><dd data-testid="pending-changes">{pendingCount()}</dd>
         <dt>Image uploads</dt><dd>{pendingUploadsCount()}</dd>
         <dt>Last synced</dt><dd>{savedAt()}</dd></dl>
-      <Show when={recoverableChanges().length}><p>Access changed for {recoverableChanges().length} unsynced item(s). A local recovery copy is available.</p><button class="bar-btn" data-testid="download-recovery" onClick={downloadRecovery}>Download unsynced changes</button></Show>
+      <Show when={recoverableChanges().length}><p>Access changed for {recoverableChanges().length} unsynced item(s). A local recovery copy is available.</p><div class="recovery-actions"><button class="bar-btn" data-testid="download-recovery" aria-label="Download unsynced changes" data-tip="Save a copy of the unsynced edits as a file" onClick={downloadRecovery}>Download</button><button class="bar-btn" data-testid="discard-recovery" data-tip="Remove this notice and the local copy. Undo is available briefly." onClick={() => void discardRecovery()}>Discard</button></div></Show>
       <button class="primary-btn sync-now" data-testid="sync-now" data-state={syncButtonState()} aria-disabled={busy()} onClick={() => { if (!busy()) retry() }}>
         <Show when={syncButtonState() === 'syncing'}><svg class="sync-spinner" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="26 12" stroke-linecap="round" /></svg></Show>
         <Show when={syncButtonState() === 'synced'}><Icon size={14}>{ToolIcons.check()}</Icon></Show>

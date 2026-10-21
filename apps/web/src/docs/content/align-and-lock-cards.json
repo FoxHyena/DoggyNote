@@ -1,0 +1,112 @@
+{
+  "slug": "align-and-lock-cards",
+  "category": "working-on-boards",
+  "kind": "task",
+  "title": "Line up cards and lock their positions",
+  "summary": "Align references together and keep a reference fixed while you arrange nearby notes.",
+  "status": "draft",
+  "order": 10,
+  "benefit": "Tidy a collection of references without dragging each card into place, then protect the layout you want to keep.",
+  "outcome": "Selected cards line up, and a locked reference stays in place while nearby notes move or resize.",
+  "prerequisites": [
+    "Editing access to the board.",
+    "Two or more selected layout units when using alignment."
+  ],
+  "sections": [
+    {
+      "id": "how-it-works",
+      "title": "How alignment and position locks work",
+      "paragraphs": [
+        "Use alignment to tidy a row of images or line up cards in one action. A position lock protects deliberate layout changes while leaving content available to edit.",
+        "Each alignment uses the outside bounds of the selected layout units. Edge commands use those outer edges; center commands use the middle of that selection area.",
+        "Align… offers Align left, Align horizontal centers, Align right, Align top, Align vertical centers and Align bottom."
+      ]
+    },
+    {
+      "id": "align-images",
+      "title": "Align three image cards",
+      "flow": {
+        "entry": "Open an editable board with three image cards at uneven positions.",
+        "steps": [
+          {
+            "action": "Clear an old selection if needed. With a mouse, hold Shift and click each image. On a touchscreen, tap one image, tap Select in the selection toolbar, then tap the other images.",
+            "result": "The selected images show outlines and share a selection toolbar."
+          },
+          {
+            "action": "Open Align… in the toolbar and choose Align top.",
+            "result": "The unlocked images move so their top edges line up. Their widths and contents stay the same."
+          },
+          {
+            "action": "Use Undo, then Redo if you want to compare the layouts.",
+            "result": "One Undo restores all previous positions for that command. Redo applies the alignment again."
+          }
+        ],
+        "completion": "The alignment is saved with the board. Save status shows whether changes are still waiting to sync.",
+        "correction": "Use Undo in the alignment feedback before making another change. You can also press ⌘Z on a Mac or Ctrl+Z in other browsers to reverse the latest change."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/align-and-lock-cards/images-aligned-top-with-one-lock.png",
+          "alt": "Three selected image cards share their top edge. The first has a visible lock badge, and the toolbar shows Align… and 1 locked.",
+          "caption": "Align top lines up the three images. One reference is then locked while the other cards remain available to arrange.",
+          "width": 720,
+          "height": 900
+        }
+      ]
+    },
+    {
+      "id": "lock-reference",
+      "title": "Keep a reference in place",
+      "flow": {
+        "entry": "Select the reference image whose layout you want to keep.",
+        "steps": [
+          {
+            "action": "Choose Lock position in the selection toolbar.",
+            "result": "A lock indicator appears and the action changes to Unlock position."
+          },
+          {
+            "action": "Select a nearby note. Drag it, nudge it with the arrow keys, or drag its resize handle. Hold Shift with an arrow key for a larger nudge.",
+            "result": "The note changes while the locked reference stays in place."
+          },
+          {
+            "action": "Select the reference again and choose Unlock position when you want to move or resize it.",
+            "result": "The reference can be arranged again using the normal board tools."
+          }
+        ],
+        "completion": "The position lock is saved with the board and remains when you reopen it or restart the Mac app.",
+        "correction": "Lock and unlock changes support Undo and Redo. Unlock position is available in the same selection toolbar."
+      },
+      "paragraphs": [
+        "Locked items resist dragging, resizing, nudging and alignment. You can still edit their text or other content. Content edits can change a text card’s height or the flow of a column; a position lock does not freeze the content."
+      ]
+    },
+    {
+      "id": "mixed-selections",
+      "title": "Align a mixed selection",
+      "paragraphs": [
+        "Locked items remain part of the alignment reference but stay fixed. The toolbar shows how many selected cards are locked, and the feedback reports which layout units stayed in place.",
+        "If every selected layout unit is locked, Align is unavailable until you unlock one. Unlock selected releases explicit locks in a mixed selection."
+      ]
+    },
+    {
+      "id": "columns",
+      "title": "Keep columns and their members together",
+      "paragraphs": [
+        "Selecting a card inside a column uses its whole column as the alignment unit. Members keep their order. Selecting both the column and one of its members still moves that column only once.",
+        "Locking a column protects its members’ layout. A locked member also pins the column, so moving or resizing the outer column cannot shift that reference indirectly.",
+        "Select the column or an affected member and choose Unlock column layout to unlock the column and its locked members. Content inside the column remains editable while its layout is locked."
+      ]
+    },
+    {
+      "id": "save-correct-share",
+      "title": "Save, correct and share the result",
+      "paragraphs": [
+        "A position lock is a layout aid for editors. It does not change who can see or edit the board. People with view-only access can look at the result but cannot change positions or locks.",
+        "You can still deliberately choose Bury for a locked card. Undo brings it back, or restore it from Buried bones. Editor lock indicators do not appear in a PNG export.",
+        "If another session has changed a position, Undo may keep the newer layout and explain why it cannot reverse the older layout change. If a position is locked elsewhere while you are offline, reconnecting keeps the locked layout and preserves your unrelated content edits."
+      ]
+    }
+  ],
+  "related": [],
+  "links": []
+}

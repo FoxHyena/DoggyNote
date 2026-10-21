@@ -1,6 +1,7 @@
 import { For, Show, createMemo } from 'solid-js'
 import { SIDES, autoSides, connectorPath, sideAnchor, type Connection } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
+import { connectionEndpoint } from '../state/columns.ts'
 import { boardId, isSelected } from '../state/ui.ts'
 import { layoutTick, rectOf } from './layout.ts'
 import { connectPreview } from './dnd.ts'
@@ -13,17 +14,20 @@ import { connectPreview } from './dnd.ts'
 function ConnLine(props: { conn: Connection }) {
   const geo = createMemo(() => {
     layoutTick()
-    const a = rectOf(props.conn.from)
-    const b = rectOf(props.conn.to)
+    const from = connectionEndpoint(props.conn.from)
+    const to = connectionEndpoint(props.conn.to)
+    if (!from || !to || from === to) return null
+    const a = rectOf(from)
+    const b = rectOf(to)
     if (!a || !b) return null
     const [autoA, autoB] = autoSides(a, b)
-    return connectorPath(a, props.conn.fromSide ?? autoA, { rect: b, side: props.conn.toSide ?? autoB }).d
+    return { d: connectorPath(a, from === props.conn.from ? props.conn.fromSide ?? autoA : autoA, { rect: b, side: to === props.conn.to ? props.conn.toSide ?? autoB : autoB }).d, collapsed: from !== props.conn.from || to !== props.conn.to }
   })
   return (
     <Show when={geo()}>
-      <g class="conn" classList={{ selected: isSelected(props.conn.id) }} data-connection-id={props.conn.id} data-testid="connection">
-        <path class="conn-hit" d={geo()!} />
-        <path class="conn-line" d={geo()!} marker-end={props.conn.arrow === 'end' ? 'url(#dn-arrow)' : undefined} />
+      <g class="conn" classList={{ selected: isSelected(props.conn.id) }} data-collapsed-endpoint={geo()?.collapsed ? 'true' : undefined} data-connection-id={props.conn.id} data-testid="connection">
+        <path class="conn-hit" d={geo()!.d} />
+        <path class="conn-line" stroke-dasharray={geo()!.collapsed ? '6 4' : undefined} d={geo()!.d} marker-end={props.conn.arrow === 'end' ? 'url(#dn-arrow)' : undefined} />
       </g>
     </Show>
   )

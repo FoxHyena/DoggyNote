@@ -1,12 +1,15 @@
 import { For, Show, createMemo, onMount } from 'solid-js'
-import type { Card } from '@doggynote/core'
+import { COLUMN_HEADER, type Card } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
+import { columnCollapsed, setColumnCollapsed } from '../state/columns.ts'
 import { endEdit } from '../state/ui.ts'
 import { columnChildren } from '../state/actions.ts'
 import { CardView, type CardProps } from '../canvas/CardView.tsx'
 import { dropTarget } from '../canvas/dnd.ts'
 
 export function ColumnCard(props: CardProps<'column'>) {
+  const collapsed = () => columnCollapsed(props.card)
+  const title = () => typeof props.card.content?.title === 'string' ? props.card.content.title : ''
   const kids = createMemo(() => columnChildren(props.card.id))
   const drop = () => {
     const d = dropTarget()
@@ -14,13 +17,22 @@ export function ColumnCard(props: CardProps<'column'>) {
   }
 
   return (
-    <div class="column" classList={{ 'drop-active': drop() >= 0 }}>
-      <div class="column-head" data-edit-title>
+    <div class="column" style={{ '--column-header': `${COLUMN_HEADER}px` }} classList={{ collapsed: collapsed(), 'drop-active': drop() >= 0 }}>
+      <div class="column-head">
+        <button class="column-toggle" data-testid="column-toggle" data-nodrag
+          aria-label={collapsed() ? 'Expand column' : 'Collapse column'} aria-expanded={!collapsed()}
+          title={collapsed() ? 'Expand column' : 'Collapse column'}
+          onPointerDown={(e) => e.stopPropagation()}
+          onKeyDown={(e) => { if (!e.metaKey && !e.ctrlKey && e.key !== 'Escape') e.stopPropagation() }}
+          onClick={(e) => { e.stopPropagation(); setColumnCollapsed(props.card.id, !collapsed(), props.readOnly) }}>
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d={collapsed() ? 'M6 3l5 5-5 5' : 'M3 6l5 5 5-5'} fill="none" stroke="currentColor" stroke-width="1.8" /></svg>
+        </button>
+        <div class="column-heading" data-edit-title>
         <Show
           when={props.editing}
           fallback={
-            <div class="column-title" data-testid="column-title">
-              {props.card.content.title || 'Column'}
+            <div class="column-title" data-testid="column-title" title={title() || 'Column'}>
+              {title() || 'Column'}
             </div>
           }
         >
@@ -29,7 +41,7 @@ export function ColumnCard(props: CardProps<'column'>) {
             class="column-title-input"
             data-testid="column-title-input"
             placeholder="Column"
-            value={props.card.content.title}
+            value={title()}
             onInput={(e) => doc.transient(props.card.id, { content: { title: e.currentTarget.value } } as Partial<Card>)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === 'Escape') {
@@ -39,10 +51,12 @@ export function ColumnCard(props: CardProps<'column'>) {
             }}
           />
         </Show>
-        <div class="column-meta">
+        <div class="column-meta" title={collapsed() ? 'Live cards in this column. Dashed connections lead to hidden cards.' : 'Live cards in this column'}>
           {kids().length} card{kids().length === 1 ? '' : 's'}
         </div>
+        </div>
       </div>
+      <Show when={!collapsed()}>
       <div class="column-body" data-testid="column-body">
         <For each={kids()}>
           {(k, i) => (
@@ -61,6 +75,7 @@ export function ColumnCard(props: CardProps<'column'>) {
           <div class="column-empty">Drag cards here</div>
         </Show>
       </div>
+      </Show>
     </div>
   )
 }

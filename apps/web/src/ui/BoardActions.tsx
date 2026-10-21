@@ -4,6 +4,8 @@ import { Show, createSignal, onCleanup, onMount, type JSX } from 'solid-js'
 import { AgentProposals } from './AgentProposals.tsx'
 import { ExportButton } from './ExportMenu.tsx'
 import { BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
+import { TemplatesDialog } from './TemplatesDialog.tsx'
+import { canReadBoard } from '../state/access.ts'
 
 /** One proposal resource and export panel, shared by every board-action trigger. */
 export function BoardActions(props: { boardId: string; primary?: JSX.Element }) {
@@ -33,7 +35,7 @@ export function BoardActions(props: { boardId: string; primary?: JSX.Element }) 
       : event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : -1
     if (next >= 0) { event.preventDefault(); items[next]?.focus() }
   }
-  return <AgentProposals boardId={props.boardId} renderTrigger={(proposal) => <ExportButton renderTrigger={(png) => <div class="board-actions" ref={root} style={{ position: 'relative' }}>
+  return <TemplatesDialog renderTrigger={(templates) => <AgentProposals boardId={props.boardId} renderTrigger={(proposal) => <ExportButton renderTrigger={(png) => <div class="board-actions" ref={root} style={{ position: 'relative' }}>
     <Show when={proposal.pending() > 0}><button class="icon-btn board-actions-review" classList={{ 'preview-hidden': doc.previewing() }} aria-hidden={doc.previewing() || undefined} tabindex={doc.previewing() ? -1 : undefined} data-testid="review-changes" data-tooltip="See the pending agent changes on the board" aria-haspopup="dialog" aria-expanded={proposal.isOpen()} onClick={(e) => { png.close(false); close(); proposal.open(e.currentTarget) }}><BoardIconSvg icon="paw" size={18} /><span>Review changes · {proposal.pending()}</span></button></Show>
     <Show when={props.primary}><div class="board-actions-primary" onClick={() => { png.close(false); close() }}>{props.primary}</div></Show>
     <button ref={more} class="icon-btn board-actions-more" data-testid="board-more" data-tooltip="More board actions" aria-label={`More board actions${proposal.pending() ? `, ${proposal.pending()} pending proposals` : ''}`} aria-haspopup="menu" aria-expanded={open()} onClick={() => { png.close(false); setOpen(!open()) }} onKeyDown={(event) => { if (event.key === 'ArrowDown') { event.preventDefault(); event.stopPropagation(); png.close(false); setOpen(true) } }}>
@@ -43,6 +45,9 @@ export function BoardActions(props: { boardId: string; primary?: JSX.Element }) 
       <div class="nav-menu-head sheet-only" aria-hidden="true"><strong>This board</strong></div>
       <button class="menu-item nav-menu-row" role="menuitem" data-testid="agent-proposals" aria-haspopup="dialog" onClick={() => { png.close(false); close(); proposal.open(more) }}><BoardIconSvg icon="paw" size={18} /><span class="nav-menu-label">Agent proposals</span><Show when={proposal.pending() > 0}><span class="nav-menu-meta">{` · ${proposal.pending()}`}</span></Show></button>
       <button class="menu-item nav-menu-row" role="menuitem" data-testid="export" aria-haspopup="dialog" onClick={() => { close(); png.open(more) }}><Icon size={18}>{ToolIcons.download()}</Icon><span class="nav-menu-label">Export PNG</span></button>
+      <button class="menu-item nav-menu-row" role="menuitem" data-testid="duplicate-board" disabled={!canReadBoard(props.boardId)} onClick={() => { close(); templates('duplicate', more) }}>Duplicate board…</button>
+      <button class="menu-item nav-menu-row" role="menuitem" data-testid="save-template" disabled={!canReadBoard(props.boardId)} onClick={() => { close(); templates('save', more) }}>Save as template…</button>
+      <button class="menu-item nav-menu-row" role="menuitem" data-testid="open-templates" onClick={() => { close(); templates('library', more) }}>Templates…</button>
     </div></Show>
-  </div>} />} />
+  </div>} />} />} />
 }

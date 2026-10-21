@@ -1,12 +1,18 @@
+import { checkPositionLocks, positionWriteGuards } from './position.ts'
+import { validSwatchFields } from '@doggynote/core'
 import { Hono } from 'hono'
+import { LABEL_FIELD, validLabelField } from '@doggynote/core'
+import { isSketchContent } from '@doggynote/core'
 import { isReservedId } from '@doggynote/core/agent'
+import { isInkMark } from '@doggynote/core'
 import type { AppEnv } from './env.ts'
 import { accessGuard, bumpAccess, loadAccess, newBoardAccess, type Access } from './access.ts'
+import { noteRevisionGuard, prepareSyncedNotes, syncedNoteCapabilities } from './synced-notes.ts'
 
 // Push: field patches, merged per top-level field (last write to arrive wins).
 // Pull: every object whose seq is above the client's cursor.
 
-export const KINDS = new Set(['board', 'card', 'connection', 'comment'])
+export const KINDS = new Set(['board', 'card', 'connection', 'comment', 'stroke'])
 const KEY = /^[a-zA-Z][a-zA-Z0-9]{0,31}$/
 // ':' is for namespaced ids like "toybox:<userId>".
 const ID = /^[a-zA-Z0-9_:-]{1,64}$/
@@ -30,9 +36,13 @@ export function parseChanges(body: unknown): IncomingChange[] | string {
     seen.add(id)
     if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return `bad patch for ${id}`
     const keys = Object.keys(patch)
-    if (!keys.length || keys.length > 40 || !keys.every((k) => KEY.test(k))) return `bad keys for ${id}`
+    if (!keys.length || keys.length > 256 || !keys.every((k) => KEY.test(k) || LABEL_FIELD.test(k))) return `bad keys for ${id}`
     const p = patch as Record<string, unknown>
+    for (const [key, value] of Object.entries(p)) {
+      if (key.startsWith('label') && !validLabelField(key.startsWith('labelName') || key.startsWith('labelColor') ? 'board' : 'card', key, value)) return `bad label field for ${id}`
+    }
     if ('id' in p && p.id !== id) return `id mismatch for ${id}`
+    if ('positionLocked' in p && p.positionLocked !== null && typeof p.positionLocked !== 'boolean') return `bad position lock for ${id}`
     if ('kind' in p && !KINDS.has(p.kind as string)) return `bad kind for ${id}`
     if (JSON.stringify(p).length > MAX_OBJECT_BYTES) return `object ${id} too large`
     out.push({ id, patch: p })
@@ -47,15 +57,20 @@ export function parseChanges(body: unknown): IncomingChange[] | string {
  */
 export function upsertSql(patch: Record<string, unknown>): { sql: string; args: unknown[] } {
   const keys = Object.keys(patch).filter((k) => k !== 'id')
-  const sets = keys.map((k, i) => `'$.${k}', json(?${8 + i})`).join(', ')
+  // One bound patch keeps dense label catalogues below D1's parameter budget.
+  let data = 'objects.data'
+  for (let start = 0; start < keys.length; start += 32) {
+    const sets = keys.slice(start, start + 32).map((k) => `'$.${k}', json(?8 -> '$.${k}')`).join(', ')
+    data = `json_set(${data}, ${sets})`
+  }
   const sql = `INSERT INTO objects (id, kind, board_id, data, seq, updated_at, updated_by, owner_id)
     VALUES (?1, ?2, ?3, ?4, (SELECT value FROM counters WHERE name = 'seq'), ?5, ?6, ?7)
     ON CONFLICT(id) DO UPDATE SET
-      data = ${keys.length ? `json_set(objects.data, ${sets})` : 'objects.data'},
+      data = ${data},
       board_id = CASE WHEN ?3 IS NULL THEN objects.board_id ELSE ?3 END,
       owner_id = ?7,
       seq = excluded.seq, updated_at = excluded.updated_at, updated_by = excluded.updated_by`
-  const args = keys.map((k) => JSON.stringify(patch[k] ?? null))
+  const args = keys.length ? [JSON.stringify(Object.fromEntries(keys.map((key) => [key, patch[key] ?? null])))] : []
   return { sql, args }
 }
 
@@ -124,13 +139,17 @@ export function deletedCommentOwner(
 export const sync = new Hono<AppEnv>()
 
 sync.post('/sync', async (c) => {
-  const parsed = parseChanges(await c.req.json().catch(() => null))
+  let parsed = parseChanges(await c.req.json().catch(() => null))
   if (typeof parsed === 'string') return c.json({ error: parsed }, 400)
   if (!parsed.length) return c.json({ ok: true })
   const db = c.env.DB
   const now = Date.now()
   const me = c.get('user')
   const user = me.id
+  const access = await loadAccess(db, me)
+  const shared = await prepareSyncedNotes(db, access, user, parsed)
+  if (shared.deniedIds.length) return c.json({ error: 'This synced body cannot be changed with your current access. Unlink this instance to edit independently.', deniedIds: shared.deniedIds }, 403)
+  parsed = shared.changes
 
   // Current board + owner of everything being written, to enforce Toy box privacy.
   const existing = new Map<string, Existing>()
@@ -146,10 +165,11 @@ sync.post('/sync', async (c) => {
     for (const r of results) existing.set(r.id, r)
   }
 
-  const access = await loadAccess(db, me)
   const deniedIds = await deniedChanges(db, access, me.id, parsed)
   if (deniedIds.length) return c.json({ error: 'You no longer have permission to change these objects', deniedIds }, 403)
-  const stmts: D1PreparedStatement[] = [accessGuard(db, access.revision)]
+  const positions = await checkPositionLocks(db, parsed)
+  if (positions.lockedIds.length) return c.json({ error: 'Locked positions stayed in place. Unlock before moving them.', lockedIds: positions.lockedIds, objects: positions.objects }, 409)
+  const stmts: D1PreparedStatement[] = [accessGuard(db, access.revision), noteRevisionGuard(db, access.revision, shared.revision), ...positionWriteGuards(db, access.revision, positions.versions)]
   const newIds = parsed.filter((ch) => !existing.has(ch.id)).map((ch) => ch.id)
   for (let i = 0; i < newIds.length; i += 90) stmts.push(accessGuard(db, access.revision, newIds.slice(i, i + 90)))
   for (const { id, patch } of parsed) {
@@ -165,8 +185,13 @@ sync.post('/sync', async (c) => {
     const { sql, args } = upsertSql(patch)
     stmts.push(db.prepare("UPDATE counters SET value = value + 1 WHERE name = 'seq'"))
     stmts.push(db.prepare(sql).bind(id, kind, boardId, JSON.stringify({ ...patch, id }), now, user, owner, ...args))
+    // Old clients know nothing about strokes. Always propagate parent moves/purge
+    // inside this same transaction, including marks inserted since our read.
+    if (kind === 'card' && (boardId || patch.purged === true)) {
+      stmts.push(...strokeLifecycleStatements(db, id, boardId ?? prev?.board_id ?? '', patch.purged === true, now, user))
+    }
     if (kind === 'board' && !prev && !id.startsWith('toybox:')) stmts.push(newBoardAccess(db, id, user))
-    if ((kind === 'board' && (!prev || 'parentId' in patch)) || (prev && boardId && boardId !== prev.board_id) || (kind === 'comment' && ('deletedAt' in patch || 'purged' in patch))) stmts.push(bumpAccess(db))
+    if ((kind === 'board' && (!prev || 'parentId' in patch)) || (prev && boardId && boardId !== prev.board_id) || 'noteGroupId' in patch || (!!JSON.parse(prev?.data ?? '{}').noteGroupId && 'purged' in patch) || (kind === 'comment' && ('deletedAt' in patch || 'purged' in patch))) stmts.push(bumpAccess(db))
   }
   try { await db.batch(stmts) } catch (e) {
     if (String(e).includes('Access changed')) return c.json({ error: 'Access changed; refresh and retry' }, 409)
@@ -178,6 +203,7 @@ sync.post('/sync', async (c) => {
 sync.get('/sync', async (c) => {
   c.header('cache-control', 'no-store')
   const a = await loadAccess(c.env.DB, c.get('user'))
+  const capabilities = await syncedNoteCapabilities(c.env.DB, a, c.get('user').id)
   const reset = c.req.query('accessRevision') !== a.revision
   const since = Math.max(0, Number(c.req.query('since') ?? 0) || 0)
   // The client restarts at zero after observing reset. Keeping the supplied
@@ -187,7 +213,12 @@ sync.get('/sync', async (c) => {
     .all<{ id: string; kind: string; board_id: string | null; data: string; seq: number; owner_id: string | null }>()
   const objects = results.flatMap((r) => {
     const readable = (!r.owner_id || r.owner_id === c.get('user').id) && a.canRead(r.kind === 'board' ? r.id : r.board_id ?? '')
-    if (readable) return [JSON.parse(r.data)]
+    if (readable) {
+      const object = JSON.parse(r.data)
+      delete object.noteBodyReadOnly
+      if (capabilities.has(r.id)) object.noteBodyReadOnly = capabilities.get(r.id)
+      return [object]
+    }
     // Authorized snapshots contain only readable IDs; deltas retain the old
     // privacy stub behavior to evict objects moved between boards.
     return reset ? [] : [{ id: r.id, hidden: true }]
@@ -231,6 +262,7 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
     if ('ownerId' in patch || 'owner_id' in patch || 'legacy' in patch) ok = false
     if (id.startsWith('home:') && (!prev || ('parentId' in patch && (patch.parentId ?? null) !== (prev.data.parentId ?? null)) || patch.deletedAt || patch.purged)) ok = false
     if (id.startsWith('toybox:') && (id !== `toybox:${userId}` || o.kind !== 'board' || o.parentId != null)) ok = false
+    for (const [key, value] of Object.entries(patch)) if (LABEL_FIELD.test(key) && !validLabelField(o.kind, key, value)) ok = false
     if (o.kind === 'board') {
       if (prev && !access.canEdit(id)) ok = false
       if (prev && 'parentId' in patch && (patch.parentId ?? null) !== (prev.data.parentId ?? null) && !access.canManage(id)) ok = false
@@ -248,8 +280,23 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
       if (typeof board !== 'string' || next.get(board)?.kind !== 'board' || !editable(board)) ok = false
       if (prev && (typeof prev.data.boardId !== 'string' || !editable(prev.data.boardId))) ok = false
       if (o.kind === 'card') {
-        if (!['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie'].includes(o.type as string)) ok = false
-        if (o.type === 'column' && o.columnId != null) ok = false
+        const metadata = next.get(board as string)
+        for (const [key, value] of Object.entries(patch)) {
+          if (/^label[a-f0-9]{32}$/.test(key) && value === true && !validLabelField('board', `labelName${key.slice(5)}`, metadata?.[`labelName${key.slice(5)}`])) ok = false
+          if (/^label[a-f0-9]{32}$/.test(key) && value === true && !metadata?.[`labelName${key.slice(5)}`]) ok = false
+        }
+        if (!['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie', 'swatch', 'sketch', 'ink'].includes(o.type as string)) ok = false
+        if (o.type === 'swatch' && !o.purged && !validSwatchFields(o)) ok = false
+        if (o.type === 'sketch' && !o.purged && !isSketchContent(o.content)) ok = false
+        if ((o.type === 'column' || o.type === 'ink') && o.columnId != null) ok = false
+        if (o.type === 'ink' && !o.purged) {
+          const logical = o.content as { width?: unknown; height?: unknown } | undefined
+          const dimension = (n: unknown, max: number) => typeof n === 'number' && Number.isFinite(n) && n > 0 && n <= max
+          if (!dimension(logical?.width, 8322) || !dimension(logical?.height, 8322) ||
+            !dimension(o.w, 10_000) || !dimension(o.h, 100_000) ||
+            typeof o.x !== 'number' || !Number.isFinite(o.x) || Math.abs(o.x) > 1_000_000 ||
+            typeof o.y !== 'number' || !Number.isFinite(o.y) || Math.abs(o.y) > 1_000_000) ok = false
+        }
         if (o.columnId) {
           const col = next.get(o.columnId as string)
           if (col?.kind !== 'card' || col.type !== 'column' || col.boardId !== board || col.id === id) ok = false
@@ -275,6 +322,18 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
         const card = next.get(o.cardId as string)
         if (card?.kind !== 'card' || card.boardId !== board || (!prev && (card.deletedAt || card.purged))) ok = false
       }
+      if (o.kind === 'stroke') {
+        const card = next.get(o.cardId as string)
+        const purgingWithOwner = card?.purged === true && o.purged === true
+        const removingWithOwner = !!card?.deletedAt && !!o.deletedAt && !card.purged
+        if (card?.kind !== 'card' || !['image', 'sketch', 'ink'].includes(card.type as string) || card.boardId !== board || ((card.purged || card.deletedAt) && !purgingWithOwner && !removingWithOwner) || !isInkMark(o as unknown)) ok = false
+        // A stroke's identity cannot be reassigned to another image to leak or
+        // overwrite its history. Copy operations create a fresh identity.
+        if (prev && o.cardId !== prev.data.cardId) ok = false
+        const image = card?.content as { width?: number; height?: number } | undefined
+        if (!image || !Number.isFinite(image.width) || !Number.isFinite(image.height) || !Array.isArray(o.points) ||
+          !(o.points as { x: number; y: number }[]).every((p) => p.x <= image.width! && p.y <= image.height!)) ok = false
+      }
       if (o.kind === 'connection' && !o.purged && !o.deletedAt) {
         for (const endpoint of [o.from, o.to]) {
           const card = next.get(endpoint as string)
@@ -285,4 +344,17 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
     if (!ok) denied.push(id)
   }
   return denied
+}
+
+/** Unique sequence values keep pagination correct even on very dense images. */
+export function strokeLifecycleStatements(db: D1Database, cardId: string, boardId: string, purge: boolean, now: number, userId: string): D1PreparedStatement[] {
+  const where = "kind='stroke' AND json_extract(data,'$.cardId')=?1 AND (board_id<>?2 OR (?3=1 AND COALESCE(json_extract(data,'$.purged'),0)=0))"
+  const owner = ownerFor(cardId, boardId)
+  return [
+    db.prepare(`UPDATE counters SET value=value+(SELECT COUNT(*) FROM objects WHERE ${where}) WHERE name='seq'`).bind(cardId, boardId, purge ? 1 : 0),
+    db.prepare(`WITH affected AS MATERIALIZED (SELECT id, ROW_NUMBER() OVER (ORDER BY id) AS n FROM objects WHERE ${where})
+      UPDATE objects SET board_id=?2, owner_id=?4, data=CASE WHEN ?3=1 THEN json_set(data,'$.boardId',?2,'$.purged',json('true')) ELSE json_set(data,'$.boardId',?2) END,
+      seq=(SELECT value FROM counters WHERE name='seq')-(SELECT COUNT(*) FROM affected)+(SELECT n FROM affected WHERE affected.id=objects.id), updated_at=?5, updated_by=?6
+      WHERE id IN (SELECT id FROM affected)`).bind(cardId, boardId, purge ? 1 : 0, owner, now, userId),
+  ]
 }

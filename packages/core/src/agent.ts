@@ -1,5 +1,8 @@
 import { z } from 'zod'
+import { imageSourceUrl } from './image.ts'
+import { validLabelField } from './labels.ts'
 import { CARD_COLORS } from '@doggynote/theme'
+import { isInkMark, MAX_INK_POINTS, MAX_INK_COORD } from './ink.ts'
 
 /** Object ids key plain maps on every client, so built-in property names are refused. */
 export const isReservedId = (id: string) => id === 'prototype' || Object.hasOwn(Object.prototype, id)
@@ -12,7 +15,7 @@ const card = {
   ...common, kind: z.literal('card'), boardId: id,
   x: z.number().finite().min(-1_000_000).max(1_000_000), y: z.number().finite().min(-1_000_000).max(1_000_000),
   w: z.number().finite().positive().max(10_000), h: z.number().finite().positive().max(100_000),
-  z: z.number().finite(), color, columnId: id.nullable().optional(), order: z.number().finite().optional(),
+  z: z.number().finite(), color, positionLocked: z.boolean().nullable().optional(), columnId: id.nullable().optional(), order: z.number().finite().optional(),
 }
 const safeUrl = z.string().max(4096).refine((v) => { try { return ['https:', 'http:'].includes(new URL(v).protocol) } catch { return false } }, 'Use an http or https URL')
 const rendition = z.enum(['thumb', 'small', 'medium', 'full'])
@@ -29,20 +32,38 @@ const movieContent = z.strictObject({
   imdbId: z.string().regex(/^tt\d{5,10}$/).optional(), assetId: id.optional(), watched: z.boolean().optional(), watchedAt: stamp.nullable().optional(),
   details: z.boolean().optional(), status: z.enum(['pending', 'ok', 'error']).optional(), info: movieInfo.optional(),
 }).refine((m) => m.tmdbId !== undefined || m.imdbId !== undefined, 'Give the title’s tmdbId (with kind) or imdbId')
+/** Only the declared shape plus validated label scalar fields is accepted. */
+function labelled<S extends z.ZodRawShape>(shape: S) {
+  return z.object(shape).catchall(z.unknown()).superRefine((value, ctx) => {
+    const row = value as Record<string, unknown>
+    for (const [key, field] of Object.entries(row)) {
+      if (!Object.hasOwn(shape, key) && !validLabelField(row.kind, key, field)) ctx.addIssue({ code: 'custom', path: [key], message: 'Unknown or invalid label field' })
+    }
+  })
+}
 export const agentObjectSchema = z.discriminatedUnion('kind', [
-  z.strictObject({ ...common, kind: z.literal('board'), parentId: id.nullable(), title: z.string().max(200), icon: z.enum(['paw', 'bone', 'ball', 'collar', 'kennel', 'bowl', 'star', 'heart']), color }),
+  labelled({ ...common, kind: z.literal('board'), parentId: id.nullable(), title: z.string().max(200), templateName: z.string().max(160).nullable().optional(), icon: z.enum(['paw', 'bone', 'ball', 'collar', 'kennel', 'bowl', 'star', 'heart']), color }),
   z.discriminatedUnion('type', [
-    z.strictObject({ ...card, type: z.literal('note'), content: z.strictObject({ md: text }) }),
-    z.strictObject({ ...card, type: z.literal('todo'), content: z.strictObject({ title: z.string().max(1000), items: z.array(z.strictObject({ id, text: z.string().max(10_000), done: z.boolean(), doneAt: stamp.nullable().optional() })).max(1000), sortDone: z.boolean().optional(), hideDone: z.boolean().optional() }) }),
-    z.strictObject({ ...card, type: z.literal('board'), content: z.strictObject({ boardId: id }) }),
-    z.strictObject({ ...card, columnId: z.null().optional(), type: z.literal('column'), content: z.strictObject({ title: z.string().max(1000) }) }),
-    z.strictObject({ ...card, type: z.literal('link'), content: z.strictObject({ url: safeUrl, title: z.string().max(1000).optional(), description: z.string().max(10_000).optional(), image: safeUrl.optional(), siteName: z.string().max(1000).optional(), status: z.enum(['pending', 'ok', 'error']).optional() }) }),
-    z.strictObject({ ...card, type: z.literal('image'), content: z.strictObject({ assetId: id, width: z.number().positive().finite(), height: z.number().positive().finite(), caption: z.string().max(10_000).optional(), sizes: z.array(rendition).max(4).optional() }) }),
-    z.strictObject({ ...card, type: z.literal('file'), content: z.strictObject({ assetId: id, name: z.string().min(1).max(200), size: stamp.max(50 * 1024 * 1024), mime: z.string().max(200), status: z.enum(['ok']).optional(), thumb: z.strictObject({ width: z.number().positive().finite(), height: z.number().positive().finite() }).optional() }) }),
-    z.strictObject({ ...card, type: z.literal('movie'), content: movieContent }),
+    labelled({ ...card, type: z.literal('sketch'), content: z.strictObject({ title: z.string().max(1000), width: z.number().finite().min(1).max(10_000), height: z.number().finite().min(1).max(10_000), background: z.union([z.enum(['paper', 'transparent']), z.string().regex(/^#[0-9a-f]{6}$/i)]) }) }),
+    labelled({ ...card, type: z.literal('swatch'), content: z.strictObject({}), swatchHex: z.string().regex(/^#[0-9A-F]{6}$/), swatchName: z.string().max(1000), swatchCaption: z.string().max(10_000), swatchHexDraft: z.string().max(100).nullable().optional() }),
+    labelled({ ...card, type: z.literal('note'), noteGroupId: id.nullable().optional(), content: z.strictObject({ md: text }) }),
+    labelled({ ...card, type: z.literal('todo'), content: z.strictObject({ title: z.string().max(1000), items: z.array(z.strictObject({ id, text: z.string().max(10_000), done: z.boolean(), doneAt: stamp.nullable().optional() })).max(1000), sortDone: z.boolean().optional(), hideDone: z.boolean().optional() }) }),
+    labelled({ ...card, type: z.literal('board'), content: z.strictObject({ boardId: id }) }),
+    labelled({ ...card, columnId: z.null().optional(), collapsed: z.boolean().nullable().optional(), type: z.literal('column'), content: z.strictObject({ title: z.string().max(1000) }) }),
+    labelled({ ...card, type: z.literal('link'), content: z.strictObject({ url: safeUrl, title: z.string().max(1000).optional(), description: z.string().max(10_000).optional(), image: safeUrl.optional(), siteName: z.string().max(1000).optional(), status: z.enum(['pending', 'ok', 'error']).optional() }) }),
+    labelled({ ...card, type: z.literal('image'), imageCaption: z.string().max(10_000).nullable().optional(), imageSourceUrl: z.string().max(4096).refine((v) => !v || !!imageSourceUrl(v), 'Use an http or https URL without credentials').nullable().optional(), content: z.strictObject({ assetId: id, width: z.number().positive().finite(), height: z.number().positive().finite(), caption: z.string().max(10_000).optional(), sizes: z.array(rendition).max(4).optional() }) }),
+    labelled({ ...card, type: z.literal('file'), content: z.strictObject({ assetId: id, name: z.string().min(1).max(200), size: stamp.max(50 * 1024 * 1024), mime: z.string().max(200), status: z.enum(['ok']).optional(), thumb: z.strictObject({ width: z.number().positive().finite(), height: z.number().positive().finite() }).optional() }) }),
+    labelled({ ...card, type: z.literal('movie'), content: movieContent }),
+    labelled({ ...card, columnId: z.null().optional(), type: z.literal('ink'), content: z.strictObject({ width: z.number().finite().positive().max(8322), height: z.number().finite().positive().max(8322) }) }),
   ]),
   z.strictObject({ ...common, kind: z.literal('connection'), boardId: id, from: id, to: id, fromSide: z.enum(['top', 'right', 'bottom', 'left']).nullable().optional(), toSide: z.enum(['top', 'right', 'bottom', 'left']).nullable().optional(), arrow: z.enum(['end', 'none']) }),
   z.strictObject({ ...common, kind: z.literal('comment'), boardId: id, cardId: id, authorId: id, author: z.string().max(32), text: z.string().max(20_000), editedAt: stamp.nullable().optional(), resolvedAt: stamp.nullable().optional() }),
+  z.strictObject({ ...common, kind: z.literal('stroke'), boardId: id, cardId: id,
+    tool: z.enum(['pen', 'highlighter']), color: z.string().regex(/^#[0-9a-f]{6}$/i),
+    width: z.number().finite().min(0.1).max(2000), opacity: z.number().finite().min(0.05).max(1), order: stamp,
+    points: z.array(z.strictObject({ x: z.number().finite().min(0).max(MAX_INK_COORD), y: z.number().finite().min(0).max(MAX_INK_COORD) })).min(1).max(MAX_INK_POINTS),
+    bounds: z.strictObject({ x: z.number().finite(), y: z.number().finite(), w: z.number().finite(), h: z.number().finite() }),
+  }).refine(isInkMark, 'Invalid stroke geometry'),
 ])
 
 /** Full replacement shapes deliberately reject arbitrary sync metadata and unknown fields. */

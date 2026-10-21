@@ -10,8 +10,7 @@ test('Duplicate from the selection bar copies the card beside it', async ({ page
   await tapOn(page, cardByText(page, 'Walkies at 5'))
   // Every bar button fits on the screen.
   for (const b of await page.getByTestId('selection-bar').locator('.bar-btn').all()) await expect(b).toBeInViewport({ ratio: 1 })
-  await page.getByTestId('selection-more').tap()
-  await page.getByTestId('duplicate').tap()
+  await page.getByTestId('duplicate-selection').tap()
   await expect(page.locator('[data-type=note]', { hasText: 'Walkies at 5' })).toHaveCount(2)
   await page.screenshot({ path: test.info().outputPath('bar.png') })
 })

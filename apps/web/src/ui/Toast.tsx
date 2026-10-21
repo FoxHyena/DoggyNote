@@ -16,8 +16,11 @@ export function Toast() {
             data-testid="toast-action"
             onClick={(e) => {
               e.stopPropagation()
-              toastAction()!.run()
+              const action = toastAction()
               dismiss()
+              // The action can replace this message (for example, an Undo
+              // rejected after a collaborator moved the card). Keep that feedback.
+              action?.run()
             }}
           >
             {toastAction()!.label}

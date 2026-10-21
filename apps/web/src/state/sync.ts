@@ -1,3 +1,4 @@
+import { showToast } from './toast.ts'
 import { createSignal } from 'solid-js'
 import type { Obj } from '@doggynote/core'
 import * as doc from './doc.ts'
@@ -56,6 +57,11 @@ async function push() {
         await refreshAccess()
         continue
       }
+      if (error instanceof ApiError && error.status === 409 && Array.isArray(error.details.lockedIds) && Array.isArray(error.details.objects)) {
+        doc.reconcileLockedPositions(error.details.lockedIds as string[], error.details.objects as Obj[], pending)
+        showToast('A position was locked in another session. Its layout was kept; your content edits are still saved.')
+        continue
+      }
       if (error instanceof ApiError && error.status === 409) {
         await refreshAccess()
         again = true
@@ -99,25 +105,59 @@ async function pull() {
       continue
     }
     if (snapshot) snapshot.push(...res.objects.filter((object) => !(object as { hidden?: boolean }).hidden))
-    else doc.receiveRemote(res.objects)
+    else {
+      // A move can race the read of accessRevision. Preserve text before a
+      // privacy stub removes the object and queue, even without a reset yet.
+      const hidden = res.objects.filter((object) => (object as { hidden?: boolean }).hidden).map((object) => object.id)
+      if (hidden.length) {
+        await preserveDenied(hidden, 'This item is no longer accessible. Your local edits are preserved for recovery.')
+        const editing = editingId()
+        if (editing && hidden.includes(editing)) {
+          await preserveActiveEdit(editing, 'Access changed while you were editing. Your text is preserved here.')
+          cancelEdit()
+        }
+      }
+      doc.receiveRemote(res.objects)
+    }
     cursor = res.cursor
     if (res.more) continue
     if (snapshot) {
       if (accessRevision() !== res.accessRevision) { snapshot = []; snapshotRevision = accessRevision(); cursor = 0; continue }
+      const incoming = new Map(snapshot.map((row) => [row.id, row]))
+      const pending = doc.pendingOutbox()
+      const pendingById = new Map(pending.map((change) => [change.id, change.patch]))
+      // A complete authorized snapshot may omit an object moved into someone
+      // else's Inbox even while its old board remains editable. Only actual
+      // unsent creations may legitimately be absent from the server snapshot.
+      const localCreations = new Set(pending.filter((change) => change.patch.kind).map((change) => change.id))
+      const missing = (id: string) => !incoming.has(id) && !localCreations.has(id)
+      const bodyDenied = (id: string) => {
+        const row = incoming.get(id), local = doc.getCard(id)
+        if (row?.kind !== 'card' || row.type !== 'note') return false
+        const patch = pendingById.get(id)
+        // A pre-push snapshot still describes the old group. Keep an explicit
+        // local link/unlink intent for server validation instead of mistaking
+        // its body for an unauthorized edit to that old group.
+        if (patch && 'noteGroupId' in patch && (patch.noteGroupId ?? null) !== (row.noteGroupId ?? null)) return false
+        return row.noteBodyReadOnly || (local?.noteGroupId ?? null) !== (row.noteGroupId ?? null)
+      }
+      const denied = pending.filter((change) => {
+        const object = doc.base(change.id)
+        const bodyWrite = 'content' in change.patch || 'noteBodyEdit' in change.patch
+        return object && (!writable(object) || missing(change.id) || (bodyWrite && bodyDenied(change.id)))
+      }).map((change) => change.id)
+      // Preserve before unmarking busy objects: a deferred row may replace the
+      // local draft when cancelEdit releases the session.
+      await preserveDenied(denied, 'Access or linked-note permissions changed. Download these edits to keep a copy.')
       const editing = editingId()
       const editingCard = doc.getCard(editing)
       const editingTarget = editingCard?.type === 'board' ? doc.getBoard((editingCard.content as { boardId: string }).boardId) : undefined
-      if (editing && doc.base(editing) && (!writable(doc.base(editing)!) || (editingTarget && !writable(editingTarget)))) {
+      if (editing && doc.base(editing) && (!writable(doc.base(editing)!) || missing(editing) || bodyDenied(editing) || (editingTarget && !writable(editingTarget)))) {
         await preserveActiveEdit(editing, 'Access was removed while you were editing. Your text is preserved here.')
         const card = doc.getCard(editing)
         if (card?.type === 'board') await preserveActiveEdit((card.content as { boardId: string }).boardId, 'Board access changed during renaming.')
         cancelEdit()
       }
-      const denied = doc.pendingOutbox().filter((change) => {
-        const object = doc.base(change.id)
-        return object && !writable(object)
-      }).map((change) => change.id)
-      await preserveDenied(denied, 'Your access to this board changed. Download these edits to keep a copy.')
       doc.reconcileSnapshot(snapshot, writable)
     }
     syncedAccessRevision = res.accessRevision
@@ -155,16 +195,23 @@ async function runOnce() {
   }
 }
 
-/** Sync now. Concurrent calls coalesce into one follow-up run. */
+/** Concurrent calls coalesce. One automatic successful follow-up covers writes
+ * queued during the final pull; continuous writers can leave a pending queue. */
 export function syncNow(): Promise<void> {
   if (running) {
     again = true
     return running
   }
   running = (async () => {
+    let canDrainLateWrites = true
     do {
       again = false
       await runOnce()
+      if (canDrainLateWrites && syncState() === 'idle' && doc.outboxSize() > 0) {
+        // An explicitly requested pass can satisfy this one automatic budget.
+        canDrainLateWrites = false
+        again = true
+      }
     } while (again)
   })().finally(() => (running = null))
   return running

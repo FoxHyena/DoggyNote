@@ -2,7 +2,7 @@ import { Show } from 'solid-js'
 import { cancelExitSave, exitSaveProblem, retryExitSave } from '../state/lifecycle.ts'
 
 export function ExitSaveDialog() {
-  return <Show when={exitSaveProblem()}><div class="dialog-backdrop">
+  return <Show when={exitSaveProblem()}><div class="dialog-backdrop exit-save-backdrop">
     <section class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="exit-save-title">
       <h2 id="exit-save-title">Your latest changes need saving</h2>
       <p>Local storage could not save your changes. Keep DoggyNote open while you retry.</p>

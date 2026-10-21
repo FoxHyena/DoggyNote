@@ -5,10 +5,13 @@ export const MOD = 'ControlOrMeta'
 
 /** Camera from the world transform: translate(tx, ty) scale(z). */
 export async function camera(page: Page) {
-  const t = await page.getByTestId('world').evaluate((el) => (el as HTMLElement).style.transform)
-  const m = t.match(/translate\((-?[\d.e-]+)px, (-?[\d.e-]+)px\) scale\(([\d.e-]+)\)/)
-  if (!m) throw new Error(`unexpected transform ${t}`)
-  return { tx: Number(m[1]), ty: Number(m[2]), zoom: Number(m[3]) }
+  return page.getByTestId('world').evaluate((el) => {
+    const transform = getComputedStyle(el).transform
+    // WebKit may serialize a zero Y translation as translate(0px). Read the
+    // browser's actual matrix instead of requiring a particular CSS spelling.
+    const matrix = transform === 'none' ? new DOMMatrix() : new DOMMatrix(transform)
+    return { tx: matrix.e, ty: matrix.f, zoom: matrix.a }
+  })
 }
 
 export async function canvasBox(page: Page) {
@@ -102,9 +105,10 @@ export async function pullAllObjects(api: APIRequestContext) {
 /** Parent navigation is condensed into a menu when the title needs room. */
 export async function openParentBoard(page: Page, which: 'first' | 'last' = 'last') {
   const condensed = page.getByTestId('parent-boards')
-  if (await condensed.isVisible()) {
-    await condensed.click()
-    const choices = page.getByLabel('Parent boards', { exact: true }).locator('button.menu-item')
-    await choices[which]().click()
-  } else await page.getByTestId('crumb')[which]().click()
+  // Navigation/layout may still be settling. Resolve the visible control at
+  // action time instead of committing to a currently hidden breadcrumb.
+  await condensed.or(page.getByTestId('crumb')[which]()).filter({ visible: true }).first().click()
+  const choices = page.getByLabel('Parent boards', { exact: true }).locator('button.menu-item')
+  // A condensed desktop control opens a menu; a phone Back/direct crumb goes up.
+  if (await choices.first().isVisible()) await choices[which]().click()
 }

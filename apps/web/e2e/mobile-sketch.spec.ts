@@ -1,0 +1,27 @@
+import { expect, test } from '@playwright/test'
+import { freshBoard, waitForSync } from './helpers.ts'
+
+test('touch creation exposes sketch tools, saves a tap mark and supports forgiving Undo/Redo', async ({ page }) => {
+  await freshBoard(page, 'Loop10 touch sketch')
+  await page.getByTestId('dock-add').tap()
+  await page.getByTestId('add-sketch').tap()
+  const editor = page.getByTestId('stroke-editor')
+  await expect(editor).toBeVisible()
+  const bounds = await editor.boundingBox()
+  expect(bounds!.x).toBeGreaterThanOrEqual(0)
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(page.viewportSize()!.width)
+  await editor.getByTestId('ink-surface').tap()
+  await expect(editor.locator('[data-stroke-id]')).toHaveCount(1)
+  await editor.getByRole('button', { name: 'Undo', exact: true }).tap()
+  await expect(editor.locator('[data-stroke-id]')).toHaveCount(0)
+  await editor.getByRole('button', { name: 'Redo', exact: true }).tap()
+  await editor.getByRole('button', { name: 'Done', exact: true }).tap()
+  const card = page.locator('[data-type="sketch"]')
+  await expect(card.locator('[data-stroke-id]')).toHaveCount(1)
+  await waitForSync(page); await page.reload()
+  await expect(card.locator('[data-stroke-id]')).toHaveCount(1)
+  await card.getByTestId('sketch-paper').tap()
+  await page.getByTestId('edit-card').tap()
+  await expect(editor).toBeVisible()
+  await editor.getByRole('button', { name: 'Done', exact: true }).tap()
+})

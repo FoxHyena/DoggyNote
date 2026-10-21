@@ -108,6 +108,7 @@ export function AccountMenu(props: ThemeChoicesProps) {
               </p>
             </Show>
           </Show>
+          <Show when={!isTauri}><a class="menu-item" href="/docs" target="_blank" rel="noopener">Documentation ↗</a></Show>
           <button class="menu-item" data-testid="manage-agents" onClick={() => { close(); setAgents(true) }}>Agent connections</button>
           <button class="menu-item" data-testid="about" onClick={() => { close(); setAbout(true) }}>About &amp; credits</button>
           <button class="menu-item" data-testid="sign-out" onClick={() => { close(); void logout() }}>

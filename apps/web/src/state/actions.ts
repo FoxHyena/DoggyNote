@@ -1,5 +1,9 @@
 import {
   DEFAULT_SIZE,
+  columnMembers,
+  remapCardLabels,
+  DEFAULT_SWATCH_HEX,
+  DEFAULT_SKETCH,
   newId,
   orderBetween,
   snap,
@@ -18,8 +22,11 @@ import type { CardColor } from '@doggynote/theme'
 import * as doc from './doc.ts'
 import { snapToGrid } from './grid.ts'
 import { beginEdit, boardId, clearSelection, editingId, endEdit, select, selection } from './ui.ts'
+import { endCanvasDrawing } from './canvasDrawing.ts'
 
 export const EMPTY_CONTENT: { [T in CardType]: () => CardContent[T] } = {
+  swatch: () => ({}),
+  sketch: () => ({ ...DEFAULT_SKETCH }),
   note: () => ({ md: '' }),
   todo: () => ({ title: '', items: [{ id: newId(), text: '', done: false }] }),
   board: () => ({ boardId: '' }),
@@ -28,6 +35,7 @@ export const EMPTY_CONTENT: { [T in CardType]: () => CardContent[T] } = {
   column: () => ({ title: '' }),
   file: () => ({ assetId: '', name: '', size: 0, mime: '' }),
   movie: () => ({ kind: 'movie', title: '' }),
+  ink: () => ({ width: 80, height: 80 }),
 }
 
 /** Where a new card goes: a world point (card's top-centre lands there) or a column slot. */
@@ -36,10 +44,7 @@ export type Placement = { at: Vec } | { columnId: Id; order: number }
 export function columnChildren(columnId: Id): Card[] {
   const col = doc.getCard(columnId)
   if (!col) return []
-  return doc
-    .cardsOn(col.boardId)
-    .filter((c) => c.columnId === columnId)
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+  return columnMembers(col, doc.cardsOn(col.boardId))
 }
 
 export function appendOrder(columnId: Id): number {
@@ -68,6 +73,7 @@ function baseCard<T extends CardType>(type: T, place: Placement, content: CardCo
     columnId: inColumn ? place.columnId : null,
     order: inColumn ? place.order : 0,
     content,
+    ...(type === 'swatch' ? { swatchHex: DEFAULT_SWATCH_HEX, swatchName: '', swatchCaption: '', swatchHexDraft: null } : {}),
     createdAt: Date.now(),
     ...extra,
   } as Card<T>
@@ -79,6 +85,9 @@ export function createCard(
   place: Placement,
   opts: { content?: unknown; edit?: boolean; extra?: Partial<Card>; boardId?: Id } = {},
 ): Id {
+  // Freehand marks are anchored to board space, never a column's flow.
+  if (type === 'ink' && 'columnId' in place) throw new Error('Canvas drawing stays on the board')
+  endCanvasDrawing()
   endEdit()
   const tx: Change[] = []
   let content = (opts.content ?? EMPTY_CONTENT[type]()) as CardContent[CardType]
@@ -100,7 +109,7 @@ export function createCard(
   doc.commit(tx)
   // Created somewhere else (e.g. straight into the Toy box): don't select or edit it here.
   if (opts.boardId && opts.boardId !== boardId()) return card.id
-  const editable = type === 'note' || type === 'todo' || type === 'column' || type === 'board' || type === 'link' || type === 'movie'
+  const editable = type === 'sketch' || type === 'swatch' || type === 'note' || type === 'todo' || type === 'column' || type === 'board' || type === 'link' || type === 'movie'
   if (opts.edit ?? editable) beginEdit(card.id, { isNew: true })
   else select([card.id])
   return card.id
@@ -136,6 +145,8 @@ export function restoreCard(id: Id) {
 export function emptyTrash(cards: Card[]) {
   const patches: Record<Id, Partial<Obj>> = {}
   for (const c of cards) patches[c.id] = { purged: true }
+  const owners = new Set(cards.map((c) => c.id))
+  for (const o of Object.values(doc.objs)) if (o.kind === 'stroke' && owners.has(o.cardId)) patches[o.id] = { purged: true }
   doc.update(patches)
 }
 
@@ -143,7 +154,7 @@ export function setColor(ids: Iterable<Id>, color: CardColor) {
   const patches: Record<Id, Partial<Obj>> = {}
   for (const id of ids) {
     const o = doc.get(id)
-    if (o?.kind === 'card') {
+    if (o?.kind === 'card' && o.type !== 'ink') {
       patches[id] = { color }
       // A board card's colour is the board's colour.
       if (o.type === 'board') patches[(o as Card<'board'>).content.boardId] = { color }
@@ -191,6 +202,7 @@ export function selectAll() {
 export function moveCardTo(id: Id, toBoard: Id, place: Placement) {
   const c = doc.getCard(id)
   if (!c) return
+  if (c.type === 'ink' && 'columnId' in place) return
   const size = { w: c.w, h: c.h }
   const patch: Partial<Card> =
     'columnId' in place
@@ -199,8 +211,17 @@ export function moveCardTo(id: Id, toBoard: Id, place: Placement) {
   // Connections can't span boards, so ones touching the moved card are removed.
   // All of it is one undo step.
   const patches: Record<Id, Partial<Obj>> = { [id]: patch }
+  if (toBoard !== c.boardId) {
+    const source = doc.getBoard(c.boardId), destination = doc.getBoard(toBoard)
+    if (source && destination) {
+      const mapped = remapCardLabels([c], source, destination)
+      patches[id] = { ...patch, ...mapped.cards[id] }
+      if (Object.keys(mapped.board).length) patches[toBoard] = mapped.board
+    }
+  }
   for (const conn of doc.connectionsOn(c.boardId)) if (conn.from === id || conn.to === id) patches[conn.id] = { purged: true }
   // Its comments go with it, so the new board's sharing (or Toy box privacy) covers them.
   for (const m of doc.commentsOn(id)) patches[m.id] = { boardId: toBoard }
+  for (const o of Object.values(doc.objs)) if (o.kind === 'stroke' && o.cardId === id && !o.purged) patches[o.id] = { boardId: toBoard }
   doc.update(patches)
 }

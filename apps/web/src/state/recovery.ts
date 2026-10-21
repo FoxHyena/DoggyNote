@@ -22,7 +22,7 @@ export async function preserveDenied(ids: string[], reason: string) {
     const current = doc.base(change.id)
     const object = current?.kind ? JSON.parse(JSON.stringify(current)) as Obj : undefined
     const previous = await idb.get<Recovery>('meta', `recovery:${change.id}`)
-    return { ...change, patch: { ...previous?.patch, ...change.patch }, object: object ?? previous?.object, reason, savedAt: Date.now() }
+    return { ...change, patch: { ...previous?.patch, ...change.patch } as Partial<Obj>, object: object ?? previous?.object, reason, savedAt: Date.now() }
   }))
   await idb.putMany('meta', rows.map((row) => [`recovery:${row.id}`, row]))
   doc.ackOutbox(pending)
@@ -44,6 +44,15 @@ export async function downloadRecovery() {
   const link = document.createElement('a')
   link.href = url; link.download = 'doggynote-unsynced-changes.json'; link.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+/** Throw away the recovery copy (after downloading it, or when it isn't needed). Undo restores it. */
+export async function discardRecovery() {
+  const rows = recoverableChanges()
+  if (!rows.length) return
+  await idb.putMany('meta', rows.map((row) => [`recovery:${row.id}`, undefined]))
+  setRecoverableChanges([])
+  showToast(`Recovery copy discarded (${rows.length} ${rows.length === 1 ? 'item' : 'items'}).`, 6000, { label: 'Undo', run: () => { void idb.putMany('meta', rows.map((row) => [`recovery:${row.id}`, row])).then(loadRecovery) } })
 }
 
 export async function preserveActiveEdit(id: string, reason: string) {

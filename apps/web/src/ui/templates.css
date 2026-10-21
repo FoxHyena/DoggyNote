@@ -1,0 +1,22 @@
+.template-dialog { width: min(640px, calc(100vw - 32px)); box-sizing: border-box; max-height: calc(100dvh - 32px); overflow: hidden; padding: 24px; color: var(--dn-text); background: var(--dn-panel); border: 1px solid var(--dn-border); border-radius: 16px; overscroll-behavior: contain; }
+.template-dialog[open] { display: flex; flex-direction: column; }
+.template-heading, .template-dialog > form { flex: none; }
+.template-options { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 3px; margin: 0 -3px; }
+.template-dialog::backdrop { background: var(--dn-canvas); opacity: .7; }
+.template-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.template-heading h2 { margin: 0; font-size: 19px; overflow-wrap: anywhere; }
+.template-heading .icon-btn { flex-shrink: 0; }
+.template-hint { color: var(--dn-text-muted); font-size: 13px; line-height: 1.6; }
+.template-dialog h3 { font-size: 14px; margin: 24px 0 12px; }
+.template-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+.template-choice { display: grid; align-content: start; gap: 8px; padding: 16px; text-align: left; background: var(--dn-card); border: 1px solid var(--dn-border); border-radius: 10px; color: var(--dn-text); cursor: pointer; font: inherit; min-width: 0; overflow-wrap: anywhere; }
+.template-choice.on { border-color: var(--dn-accent); box-shadow: inset 0 0 0 1px var(--dn-accent); }
+.template-choice span { font-size: 12px; line-height: 1.5; color: var(--dn-text-muted); }
+.template-choice:focus-visible, .template-name input:focus-visible { outline: 2px solid var(--dn-accent); outline-offset: 3px; }
+.template-name { display: grid; gap: 8px; margin-top: 24px; font-size: 13px; }
+.template-name input { box-sizing: border-box; width: 100%; padding: 11px; border: 1px solid var(--dn-border); border-radius: 8px; background: var(--dn-card); color: var(--dn-text); font: inherit; }
+.template-footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 20px; }
+.personal-templates { display: grid; gap: 8px; }
+.personal-template { display: flex; align-items: center; gap: 8px; }
+.personal-template .template-choice { flex: 1; }
+@media (max-width: 600px) { .template-dialog { padding: 18px; } .template-grid { grid-template-columns: 1fr; } .template-choice { padding: 12px; } }

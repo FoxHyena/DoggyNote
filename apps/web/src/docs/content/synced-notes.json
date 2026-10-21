@@ -1,0 +1,138 @@
+{
+  "slug": "synced-notes",
+  "category": "writing-drawing",
+  "kind": "task",
+  "title": "Reuse a note across boards",
+  "summary": "Keep one project brief up to date wherever you need it.",
+  "status": "draft",
+  "order": 70,
+  "benefit": "Write a shared note once while keeping each board's layout useful.",
+  "outcome": "The overview and research board show the same Markdown body, with each instance arranged independently.",
+  "prerequisites": [
+    "A Markdown note on an editable board and an editable destination board.",
+    "Edit access to every linked location when changing the shared body or creating another synced copy."
+  ],
+  "sections": [
+    {
+      "id": "one-body-several-places",
+      "title": "One body, several places",
+      "paragraphs": [
+        "A synced copy puts the same Markdown note body on another board. For example, keep a project brief on your overview and research sub-board. A body edit in either place updates its linked instances.",
+        "Each instance keeps its own position, width, colour, column placement and comments. Moving the research note does not move the overview note. The Synced note hint identifies a shared body without listing other locations."
+      ]
+    },
+    {
+      "id": "create-a-synced-copy",
+      "title": "Put your brief on another board",
+      "flow": {
+        "entry": "Open the board containing your project brief.",
+        "steps": [
+          {
+            "action": "Finish editing the note with Escape, or Done on a phone.",
+            "result": "The note stays selected and its selection bar appears."
+          },
+          {
+            "action": "Choose Note copies.",
+            "result": "The dialog explains synced and independent copies and offers editable destination boards."
+          },
+          {
+            "action": "Choose the research board under Destination board, then choose Create synced copy.",
+            "result": "The destination opens with the new instance selected. Its Synced note hint explains that edits update linked notes."
+          },
+          {
+            "action": "Edit the body on the research board and finish editing.",
+            "result": "The shared Markdown changes while this instance keeps its own layout."
+          },
+          {
+            "action": "Open the overview board again.",
+            "result": "The original instance shows the updated brief. Editing it also updates the research instance."
+          },
+          {
+            "action": "Move or recolour one instance.",
+            "result": "Only that instance's presentation changes; the shared text stays linked."
+          }
+        ],
+        "completion": "Changes save locally and sync through the usual Save status. Reopen either board to continue with the same linked body.",
+        "correction": "Use Undo and Redo for copy creation, body edits and layout changes. Close the Note copies dialog to cancel before creating a copy. If another session changed a note’s links, a conflicting Undo or Redo is skipped to keep those links intact."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/synced-notes/choose-research-destination.png",
+          "alt": "Note copies dialog with Research sub-board selected and both copy choices visible.",
+          "caption": "Choose the destination, then create a synced or independent copy.",
+          "width": 1280,
+          "height": 720
+        },
+        {
+          "src": "/docs/assets/synced-notes/research-updated-brief.png",
+          "alt": "The selected Research note shows a revised project brief and the synced-note hint.",
+          "caption": "Editing the Research instance updates the shared brief.",
+          "width": 1280,
+          "height": 720
+        },
+        {
+          "src": "/docs/assets/synced-notes/overview-matching-brief.png",
+          "alt": "The overview contains the Research sub-board tile and the same revised synced brief.",
+          "caption": "Returning to the overview shows the same revised brief.",
+          "width": 1280,
+          "height": 720
+        },
+        {
+          "src": "/docs/assets/synced-notes/phone-updated-shared-brief.png",
+          "alt": "On a phone, the Research board shows Shared phone revision beneath the synced-note hint and a saved checkmark.",
+          "caption": "The phone workflow uses the same shared body; edits also reach its linked overview note.",
+          "width": 393,
+          "height": 659
+        }
+      ]
+    },
+    {
+      "id": "make-a-separate-version",
+      "title": "Make a separate version",
+      "paragraphs": [
+        "Choose Create independent copy in Note copies when the new note should develop separately. Ordinary Duplicate also creates independent content.",
+        "To separate an existing instance, select it, open Note copies and choose Unlink this instance. It keeps its current text and layout. Future body edits stay with that note; the other linked instances remain intact.",
+        "Independent board copies and reused layouts get their own shared bodies. Linked notes copied together stay linked inside the new copy, while the original project's text remains separate."
+      ],
+      "figures": [
+        {
+          "src": "/docs/assets/synced-notes/independent-version.png",
+          "alt": "The overview shows a linked opening-scene brief and a separate note with different project text.",
+          "caption": "An independent copy develops separately while the original keeps its synced body.",
+          "width": 1280,
+          "height": 720
+        }
+      ]
+    },
+    {
+      "id": "bury-and-restore",
+      "title": "Bury or restore an instance",
+      "paragraphs": [
+        "Bury removes the selected instance from its board. The other linked notes remain usable. Restore it from Buried bones to bring it back with the shared body's current text.",
+        "Burying the last instance keeps it recoverable in Buried bones. Emptying the trash removes that instance from the group. Use Unlink when you want to keep an editable separate note instead of removing it."
+      ]
+    },
+    {
+      "id": "access-and-offline-edits",
+      "title": "Access and offline edits",
+      "paragraphs": [
+        "People who can view the destination can read the body placed there. Choose a destination that is appropriate for that text.",
+        "Changing a shared body requires edit access to every linked location. Having edit access to one board does not grant editing rights elsewhere. A restricted body shows Synced note · read-only body; it does not reveal hidden board names or counts.",
+        "If your board is editable but the shared body is read-only, select the instance to change its local presentation or open it for focused reading. Unlink this instance if you need to write a separate version. View-only boards do not allow unlinking or other changes.",
+        "Offline edits queue on your device. Reconnect and check Save status. If access or links changed while you were away, denied edits are preserved for recovery rather than silently written into a different note. Open Save status when it reports a problem.",
+        "If two sessions write different Markdown to the same shared body, the last body accepted by the server wins. Position and other local presentation fields sync separately."
+      ],
+      "figures": [
+        {
+          "src": "/docs/assets/synced-notes/protected-body-actions.png",
+          "alt": "Note copies explains a read-only shared body, disables synced creation and offers unlinking.",
+          "caption": "An editable board still allows a separate version or unlinking when its shared body is read-only.",
+          "width": 1280,
+          "height": 720
+        }
+      ]
+    }
+  ],
+  "related": [],
+  "links": []
+}

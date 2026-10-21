@@ -43,6 +43,7 @@ import { canEditBoard, canManageBoard, canReadBoard, homeBoardId } from './state
 import { installNativeSave } from './state/lifecycle.ts'
 import { ExitSaveDialog } from './ui/ExitSaveDialog.tsx'
 import { EditDock } from './ui/EditDock.tsx'
+import { FocusNote } from './ui/FocusNote.tsx'
 import { MobileDock } from './ui/MobileDock.tsx'
 import { installSheetDrag } from './ui/sheet.ts'
 import { phone } from './state/device.ts'
@@ -52,6 +53,8 @@ import { ProposalBanner } from './ui/ProposalBanner.tsx'
 
 /** The board can be edited now: you may edit it, and no agent proposal is being previewed. */
 const editable = () => canEditBoard(boardId()) && !doc.previewing()
+import { ImageAnnotations } from './drawing/ImageAnnotations.tsx'
+import { CanvasInkEditor } from './drawing/CanvasInkEditor.tsx'
 
 export default function Root() {
   installLinkHandler()
@@ -82,7 +85,8 @@ function EditorApp() {
       booted = true
       // Warm the editor so the first note opens instantly, and so notes stay
       // editable offline (the chunk can't be fetched then). Viewers never load it.
-      void import('./editor/codemirror.ts')
+      void import('./editor/codemirror.ts').catch(() => {})
+      void import('./drawing/StrokeEditor.tsx').catch(() => {})
       await doc.load({ persist: true, readOnly: false })
       const { first } = await startSync({ onSignedOut: () => setSignedOut(true) })
       // Quick captures land on the server; pull them in right away.
@@ -181,11 +185,14 @@ function EditorApp() {
           <FetchPalette />
         </Show>
         <EditDock />
+        <FocusNote />
+        <ImageAnnotations />
+        <CanvasInkEditor />
         <ExitSaveDialog />
         <Diagnostics />
         <UpdateToast />
         <Show when={signedOut()}>
-          <div class="dialog-backdrop">
+          <div class="dialog-backdrop auth-backdrop">
             <Login onLogin={() => void boot()} />
           </div>
         </Show>

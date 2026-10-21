@@ -172,19 +172,6 @@ function moveBack(clip: ClipPayload, at: Vec, column?: { id: Id; orders: number[
   return true
 }
 
-/** ⌘D and the Duplicate button: a copy just below and to the right, no clipboard involved. */
-export function duplicateSelection() {
-  if (editingId()) return
-  const clip = clipOfSelection()
-  if (!clip) return
-  const roots = clip.roots.map((id) => clip.objects.find((o) => o.id === id) as Card)
-  const minX = Math.min(...roots.map((c) => c.x))
-  const minY = Math.min(...roots.map((c) => c.y))
-  const maxX = Math.max(...roots.map((c) => c.x + c.w))
-  const maxY = Math.max(...roots.map((c) => c.y + (c.h || 0)))
-  pasteClip(clip, { x: (minX + maxX) / 2 + GRID, y: (minY + maxY) / 2 + GRID })
-}
-
 // ---- the hidden textarea that makes native copy, cut and paste fire ----------------
 
 let proxy: HTMLTextAreaElement | null = null
@@ -228,9 +215,6 @@ export function installClipboard(opts: { readOnly: boolean }) {
     } else if (key === 'v' && !opts.readOnly) {
       plainUntil = e.shiftKey ? Date.now() + 1000 : 0
       focusProxy('')
-    } else if (key === 'd' && !opts.readOnly && selection().size) {
-      e.preventDefault()
-      duplicateSelection()
     }
   }
   const onCopy = (e: ClipboardEvent) => {

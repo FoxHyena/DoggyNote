@@ -1,0 +1,105 @@
+{
+  "slug": "image-captions-and-sources",
+  "category": "research-media",
+  "kind": "task",
+  "title": "Caption images and keep their sources",
+  "summary": "Keep useful observations and original references beside each image.",
+  "status": "draft",
+  "order": 30,
+  "benefit": "A visual research board still makes sense when you return to it.",
+  "outcome": "An image shows its caption and an optional link to its original webpage or image.",
+  "prerequisites": [
+    "An image on a board you can edit."
+  ],
+  "sections": [
+    {
+      "id": "image-context",
+      "title": "Keep the observation with the reference",
+      "paragraphs": [
+        "A caption explains why you saved a picture. A source link takes you back to the webpage or image where it came from. Add either one, or use both.",
+        "For example, caption a lighting reference with “Warm side lighting; use for the opening scene,” then attach its original webpage. The caption stays with that image as you arrange the board."
+      ]
+    },
+    {
+      "id": "add-caption-and-source",
+      "title": "Add a caption and source",
+      "flow": {
+        "entry": "Choose Add caption on an image. If it already has a caption or source, choose Edit beneath it. You can also select the image and choose Caption & source in the selection toolbar, or Caption in a narrow window.",
+        "steps": [
+          {
+            "action": "Type your observation in Caption. Use several lines when that helps explain the reference.",
+            "result": "The Image caption & source editor keeps the text attached to this image."
+          },
+          {
+            "action": "Paste the original webpage or image address into Source URL, or leave it blank if you do not know the source.",
+            "result": "A valid address starts with https:// or http://. Invalid input shows an explanation beneath the field."
+          },
+          {
+            "action": "Choose Done, press Escape, or use Cmd+Enter on Mac or Ctrl+Enter elsewhere.",
+            "result": "The caption appears beneath the image. If there is a source, its hostname appears as a separate link."
+          }
+        ],
+        "completion": "Valid changes save as you type. Reopening the board keeps the saved caption and source; pending local edits sync when the connection returns.",
+        "correction": "Choose Edit to revise the fields. Clear Source URL to remove the link. After finishing an edit, Undo restores the previous metadata and Redo brings the edit back. Escape finishes the current valid edits."
+      },
+      "callout": {
+        "title": "Check captured sources",
+        "text": "When a pasted or dropped image includes a clear web address, DoggyNote can keep it as the source. Check it, and replace it with the original webpage if that is more useful. It does not guess attribution from a filename."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/image-captions-and-sources/caption-with-original-source.png",
+          "alt": "An image with a lighting caption and an example.com source link, beneath the Caption & source toolbar action.",
+          "caption": "The caption and source stay beside the image; Caption & source opens the editor.",
+          "width": 1156,
+          "height": 712
+        }
+      ]
+    },
+    {
+      "id": "read-and-revisit",
+      "title": "Read the caption and revisit the source",
+      "paragraphs": [
+        "Long captions use a compact preview on the board. Choose Read full caption to expand the text, then Show less to return to the compact view.",
+        "Choose the source link to open the reference separately from the board. Moving or resizing the image keeps its metadata attached. Adding a source does not replace the stored image."
+      ]
+    },
+    {
+      "id": "export-caption",
+      "title": "Include the caption in a PNG",
+      "paragraphs": [
+        "Export the board or an image selection as PNG. The exported picture includes the full caption, even when the canvas shows the compact preview. Editing controls are left out of the exported picture."
+      ],
+      "figures": [
+        {
+          "src": "/docs/assets/image-captions-and-sources/full-caption-png-export.png",
+          "alt": "An exported green and gold image with all twelve caption observations and its source link, without editing controls.",
+          "caption": "PNG export includes the full caption and source, even when the board uses the compact preview.",
+          "width": 648,
+          "height": 1448
+        }
+      ]
+    },
+    {
+      "id": "availability-and-corrections",
+      "title": "Availability and corrections",
+      "paragraphs": [
+        "You need permission to edit the board to change a caption or source. View-only visitors can read captions and follow source links.",
+        "You can leave either field blank. If a source is unknown, no attribution is invented. Local file paths and addresses containing passwords are not used as source links.",
+        "If a source address is invalid, correct it or clear it. The editor keeps the last valid source value while the invalid draft is visible; the message explains that invalid changes are not saved as a link.",
+        "On a small or zoomed-out card, open the editor to work with the text at a comfortable size. This feature adds image context; it does not crop or rotate the image."
+      ],
+      "figures": [
+        {
+          "src": "/docs/assets/image-captions-and-sources/correct-an-invalid-source.png",
+          "alt": "The image caption editor shows an address without https:// and explains that invalid changes are not saved.",
+          "caption": "Use a full http:// or https:// address, or clear the optional source.",
+          "width": 928,
+          "height": 700
+        }
+      ]
+    }
+  ],
+  "related": [],
+  "links": []
+}

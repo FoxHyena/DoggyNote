@@ -8,8 +8,8 @@ type Obj = { id: string; kind: string; cardId?: string; from?: string; to?: stri
 type ShareRow = { token: string; board_id: string; include_children: number; permission: 'view' | 'edit'; created_by: string; created_at: number; revoked_at: number | null; expires_at: number | null; allow_signup: number; scope_version: number }
 const alive = (o: Obj) => !o.purged && !o.deletedAt
 const visibleRelations = (items: Obj[]) => {
-  const cards = new Set(items.filter((o) => o.kind === 'card' && alive(o)).map((o) => o.id))
-  return items.filter((o) => o.kind === 'comment' ? !!o.cardId && cards.has(o.cardId) : o.kind === 'connection' ? !!o.from && !!o.to && cards.has(o.from) && cards.has(o.to) : true)
+  const cards = new Map(items.filter((o) => o.kind === 'card' && alive(o)).map((o) => [o.id, o]))
+  return items.filter((o) => o.kind === 'comment' || o.kind === 'stroke' ? !!o.cardId && cards.has(o.cardId) && cards.get(o.cardId)?.boardId === o.boardId : o.kind === 'connection' ? !!o.from && !!o.to && cards.has(o.from) && cards.has(o.to) : true)
 }
 const WEEK = 7 * 86_400_000
 export const shares = new Hono<AppEnv>()

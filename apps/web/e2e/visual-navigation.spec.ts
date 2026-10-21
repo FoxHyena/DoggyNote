@@ -60,7 +60,7 @@ test('Boards empty descriptions align with labels in both appearances and short 
 
 test('Boards long shared names keep permissions separate and scroll below a visible header', async ({ page }, info) => {
   await freshBoard(page)
-  const ids = Array.from({ length: 18 }, () => crypto.randomUUID())
+  const ids: string[] = Array.from({ length: 18 }, () => crypto.randomUUID())
   const response = await postSync(page.request, { data: { changes: ids.map((id, i) => ({ id, patch: { id, kind: 'board', parentId: 'home', title: `${title} ${i + 1}`, icon: 'paw', color: 'none', createdAt: Date.now() } })) } })
   expect(response.ok()).toBe(true)
   await page.route('**/api/access', async (route) => {

@@ -1,7 +1,8 @@
 import { ErrorBoundary, For, Match, Show, Switch, createSelector, onCleanup, onMount, type JSX } from 'solid-js'
-import { SIDES, type Card } from '@doggynote/core'
+import { SIDES, isKnownCardType, type Card } from '@doggynote/core'
 import { COPY, cardColor } from '@doggynote/theme'
 import { isPreviewCurrent, previewBadge, type Badge } from '../state/preview.ts'
+import { isPositionLocked } from '../state/position.ts'
 
 const PREVIEW_CHIP: Record<Badge, string> = { added: 'New', changed: 'Edited', moved: 'Moved', removed: 'Buried' }
 import { camera, editingId, isSelected, nearHandle, selection } from '../state/ui.ts'
@@ -18,8 +19,12 @@ import { BoardCard } from '../cards/BoardCard.tsx'
 import { ImageCard } from '../cards/ImageCard.tsx'
 import { LinkCard } from '../cards/LinkCard.tsx'
 import { ColumnCard } from '../cards/ColumnCard.tsx'
+import { CardLabels } from '../ui/Labels.tsx'
+import { SwatchCard } from '../cards/SwatchCard.tsx'
+import { SketchCard } from '../cards/SketchCard.tsx'
 import { FileCard } from '../cards/FileCard.tsx'
 import { MovieCard } from '../cards/MovieCard.tsx'
+import { InkCard } from '../cards/InkCard.tsx'
 
 export type CardProps<T extends Card['type'] = Card['type']> = {
   card: Card<T>
@@ -48,6 +53,8 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
       '--c-bg': `var(--dn-card-${cardColor(c.color)}-bg)`,
       '--c-text': `var(--dn-card-${cardColor(c.color)}-text)`,
     }
+    // Fixed sketch envelope: measuring must not feed the column border back into h.
+    if (c.type === 'sketch') s.height = `${Math.max(80, c.h)}px`
     if (free()) {
       // left/top, not transform: a thousand per-card transforms make the
       // browser re-layerize every card on every pan frame (61 ms vs 9 ms).
@@ -77,6 +84,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         resizing: resizingId() === props.card.id,
         colored: props.card.color !== 'none' && !!props.card.color,
       }}
+      tabIndex={-1}
       data-card-id={props.card.id}
       data-testid="card"
       data-type={props.card.type}
@@ -98,6 +106,15 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
           </div>
         }
       >
+        <Match when={props.card.type === 'swatch'}>
+          <SwatchCard {...(props2() as CardProps<'swatch'>)} />
+        </Match>
+        <Match when={props.card.type === 'sketch'}>
+          <SketchCard {...(props2() as CardProps<'sketch'>)} />
+        </Match>
+        <Match when={props.card.type === 'ink'}>
+          <InkCard {...(props2() as CardProps<'ink'>)} />
+        </Match>
         <Match when={props.card.type === 'note'}>
           <NoteCard {...(props2() as CardProps<'note'>)} />
         </Match>
@@ -123,7 +140,11 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
           <ColumnCard {...(props2() as CardProps<'column'>)} />
         </Match>
       </Switch>
+      <Show when={!props.lod && isKnownCardType(props.card.type)}><CardLabels card={props.card} /></Show>
       </ErrorBoundary>
+      <Show when={isPositionLocked(props.card.id) && !props.readOnly && !props.lod}>
+        <span class="position-lock-badge" data-testid="position-lock-badge" title={props.card.positionLocked === true ? 'Position locked — select to unlock' : 'Column layout locked — unlock the column or its locked member'} aria-label="Position locked"><svg width="12" height="14" viewBox="0 0 12 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="6" width="9" height="7" rx="1.5" /><path d="M3.5 6V3.5a2.5 2.5 0 0 1 5 0V6" /></svg></span>
+      </Show>
       <Show when={comments() && !props.lod}>
         <button
           class="comment-badge"
@@ -140,7 +161,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
           {comments()}
         </button>
       </Show>
-      <Show when={!props.readOnly && single() && free() && props.card.type !== 'board' && !props.lod}>
+      <Show when={!props.readOnly && single() && free() && !isPositionLocked(props.card.id) && props.card.type !== 'board' && !props.lod}>
         <div class="resize-handle" data-resize data-testid="resize-handle" title="Resize" />
       </Show>
       <Show when={!props.readOnly && !props.lod && (!touch() || touchHandles())}>

@@ -76,7 +76,7 @@ test('README screenshots', async ({ page, browser }) => {
   await page.request.put(`/api/files/${pdf}?name=${encodeURIComponent('Trail map.pdf')}`, { data: pdfBytes, headers: { 'content-type': 'application/pdf' } })
 
   const now = Date.now()
-  const card = (o: Record<string, unknown>) => ({ kind: 'card', boardId: board, z: 1, color: 'none', columnId: null, createdAt: now, h: 80, ...o })
+  const card = <T extends { id: string }>(o: T) => ({ kind: 'card', boardId: board, z: 1, color: 'none', columnId: null, createdAt: now, h: 80, ...o })
   const ids = { title: id(), column: id(), todo: id(), ask: id(), rules: id(), vet: id(), vetBoard: id() }
   const tb = `toybox:${me}`
   const objs = [

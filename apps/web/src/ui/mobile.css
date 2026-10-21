@@ -90,6 +90,12 @@ html[data-input='touch'] .card > .resize-handle::before {
 }
 .selection-bar.docked .bar-done { flex: 0 0 44px; align-self: center; }
 
+@media (max-width: 599px) {
+  /* Keep complete action names readable as creative tools add more actions. */
+  .selection-bar.docked .bar-actions { flex-wrap: wrap; overflow: visible; }
+  .selection-bar.docked .bar-actions .bar-btn { flex: 1 1 88px; white-space: normal; }
+}
+
 @keyframes dock-up {
   from { transform: translateY(100%); }
 }
@@ -325,7 +331,8 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   .board-nav-menu { display: flex; overflow: hidden !important; }
 
   /* Canvas panels (Inbox, comments, Buried bones): a sheet that leaves the top of the board in view. */
-  .trash {
+  /* The lazy canvas stylesheet may arrive later; keep its desktop .trash rule below these phone rules. */
+  .stage > .trash {
     position: fixed;
     inset: auto 0 var(--vv-bottom, 0px) 0;
     width: auto;
@@ -346,7 +353,8 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
 
   /* Dialogs (people, agents, saving): full-width sheets. Sign-in stays centred. */
   .dialog-backdrop:has(> .dialog) { place-items: end stretch; padding: 0; }
-  .dialog {
+  .dialog,
+  .dialog-backdrop > .dialog {
     position: relative;
     width: 100%;
     max-height: calc(var(--vv-height, 100dvh) - 24px);
@@ -358,8 +366,10 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   }
 
   /* Fetch: the whole screen, above the keyboard. */
-  .fetch-backdrop { inset: 0 0 var(--vv-bottom, 0px) 0; padding: 0; place-items: stretch; }
-  .fetch {
+  /* The lazy canvas chunk can load after this entry stylesheet. Keep the
+     phone backdrop/panel rules above its single-class desktop selectors. */
+  .dialog-backdrop.fetch-backdrop { inset: 0 0 var(--vv-bottom, 0px) 0; padding: 0; place-items: stretch; }
+  .fetch-backdrop > .fetch {
     width: 100%;
     max-height: none;
     height: 100%;
@@ -390,7 +400,7 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   .mobile-dock .board-navigation > .icon-btn { min-height: 44px; flex-direction: row; gap: 6px; }
   .dock-add { width: 48px; height: 48px; margin-top: 0; }
   .menu, .nav-menu, .share-panel, .export-panel, .save-details { max-height: calc(var(--vv-height, 100dvh) - 16px) !important; }
-  .trash { max-height: calc(var(--vv-height, 100dvh) - 56px); left: auto; width: min(420px, 60vw); border-left: 1px solid var(--dn-border); }
+  .stage > .trash { max-height: calc(var(--vv-height, 100dvh) - 56px); left: auto; width: min(420px, 60vw); border-left: 1px solid var(--dn-border); }
 }
 
 @keyframes sheet-up {
@@ -507,7 +517,7 @@ body:has(.edit-dock) .canvas-controls { visibility: hidden; }
 }
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   /* Sticky sheet headers line up with the sheet's own padding; the grip stays on top. */
-  .share-head { top: -22px; margin: -22px -12px 0; padding: 22px 12px 4px; }
+  .share-panel > .share-head { top: -22px; margin: -22px -12px 0; padding: 22px 12px 4px; }
   .menu::before, .share-panel::before, .export-panel::before, .save-details::before, .trash::before { z-index: 3; }
 }
 .install-help { padding-left: 12px; }
@@ -522,7 +532,7 @@ body:has(.edit-dock) .mobile-dock { visibility: hidden; }
 
 /* V2-06: non-modal sheets lift clearly off the board, especially in the dark. */
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
-  .trash { box-shadow: 0 -2px 0 var(--dn-border), 0 -14px 40px rgb(0 0 0 / 0.32); }
+  .stage > .trash { box-shadow: 0 -2px 0 var(--dn-border), 0 -14px 40px rgb(0 0 0 / 0.32); }
   /* V2-15: a tidy three-column Add grid; a lone last tile takes the whole row. */
   .add-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .add-grid > .add-tile:last-child:nth-child(3n + 1) { grid-column: 1 / -1; flex-direction: row; justify-content: center; gap: 10px; min-height: 56px; }
@@ -537,7 +547,7 @@ body:has(.edit-dock) .mobile-dock { visibility: hidden; }
   .selection-bar.docked .bar-style { flex: 0 1 auto; min-width: 0; }
   .selection-bar.docked .swatches { margin-inline: 0; }
   .selection-bar.docked .bar-actions .bar-btn { min-height: 48px; min-width: 52px; }
-  .trash { width: min(420px, 60vw) !important; }
+  .stage > .trash { width: min(420px, 60vw) !important; }
   /* V2-02: the thread keeps room; the reply box shrinks to one line. */
   .comment-list { min-height: 72px; }
   .comment-input { min-height: 44px; height: 44px; }
@@ -664,7 +674,7 @@ html[data-input='touch'] :is(.icon-btn, .bar-btn, .menu-item, .tool, .toast-acti
   .comment-reply { flex-direction: row; align-items: center; padding: 8px 12px; }
   .comment-reply .comment-input { flex: 1; }
   .comment-reply .primary-btn { align-self: center; min-height: 44px; }
-  .trash { height: calc(var(--vv-height, 100dvh) - 52px - env(safe-area-inset-top)); }
+  .stage > .trash { height: calc(var(--vv-height, 100dvh) - 52px - env(safe-area-inset-top)); }
   /* V3-06: a smaller pill on a short screen: undo and zoom only. */
   .canvas-controls [data-testid='redo'],
   .canvas-controls [data-testid='snap-toggle'],
@@ -690,3 +700,7 @@ html[data-input='touch'] .share-panel .bar-btn:not(.share-tabs .bar-btn) { paddi
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 11.2c-2.1 0-3.1 2.8-4.6 4.4-1.3 1.4-1.1 3.5.5 4.1 1.5.6 2.7-.5 4.1-.5s2.7 1.1 4.1.5c1.6-.6 1.8-2.7.5-4.1-1.5-1.6-2.5-4.4-4.6-4.4Z'/%3E%3Cellipse cx='5.6' cy='10.2' rx='1.85' ry='2.5' transform='rotate(-30 5.6 10.2)'/%3E%3Cellipse cx='9.6' cy='6.7' rx='1.85' ry='2.5' transform='rotate(-10 9.6 6.7)'/%3E%3Cellipse cx='14.4' cy='6.7' rx='1.85' ry='2.5' transform='rotate(10 14.4 6.7)'/%3E%3Cellipse cx='18.4' cy='10.2' rx='1.85' ry='2.5' transform='rotate(30 18.4 10.2)'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 .trash-empty, .fetch-hint { text-align: center; }
+
+.selection-bar.docked .bar-position .bar-btn { min-height: 44px; }
+/* Mixed lock actions must not push the alignment picker off a phone screen. */
+.selection-bar.docked .bar-position { flex-wrap: wrap; overflow: visible; }

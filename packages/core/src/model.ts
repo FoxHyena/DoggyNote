@@ -4,11 +4,15 @@
 
 import type { CardColor } from '@doggynote/theme'
 import type { Side } from './geometry.ts'
+import type { LabelNames, LabelColors, LabelMembership } from './labels.ts'
+import type { InkMark } from './ink.ts'
 
+/** 'paper' is the theme's card white; a hex value is a colour the author picked. */
+export type SketchBackground = 'paper' | 'transparent' | `#${string}`
 export type Id = string
 
 /** Every card type this build can draw. Anything else came from a newer app (see cardtext.ts). */
-export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie'] as const
+export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie', 'swatch', 'sketch', 'ink'] as const
 export type CardType = (typeof CARD_TYPES)[number]
 export const isKnownCardType = (t: unknown): t is CardType => (CARD_TYPES as readonly unknown[]).includes(t)
 
@@ -26,6 +30,9 @@ export type RichNode = {
 export type TodoItem = { id: Id; text: string; done: boolean; doneAt?: number | null }
 
 export type CardContent = {
+  swatch: Record<string, never>
+  /** Immutable logical paper dimensions; card geometry uniformly contains this drawing. */
+  sketch: { title: string; width: number; height: number; background: SketchBackground }
   /** Markdown source. `doc` is the pre-markdown format, migrated on load (see noteMarkdown). */
   note: { md: string; doc?: RichDoc }
   /**
@@ -38,6 +45,8 @@ export type CardContent = {
   image: { assetId: Id; width: number; height: number; caption?: string; sizes?: ('thumb' | 'small' | 'medium' | 'full')[] }
   link: { url: string; title?: string; description?: string; image?: string; siteName?: string; status?: 'pending' | 'ok' | 'error' }
   column: { title: string }
+  /** Board-space ink. Logical size is immutable; outer resizing scales uniformly. */
+  ink: { width: number; height: number }
   /**
    * An uploaded file, stored in R2 as "<assetId>/file". PDFs also get a
    * first-page preview stored as the image rendition "<assetId>/thumb".
@@ -87,7 +96,7 @@ type Base = {
   createdAt: number
 }
 
-export type Card<T extends CardType = CardType> = Base & {
+export type Card<T extends CardType = CardType> = Base & LabelMembership & {
   kind: 'card'
   type: T
   boardId: Id
@@ -100,18 +109,37 @@ export type Card<T extends CardType = CardType> = Base & {
   color: CardColor
   /** Set when the card sits inside a column; x/y are then ignored. */
   columnId?: Id | null
+  /** Column presentation only. Null/absent means expanded; member geometry is retained. */
+  collapsed?: boolean | null
   order?: number
+  /** Persistent editor layout lock. Content edits and natural height reflow remain allowed. */
+  positionLocked?: boolean
+  /** Only Markdown is shared. Geometry, colour, column and discussion stay local. */
+  noteGroupId?: Id | null
+  /** Server-projected capability; never authoritative client data. */
+  noteBodyReadOnly?: boolean
   content: CardContent[T]
+  /** Image metadata is independent of asset/annotation content for per-field sync. */
+  imageCaption?: string | null
+  imageSourceUrl?: string | null
+  /** Swatch metadata is separate fields so editing a name never overwrites a remote color. */
+  swatchHex?: string
+  swatchName?: string
+  swatchCaption?: string
+  /** Unfinished input; the last valid swatchHex remains the displayed document color. */
+  swatchHexDraft?: string | null
 }
 
 export type BoardIcon = 'paw' | 'bone' | 'ball' | 'collar' | 'kennel' | 'bowl' | 'star' | 'heart'
 
-export type Board = Base & {
+export type Board = Base & LabelNames & LabelColors & {
   kind: 'board'
   parentId: Id | null
   title: string
   icon: BoardIcon
   color: CardColor
+  /** Private saved-layout snapshot, shown in the personal template library. */
+  templateName?: string | null
 }
 
 export type Connection = Base & {
@@ -143,11 +171,19 @@ export type Comment = Base & {
   resolvedAt?: number | null
 }
 
-export type Obj = Card | Board | Connection | Comment
+/** One editable mark, owned by a card. Independent objects preserve concurrent additions. */
+export type Stroke = Base & InkMark & {
+  kind: 'stroke'
+  boardId: Id
+  cardId: Id
+}
+
+export type Obj = Card | Board | Connection | Comment | Stroke
 
 export const HOME_BOARD_ID = 'home'
 
 export const DEFAULT_SIZE: Record<CardType, { w: number; h: number }> = {
+  sketch: { w: 320, h: 240 },
   note: { w: 260, h: 60 },
   todo: { w: 260, h: 110 },
   board: { w: 120, h: 120 },
@@ -156,6 +192,8 @@ export const DEFAULT_SIZE: Record<CardType, { w: number; h: number }> = {
   column: { w: 280, h: 120 },
   file: { w: 260, h: 72 },
   movie: { w: 220, h: 370 },
+  swatch: { w: 220, h: 220 },
+  ink: { w: 80, h: 80 },
 }
 
 export const isAlive = (o: Obj | undefined): boolean => !!o && !o.purged && !o.deletedAt

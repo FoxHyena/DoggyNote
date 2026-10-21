@@ -1,0 +1,112 @@
+{
+  "slug": "sketch-cards",
+  "category": "writing-drawing",
+  "kind": "task",
+  "title": "Draw a sketch card",
+  "summary": "Sketch a storyboard frame or rough interface beside your notes and keep every mark editable.",
+  "status": "draft",
+  "order": 30,
+  "benefit": "Explore visual ideas without leaving their written context.",
+  "outcome": "Create storyboard frames, arrange them on your board, and make an independent alternative.",
+  "prerequisites": [
+    "Edit access to the board"
+  ],
+  "sections": [
+    {
+      "id": "how-sketches-work",
+      "title": "How sketches work",
+      "paragraphs": [
+        "A sketch is a bounded drawing card that lives on your board. Use one for a storyboard frame, a rough interface, or a diagram beside your requirements. You can move and resize the card, then reopen its drawing tools to change the marks.",
+        "The paper keeps a clear boundary in both themes. Resizing fits the complete drawing inside that boundary. Changing the card's shape can leave empty space, but does not stretch or cut off its marks."
+      ]
+    },
+    {
+      "id": "draw-and-finish",
+      "title": "Draw and return to your board",
+      "flow": {
+        "entry": "Open an editable board and choose Sketch in the board tools. On a phone, open Add to this board, then choose Sketch.",
+        "steps": [
+          {
+            "action": "Choose Pen, a colour and a stroke width, then drag on the paper.",
+            "result": "An editable stroke follows your gesture."
+          },
+          {
+            "action": "Choose Highlighter to mark a useful area.",
+            "result": "A translucent stroke leaves the drawing underneath visible."
+          },
+          {
+            "action": "Choose Done.",
+            "result": "You return to the board with the completed sketch card selected."
+          },
+          {
+            "action": "Give the card a title in the field below its paper, then press Enter.",
+            "result": "The title appears beneath the drawing."
+          },
+          {
+            "action": "Choose Edit on the sketch card.",
+            "result": "The drawing tools reopen with your existing marks ready to change."
+          }
+        ],
+        "completion": "Completed marks save as you draw. You can finish, reopen the sketch, or reload the board and continue working.",
+        "correction": "Use Undo and Redo in the drawing tools. Eraser removes whole strokes rather than painting over them; one continuous erasing gesture is one Undo action. Escape cancels an unfinished stroke, then exits when pressed again while idle."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/sketch-cards/editable-interface-and-tools.png",
+          "alt": "Sketch editor showing a red interface outline, a translucent yellow highlight and drawing tools.",
+          "caption": "Reopen a frame to keep its pen strokes and highlights editable. Done returns to the board.",
+          "width": 1440,
+          "height": 900
+        }
+      ]
+    },
+    {
+      "id": "arrange-and-reuse",
+      "title": "Arrange frames and explore alternatives",
+      "paragraphs": [
+        "Drag a sketch card beside its requirements or into a column. Select it and drag the resize handle to change its width and height. Use the drawing zoom controls and Fit when you need a closer view; while drawing, hold Space and drag to pan temporarily.",
+        "Select a sketch and choose Duplicate, or use Command+D on Mac or Ctrl+D elsewhere. The new card has its own editable marks. Change that copy to explore an alternative while preserving the original.",
+        "For a reusable storyboard layout, choose More board actions, then Save as template. Later, open Templates from the same menu, select the personal layout and create a new board. The new sketches remain editable and independent of the saved layout and source board."
+      ],
+      "callout": {
+        "title": "Keep a reference in place",
+        "text": "Lock position protects the card's layout while keeping its drawing and title editable. Choose Unlock position before moving or resizing it again."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/sketch-cards/storyboard-and-independent-alternative.png",
+          "alt": "Three titled storyboard sketch cards beside a requirements note, with one frame in a column and a selected independent alternative.",
+          "caption": "Move frames into your board layout and edit a duplicate while preserving its source.",
+          "width": 1440,
+          "height": 900
+        }
+      ]
+    },
+    {
+      "id": "correct-and-recover",
+      "title": "Correct mistakes and recover a sketch",
+      "paragraphs": [
+        "Use Undo to reverse your last completed drawing action, resize, move or duplication. Redo reapplies it. An empty sketch stays available to reopen.",
+        "If you delete a sketch, open Buried bones and choose Restore to bring back the card with its editable marks."
+      ]
+    },
+    {
+      "id": "save-and-export",
+      "title": "Save and export your work",
+      "paragraphs": [
+        "When you go offline, completed marks wait to sync when you reconnect. If the editor reports a save problem, keep the window open and choose Retry saving.",
+        "Choose More board actions, then Export PNG, for a picture of the board or selected cards. The picture includes sketch marks and their boundary, without drawing tools or selection handles. Keep the sketch card itself when you want to edit the marks later."
+      ]
+    },
+    {
+      "id": "availability",
+      "title": "Availability",
+      "paragraphs": [
+        "People with view access can see sketches but cannot edit their drawings or titles. Use a mouse or trackpad for drawing.",
+        "Sketch marks follow their sketch card. They do not attach to nearby cards when those cards move."
+      ]
+    }
+  ],
+  "related": [],
+  "links": []
+}
