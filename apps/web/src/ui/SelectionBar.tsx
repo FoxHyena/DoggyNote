@@ -41,7 +41,7 @@ export function SelectionBar() {
   }
   const editable = () => {
     const c = sole()
-    return !!c && (c.type === 'note' || c.type === 'todo' || c.type === 'column') && doc.canWriteObject(c)
+    return !!c && (c.type === 'note' || c.type === 'todo' || c.type === 'column' || c.type === 'image') && doc.canWriteObject(c)
   }
   const canDuplicate = () => cards().length > 0 && cards().every((c) => doc.canWriteObject(c))
   const bury = () => {

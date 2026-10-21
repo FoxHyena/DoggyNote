@@ -1087,6 +1087,36 @@ html[data-input="mouse"] .board-card:hover .board-tile {
   -webkit-user-drag: none;
 }
 
+/* The caption and its editor share one box, so typing doesn't shift a line. */
+.image-caption {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 8px 12px 10px;
+  border: 0;
+  background: var(--dn-card);
+  color: var(--dn-text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.image-caption-input {
+  resize: none;
+  overflow: hidden;
+  outline: none;
+  border-radius: 0;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.image-caption-input::placeholder {
+  color: var(--dn-text-muted);
+}
+
 /* links */
 
 .card-link {

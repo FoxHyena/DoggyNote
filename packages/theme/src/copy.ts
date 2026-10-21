@@ -56,6 +56,8 @@ export const COPY = {
       'A loose sticker! 🦴 This sticker has no pack information. In DoggyNote, choose Add pack and paste a Telegram pack link instead.',
     ],
   },
+  /** Placeholder while typing an image's caption. */
+  captionPlaceholder: 'Add a caption…',
   /** Movie cards. */
   movieSearch: 'Sniff out a movie or show…',
   movieNoMatch: 'No scent of that one. Try another title?',

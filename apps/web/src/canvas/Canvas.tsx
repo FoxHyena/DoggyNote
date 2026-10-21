@@ -1048,7 +1048,7 @@ export function Canvas(props: { readOnly: boolean }) {
     }
     if (c.type === 'board') return openBoard((c as Card<'board'>).content.boardId)
     const isTitle = !!g.target.closest('[data-edit-title]')
-    if (!lod() && (c.type === 'note' || c.type === 'todo' || (c.type === 'column' && isTitle))) {
+    if (!lod() && (c.type === 'note' || c.type === 'todo' || (c.type === 'column' && isTitle) || (c.type === 'image' && double))) {
       // Synchronously, inside the touch: iOS only raises the keyboard for focus it can tie to a gesture.
       touchEdit(g.id, { x: e.clientX, y: e.clientY })
     }
@@ -1104,6 +1104,13 @@ export function Canvas(props: { readOnly: boolean }) {
         e.preventDefault()
         lastPress = null
         openBoard((card as Card<'board'>).content.boardId)
+        return
+      }
+      // An image types its caption right under it.
+      if (card?.type === 'image' && !lod()) {
+        e.preventDefault()
+        lastPress = null
+        beginEdit(card.id)
         return
       }
       // Any other card: the press already selected or began editing it. Never drop a new note on top.

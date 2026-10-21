@@ -198,10 +198,19 @@ export function LodLayer() {
       if (c.type === 'image') {
         const assetId = (c as Card<'image'>).content?.assetId
         const t = typeof assetId === 'string' ? thumb(assetId) : null
-        if (t && atlas) ctx.drawImage(atlas, t.sx, t.sy, t.sw, t.sh, x, y, w, h)
+        // A caption sits under the picture: keep the picture's shape and draw the caption as a bar.
+        const { width: iw, height: ih } = (c as Card<'image'>).content ?? {}
+        const ph = iw > 0 && ih > 0 ? Math.min(h, (w * ih) / iw) : h
+        if (t && atlas) ctx.drawImage(atlas, t.sx, t.sy, t.sw, t.sh, x, y, w, ph)
         else {
           ctx.fillStyle = pal.border
-          ctx.fillRect(x, y, w, h)
+          ctx.fillRect(x, y, w, ph)
+        }
+        if (h - ph >= 1) {
+          ctx.fillStyle = pal.card
+          ctx.fillRect(x, y + ph, w, h - ph)
+          ctx.fillStyle = pal.muted
+          ctx.fillRect(x + w * 0.08, y + ph + (h - ph) * 0.4, w * 0.6, Math.max(1, Math.min(h - ph, 8 * z) * 0.4))
         }
         return
       }
