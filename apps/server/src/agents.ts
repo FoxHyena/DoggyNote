@@ -27,6 +27,17 @@ async function records(db: D1Database): Promise<Map<string, RecordObject>> {
   return new Map(results.map((r) => [r.id, { object: JSON.parse(r.data), revision: r.seq, owner: r.owner_id }]))
 }
 
+/** Objects matching `ids` by id (or, with `board_id`, everything on those boards); polling must not scan the table. */
+async function recordsFor(db: D1Database, ids: Iterable<string>, column: 'id' | 'board_id' = 'id'): Promise<Map<string, RecordObject>> {
+  const list = [...new Set(ids)], out = new Map<string, RecordObject>()
+  for (let i = 0; i < list.length; i += 90) {
+    const chunk = list.slice(i, i + 90)
+    const { results } = await db.prepare(`SELECT id,data,seq,owner_id FROM objects WHERE ${column} IN (${chunk.map((_, j) => `?${j + 1}`).join(',')})`).bind(...chunk).all<Row>()
+    for (const r of results) out.set(r.id, { object: JSON.parse(r.data), revision: r.seq, owner: r.owner_id })
+  }
+  return out
+}
+
 /** Scope follows canonical ancestry, always intersected with the user's current access. */
 export function inAgentScope(access: Access, credential: Pick<Credential, 'board_ids'>, boardId: string): boolean {
   const roots = new Set<string>(JSON.parse(credential.board_ids))
@@ -276,10 +287,10 @@ agents.get('/agent-proposals', requireUser, async (c) => {
   c.header('cache-control', 'no-store')
   // Every open board polls this; most people have no proposals, so skip reading the workspace.
   if (!results.length) return c.json({ proposals: [] })
-  const a = await loadAccess(c.env.DB, c.get('user')), current = await records(c.env.DB)
+  const parsed = results.map((p) => ({ p, changes: JSON.parse(p.changes) as AgentChange[] }))
+  const a = await loadAccess(c.env.DB, c.get('user')), current = await recordsFor(c.env.DB, parsed.flatMap(({ changes }) => changes.map((ch) => ch.id)))
   const boardId = c.req.query('boardId')
-  const proposals = results.flatMap((p) => {
-    const changes = JSON.parse(p.changes) as AgentChange[]
+  const proposals = parsed.flatMap(({ p, changes }) => {
     if (!canReviewChanges(a, c.get('user').id, changes, current)) return []
     if (boardId && !changes.some((ch) => onBoard(ch.after) === boardId || (ch.before && onBoard(ch.before) === boardId))) return []
     return [{ id: p.id, label: p.label, status: p.status, createdAt: p.created_at, appliedAt: p.applied_at, count: changes.length }]
@@ -291,9 +302,10 @@ agents.get('/agent-proposals/:id', requireUser, async (c) => {
   const p = await ownedProposal(c)
   if (!p) return c.json({ error: 'Proposal unavailable' }, 404)
   const changes = JSON.parse(p.changes) as AgentChange[]
-  const a = await loadAccess(c.env.DB, c.get('user')), all = await records(c.env.DB)
-  if (!canReviewChanges(a, c.get('user').id, changes, all)) return c.json({ error: 'Board or object access was removed' }, 403)
   const ids = new Set(changes.flatMap((ch) => [onBoard(ch.after), ...(ch.before ? [onBoard(ch.before)] : [])]))
+  const all = new Map([...await recordsFor(c.env.DB, [...ids, ...changes.map((ch) => ch.id)]), ...await recordsFor(c.env.DB, ids, 'board_id')])
+  const a = await loadAccess(c.env.DB, c.get('user'))
+  if (!canReviewChanges(a, c.get('user').id, changes, all)) return c.json({ error: 'Board or object access was removed' }, 403)
   const before = [...all.values()].filter((r) => ids.has(onBoard(r.object)) && (!r.owner || r.owner === c.get('user').id) && a.canRead(onBoard(r.object))).map((r) => r.object)
   const after = new Map(before.map((o) => [o.id, o]))
   for (const ch of changes) after.set(ch.id, ch.after)

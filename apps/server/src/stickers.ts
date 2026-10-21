@@ -104,7 +104,7 @@ stickers.delete('/stickers/packs/:name', async (c) => {
 })
 stickers.post('/stickers/preferences/:assetId', async (c) => {
   const assetId = c.req.param('assetId'), db = c.env.DB, user = c.get('user').id
-  const member = await db.prepare("SELECT 1 FROM sticker_memberships m JOIN sticker_packs p ON m.pack_name=p.name,json_each(p.manifest,'$.stickers') s WHERE m.user_id=?1 AND json_extract(s.value,'$.assetId')=?2 AND json_extract(s.value,'$.available')=1").bind(user, assetId).first()
+  const member = await db.prepare("SELECT 1 FROM sticker_memberships m JOIN sticker_assets a ON a.pack_name=m.pack_name WHERE m.user_id=?1 AND a.asset_id=?2 AND a.available=1").bind(user, assetId).first()
   if (!member) return c.json({ error: 'Add the sticker pack first.' }, 403)
   const body = await jsonBody(c)
   if (!body || Object.keys(body).some((k) => !['favorite', 'recent'].includes(k)) || ('favorite' in body && typeof body.favorite !== 'boolean') || ('recent' in body && body.recent !== true)) return c.json({ error: 'Invalid sticker preference.' }, 400)
