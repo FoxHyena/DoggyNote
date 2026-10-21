@@ -221,10 +221,12 @@ export function Canvas(props: { readOnly: boolean }) {
   // ---- camera per board ------------------------------------------------------
   createEffect(
     on(boardId, (id) => {
+      // Effects can run before the ResizeObserver's first callback. Measure even when a
+      // saved camera is restored: a ⌘1 or ⌘0 that lands first would otherwise fit the
+      // board into the 1×1 placeholder viewport and zoom out to the minimum.
+      measure()
       const saved = loadCamera(id)
       if (saved) return setCamera(saved)
-      // Effects can run before the ResizeObserver's first callback; fit needs the real size.
-      measure()
       const v = viewport()
       const rects = doc.cardsOn(id).filter((c) => !c.columnId).map((c) => ({ x: c.x, y: c.y, w: c.w, h: cardHeight(c) }))
       rects.push(...doc.stickersOn(id).map(stickerBounds))
