@@ -7,7 +7,7 @@ import { takeEditCaret } from '../canvas/Canvas.tsx'
 import type { CardProps } from '../canvas/CardView.tsx'
 import type { FormatCommand, NoteEditor as Editor } from '../editor/codemirror.ts'
 import { exporting } from '../state/export.ts'
-import type { EditorState } from '@codemirror/state'
+import type { EditorState, StateEffect } from '@codemirror/state'
 import { touch } from '../state/device.ts'
 
 // Brand-new notes left empty disappear instead of littering the board.
@@ -57,7 +57,7 @@ export const FORMAT: { cmd: FormatCommand; label: string; title: string }[] = [
 
 // Keep only local editor presentation. History crosses the surface transition
 // within one edit session, but cannot undo into an earlier board transaction.
-type Position = { anchor: number; head: number; scroll: number; session: number; state?: EditorState }
+type Position = { anchor: number; head: number; scroll: number; session: number; state?: EditorState; snapshot?: StateEffect<unknown> }
 const positions = new Map<string, Position>()
 
 export function NoteEditor(props: { card: Card<'note'>; focused?: boolean; onExit?: () => void }) {
@@ -108,14 +108,19 @@ export function NoteEditor(props: { card: Card<'note'>; focused?: boolean; onExi
     setActiveNoteEditor(editor)
     buffer.remove()
     for (const cmd of earlyIndents) editor.run(cmd)
-    if (props.focused && remembered) editor.view.scrollDOM.scrollTop = remembered.scroll
+    if (props.focused && remembered) {
+      // A scroll snapshot is anchored to a line, so it survives CodeMirror re-measuring
+      // line heights after mount (WebKit otherwise lands a few paragraphs higher).
+      editor.view.scrollDOM.scrollTop = remembered.scroll
+      try { if (remembered.snapshot) editor.view.dispatch({ effects: remembered.snapshot }) } catch { /* the text changed underneath: keep the pixel offset */ }
+    }
   })
   onCleanup(() => {
     disposed = true
     if (editor) {
       const { anchor, head } = editor.view.state.selection.main
       positions.delete(id)
-      positions.set(id, { anchor, head, scroll: props.focused ? editor.view.scrollDOM.scrollTop : remembered?.scroll ?? 0, session, state: editingId() === id && doc.canEditNoteBody(doc.getCard(id)) ? editor.view.state : undefined })
+      positions.set(id, { anchor, head, scroll: props.focused ? editor.view.scrollDOM.scrollTop : remembered?.scroll ?? 0, snapshot: props.focused ? editor.view.scrollSnapshot() : remembered?.snapshot, session, state: editingId() === id && doc.canEditNoteBody(doc.getCard(id)) ? editor.view.state : undefined })
       if (positions.size > 30) positions.delete(positions.keys().next().value!)
     }
     if (!editor) positions.set(id, { anchor: buffer.selectionStart, head: buffer.selectionEnd, scroll: remembered?.scroll ?? 0, session })
