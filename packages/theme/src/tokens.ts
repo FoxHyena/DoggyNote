@@ -22,6 +22,7 @@ export const SURFACE_TOKENS = [
   'diffChanged', // …edits or moves
   'diffRemoved', // …buries
   'diffInk', // text on the diff colours (badge chips)
+  'personSky', 'personBall', 'personLilac', 'personCollar', 'personGold', 'personPeach', 'personInk',
 ] as const
 
 export type SurfaceToken = (typeof SURFACE_TOKENS)[number]
@@ -46,6 +47,7 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     diffChanged: '#74a9e6',
     diffRemoved: '#ee7f6f',
     diffInk: '#1c1b1a',
+    personSky: '#74a9e6', personBall: '#62c48c', personLilac: '#b29be0', personCollar: '#ee7f6f', personGold: '#e8a849', personPeach: '#e6a87c', personInk: '#1c1b1a',
   },
   light: {
     bg: '#f3efe9',
@@ -66,6 +68,7 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     diffChanged: '#2c66a8',
     diffRemoved: '#b0392b',
     diffInk: '#ffffff',
+    personSky: '#2c66a8', personBall: '#2d7a4c', personLilac: '#7951a3', personCollar: '#b0392b', personGold: '#9a5f0c', personPeach: '#98521d', personInk: '#ffffff',
   },
 }
 

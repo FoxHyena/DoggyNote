@@ -1,4 +1,5 @@
 import { StickerTray } from './ui/StickerTray.tsx'
+import { Collaborators } from './ui/Collaboration.tsx'
 import { StickerControls } from './ui/StickerControls.tsx'
 import { Match, Show, Switch, createSignal, onCleanup, onMount } from 'solid-js'
 import { COPY } from '@doggynote/theme'
@@ -124,6 +125,7 @@ function EditorApp() {
     // Don't lose an in-progress edit when the window goes away.
     const save = () => {
       endEdit()
+      doc.journalNotes()
       void doc.flush().catch(() => {})
     }
     const onVis = () => document.visibilityState === 'hidden' && save()
@@ -160,6 +162,7 @@ function EditorApp() {
                   <button class="icon-btn" data-testid="open-fetch" aria-label={`${COPY.search} (⌘K)`} data-tooltip={`${COPY.search} (⌘K)`} onClick={() => setPaletteOpen(true)}><Icon>{ToolIcons.search()}</Icon></button>
                   <ToyboxButton />
                 </Show>
+                <Collaborators />
                 <BoardActions boardId={boardId()} primary={<ShareButton boardId={boardId()} />} />
                 <AccountMenu mode={theme.mode()} onThemeChange={theme.setMode} />
               </>
@@ -217,7 +220,7 @@ function migrateNotesToMarkdown() {
   for (const o of Object.values(doc.objs)) {
     if (o.kind !== 'card' || o.type !== 'note' || o.purged) continue
     const c = o as Card<'note'>
-    if (typeof (c.content as { md?: unknown }).md !== 'string') patches[c.id] = { content: { md: noteMarkdown(c) } } as Partial<Card>
+    if (typeof (c.content as { md?: unknown } | undefined)?.md !== 'string') patches[c.id] = { content: { md: noteMarkdown(c) } } as Partial<Card>
   }
   if (Object.keys(patches).length) doc.silent(patches)
 }

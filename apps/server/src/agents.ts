@@ -309,7 +309,7 @@ agents.post('/agent-proposals/:id/reject', requireUser, async (c) => {
 
 /** All preconditions and writes share one D1 transaction. The guarded status
  * transition is the gate for every subsequent statement; a conflict writes nothing. */
-async function applyProposal(c: Context<AgentEnv>, reverse: boolean) {
+async function applyProposal(c: Context<AgentEnv>, reverse: boolean, attempt = 0): Promise<Response> {
   const db = c.env.DB, p = await ownedProposal(c)
   if (!p) return c.json({ error: 'Proposal unavailable' }, 404)
   const final = reverse ? 'reversed' : 'applied', previous = reverse ? 'applied' : 'pending', transitional = reverse ? 'reversing' : 'applying'
@@ -377,9 +377,15 @@ async function applyProposal(c: Context<AgentEnv>, reverse: boolean) {
   let accessChanged = false
   for (const ch of changes) {
     const o = ch.after
+    let note: Awaited<ReturnType<typeof prepareNote>> | undefined
+    if (o.kind === 'card' && o.type === 'note' && !o.purged) {
+      note = await prepareNote(db, o.id, o.content.md, undefined, ch.expectedRevision ?? 0)
+      stmts.push(db.prepare(`INSERT OR REPLACE INTO note_write_guard(id,revision,object_seq) SELECT ?2,?3,?4 WHERE ${gate}`).bind(p.id, o.id, note.previousRevision, ch.expectedRevision ?? 0))
+    }
     const owner = ownerFor(o.id, o.kind === 'board' ? null : o.boardId) ?? deletedCommentOwner(o.kind, o as unknown as Record<string, unknown>, ch.before ? { kind: ch.before.kind, author_id: ch.before.kind === 'comment' ? ch.before.authorId : null, deleted_at: ch.before.deletedAt ?? null, purged: ch.before.purged ? 1 : 0 } : undefined, c.get('user').id)
     stmts.push(db.prepare(`UPDATE counters SET value=value+1 WHERE name='seq' AND ${gate}`).bind(p.id))
     stmts.push(db.prepare(`INSERT INTO objects(id,kind,board_id,data,seq,updated_at,updated_by,owner_id) SELECT ?2,?3,?4,?5,(SELECT value FROM counters WHERE name='seq'),?6,?7,?8 WHERE ${gate} ON CONFLICT(id) DO UPDATE SET data=excluded.data,board_id=excluded.board_id,seq=excluded.seq,updated_at=excluded.updated_at,updated_by=excluded.updated_by,owner_id=excluded.owner_id`).bind(p.id, o.id, o.kind, o.kind === 'board' ? null : o.boardId, JSON.stringify(o), now, c.get('user').id, owner))
+    if (note) stmts.push(db.prepare(`INSERT INTO note_states(id,state,revision) SELECT ?2,?3,?4 WHERE ${gate} ON CONFLICT(id) DO UPDATE SET state=excluded.state,revision=excluded.revision`).bind(p.id, o.id, note.state, note.revision))
     if (o.kind === 'board') {
       accessChanged = true
       if (!ch.before && !reverse) stmts.push(db.prepare(`INSERT INTO board_access(board_id,owner_id,legacy) SELECT ?2,?3,0 WHERE ${gate}`).bind(p.id, o.id, c.get('user').id))
@@ -389,13 +395,23 @@ async function applyProposal(c: Context<AgentEnv>, reverse: boolean) {
   if (accessChanged) stmts.push(db.prepare(`UPDATE counters SET value=value+1 WHERE name='access_revision' AND ${gate}`).bind(p.id))
   // Capture resulting revisions inside the same transaction for safe reversal.
   stmts.push(db.prepare(`UPDATE agent_proposals SET status='${final}',applied_at=?2,applied_revisions=(SELECT json_group_object(id,seq) FROM objects WHERE id IN (${changes.map((ch) => `'${ch.id}'`).join(',')})) WHERE id=?1 AND status='${transitional}'`).bind(p.id, now))
-  const result = await db.batch(stmts)
+  let result: D1Result[]
+  try { result = await db.batch(stmts) } catch (error) {
+    if (String(error).includes('Note changed')) return c.json({ error: 'Revision conflict: the note changed. Prepare a new proposal.' }, 409)
+    throw error
+  }
   if (!result[0].meta.changes) {
     const latest = await db.prepare('SELECT status FROM agent_proposals WHERE id=?1').bind(p.id).first<{ status: string }>()
     if (latest?.status === final) return c.json({ ok: true, status: final })
+    // Unrelated access changes can race this short transaction. Revalidate all
+    // permissions and the original proposal revisions; never relax the guard.
+    if (latest?.status === previous && attempt < 2) return applyProposal(c, reverse, attempt + 1)
     return c.json({ error: 'Revision conflict: the board changed after this proposal. Ask the agent to read it and prepare a new proposal.' }, 409)
   }
+  await notifyRooms(c.env, changes.flatMap((ch) => [onBoard(ch.after), ...(ch.before ? [onBoard(ch.before)] : [])]))
   return c.json({ ok: true, status: final, count: changes.length })
 }
 agents.post('/agent-proposals/:id/approve', requireUser, (c) => applyProposal(c, false))
 agents.post('/agent-proposals/:id/reverse', requireUser, (c) => applyProposal(c, true))
+import { prepareNote } from './notes.ts'
+import { notifyRooms } from './realtime.ts'

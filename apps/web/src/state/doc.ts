@@ -16,6 +16,8 @@ import {
   usableSticker,
 } from '@doggynote/core'
 import * as idb from './idb.ts'
+import * as Y from 'yjs'
+import { decodeUpdate, noteDocument, noteMarkdown, noteState, replaceText, REMOTE_ORIGIN } from '@doggynote/core'
 
 // The document store. Every edit goes through `commit` (undoable) or `silent`
 // (not undoable, e.g. measured heights, unfurled link titles). Both apply the
@@ -48,7 +50,7 @@ let persist = true
 let readOnly = false
 let writeGuard: ((object: Obj) => boolean) | null = null
 export const setWriteGuard = (guard: (object: Obj) => boolean) => { writeGuard = guard }
-export const canWriteObject = (object: Obj | undefined) => !!object && !readOnly && !previewing() && (!writeGuard || writeGuard(object))
+export const canWriteObject = (object: Obj | undefined) => !!object && !readOnly && !previewing() && (!writeGuard || writeGuard(object)) && !(object.kind === 'card' && object.type === 'note' && !object.noteState)
 const undoStack = new UndoStack()
 const [undoTick, setUndoTick] = createSignal(0)
 export const [localSaveError, setLocalSaveError] = createSignal<string | null>(null)
@@ -56,6 +58,82 @@ export const [lastLocalSave, setLastLocalSave] = createSignal<number | null>(nul
 
 /** id → merged patch not yet acknowledged by the server. */
 const outbox = new Map<Id, Partial<Obj>>()
+const notes = new Map<Id, Y.Doc>()
+const noteUndos = new Map<Id, Y.UndoManager>()
+const composingNotes = new Set<string>()
+const heldNoteStates = new Map<string, string>()
+const compositionWaiters = new Map<string, Set<() => void>>()
+export const isNoteComposing = (id: string) => composingNotes.has(id)
+export function setNoteComposing(id: string, active: boolean) {
+  if (active) { composingNotes.add(id); return }
+  composingNotes.delete(id)
+  const held = heldNoteStates.get(id)
+  heldNoteStates.delete(id)
+  if (held && notes.has(id)) Y.applyUpdate(notes.get(id)!, decodeUpdate(held), REMOTE_ORIGIN)
+  for (const resolve of compositionWaiters.get(id) ?? []) resolve()
+  compositionWaiters.delete(id)
+}
+/** Don't persist a pull cursor ahead of text held by an active native IME. */
+export async function settleNoteCompositions() {
+  await Promise.all([...heldNoteStates.keys()].map((id) => new Promise<void>((resolve) => {
+    const waiters = compositionWaiters.get(id) ?? new Set()
+    waiters.add(resolve); compositionWaiters.set(id, waiters)
+  })))
+}
+export const finishNoteEdit = (id: string) => noteUndos.get(id)?.stopCapturing()
+let noteFlushScheduled = false
+let applyingTextUndo = false
+let newNoteEdit: string | null = null
+export const setNewNoteEdit = (id: string | null) => { newNoteEdit = id }
+export const LOCAL_TEXT_ORIGIN = 'local-text'
+export function noteUndo(id: string) {
+  let manager = noteUndos.get(id)
+  if (!manager) {
+    manager = new Y.UndoManager(noteDoc(id).getText('markdown'), { trackedOrigins: new Set([LOCAL_TEXT_ORIGIN]), captureTimeout: Number.MAX_SAFE_INTEGER })
+    noteUndos.set(id, manager)
+    manager.on('stack-item-added', ({ type, origin }: { type: string; origin: unknown }) => {
+      if (type !== 'undo' || applyingTextUndo || origin === manager) return
+      if (newNoteEdit === id) return
+      undoStack.push([{ id, before: { noteUpdate: 'undo' }, after: { noteUpdate: 'redo' } }])
+      setUndoTick((n) => n + 1)
+    })
+    manager.on('stack-item-popped', ({ type }: { type: string }) => {
+      if (applyingTextUndo) return
+      const top = type === 'undo' ? undoStack.peek() : undoStack.peekRedo()
+      if (top?.length === 1 && top[0]!.id === id && top[0]!.after.noteUpdate === 'redo') {
+        if (type === 'undo') undoStack.undo()
+        else undoStack.redo()
+        setUndoTick((n) => n + 1)
+      }
+    })
+  }
+  return manager
+}
+/** Shared text lives independently of mounted editors, including offline. */
+export function noteDoc(id: Id): Y.Doc {
+  let document = notes.get(id)
+  if (document) return document
+  const object = state.objs[id]
+  document = noteDocument(object?.noteState)
+  notes.set(id, document)
+  if (object) applyPatchToStore(id, { noteState: noteState(document) })
+  document.on('update', (_update: Uint8Array, origin: unknown) => {
+    if (!state.objs[id]) return
+    const text = document!.getText('markdown').toString(), encoded = noteState(document!)
+    applyPatchToStore(id, { content: { md: text }, noteState: encoded } as Partial<Obj>)
+    if (newNoteEdit === id && origin !== REMOTE_ORIGIN) undoStack.amendTop(id, { content: { md: text } })
+    if (persist) dirtyObjs.add(id)
+    if (origin !== REMOTE_ORIGIN) {
+      record(id, { noteUpdate: encoded })
+      for (const listener of outboxListeners) listener()
+      if (!noteFlushScheduled) {
+        noteFlushScheduled = true
+        queueMicrotask(() => { noteFlushScheduled = false; void flush().catch(() => {}) })
+      }
+    } else scheduleFlush()
+  })
+  return document
+}
 /** Retain creation ownership across the gap between push acknowledgement and access refresh. */
 export const localBoardCreations = new Set<Id>()
 const outboxListeners = new Set<() => void>()
@@ -65,7 +143,27 @@ export const onTransient = (listener: (id: Id, patch: Partial<Obj>) => void) => 
 const dirtyObjs = new Set<Id>()
 const dirtyOutbox = new Set<Id>()
 let flushTimer: ReturnType<typeof setTimeout> | null = null
-let flushing: Promise<void> | null = null
+const saves = new Set<Promise<void>>()
+const NOTE_JOURNAL = 'doggynote.note-reload'
+
+/** A per-tab crash cushion: browsers may cancel queued IDB writes on reload.
+ * Store each full CRDT state once; projection and outbox are restored together. */
+export function journalNotes() {
+  if (!persist) return
+  try {
+    const rows = [...outbox].flatMap(([id, patch]) => {
+      const o = state.objs[id]
+      if (o?.kind !== 'card' || o.type !== 'note' || !patch.noteUpdate) return []
+      const { content: _content, noteState: _state, noteUpdate: _update, ...object } = unwrap(o)
+      const { noteUpdate: _pending, ...metadata } = patch
+      return [{ id, object, patch: metadata, state: o.noteState ?? patch.noteUpdate }]
+    })
+    if (rows.length) sessionStorage.setItem(NOTE_JOURNAL, JSON.stringify(rows))
+    else sessionStorage.removeItem(NOTE_JOURNAL)
+  } catch {
+    setLocalSaveError('The reload recovery copy could not be saved. Keep this window open until local saving finishes.')
+  }
+}
 
 export const get = (id: Id | null | undefined): Obj | undefined => {
   if (!id) return undefined
@@ -92,9 +190,22 @@ function applyPatchToStore(id: Id, patch: Partial<Obj>) {
 
 function record(id: Id, patch: Partial<Obj>) {
   if (!persist) return
+  const object = state.objs[id]
+  // Text is always sent as CRDT operations, including task toggles and undo.
+  if (object?.kind === 'card' && object.type === 'note' && 'content' in patch && !patch.purged) {
+    if (!patch.kind) { const undo = noteUndo(id); undo.stopCapturing() }
+    const text = noteDoc(id).getText('markdown')
+    replaceText(text, noteMarkdown({ ...object, ...patch } as Card<'note'>), LOCAL_TEXT_ORIGIN)
+    // Even an empty or unchanged copied note must carry its shared baseline.
+    patch = { ...patch, noteUpdate: noteState(noteDoc(id)) }
+    delete (patch as Partial<Card>).content
+  }
+  if ('noteState' in patch) { patch = { ...patch }; delete patch.noteState }
   if (patch.kind === 'board') localBoardCreations.add(id)
   dirtyObjs.add(id)
-  outbox.set(id, { ...(outbox.get(id) ?? {}), ...structuredClone(unwrap(patch)) } as Partial<Obj>)
+  const previous = { ...(outbox.get(id) ?? {}) } as Partial<Obj> & { noteRestore?: boolean }
+  if (patch.purged) delete previous.noteRestore
+  outbox.set(id, { ...previous, ...structuredClone(unwrap(patch)) } as Partial<Obj>)
   dirtyOutbox.add(id)
   scheduleFlush()
 }
@@ -102,8 +213,17 @@ function record(id: Id, patch: Partial<Obj>) {
 function applyTx(tx: Transaction) {
   batch(() => {
     for (const c of tx) {
-      applyPatchToStore(c.id, c.after)
-      record(c.id, c.after)
+      if (c.after.noteUpdate === 'undo' || c.after.noteUpdate === 'redo') {
+        applyingTextUndo = true
+        try { c.after.noteUpdate === 'undo' ? noteUndo(c.id).undo() : noteUndo(c.id).redo() } finally { applyingTextUndo = false }
+        continue
+      }
+      const restoring = state.objs[c.id]?.purged && c.after.purged === false && c.after.kind === 'card' && c.after.type === 'note'
+      // A deliberate creation redo restores the current shared text, including
+      // peers' work. An old queued creation has no such restoration intent.
+      const after = restoring ? { ...c.after, content: { md: noteDoc(c.id).getText('markdown').toString() } } as Partial<Obj> : c.after
+      applyPatchToStore(c.id, after)
+      record(c.id, restoring ? { ...after, noteRestore: true } as Partial<Obj> : after)
     }
   })
   for (const l of outboxListeners) l()
@@ -130,7 +250,16 @@ export function commit(tx: Transaction) {
     })) return
   }
   applyTx(tx)
-  undoStack.push(tx)
+  // CRDT text has its own origin-aware entry. Keeping a second whole-text
+  // snapshot here would let a later undo erase another author's changes.
+  const undoTx = tx.flatMap((c) => {
+    const object = state.objs[c.id]
+    if (object?.kind !== 'card' || object.type !== 'note' || c.before.purged || !('content' in c.after)) return [c]
+    const before = { ...c.before } as Partial<Card>, after = { ...c.after } as Partial<Card>
+    delete before.content; delete after.content
+    return Object.keys(after).length ? [{ ...c, before, after }] : []
+  })
+  undoStack.push(undoTx)
   setUndoTick((n) => n + 1)
 }
 
@@ -312,32 +441,30 @@ export async function flush() {
   if (flushTimer) clearTimeout(flushTimer)
   flushTimer = null
   if (!persist) return
-  if (flushing) {
-    await flushing
-    if (dirtyObjs.size || dirtyOutbox.size) return flush()
-    return
-  }
-  flushing = (async () => {
-    while (dirtyObjs.size || dirtyOutbox.size) {
+  if (dirtyObjs.size || dirtyOutbox.size) {
       const objIds = [...dirtyObjs]
       const outIds = [...dirtyOutbox]
       const objects: [string, unknown][] = objIds.map((id) => [id, structuredClone(unwrap(state.objs[id]))])
       const patches: [string, unknown][] = outIds.map((id) => [id, structuredClone(outbox.get(id))])
       dirtyObjs.clear()
       dirtyOutbox.clear()
-      try {
-        await idb.putDocument(objects, patches)
-        setLocalSaveError(null)
+      // Start the atomic IDB transaction now, even if an older save is pending.
+      // IDB orders these transactions; a navigation need not run a continuation
+      // in this page merely to start saving the newest input.
+      const saving = idb.putDocument(objects, patches).then(() => {
+        if (!dirtyObjs.size && !dirtyOutbox.size) setLocalSaveError(null)
+        if (saves.size === 1 && !dirtyObjs.size && !dirtyOutbox.size) { try { sessionStorage.removeItem(NOTE_JOURNAL) } catch { /* IDB is already durable. */ } }
         setLastLocalSave(Date.now())
-      } catch (error) {
+      }).catch((error) => {
         objIds.forEach((id) => dirtyObjs.add(id))
         outIds.forEach((id) => dirtyOutbox.add(id))
         setLocalSaveError('Changes could not be saved on this device. Keep this window open and retry.')
         throw error
-      }
-    }
-  })().finally(() => { flushing = null })
-  return flushing
+      }).finally(() => saves.delete(saving))
+      saves.add(saving)
+  }
+  await Promise.all([...saves])
+  if (saves.size || dirtyObjs.size || dirtyOutbox.size) await flush()
 }
 
 // ---- sync hooks -----------------------------------------------------------
@@ -399,9 +526,18 @@ export function receiveRemote(rows: Obj[]) {
   if (!rows.length) return
   batch(() => {
     for (const row of rows) {
+      if (row.noteState && row.kind === 'card' && row.type === 'note' && (notes.has(row.id) || outbox.get(row.id)?.noteUpdate)) {
+        const document = noteDoc(row.id)
+        if (composingNotes.has(row.id)) heldNoteStates.set(row.id, row.noteState)
+        else Y.applyUpdate(document, decodeUpdate(row.noteState), REMOTE_ORIGIN)
+        row.content = { md: document.getText('markdown').toString() }
+        row.noteState = noteState(document)
+      }
       // Someone else's private object (e.g. moved into their Toy box): the server
       // sends only a stub, and any copy on this device goes away.
       if ((row as { hidden?: boolean }).hidden) {
+        notes.get(row.id)?.destroy(); notes.delete(row.id)
+        noteUndos.get(row.id)?.destroy(); noteUndos.delete(row.id)
         deferred.delete(row.id)
         outbox.delete(row.id)
         if (state.objs[row.id]) setState('objs', row.id, undefined as never)
@@ -440,8 +576,41 @@ export async function load(opts: { persist: boolean; readOnly: boolean }) {
   const [all, out] = await Promise.all([idb.getAll<Obj>('objects'), idb.getAll<Partial<Obj>>('outbox')])
   const map: Record<Id, Obj> = {}
   for (const [id, o] of all) map[id] = o
+  try {
+    const journal = sessionStorage.getItem(NOTE_JOURNAL)
+    if (journal) {
+      const rows = JSON.parse(journal) as { id: string; object: Card<'note'>; patch: Partial<Obj>; state: string }[]
+      const recovered: [string, Obj][] = [], pending: [string, Partial<Obj>][] = []
+      for (const row of rows) {
+        if (typeof row.id !== 'string' || row.object?.kind !== 'card' || row.object.type !== 'note' || typeof row.state !== 'string') throw new Error('Invalid recovery data')
+        const document = noteDocument(map[row.id]?.noteState)
+        try {
+          if (out.get(row.id)?.noteUpdate) Y.applyUpdate(document, decodeUpdate(out.get(row.id)!.noteUpdate!))
+          Y.applyUpdate(document, decodeUpdate(row.state))
+          const state = noteState(document)
+          recovered.push([row.id, { ...map[row.id], ...row.object, id: row.id, noteState: state, content: { md: document.getText('markdown').toString() } }])
+          pending.push([row.id, { ...out.get(row.id), ...row.patch, noteUpdate: state } as Partial<Obj>])
+        } finally { document.destroy() }
+      }
+      await idb.putDocument(recovered, pending)
+      for (const [id, object] of recovered) map[id] = object
+      for (const [id, patch] of pending) out.set(id, patch)
+      sessionStorage.removeItem(NOTE_JOURNAL)
+    }
+  } catch { setLocalSaveError('A reload recovery copy could not be restored. Keep this tab open and retry local saving.') }
   setState('objs', map)
-  for (const [id, p] of out) { outbox.set(id, p); if (p.kind === 'board') localBoardCreations.add(id) }
+  for (const [id, p] of out) {
+    // Protocol-2 replacements have no shared baseline. Keep a recovery draft;
+    // replaying one would overwrite changes made since this device went away.
+    const o = map[id]
+    if (o?.kind === 'card' && o.type === 'note' && 'content' in p && !p.noteUpdate && !p.kind) {
+      await idb.put('meta', `recovery:${id}`, { id, patch: p, object: o, reason: 'This draft was saved before collaborative editing. Copy the text into the updated note.', savedAt: Date.now() })
+      delete (p as Partial<Card>).content
+      await idb.put('outbox', id, Object.keys(p).length ? p : undefined)
+    }
+    if (Object.keys(p).length) outbox.set(id, p)
+    if (p.kind === 'board') localBoardCreations.add(id)
+  }
 }
 
 /** Replace the whole document (share viewer). */
@@ -457,6 +626,8 @@ export function reconcileSnapshot(rows: Obj[], keepLocal: (object: Obj) => boole
   batch(() => {
     for (const object of Object.values(state.objs)) {
       if (visible.has(object.id) || (outbox.has(object.id) && keepLocal(object))) continue
+      notes.get(object.id)?.destroy(); notes.delete(object.id)
+      noteUndos.get(object.id)?.destroy(); noteUndos.delete(object.id)
       deferred.delete(object.id)
       setState('objs', object.id, undefined as never)
       dirtyObjs.add(object.id)
@@ -484,6 +655,12 @@ export function ensureHome(title: string) {
 export const outboxSize = () => outbox.size
 
 export async function resetLocal() {
+  try { sessionStorage.removeItem(NOTE_JOURNAL) } catch { /* No browser storage. */ }
+  for (const id of composingNotes) setNoteComposing(id, false)
+  for (const manager of noteUndos.values()) manager.destroy()
+  noteUndos.clear()
+  for (const document of notes.values()) document.destroy()
+  notes.clear()
   outbox.clear()
   localBoardCreations.clear()
   setState('objs', {})

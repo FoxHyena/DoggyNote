@@ -79,6 +79,12 @@ export type MovieInfo = {
 }
 
 type Base = {
+  /** Internal sync sidecar. Never accepted as a writable field by the server. */
+  noteState?: string
+  /** Idempotent collaborative update carried by the local outbox. */
+  noteUpdate?: string
+  /** Explicit user redo intent; consumed by sync, never stored on the server. */
+  noteRestore?: true
   id: Id
   /** Soft delete (trash). Restorable. */
   deletedAt?: number | null

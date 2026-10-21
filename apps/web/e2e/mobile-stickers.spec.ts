@@ -5,6 +5,34 @@ import { at, waitForSync } from './helpers.ts'
 import { Fingers, center, longPress, touchDrag } from './touch.ts'
 import { importFixturePack, openStickerTray, stickerBoard, stickerRingPoint, stickerState } from './sticker-helpers.ts'
 
+test.use({ trace: 'retain-on-failure' })
+
+// Capture before application listeners so a missing native click can be
+// distinguished from one intercepted by the application. No input is mocked.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    const events: object[] = [], nodes = new WeakMap<EventTarget, number>()
+    let next = 0
+    const id = (target: EventTarget | null) => {
+      if (!target) return null
+      if (!nodes.has(target)) nodes.set(target, ++next)
+      return nodes.get(target)
+    }
+    ;(window as unknown as { touchInputEvidence: object[] }).touchInputEvidence = events
+    for (const type of ['pointerdown', 'pointerup', 'pointercancel', 'touchstart', 'touchend', 'touchcancel', 'mousedown', 'mouseup', 'click', 'gotpointercapture', 'lostpointercapture', 'resize']) window.addEventListener(type, (event) => {
+      const target = event.target as Element | null, pointer = event as PointerEvent, touches = event as TouchEvent
+      const entry = { type, at: performance.now(), node: id(target), tag: target?.tagName, button: target?.closest?.('button')?.dataset.testid, path: event.composedPath().map(id), x: pointer.clientX, y: pointer.clientY, pointerId: pointer.pointerId, active: touches.touches && [...touches.touches].map((t) => t.identifier), changed: touches.changedTouches && [...touches.changedTouches].map((t) => t.identifier), prevented: event.defaultPrevented, connected: target?.isConnected, width: innerWidth, height: innerHeight, outerWidth, outerHeight, screenWidth: screen.width }
+      events.push(entry)
+      queueMicrotask(() => { entry.prevented = event.defaultPrevented; entry.connected = target?.isConnected })
+    }, { capture: true, passive: true })
+  })
+})
+test.afterEach(async ({ page }) => {
+  if (test.info().status === test.info().expectedStatus || page.isClosed()) return
+  const events = await page.evaluate(() => (window as unknown as { touchInputEvidence: object[] }).touchInputEvidence)
+  await test.info().attach('native-touch-input', { body: JSON.stringify(events, null, 2), contentType: 'application/json' })
+})
+
 test('phone scroll and preview never place; tap, cancel, move, resize, rotate and pinch remain distinct', async ({ page, request }) => {
   await stickerBoard(page, request); await importFixturePack(page)
   const tray = page.getByTestId('sticker-tray')

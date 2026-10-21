@@ -1,0 +1,15 @@
+
+> doggynote@ typecheck /Users/oreo/.paseo/worktrees/2pf6ay6i/famous-jellyfish
+> pnpm -r typecheck
+
+Scope: 6 of 7 workspace projects
+packages/theme typecheck$ tsc -p .
+packages/theme typecheck: Done
+packages/core typecheck$ tsc -p .
+packages/core typecheck: Done
+apps/web typecheck$ tsc -b
+apps/mcp typecheck$ tsc -p .
+apps/server typecheck$ tsc -p .
+apps/mcp typecheck: Done
+apps/server typecheck: Done
+apps/web typecheck: Done

@@ -25,7 +25,10 @@
     "lottie-web": "5.13.0",
     "modern-screenshot": "4.7.0",
     "pdfjs-dist": "6.3.289",
-    "solid-js": "^1.9.15"
+    "solid-js": "^1.9.15",
+    "y-codemirror.next": "^0.3.6",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.33"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",

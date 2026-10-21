@@ -1,0 +1,23 @@
+
+> doggynote@ test /Users/oreo/.paseo/worktrees/2pf6ay6i/famous-jellyfish
+> vitest run
+
+
+ RUN  v4.1.11 /Users/oreo/.paseo/worktrees/2pf6ay6i/famous-jellyfish
+
+(node:44555) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:44552) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:44554) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:44553) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:44557) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  22 passed (22)
+      Tests  227 passed (227)
+   Start at  23:23:35
+   Duration  1.87s (transform 2.55s, setup 0ms, import 7.63s, tests 3.39s, environment 2ms)
+

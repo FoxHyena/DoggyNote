@@ -36,6 +36,8 @@ import {
   type Vec,
 } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
+import { CollaborationOverlay } from '../ui/Collaboration.tsx'
+import { pingAt, liveState, clearLivePreviews } from '../state/realtime.ts'
 import * as doc from '../state/doc.ts'
 import {
   beginEdit,
@@ -104,6 +106,7 @@ const EDIT_DOCK = 56
 type Client = { clientX: number; clientY: number; altKey?: boolean }
 
 export function Canvas(props: { readOnly: boolean }) {
+  const [contextPoint, setContextPoint] = createSignal<{ x: number; y: number; screenX: number; screenY: number } | null>(null)
   let vp!: HTMLDivElement
   const [marquee, setMarquee] = createSignal<Rect | null>(null)
   const [spaceHeld, setSpaceHeld] = createSignal(false)
@@ -662,6 +665,11 @@ export function Canvas(props: { readOnly: boolean }) {
   }
 
   function endGesture(g: Gesture, e: PointerEvent) {
+    if (e.type === 'pointercancel' && (g.kind === 'drag' || g.kind === 'resize')) {
+      for (const [id, snap] of Object.entries(g.snap)) doc.transient(id, snap)
+      doc.unmarkBusy(Object.keys(g.snap)); setDropTarget(null); setDraggingIds(new Set<Id>()); clearLivePreviews()
+      return
+    }
     switch (g.kind) {
       case 'sticker-place': {
         if (e.type !== 'pointercancel' && !g.moved && armedSticker()) placeSticker(armedSticker()!, toWorld(e))
@@ -796,6 +804,7 @@ export function Canvas(props: { readOnly: boolean }) {
         setMarquee(null)
         break
     }
+    clearLivePreviews()
   }
 
   // ---- touch ------------------------------------------------------------------------
@@ -1102,8 +1111,8 @@ export function Canvas(props: { readOnly: boolean }) {
 
   // ---- keyboard: space-to-pan -------------------------------------------------------
   const typing = (t: EventTarget | null) => !!(t as HTMLElement | null)?.closest?.('input,textarea,[contenteditable="true"]')
-  const onStickerEscape = (e: KeyboardEvent) => {
-    if (e.key !== 'Escape' || (!armedSticker() && gesture?.kind !== 'sticker' && gesture?.kind !== 'sticker-place')) return
+  const onGestureEscape = (e: KeyboardEvent) => {
+    if (e.key !== 'Escape' || (!armedSticker() && !gesture)) return
     e.preventDefault(); e.stopImmediatePropagation(); cancelGesture(); cancelStickerPlacement()
   }
   const onKeyDown = (e: KeyboardEvent) => {
@@ -1159,7 +1168,7 @@ export function Canvas(props: { readOnly: boolean }) {
     vp.addEventListener('gesturestart', onGestureStart)
     vp.addEventListener('gesturechange', onGestureChange)
     vp.addEventListener('gestureend', onGestureEnd)
-    window.addEventListener('keydown', onStickerEscape, true)
+    window.addEventListener('keydown', onGestureEscape, true)
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
     document.addEventListener('paste', onPaste)
@@ -1170,7 +1179,7 @@ export function Canvas(props: { readOnly: boolean }) {
       vp.removeEventListener('gesturestart', onGestureStart)
       vp.removeEventListener('gesturechange', onGestureChange)
       vp.removeEventListener('gestureend', onGestureEnd)
-      window.removeEventListener('keydown', onStickerEscape, true)
+      window.removeEventListener('keydown', onGestureEscape, true)
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
       document.removeEventListener('paste', onPaste)
@@ -1212,7 +1221,9 @@ export function Canvas(props: { readOnly: boolean }) {
       onDblClick={onDblClick}
       onContextMenu={(e) => {
         // Long-press is ours on touch (lift a card), not the browser's menu.
-        if (lastPointerType === 'touch') e.preventDefault()
+        if (lastPointerType !== 'touch' && (liveState() !== 'live' || (e.target as Element).closest('input,textarea,[contenteditable="true"],a,button'))) return
+        e.preventDefault()
+        if (lastPointerType !== 'touch') { const p = toWorld(e); setContextPoint({ ...p, screenX: e.clientX, screenY: e.clientY }) }
       }}
       onDragOver={(e) => {
         if (!props.readOnly) e.preventDefault()
@@ -1223,6 +1234,8 @@ export function Canvas(props: { readOnly: boolean }) {
         handleCanvasDrop(e, toWorld(e))
       }}
     >
+      <CollaborationOverlay />
+      <Show when={contextPoint()}><div class="menu canvas-ping-menu" data-nodrag style={{ position: 'fixed', left: `${Math.min(contextPoint()!.screenX, innerWidth - 160)}px`, top: `${Math.min(contextPoint()!.screenY, innerHeight - 60)}px`, 'z-index': 50 }}><button class="menu-item" onClick={() => { pingAt(contextPoint()!); setContextPoint(null) }} onBlur={() => setContextPoint(null)} onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setContextPoint(null); document.querySelector<HTMLButtonElement>('[data-testid="collaborators"]')?.focus() } }} ref={(el) => queueMicrotask(() => el.focus())}>{COPY.lookHere}</button></div></Show>
       <div class="world" data-testid="world" style={{ transform: transform() }}>
         <Show when={snapping()}>
           <GridGlow />

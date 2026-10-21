@@ -41,7 +41,7 @@ server, so each test works on its own `freshBoard()`.
 
 ## Releases
 
-Every merge to `main` runs `.github/workflows/release.yml`:
+After merging to `main`, manually run `.github/workflows/release.yml` on main as a separate release action:
 1. The full CI runs again.
 2. The Mac app is built and signed with the self-signed "DoggyNote Signing" cert. Its updater bundle, DMG and versioned `desktop/<version>/latest.json` are staged in R2; the public fallback manifest stays unchanged.
 3. The Worker and web app deploy, with migrations applied first. The Worker selects the staged manifest matching `APP_VERSION`, making the compatible updater available when its minimum-client gate takes effect.
