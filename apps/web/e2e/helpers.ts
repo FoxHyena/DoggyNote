@@ -141,3 +141,15 @@ export async function openParentBoard(page: Page, which: 'first' | 'last' = 'las
     await choices[which]().click()
   } else await page.getByTestId('crumb')[which]().click()
 }
+
+/** The selected card's resize and right connect handles answer a hit test at their centres (nothing clips them). */
+export async function expectHandlesHittable(card: Locator) {
+  for (const id of ['resize-handle', 'connect-handle-right']) {
+    const handle = card.getByTestId(id)
+    await expect(handle).toHaveCount(1)
+    await expect.poll(() => handle.evaluate((el) => {
+      const r = el.getBoundingClientRect()
+      return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) === el
+    }), id).toBe(true)
+  }
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CARD_COLORS, cardColors, contrast, nextMode, parseMode, resolveTheme, surfaces, themeCss } from './index.ts'
+import { CARD_COLORS, cardColor, cardColorVars, cardColors, contrast, customText, nextMode, normalizeHex, parseMode, resolveTheme, surfaces, themeCss } from './index.ts'
 
 const THEMES = ['dark', 'light'] as const
 
@@ -71,6 +71,31 @@ describe('contrast', () => {
       })
     }
   }
+})
+
+describe('custom card colours', () => {
+  // Every 17th step per channel, plus the awkward mid-greys where black and white ink tie.
+  const spread: string[] = []
+  for (let r = 0; r < 256; r += 51) for (let g = 0; g < 256; g += 51) for (let b = 0; b < 256; b += 51) spread.push('#' + [r, g, b].map((n) => n.toString(16).padStart(2, '0')).join(''))
+  spread.push('#777777', '#767676', '#808080', '#8a8a8a', '#ff0000', '#00ff00', '#0000ff', '#e5484d', '#0090ff', '#ffc53d')
+  for (const t of THEMES) {
+    it(`${t}: customText clears 4.5:1 on any picked colour`, () => {
+      for (const hex of spread) expect(contrast(surfaces[t][customText(hex)], hex), hex).toBeGreaterThanOrEqual(4.5)
+    })
+  }
+  it('accepts a normalised hex and refuses anything else', () => {
+    expect(cardColor('#aBc')).toBe('#AABBCC')
+    expect(cardColor(' #12ab9f ')).toBe('#12AB9F')
+    expect(cardColor('sky')).toBe('sky')
+    for (const bad of ['red', '#12345', 'url(x)', '#1234567', 7, null, { a: 1 }]) expect(cardColor(bad)).toBe('none')
+    expect(normalizeHex('zzz')).toBeNull()
+  })
+  it('gives CSS a preset variable or the hex with a text token', () => {
+    expect(cardColorVars('gold')).toEqual({ bg: 'var(--dn-card-gold-bg)', text: 'var(--dn-card-gold-text)' })
+    expect(cardColorVars('#ffffff')).toEqual({ bg: '#FFFFFF', text: 'var(--dn-custom-ink-dark)' })
+    expect(cardColorVars('#000000')).toEqual({ bg: '#000000', text: 'var(--dn-custom-ink-light)' })
+    expect(cardColorVars('nope;}', 'gold').bg).toBe('var(--dn-card-gold-bg)')
+  })
 })
 
 describe('theme mode', () => {

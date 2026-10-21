@@ -40,12 +40,18 @@ export function CardLabels(props: { card: Card }) {
 }
 
 /** Selection bar: the labels icon and its popover. */
-export function LabelsButton(props: { cards: Card[] }) {
+export function LabelsButton(props: { cards: Card[]; labelled?: boolean }) {
   const [open, setOpen] = createSignal(false)
   let trigger!: HTMLButtonElement
   return (
     <>
-      <IconButton ref={(el) => (trigger = el)} testid="labels-button" icon={ToolIcons.label} label="Labels" popup expanded={open()} onClick={() => setOpen(!open())} />
+      {/* Docked on touch, an icon over its label like the other actions (glass has no hover tips). */}
+      <Show when={props.labelled} fallback={<IconButton ref={(el) => (trigger = el)} testid="labels-button" icon={ToolIcons.label} label="Labels" popup expanded={open()} onClick={() => setOpen(!open())} />}>
+        <button ref={(el) => (trigger = el)} class="bar-btn" data-testid="labels-button" aria-haspopup="dialog" aria-expanded={open()} onClick={() => setOpen(!open())}>
+          <Icon size={18}>{ToolIcons.label()}</Icon>
+          <span class="bar-btn-label">Labels</span>
+        </button>
+      </Show>
       <Show when={open()}>
         <LabelsPopover cards={props.cards} anchor={() => trigger} close={() => setOpen(false)} />
       </Show>

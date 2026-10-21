@@ -8,6 +8,8 @@ export const COPY = {
   trashShort: 'Bones',
   /** "Buried 3 cards" (toast after moving cards to the trash). */
   buried: 'Buried',
+  /** The action that moves cards to the trash (a button label). */
+  bury: 'Bury',
   unsorted: 'Inbox',
   search: 'Fetch',
   loading: 'Fetching…',

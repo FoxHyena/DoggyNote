@@ -1,4 +1,5 @@
 import type { Card } from './model.ts'
+import { normalizeHex } from '@doggynote/theme'
 
 // Colour cards. The swatch colour is document data that people pick, so it is
 // deliberately independent of the theme: it reads the same in light and dark.
@@ -15,13 +16,7 @@ export const SWATCH_PRESETS = [
 ] as const
 
 /** `#abc`, `ABCDEF`, ` #aabbcc ` → `#AABBCC`. Anything else is null. */
-export function normalizeSwatchHex(value: unknown): string | null {
-  if (typeof value !== 'string') return null
-  const hex = value.trim().replace(/^#/, '')
-  if (/^[\da-f]{6}$/i.test(hex)) return `#${hex.toUpperCase()}`
-  if (/^[\da-f]{3}$/i.test(hex)) return `#${[...hex].map((c) => c + c).join('').toUpperCase()}`
-  return null
-}
+export const normalizeSwatchHex: (value: unknown) => string | null = normalizeHex
 
 /** The colour to draw. Synced data from other devices: never hand an unchecked string to CSS or a canvas. */
 export function swatchHex(card: Pick<Card<'swatch'>, 'content'>): string {

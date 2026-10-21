@@ -1079,7 +1079,39 @@ html[data-input="mouse"] .board-card:hover .board-tile {
 
 .card-image {
   background: var(--dn-card-hover);
+}
+
+/* The card itself never clips: its resize and connect handles sit just outside it.
+   The picture and caption round their own corners to the card's instead. */
+.image-card {
+  position: relative;
   overflow: hidden;
+  border-radius: inherit;
+}
+.image-card:has(+ .image-caption, + .image-caption-editor) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.card-image .image-caption-editor { border-radius: inherit; }
+.card-image .image-caption,
+.card-image .image-caption-input {
+  border-radius: 0 0 6px 6px;
+}
+
+/* A tinted picture gets a frame in its colour. An inset overlay, not a border:
+   the card keeps its measured size. */
+.card-image.colored .image-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 3px var(--c-bg);
+  pointer-events: none;
+}
+
+.card-image.colored .image-caption {
+  background: var(--c-bg);
+  color: var(--c-text);
 }
 
 .image-card img {
@@ -1119,11 +1151,18 @@ html[data-input="mouse"] .board-card:hover .board-tile {
 .image-caption-input::placeholder {
   color: var(--dn-text-muted);
 }
+.card-image.colored .image-caption-input::placeholder {
+  color: inherit;
+  opacity: 0.7;
+}
 
 /* links */
 
-.card-link {
+/* As with images: the content clips to the card's corners, the card leaves its
+   handles unclipped. */
+.link-card {
   overflow: hidden;
+  border-radius: inherit;
 }
 
 .link-input {
