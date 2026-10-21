@@ -4,6 +4,7 @@
 
 import type { Card, Id } from './model.ts'
 import { mdToText, noteMarkdown } from './markdown.ts'
+import { swatchHex, swatchName } from './swatch.ts'
 
 // Cards are synced from everyone's devices: a malformed one must not break search
 // or the trash list for the whole workspace, so it degrades to a generic answer.
@@ -44,6 +45,8 @@ function rawCardText(c: Card): string {
       const m = (c as Card<'movie'>).content
       return [m.title, m.year, m.info?.genres?.join(', '), m.info?.overview].filter(Boolean).join('\n')
     }
+    case 'swatch':
+      return [swatchName(c as Card<'swatch'>), swatchHex(c as Card<'swatch'>)].filter(Boolean).join('\n')
     default:
       return ''
   }
@@ -73,6 +76,8 @@ function rawCardLabel(c: Card, boardTitle: (boardId: Id) => string): string {
       const m = (c as Card<'movie'>).content
       return m.title ? (m.year ? `${m.title} (${m.year})` : m.title) : 'Movie or show'
     }
+    case 'swatch':
+      return swatchName(c as Card<'swatch'>) || swatchHex(c as Card<'swatch'>)
     default:
       return 'Card'
   }

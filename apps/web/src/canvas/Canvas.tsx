@@ -251,7 +251,8 @@ export function Canvas(props: { readOnly: boolean }) {
     on(
       editingId,
       (id, prev) => {
-        if (id && focusEdits()) {
+        // A colour card has nothing to type into: its panel opens where the card already is.
+        if (id && focusEdits() && doc.getCard(id)?.type !== 'swatch') {
           if (!prev) editReturn = camera()
           movedWhileEditing = false
           const r = rectOf(id)
@@ -1052,6 +1053,8 @@ export function Canvas(props: { readOnly: boolean }) {
       // Synchronously, inside the touch: iOS only raises the keyboard for focus it can tie to a gesture.
       touchEdit(g.id, { x: e.clientX, y: e.clientY })
     }
+    // A colour card has no caret: a double tap just opens its panel.
+    else if (!lod() && c.type === 'swatch' && double) beginEdit(g.id)
   }
 
   function swallowNextClick() {
@@ -1106,8 +1109,8 @@ export function Canvas(props: { readOnly: boolean }) {
         openBoard((card as Card<'board'>).content.boardId)
         return
       }
-      // An image types its caption right under it.
-      if (card?.type === 'image' && !lod()) {
+      // An image types its caption right under it; a colour card opens its panel.
+      if ((card?.type === 'image' || card?.type === 'swatch') && !lod()) {
         e.preventDefault()
         lastPress = null
         beginEdit(card.id)

@@ -20,6 +20,7 @@ export const TOOLS: Tool[] = [
   { id: 'board', label: 'Board', icon: ToolIcons.board },
   { id: 'column', label: 'Column', icon: ToolIcons.column },
   { id: 'movie', label: 'Movie', icon: ToolIcons.film },
+  { id: 'swatch', label: 'Colour', icon: ToolIcons.swatch },
 ]
 
 /** A click on a tool drops the card near the viewport centre, in free space. */

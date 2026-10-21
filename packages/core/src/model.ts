@@ -8,7 +8,7 @@ import type { Side } from './geometry.ts'
 export type Id = string
 
 /** Every card type this build can draw. Anything else came from a newer app (see cardtext.ts). */
-export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie'] as const
+export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie', 'swatch'] as const
 export type CardType = (typeof CARD_TYPES)[number]
 export const isKnownCardType = (t: unknown): t is CardType => (CARD_TYPES as readonly unknown[]).includes(t)
 
@@ -44,6 +44,8 @@ export type CardContent = {
    */
   file: { assetId: Id; name: string; size: number; mime: string; status?: 'uploading' | 'ok' | 'error'; error?: string; thumb?: { width: number; height: number } }
   movie: MovieContent
+  /** A colour card: `hex` is canonical `#RRGGBB` (see swatch.ts); the name is optional. */
+  swatch: { hex: string; name?: string }
 }
 
 /**
@@ -187,6 +189,7 @@ export const DEFAULT_SIZE: Record<CardType, { w: number; h: number }> = {
   column: { w: 280, h: 120 },
   file: { w: 260, h: 72 },
   movie: { w: 220, h: 370 },
+  swatch: { w: 200, h: 190 },
 }
 
 export const isAlive = (o: Obj | undefined): boolean => !!o && !o.purged && !o.deletedAt
