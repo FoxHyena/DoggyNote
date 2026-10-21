@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { LABEL_FIELD, boardLabels, cardLabels, labelColor, labelToken, validLabelField, withoutLabelTombstones } from './labels.ts'
+import { LABEL_FIELD, LABEL_PRESETS, pickLabelColor, boardLabels, cardLabels, labelColor, labelToken, validLabelField, withoutLabelTombstones } from './labels.ts'
 import type { Board, Card } from './model.ts'
 
 const id = 'a1b2c3d4e5f6'
@@ -50,4 +50,17 @@ it('never hands an unchecked colour to CSS', () => {
 
 it('drops label tombstones from whole-object copies', () => {
   expect(withoutLabelTombstones({ a: 1, [`label${id}`]: false, [`labelName${id}`]: null, labelfffffffffff0: true })).toEqual({ a: 1, labelfffffffffff0: true })
+})
+
+it('gives a new label a random preset the board isn’t using yet', () => {
+  expect(LABEL_PRESETS).not.toContain('none')
+  expect(pickLabelColor([], () => 0)).toBe(LABEL_PRESETS[0])
+  expect(pickLabelColor([], () => 0.9999)).toBe(LABEL_PRESETS.at(-1))
+  const used = LABEL_PRESETS.slice(0, 4).map((color) => ({ color }))
+  for (const r of [0, 0.3, 0.6, 0.9999]) expect(LABEL_PRESETS.slice(4)).toContain(pickLabelColor(used, () => r))
+  // Custom colours don't use up a preset.
+  expect(pickLabelColor([{ color: '#123456' }], () => 0)).toBe(LABEL_PRESETS[0])
+  // All taken: any preset.
+  const all = LABEL_PRESETS.map((color) => ({ color }))
+  expect(LABEL_PRESETS).toContain(pickLabelColor(all, () => 0.5))
 })

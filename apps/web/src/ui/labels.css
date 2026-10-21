@@ -17,6 +17,10 @@
   white-space: nowrap;
 }
 
+.card-labels > li { display: flex; min-width: 0; max-width: 100%; }
+/* Matching labels on a search result, after where it lives. */
+.fetch-labels { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
+.fetch-labels .label-chip { font-size: 11px; line-height: 16px; }
 .card-labels {
   display: flex;
   flex-wrap: wrap;

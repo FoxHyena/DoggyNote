@@ -1,5 +1,7 @@
 import { For, Show, createEffect, createMemo, createSignal, type JSX } from 'solid-js'
-import { LABEL_PRESETS, MAX_LABEL_NAME, DEFAULT_LABEL_COLOR, normalizeLabelName, normalizeSwatchHex, type Card, type LabelColor } from '@doggynote/core'
+import { LABEL_PRESETS, MAX_LABEL_NAME, inkFor, normalizeLabelName, normalizeSwatchHex, pickLabelColor, type Card, type Label, type LabelColor } from '@doggynote/core'
+import { cardColors } from '@doggynote/theme'
+import { theme } from '../theme.ts'
 import * as doc from '../state/doc.ts'
 import { createLabel, findLabel, hasLabel, labelNameProblem, labelUsage, labelsFor, labelsOn, recolorLabel, removeLabel, renameLabel, restoreLabel, setLabelOn } from '../state/labels.ts'
 import { showToast } from '../state/toast.ts'
@@ -10,11 +12,19 @@ import './labels.css'
 const isHex = (c: LabelColor): c is `#${string}` => c.startsWith('#')
 const colorName = (c: LabelColor) => (isHex(c) ? c : c[0]!.toUpperCase() + c.slice(1))
 
-/** A label's colours. Presets are theme tokens (light and dark); a custom colour is document data, tinted for legible text. */
+/**
+ * A label's colours. Presets paint with the theme's card colours (light and
+ * dark); a custom colour is document data. The text is black or white,
+ * whichever has more contrast on the colour actually drawn.
+ */
 export function labelStyle(c: LabelColor): JSX.CSSProperties {
-  return isHex(c)
-    ? { '--label-bg': `color-mix(in srgb, ${c} 30%, var(--dn-card-none-bg))`, '--label-text': 'var(--dn-card-none-text)', '--label-edge': c, '--label-dot': c }
-    : { '--label-bg': `var(--dn-card-${c}-bg)`, '--label-text': `var(--dn-card-${c}-text)`, '--label-dot': `var(--dn-card-${c}-bg)` }
+  const bg = isHex(c) ? c : cardColors[theme()][c].bg
+  return { '--label-bg': isHex(c) ? c : `var(--dn-card-${c}-bg)`, '--label-text': inkFor(bg), '--label-dot': isHex(c) ? c : `var(--dn-card-${c}-bg)` }
+}
+
+/** A label as a chip: on cards, in the popover and in search results. */
+export function LabelChip(props: { label: Label; title?: boolean }) {
+  return <span class="label-chip" style={labelStyle(props.label.color)} data-color={props.label.color} title={props.title ? props.label.name : undefined}>{props.label.name}</span>
 }
 
 /** The labels on a card, as chips along its foot. Content, so it's in exports too. */
@@ -23,7 +33,7 @@ export function CardLabels(props: { card: Card }) {
   return (
     <Show when={labels().length}>
       <ul class="card-labels" aria-label="Labels" data-testid="card-labels">
-        <For each={labels()}>{(label) => <li class="label-chip" style={labelStyle(label.color)} title={label.name}>{label.name}</li>}</For>
+        <For each={labels()}>{(label) => <li><LabelChip label={label} title /></li>}</For>
       </ul>
     </Show>
   )
@@ -95,7 +105,8 @@ function ColorDots(props: { label: string; value: LabelColor; onPick: (c: LabelC
 function LabelsPopover(props: { cards: Card[]; anchor: () => HTMLElement; close: () => void }) {
   const boardId = props.cards[0]?.boardId ?? ''
   const [query, setQuery] = createSignal('')
-  const [newColor, setNewColor] = createSignal<LabelColor>(DEFAULT_LABEL_COLOR)
+  // Each new label starts on a random preset the board isn't using; rolled when typing starts, so it doesn't flicker per key.
+  const [newColor, setNewColor] = createSignal<LabelColor>(pickLabelColor(labelsOn(boardId)))
   const [picked, setPicked] = createSignal<string | null>(null)
   const [renaming, setRenaming] = createSignal<string | null>(null)
   const [draft, setDraft] = createSignal('')
@@ -219,7 +230,10 @@ function LabelsPopover(props: { cards: Card[]; anchor: () => HTMLElement; close:
         autocomplete="off"
         maxLength={MAX_LABEL_NAME}
         value={query()}
-        onInput={(e) => { setQuery(e.currentTarget.value); setPicked(null); setError('') }}
+        onInput={(e) => {
+          if (!query().trim() && e.currentTarget.value.trim()) setNewColor(pickLabelColor(labels()))
+          setQuery(e.currentTarget.value); setPicked(null); setError('')
+        }}
         onKeyDown={onKeyDown}
       />
       <Show when={options().length}>

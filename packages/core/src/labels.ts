@@ -28,6 +28,17 @@ export const nameKey = (id: string) => `labelName${id}`
 export const colorKey = (id: string) => `labelColor${id}`
 export const memberKey = (id: string) => `label${id}`
 
+/**
+ * A colour for a new label: a random preset the board isn't using yet, or any
+ * preset once they're all taken.
+ */
+export function pickLabelColor(existing: readonly Pick<Label, 'color'>[], random: () => number = Math.random): LabelColor {
+  const used = new Set(existing.map((l) => l.color))
+  const free = LABEL_PRESETS.filter((c) => !used.has(c))
+  const pool = free.length ? free : LABEL_PRESETS
+  return pool[Math.min(pool.length - 1, Math.floor(random() * pool.length))]!
+}
+
 /** A synced colour if it's valid, else the default. Goes straight into CSS. */
 export function labelColor(value: unknown): LabelColor {
   if ((CARD_COLORS as readonly unknown[]).includes(value)) return value as CardColor

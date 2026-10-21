@@ -14,6 +14,7 @@ const popover = (page: Page) => page.getByTestId('labels-popover')
 const row = (page: Page, name: string) => popover(page).locator(`[data-testid="label-row"][data-label="${name}"]`)
 const chips = (card: ReturnType<Page['locator']>) => card.getByTestId('card-labels').locator('.label-chip')
 
+const textColor = (el: ReturnType<Page['locator']>) => el.evaluate((e) => getComputedStyle(e).color)
 const background = (el: ReturnType<Page['locator']>) => el.evaluate((e) => getComputedStyle(e).backgroundColor)
 /** A theme colour as the browser computes it. */
 const token = (page: Page, name: string) => page.evaluate((n) => {
@@ -184,7 +185,14 @@ test('a custom colour from the wheel, and a rename that clashes stays open with 
   await page.getByTestId('label-custom-color').fill('#a1b2c3')
   await page.getByTestId('label-create').click()
   await expect(chips(card)).toHaveText(['Mood'])
-  expect(await chips(card).first().evaluate((el) => getComputedStyle(el).getPropertyValue('--label-edge').trim().toLowerCase())).toBe('#a1b2c3')
+  // A light custom colour gets black text; a dark one gets white.
+  expect(await background(chips(card).first())).toBe('rgb(161, 178, 195)')
+  expect(await textColor(chips(card).first())).toBe('rgb(0, 0, 0)')
+  await row(page, 'Mood').hover()
+  await row(page, 'Mood').getByTestId('label-recolor').click()
+  await row(page, 'Mood').getByTestId('label-custom-color').fill('#1a2b3c')
+  await expect.poll(() => background(chips(card).first())).toBe('rgb(26, 43, 60)')
+  expect(await textColor(chips(card).first())).toBe('rgb(255, 255, 255)')
 
   await page.getByTestId('labels-input').fill('Tone')
   await page.keyboard.press('Enter')
@@ -272,4 +280,27 @@ test('Remove takes a label off the board, and Undo in the toast brings it back o
   await waitForSync(page)
   await page.reload()
   await expect(page.getByTestId('card').filter({ hasText: 'Remove me B' }).getByTestId('card-labels')).toHaveText('Mood')
+})
+
+test('new labels get a random preset, a different one each time on a fresh board', async ({ page }) => {
+  await freshBoard(page)
+  const card = await addNote(page, 'Colourful')
+  await openLabels(page, card)
+  await page.keyboard.type('First')
+  // The pick shows as the selected dot before Enter, and survives more typing.
+  const picked = popover(page).locator('[data-testid="label-color"][aria-pressed="true"]')
+  await expect(picked).toHaveCount(1)
+  const first = await picked.getAttribute('data-color')
+  await page.keyboard.type(' one')
+  await expect(picked).toHaveAttribute('data-color', first!)
+  await page.keyboard.press('Enter')
+  await page.keyboard.type('Second')
+  await page.keyboard.press('Enter')
+  const colors = await chips(card).evaluateAll((els) => els.map((el) => el.getAttribute('data-color')))
+  expect(colors).toHaveLength(2)
+  for (const c of colors) expect(['gold', 'collar', 'ball', 'sky', 'lilac', 'peach']).toContain(c)
+  expect(colors[0]).not.toBe(colors[1])
+  expect(colors).toContain(first)
+  // Preset chips pick black or white text too: dark gold/peach etc. all read with one of them.
+  for (const chip of await chips(card).all()) expect(['rgb(0, 0, 0)', 'rgb(255, 255, 255)']).toContain(await textColor(chip))
 })
