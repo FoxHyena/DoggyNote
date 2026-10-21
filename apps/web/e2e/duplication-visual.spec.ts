@@ -71,18 +71,21 @@ for (const [index, width] of [360, 600, 720, 1440].entries()) for (const theme o
     await page.keyboard.press('Escape')
     await waitForSync(page)
     await action(page, 'save-template')
-    const layoutName = `${project} — reusable references and open questions for the next collection`
+    // A retry saves its own layout; a name shared with the first attempt's would match twice.
+    const layoutName = `${project} — reusable references and open questions for the next collection${info.retry ? ` (retry ${info.retry})` : ''}`
     await page.getByTestId('template-name').fill(layoutName)
     await capture(page, info, width, theme, 'save-personal-layout')
     await page.getByTestId('create-from-template').click()
-    await expect(page.getByTestId('templates-dialog')).toHaveCount(0)
+    // Saving and reusing a layout sync first, then fetch the complete tree from the
+    // server: on the suite's shared Worker that round trip can outlast 5 seconds.
+    await expect(page.getByTestId('templates-dialog')).toHaveCount(0, { timeout: 15_000 })
     await waitForSync(page)
     await action(page, 'open-templates')
     await page.getByTestId('personal-template').filter({ hasText: layoutName }).click()
     await page.getByTestId('template-name').fill(`${subject} — independent alternative`)
     await capture(page, info, width, theme, 'selected-personal-layout')
     await page.getByTestId('create-from-template').click()
-    await expect(page.getByTestId('board-name')).toHaveText(`${subject} — independent alternative`)
+    await expect(page.getByTestId('board-name')).toHaveText(`${subject} — independent alternative`, { timeout: 15_000 })
     await waitForSync(page)
     await capture(page, info, width, theme, 'reused-populated-layout')
 

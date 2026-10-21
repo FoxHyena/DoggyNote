@@ -1,5 +1,8 @@
 .template-dialog { width: min(640px, calc(100vw - 32px)); box-sizing: border-box; max-height: calc(100dvh - 32px); overflow: hidden; padding: 24px; color: var(--dn-text); background: var(--dn-panel); border: 1px solid var(--dn-border); border-radius: 16px; overscroll-behavior: contain; }
 .template-dialog[open] { display: flex; flex-direction: column; }
+/* A modal stays fixed to the viewport. The phone `.dialog` sheet rule sets position: relative, which
+   the top layer turns into absolute: the dialog then scrolls the page when a choice is focused. */
+.template-dialog:modal { position: fixed; }
 .template-heading, .template-dialog > form { flex: none; }
 .template-options { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 3px; margin: 0 -3px; }
 .template-dialog::backdrop { background: var(--dn-canvas); opacity: .7; }
