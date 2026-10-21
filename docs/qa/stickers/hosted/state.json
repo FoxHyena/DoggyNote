@@ -1,0 +1,54 @@
+{
+  "checkedAt": "2026-10-21T03:34:25.433Z",
+  "origin": "https://doggynote-stickers-qa.oreothehyena.workers.dev",
+  "state": {
+    "configured": true,
+    "paired": true,
+    "accountVisible": false,
+    "challengePresent": false,
+    "pendingPack": null,
+    "pendingNotice": null,
+    "suggestions": [
+      {
+        "packName": "Luke76423NaL",
+        "title": "Luke"
+      }
+    ]
+  },
+  "collection": [
+    {
+      "name": "miniswizzyeen",
+      "count": 96,
+      "ready": 96
+    },
+    {
+      "name": "PeanutButter92871NaL",
+      "count": 35,
+      "ready": 35
+    },
+    {
+      "name": "KebiBy22mg",
+      "count": 53,
+      "ready": 53
+    },
+    {
+      "name": "holeposting",
+      "count": 44,
+      "ready": 44
+    },
+    {
+      "name": "AlpineShep_by_NiuKa",
+      "count": 28,
+      "ready": 28
+    }
+  ],
+  "webhook": {
+    "matchesQA": true,
+    "pendingUpdateCount": 0,
+    "allowedUpdates": [
+      "message"
+    ],
+    "lastErrorDate": null,
+    "lastErrorMessage": null
+  }
+}

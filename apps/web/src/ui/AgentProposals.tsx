@@ -62,6 +62,7 @@ function describe(change: Detail['proposal']['changes'][number], titleOf: (id: s
   }
   if (after.kind === 'board') return { badge, text: `Board · ${boardDisplayTitle(after, 'Untitled board')}` }
   if (after.kind === 'connection') return { badge, text: 'Line between cards' }
+  if (after.kind === 'sticker') return { badge, text: `Sticker · ${String((after.content as { emoji?: unknown } | undefined)?.emoji || '')} ${String((after.content as { packName?: unknown } | undefined)?.packName ?? '')}`.trim() }
   return { badge, text: after.kind }
 }
 

@@ -21,5 +21,8 @@ VALUES ('home', 'board', NULL,
   (SELECT value FROM counters WHERE name = 'seq'), CAST(strftime('%s','now') AS INTEGER) * 1000, NULL);
 INSERT INTO board_access (board_id, owner_id, legacy) VALUES ('home', NULL, 1);
 " > /dev/null
-exec pnpm exec wrangler dev --port "${PORT:-8787}" --persist-to "$DIR" --var ALLOWED_ORIGINS:tauri://localhost,http://localhost:${DESKTOP_PORT:-4174} --var DEV_DIAG:1 --var MIN_CLIENT:0.0.0 --var ASSET_TOKEN_SECRET:e2e-only-not-a-real-secret \
-  --var TMDB_TOKEN:e2e-tmdb-token --var TMDB_BASE:http://localhost:${FIXTURE_PORT:-5180}/tmdb/3 --var TMDB_IMAGE_BASE:http://localhost:${FIXTURE_PORT:-5180}/tmdb-img
+node scripts/seed-stickers.mjs "$DIR"
+: > "$DIR/fixture.env"
+exec pnpm exec wrangler dev --env-file "$DIR/fixture.env" --port "${PORT:-8787}" --persist-to "$DIR" --var ALLOWED_ORIGINS:tauri://localhost,http://localhost:${DESKTOP_PORT:-4174} --var DEV_DIAG:1 --var MIN_CLIENT:0.0.0 --var ASSET_TOKEN_SECRET:e2e-only-not-a-real-secret \
+  --var TMDB_TOKEN:e2e-tmdb-token --var TMDB_BASE:http://localhost:${FIXTURE_PORT:-5180}/tmdb/3 --var TMDB_IMAGE_BASE:http://localhost:${FIXTURE_PORT:-5180}/tmdb-img \
+  --var TELEGRAM_BOT_TOKEN:fixture-only-never-sent --var TELEGRAM_BOT_USERNAME:DoggyNoteFixtureBot --var TELEGRAM_WEBHOOK_SECRET:e2e-sticker-webhook

@@ -64,18 +64,22 @@ test('Fetch aligns supporting text and keeps keyboard results visible in short v
     await withinViewport(page, fetch)
     await captureAppearance(page, info, 'fetch-populated')
     const first = page.getByTestId('fetch-hit').first()
-    // Measure once the results have rendered, not mid-search.
-    await expect(first.locator('.fetch-snippet')).toBeVisible()
-    const title = await first.locator('.fetch-title').boundingBox()
-    const supporting = await first.locator('.fetch-snippet').boundingBox()
-    expect(Math.abs(title!.x - supporting!.x)).toBeLessThan(1)
-    expect(title!.width).toBeGreaterThan(100)
+    // Sample title and snippet in one DOM read; a remount after sync retries instead of throwing.
+    await expect.poll(() => first.evaluate((hit) => {
+      const title = hit.querySelector('.fetch-title')!.getBoundingClientRect(), supporting = hit.querySelector('.fetch-snippet')!.getBoundingClientRect()
+      return Math.abs(title.x - supporting.x) < 1 && title.width > 100
+    })).toBe(true)
     expect(await fetch.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true)
     for (let step = 0; step < 24; step++) await input.press('ArrowDown')
     await expect.poll(async () => {
-      const selected = await page.getByRole('option', { selected: true }).boundingBox()
-      const results = await page.getByRole('listbox').boundingBox()
-      return selected!.y >= results!.y && selected!.y + selected!.height <= results!.y + results!.height + 1
+      // Results can remount after sync. Sample both boxes in one DOM read so a
+      // transient detached option is retried rather than throwing from the poll.
+      return page.getByRole('listbox').evaluate((results) => {
+        const selected = results.querySelector<HTMLElement>('[role="option"][aria-selected="true"]')
+        if (!selected?.getClientRects().length) return false
+        const item = selected.getBoundingClientRect(), list = results.getBoundingClientRect()
+        return item.height > 0 && item.y >= list.y && item.bottom <= list.bottom + 1
+      })
     }).toBe(true)
     await input.press('Escape')
     await expect(page.getByTestId('open-fetch')).toBeFocused()

@@ -33,6 +33,19 @@ describe('contrast', () => {
       expect(alpha).toBeGreaterThan(0.2)
       expect(alpha).toBeLessThan(0.7)
     })
+    it(`${t}: the sticker shadow stays a quiet edge on canvas and cards`, () => {
+      const m = /^#([0-9a-f]{6})([0-9a-f]{2})$/.exec(s.stickerShadow)
+      expect(m).not.toBeNull()
+      const alpha = parseInt(m![2], 16) / 255, over = (bg: string) => '#' + [0, 2, 4].map((i) => Math.round(parseInt(m![1].slice(i, i + 2), 16) * alpha + parseInt(bg.slice(1 + i, 3 + i), 16) * (1 - alpha)).toString(16).padStart(2, '0')).join('')
+      for (const bg of [s.bg, s.card]) {
+        expect(contrast(over(bg), bg)).toBeGreaterThanOrEqual(1.12)
+        expect(contrast(over(bg), bg)).toBeLessThanOrEqual(1.6)
+      }
+    })
+    it(`${t}: the sticker outline is an opaque light border that stands off the canvas`, () => {
+      expect(s.stickerOutline).toMatch(/^#[0-9a-f]{6}$/)
+      expect(contrast(s.stickerOutline, '#000000')).toBeGreaterThanOrEqual(15)
+    })
     it(`${t}: selection outline clears 3:1 on canvas`, () => {
       expect(contrast(s.selection, s.bg)).toBeGreaterThanOrEqual(3)
     })

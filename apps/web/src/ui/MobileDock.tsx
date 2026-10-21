@@ -1,3 +1,4 @@
+import { armedSticker, suggestions, openStickers, setStickerTrayOpen, stickerTrayOpen } from '../state/stickers.ts'
 import { For, Show, createSignal } from 'solid-js'
 import { COPY } from '@doggynote/theme'
 import { LOD_ZOOM, zoomAt, type CardType } from '@doggynote/core'
@@ -33,6 +34,10 @@ export function MobileDock(props: { readOnly: boolean }) {
       </Show>
     </nav>
   )
+}
+
+export function MobileStickerButton() {
+  return <Show when={!armedSticker()}><button class="mobile-sticker-launcher" data-testid="mobile-stickers" aria-label="Stickers" aria-expanded={stickerTrayOpen()} aria-controls="sticker-tray" aria-description={suggestions.length ? suggestions.length === 1 ? 'Pack found in Telegram' : `${suggestions.length} packs found in Telegram` : undefined} onClick={() => stickerTrayOpen() ? setStickerTrayOpen(false) : openStickers()}><Icon size={25}><path d="M4 4h16v10l-6 6H4Z M14 20v-6h6 M8 9h.01 M15 9h.01 M8 12q4 5 8 0" /></Icon><Show when={suggestions.length}><span class="sticker-found-dot" data-testid="sticker-found-badge" aria-hidden="true" /></Show></button></Show>
 }
 
 function AddButton() {
@@ -88,6 +93,7 @@ function AddButton() {
                 </button>
               )}
             </For>
+            <button class="add-tile" role="menuitem" data-testid="add-stickers" onClick={() => { setOpen(false); openStickers() }}><span class="add-tile-icon"><Icon size={24}><path d="M4 4h16v10l-6 6H4Z M14 20v-6h6 M8 9h.01 M15 9h.01 M8 12q4 5 8 0" /></Icon></span>Stickers</button>
             <button class="add-tile" role="menuitem" data-testid="add-photo" onClick={() => pick(photo)}>
               <span class="add-tile-icon"><Icon size={24}>{ToolIcons.image()}</Icon></span>
               Photo

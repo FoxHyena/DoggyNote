@@ -12,6 +12,8 @@ import {
   type Id,
   type Obj,
   type Transaction,
+  type Sticker,
+  usableSticker,
 } from '@doggynote/core'
 import * as idb from './idb.ts'
 
@@ -92,7 +94,7 @@ function record(id: Id, patch: Partial<Obj>) {
   if (!persist) return
   if (patch.kind === 'board') localBoardCreations.add(id)
   dirtyObjs.add(id)
-  outbox.set(id, { ...(outbox.get(id) ?? {}), ...structuredClone(unwrap(patch)) })
+  outbox.set(id, { ...(outbox.get(id) ?? {}), ...structuredClone(unwrap(patch)) } as Partial<Obj>)
   dirtyOutbox.add(id)
   scheduleFlush()
 }
@@ -410,7 +412,10 @@ export function receiveRemote(rows: Obj[]) {
         continue
       }
       if (busy.has(row.id)) {
-        deferred.set(row.id, row)
+        // This pull can precede a push that acknowledges our queued fields while
+        // the gesture is still busy. Preserve that committed overlay now, before
+        // acknowledgment removes it from the outbox.
+        deferred.set(row.id, { ...row, ...outbox.get(row.id) } as Obj)
         continue
       }
       const pending = outbox.get(row.id)
@@ -488,6 +493,7 @@ export async function resetLocal() {
 // ---- indexes --------------------------------------------------------------
 
 type Index = {
+  stickers: Map<Id, Sticker[]>
   cards: Map<Id, Card[]>
   connections: Map<Id, Connection[]>
   boards: Board[]
@@ -501,6 +507,7 @@ type Index = {
  */
 export const index = createRoot(() =>
   createMemo<Index>(() => {
+    const stickers = new Map<Id, Sticker[]>()
     const cards = new Map<Id, Card[]>()
     const connections = new Map<Id, Connection[]>()
     const boards: Board[] = []
@@ -509,7 +516,11 @@ export const index = createRoot(() =>
     const all = shown ? [...Object.values(state.objs).filter((o) => !(o.id in shown)), ...Object.values(shown)] : Object.values(state.objs)
     for (const o of all) {
       if (o.purged || o.deletedAt) continue
-      if (o.kind === 'card') {
+      if (o.kind === 'sticker') {
+        const list = stickers.get(o.boardId)
+        if (list) list.push(o)
+        else stickers.set(o.boardId, [o])
+      } else if (o.kind === 'card') {
         const list = cards.get(o.boardId)
         if (list) list.push(o)
         else cards.set(o.boardId, [o])
@@ -525,7 +536,7 @@ export const index = createRoot(() =>
       }
     }
     for (const list of comments.values()) list.sort((a, b) => a.createdAt - b.createdAt)
-    return { cards, connections, boards, comments }
+    return { cards, stickers, connections, boards, comments }
   }),
 )
 
@@ -534,9 +545,9 @@ export const connectionsOn = (boardId: Id): Connection[] => index().connections.
 export const commentsOn = (cardId: Id): Comment[] => index().comments.get(cardId) ?? []
 
 /** Trashed (soft-deleted, not purged) cards on a board. Not memoised; read when the panel opens. */
-export function trashedOn(boardId: Id): Card[] {
+export function trashedOn(boardId: Id): (Card | Sticker)[] {
   return Object.values(state.objs)
-    .filter((o): o is Card => o.kind === 'card' && o.boardId === boardId && !!o.deletedAt && !o.purged)
+    .filter((o): o is Card | Sticker => (o.kind === 'card' || o.kind === 'sticker') && o.boardId === boardId && !!o.deletedAt && !o.purged)
     .sort((a, b) => (b.deletedAt ?? 0) - (a.deletedAt ?? 0))
 }
 
@@ -552,3 +563,5 @@ export function maxZ(boardId: Id): number {
   for (const c of cardsOn(boardId)) z = Math.max(z, c.z ?? 0)
   return z
 }
+
+export const stickersOn = (boardId: Id): Sticker[] => (index().stickers.get(boardId) ?? []).filter(usableSticker)

@@ -26,7 +26,7 @@ const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r(null)))
 
 /** Free cards in scope (cards inside a column come with their column). */
 function scopeIds(scope: ExportOptions['scope']): Id[] {
-  const free = doc.cardsOn(boardId()).filter((c) => !c.columnId)
+  const free = [...doc.cardsOn(boardId()).filter((c) => !c.columnId), ...doc.stickersOn(boardId())]
   if (scope === 'board') return free.map((c) => c.id)
   const sel = selection()
   return free.filter((c) => sel.has(c.id)).map((c) => c.id)
@@ -37,7 +37,7 @@ async function imagesReady(world: HTMLElement) {
   for (let i = 0; i < 100; i++) {
     const imgs = [...world.querySelectorAll('img')]
     const ready = (img: HTMLImageElement) =>
-      !!img.getAttribute('src') && (img.dataset.testid !== 'card-image' || img.dataset.loaded === img.dataset.size)
+      !!img.getAttribute('src') && img.complete && img.naturalWidth > 0 && (img.dataset.testid !== 'card-image' || img.dataset.loaded === img.dataset.size)
     if (imgs.every(ready)) return
     await new Promise((r) => setTimeout(r, 50))
   }
@@ -88,7 +88,9 @@ export async function renderPng(opts: ExportOptions): Promise<Rendered> {
     const root = getComputedStyle(document.documentElement)
     const keepNode = (n: Node) => {
       if (!(n instanceof Element)) return true
-      if (n.matches('.connect-handle, .resize-handle, .comment-badge, .grid-glow')) return false
+      if (n.matches('.connect-handle, .resize-handle, .comment-badge, .grid-glow, .sticker-selection-layer, .sticker-selection, .sticker-accessible-pick')) return false
+      const sticker = n.getAttribute('data-sticker-id')
+      if (sticker && !keep.has(sticker)) return false
       const card = n.getAttribute('data-card-id')
       if (card && n.classList.contains('free') && !keep.has(card)) return false
       const conn = n.getAttribute('data-connection-id')

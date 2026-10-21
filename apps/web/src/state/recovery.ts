@@ -22,7 +22,7 @@ export async function preserveDenied(ids: string[], reason: string) {
     const current = doc.base(change.id)
     const object = current?.kind ? JSON.parse(JSON.stringify(current)) as Obj : undefined
     const previous = await idb.get<Recovery>('meta', `recovery:${change.id}`)
-    return { ...change, patch: { ...previous?.patch, ...change.patch }, object: object ?? previous?.object, reason, savedAt: Date.now() }
+    return { ...change, patch: { ...previous?.patch, ...change.patch } as Partial<Obj>, object: object ?? previous?.object, reason, savedAt: Date.now() }
   }))
   await idb.putMany('meta', rows.map((row) => [`recovery:${row.id}`, row]))
   doc.ackOutbox(pending)

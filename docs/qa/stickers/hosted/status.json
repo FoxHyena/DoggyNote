@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-10-20T23:22:45.660Z",
+  "origin": "https://doggynote-stickers-qa.oreothehyena.workers.dev",
+  "webhook": {
+    "matchesQA": true,
+    "pendingUpdateCount": 0,
+    "allowedUpdates": [
+      "message"
+    ],
+    "lastErrorDate": null,
+    "lastErrorMessage": null
+  }
+}

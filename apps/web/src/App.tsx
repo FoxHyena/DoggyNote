@@ -1,3 +1,5 @@
+import { StickerTray } from './ui/StickerTray.tsx'
+import { StickerControls } from './ui/StickerControls.tsx'
 import { Match, Show, Switch, createSignal, onCleanup, onMount } from 'solid-js'
 import { COPY } from '@doggynote/theme'
 import * as doc from './state/doc.ts'
@@ -43,7 +45,7 @@ import { canEditBoard, canManageBoard, canReadBoard, homeBoardId } from './state
 import { installNativeSave } from './state/lifecycle.ts'
 import { ExitSaveDialog } from './ui/ExitSaveDialog.tsx'
 import { EditDock } from './ui/EditDock.tsx'
-import { MobileDock } from './ui/MobileDock.tsx'
+import { MobileDock, MobileStickerButton } from './ui/MobileDock.tsx'
 import { installSheetDrag } from './ui/sheet.ts'
 import { phone } from './state/device.ts'
 import { installClipboard } from './state/clipboard.ts'
@@ -168,7 +170,7 @@ function EditorApp() {
             <Show when={(canReadBoard(boardId()) || isPreviewBoard(boardId())) && doc.getBoard(boardId())} fallback={<div class="gone"><h1>This board is unavailable</h1><p>Your access may have changed. Your other boards are still available.</p><button class="primary-btn" onClick={() => openBoard(homeBoardId())}>My Doghouse</button></div>}>
               <Canvas readOnly={!editable()} />
             </Show>
-            <Show when={editable()}><SelectionBar /><ConnectBanner /><TrashPanel /></Show>
+            <Show when={editable()}><SelectionBar /><StickerTray /><StickerControls /><Show when={phone()}><MobileStickerButton /></Show><ConnectBanner /><TrashPanel /></Show>
             <CanvasControls readOnly={!editable()} />
             <ToyboxPanel />
             <CommentsPanel readOnly={!editable()} />
