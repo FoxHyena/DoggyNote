@@ -94,7 +94,9 @@ test('bottom-right sticker shelf browses sideways and lifts one sticker onto the
   await expect(page.getByTestId('placed-sticker')).toHaveCount(0)
   await expect(tray.locator('.sticker-large')).toHaveCount(0)
   if (browserName === 'chromium') await expect.poll(() => shelf.evaluate((el) => el.scrollLeft)).toBeGreaterThan(20)
-  const tile = tray.getByTestId('sticker-pick').last()
+  // Keep the chosen asset stable: scrolling a virtual shelf changes its last mounted tile.
+  const asset = await tray.getByTestId('sticker-pick').last().getAttribute('data-sticker-asset')
+  const tile = tray.locator(`[data-sticker-asset="${asset}"]`)
   await tile.scrollIntoViewIfNeeded()
   const position = await shelf.evaluate((el) => el.scrollLeft)
   expect(position).toBeGreaterThan(20)

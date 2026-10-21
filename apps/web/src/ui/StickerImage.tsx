@@ -1,7 +1,9 @@
 import { StickerAnimation } from './StickerAnimation.tsx'
-import { Show, createResource, createSignal } from 'solid-js'
+import { Show, createEffect, createSignal, onCleanup } from 'solid-js'
 import type { StickerAsset } from '@doggynote/core'
 import { assetUrl } from '../state/api.ts'
+import { user } from '../state/session.ts'
+import { acquireStickerOutline } from '../state/stickerOutline.ts'
 
 // Small alpha masks are shared by tray and canvas images; bounded to 256 assets.
 const masks = new Map<string, Uint8ClampedArray>()
@@ -31,15 +33,26 @@ export function cacheStickerAlpha(assetId: string, img: HTMLImageElement) {
     }
 }
 export function StickerImage(props: { sticker: StickerAsset; class?: string; onReady?: () => void; animate?: boolean }) {
-  const [url] = createResource(() => props.sticker.assetId, (id) => assetUrl(id, 'thumb'))
+  const [url, setUrl] = createSignal<string>()
   const [playing, setPlaying] = createSignal(false)
   const [failed, setFailed] = createSignal(false)
+  createEffect(() => {
+    const id = props.sticker.assetId
+    // Even animated stickers' stills keep their original artwork.
+    const render = props.sticker.format === 'static' ? acquireStickerOutline(id, user()?.id ?? null) : undefined
+    let disposed = false
+    setUrl(undefined); setFailed(false)
+    void (render?.url ?? assetUrl(id, 'thumb')).then((url) => {
+      if (!disposed) setUrl(url)
+    }).catch(() => { if (!disposed) setFailed(true) })
+    onCleanup(() => { disposed = true; render?.release() })
+  })
   const loaded = (img: HTMLImageElement) => {
     setFailed(false)
     cacheStickerAlpha(props.sticker.assetId, img)
     props.onReady?.()
   }
   return <span class="sticker-image" classList={{ playing: playing() }}><Show when={!failed()} fallback={<span class="sticker-unavailable" role="img" aria-label="Sticker image unavailable">{props.sticker.emoji || '◇'}</span>}>
-    <img class={props.class} src={url()} alt={`${props.sticker.emoji || 'Sticker'} · ${props.sticker.packName}`} draggable={false} crossOrigin="anonymous" onLoad={(e) => loaded(e.currentTarget)} onError={() => setFailed(true)} />
+    <img class={props.class} src={url()} decoding="async" alt={`${props.sticker.emoji || 'Sticker'} · ${props.sticker.packName}`} draggable={false} crossOrigin="anonymous" onLoad={(e) => loaded(e.currentTarget)} onError={() => setFailed(true)} />
   </Show><Show when={props.animate && props.sticker.format !== 'static'}><StickerAnimation sticker={props.sticker} enabled={!!props.animate} onReady={setPlaying} /></Show></span>
 }

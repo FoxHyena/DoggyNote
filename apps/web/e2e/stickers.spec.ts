@@ -229,10 +229,10 @@ test('dragging a sticker lifts it to the front, and one undo restores its place'
   await page.getByTestId('undo').click()
   await expect.poll(front).toBe(b)
   expect((await stickerState(page, a)).x).toBeCloseTo(before.x, 0)
-  // Every placed sticker gets the die-cut outline (one SVG filter) and its hard shadow.
-  const filter = await page.getByTestId('placed-sticker').first().evaluate((el) => getComputedStyle(el).filter)
-  expect(filter).toContain('#dn-sticker-outline'); expect(filter.match(/drop-shadow/g)).toHaveLength(1)
-  await expect(page.locator('filter#dn-sticker-outline feMorphology')).toHaveAttribute('radius', '2')
+  // The supplied artwork renders directly, without expensive live silhouette effects.
+  await expect(page.getByTestId('placed-sticker').first()).toHaveCSS('filter', 'none')
+  await expect(page.locator('.sticker-visual').first()).toHaveCSS('transition-duration', '0s')
+  await expect(page.locator('filter#dn-sticker-outline')).toHaveCount(0)
   // The sticker bar floats just above the selected sticker's ring: icon buttons with tooltips, no stray text.
   await page.locator(`[data-sticker-id="${a}"] button`).focus()
   const bar = page.getByTestId('sticker-controls'), ring = (await page.getByTestId('sticker-ring').boundingBox())!, box = (await bar.boundingBox())!
