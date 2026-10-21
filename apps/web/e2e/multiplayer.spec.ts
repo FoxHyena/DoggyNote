@@ -433,3 +433,16 @@ test('right-clicking the canvas opens a compact Look here menu at the pointer', 
   await page.keyboard.press('Escape')
   await expect(menu).toHaveCount(0)
 })
+
+test('clicking Look here in the canvas menu pings everyone at the pointer', async ({ page, browser }) => {
+  await freshBoard(page)
+  const other = await friend(browser, page)
+  await live(page); await live(other)
+  const canvas = (await other.getByTestId('canvas').boundingBox())!
+  await other.bringToFront()
+  await other.mouse.click(canvas.x + canvas.width / 3, canvas.y + canvas.height / 3, { button: 'right' })
+  // WebKit doesn't focus a clicked button; the press must not blur the menu away first.
+  await other.locator('.canvas-ping-menu').getByRole('button', { name: 'Look here', exact: true }).click()
+  await expect(other.locator('.canvas-ping-menu')).toHaveCount(0)
+  await expect(page.getByTestId('remote-ping')).toBeVisible()
+})
