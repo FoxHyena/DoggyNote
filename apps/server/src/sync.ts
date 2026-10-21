@@ -346,7 +346,7 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
         const content = o.content as { assetId?: string } | undefined
         if (!o.purged && JSON.stringify(prev?.data.content) !== JSON.stringify(content)) {
           const assetId = content?.assetId
-          const source = await db.prepare("SELECT s.value FROM sticker_packs p,json_each(p.manifest,'$.stickers') s WHERE json_extract(s.value,'$.assetId')=?1 AND json_extract(s.value,'$.available')=1").bind(assetId ?? '').first<{ value: string }>()
+          const source = await db.prepare("SELECT s.value FROM sticker_assets a JOIN sticker_packs p ON p.name=a.pack_name,json_each(p.manifest,'$.stickers') s WHERE a.asset_id=?1 AND a.available=1 AND json_extract(s.value,'$.assetId')=?1 AND json_extract(s.value,'$.available')=1").bind(assetId ?? '').first<{ value: string }>()
           if (!source) ok = false
           else {
             const known = JSON.parse(source.value) as Record<string, unknown>

@@ -22,6 +22,9 @@ export const [pendingUploadsCount, setPendingUploadsCount] = createSignal(0)
 
 const PUSH_CHUNK = 200
 const POLL_MS = 10_000
+// While the board's live room is connected it announces changes, so polling is only a backstop
+// (other boards, access changes). Each poll costs a D1 access check.
+const LIVE_POLL_MS = 60_000
 
 let cursor = 0
 let running: Promise<void> | null = null
@@ -29,6 +32,10 @@ let again = false
 let pushTimer: ReturnType<typeof setTimeout> | null = null
 let onSignedOut: (() => void) | null = null
 let syncedAccessRevision = ''
+let roomLive = false
+
+/** Set by realtime: a connected room pushes `changed`, so the poll can slow down. */
+export function setRoomLive(live: boolean) { roomLive = live }
 
 async function uploadAssets() {
   const uploads = await pendingUploads()
@@ -207,7 +214,9 @@ export async function startSync(opts: { onSignedOut: () => void }): Promise<{ fi
   window.addEventListener('online', () => void syncNow())
   window.addEventListener('focus', () => void syncNow())
   setInterval(() => {
-    if (document.visibilityState === 'visible') void syncNow()
+    if (document.visibilityState !== 'visible') return
+    if (roomLive && Date.now() - (lastSyncAt() ?? 0) < LIVE_POLL_MS - POLL_MS / 2) return
+    void syncNow()
   }, POLL_MS)
   return { first: syncNow(), fresh }
 }

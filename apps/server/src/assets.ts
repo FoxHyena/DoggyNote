@@ -36,7 +36,7 @@ assets.get('/assets/token', requireUser, async (c) => {
 assets.put('/assets/:id/:size', requireUser, async (c) => {
   const { id, size } = c.req.param()
   if (!UUID.test(id) || !SIZES.has(size)) return c.json({ error: 'bad asset path' }, 400)
-  const telegram = await c.env.DB.prepare("SELECT 1 FROM sticker_packs p,json_each(p.manifest,'$.stickers') s WHERE json_extract(s.value,'$.assetId')=?1").bind(id).first()
+  const telegram = await c.env.DB.prepare("SELECT 1 FROM sticker_assets WHERE asset_id=?1").bind(id).first()
   if (telegram) return c.json({ error: 'Telegram assets are managed by the server' }, 403)
   const uploader = await c.env.DB.prepare('SELECT created_by FROM assets WHERE id=?1 ORDER BY created_at,size LIMIT 1').bind(id).first<{ created_by: string }>()
   if (uploader && uploader.created_by !== c.get('user').id) return c.json({ error: 'Only the uploader can add asset renditions' }, 403)
@@ -67,7 +67,7 @@ async function privateToSomeoneElse(c: Context<AppEnv>, assetId: string, userId:
   ).bind(assetId).all<{ board_id: string; owner_id: string | null; data: string }>()
   // A private preview or collection can read its own cached bytes. Cache existence
   // and original uploader identity alone never authorize a sticker asset.
-  const source = await c.env.DB.prepare("SELECT p.name FROM sticker_packs p,json_each(p.manifest,'$.stickers') s WHERE json_extract(s.value,'$.assetId')=?1").bind(assetId).first<{ name: string }>()
+  const source = await c.env.DB.prepare("SELECT pack_name AS name FROM sticker_assets WHERE asset_id=?1").bind(assetId).first<{ name: string }>()
   if (source && await c.env.DB.prepare('SELECT 1 FROM sticker_memberships WHERE user_id=?1 AND pack_name=?2 UNION SELECT 1 FROM sticker_previews WHERE user_id=?1 AND pack_name=?2 AND expires_at>?3').bind(userId, source.name, Date.now()).first()) return false
   if (results.some((r) => (!r.owner_id || r.owner_id === userId) && a.canRead(r.board_id) && !(JSON.parse(r.data) as { purged?: boolean }).purged)) return false
   if (!source && !results.length) {
@@ -147,7 +147,7 @@ export function contentDisposition(name: string): string {
 assets.put('/files/:id', requireUser, async (c) => {
   const id = c.req.param('id')
   if (!UUID.test(id)) return c.json({ error: 'bad file id' }, 400)
-  const telegram = await c.env.DB.prepare("SELECT 1 FROM sticker_packs p,json_each(p.manifest,'$.stickers') s WHERE json_extract(s.value,'$.assetId')=?1").bind(id).first()
+  const telegram = await c.env.DB.prepare("SELECT 1 FROM sticker_assets WHERE asset_id=?1").bind(id).first()
   if (telegram) return c.json({ error: 'Telegram assets are managed by the server' }, 403)
   const uploader = await c.env.DB.prepare('SELECT created_by FROM assets WHERE id=?1 ORDER BY created_at,size LIMIT 1').bind(id).first<{ created_by: string }>()
   if (uploader && uploader.created_by !== c.get('user').id) return c.json({ error: 'Only the uploader can add this file' }, 403)

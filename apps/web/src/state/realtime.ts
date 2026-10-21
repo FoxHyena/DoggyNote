@@ -8,7 +8,7 @@ import { user } from './session.ts'
 import { canReadBoard } from './access.ts'
 import { boardId, camera, editingId, selection, setCamera, viewport } from './ui.ts'
 import * as doc from './doc.ts'
-import { syncNow, syncState } from './sync.ts'
+import { setRoomLive, syncNow, syncState } from './sync.ts'
 import { rectOf } from '../canvas/layout.ts'
 
 const [room, setRoom] = createStore<{ members: LivePresence[] }>({ members: [] })
@@ -151,6 +151,7 @@ export function installRealtime() {
     }
     const roomKey = createMemo(() => user() && canReadBoard(boardId()) && !doc.previewing() ? `${user()!.id}:${boardId()}` : '')
     createEffect(on(roomKey, (key) => { activeBoard = key ? boardId() : ''; void connect() }))
+    createEffect(() => setRoomLive(liveState() === 'live'))
     createEffect(() => { camera(); viewport(); selection(); editingId(); schedulePresence() })
     const move = (e: PointerEvent) => {
       const canvas = (e.target as Element)?.closest?.('[data-testid="canvas"]')
