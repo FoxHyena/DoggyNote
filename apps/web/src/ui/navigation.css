@@ -39,10 +39,14 @@ html[data-input="mouse"] .theme-choice:hover { color: var(--dn-text); background
 .viewer-menu .theme-choices { border-bottom: 0; margin-bottom: 0; padding-bottom: 4px; }
 .board-actions { position: relative; }
 .board-actions-menu { width: 240px; }
+/* Board "…" menu: one line per action, 32px rows, a rule between the copy group and the rest. */
+.board-actions-menu .menu-item { min-height: 32px; padding: 6px 12px; white-space: nowrap; }
+.board-actions-menu .nav-menu-label { overflow-wrap: normal; overflow: hidden; text-overflow: ellipsis; }
+.board-actions-menu .menu-sep { margin: 4px 12px; }
 .board-actions-more-badge { font-size: 10px; border: 1px solid var(--dn-border); border-radius: 6px; padding: 1px 4px; color: var(--dn-text); }
 .canvas-zoom .nav-menu { width: 224px; }
 .canvas-zoom .nav-menu-label { flex: 1; }
 @media (pointer: coarse) {
-  .nav-menu .menu-item, .nav-menu .icon-btn, .theme-choice { min-height: 44px; }
+  .nav-menu .menu-item, .nav-menu .icon-btn, .theme-choice, .board-actions-menu .menu-item { min-height: 44px; }
   .nav-menu .icon-btn { min-width: 44px; }
 }

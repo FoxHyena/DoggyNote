@@ -83,3 +83,101 @@ export function cardLabels(card: Card, board: Board | undefined): Label[] {
 export function withoutLabelTombstones<T extends object>(object: T): T {
   return Object.fromEntries(Object.entries(object).filter(([key, value]) => !(LABEL_FIELD.test(key) && (value == null || value === false)))) as T
 }
+
+// ---- copying labelled cards to another board ------------------------------------
+// A card's `label<id>` flags point at its own board's definitions. On another
+// board those ids mean nothing, so a copy (or a move) maps each label by name:
+// an existing label with the same name is reused, otherwise one is created with
+// the source's colour. Same-board copies keep their flags untouched.
+
+const MEMBER = /^label([a-f0-9]{12})$/
+
+/** Ids of the labels a card carries (flags that are on). */
+export function cardLabelIds(card: object): string[] {
+  const out: string[] = []
+  for (const [key, value] of Object.entries(card)) {
+    const match = MEMBER.exec(key)
+    if (match && value === true) out.push(match[1]!)
+  }
+  return out
+}
+
+export type LabelCopyPlan = {
+  /** Source label id → target label id. Labels missing here are dropped. */
+  map: Map<string, string>
+  /** New labels the target board needs. */
+  create: Label[]
+}
+
+/**
+ * How the `used` labels from `source` land on a board that already has `target`.
+ * Never goes past MAX_LABELS: labels that don't fit are dropped from the copy.
+ */
+export function planLabelCopy(source: readonly Label[], used: Iterable<string>, target: readonly Label[], token: () => string = labelToken): LabelCopyPlan {
+  const wanted = new Set(used)
+  const byName = new Map(target.map((l) => [normalizeLabelName(l.name), l.id]))
+  const taken = new Set(target.map((l) => l.id))
+  const map = new Map<string, string>()
+  const create: Label[] = []
+  for (const label of source) {
+    if (!wanted.has(label.id) || map.has(label.id)) continue
+    const key = normalizeLabelName(label.name)
+    const existing = byName.get(key)
+    if (existing) {
+      map.set(label.id, existing)
+      continue
+    }
+    if (target.length + create.length >= MAX_LABELS) continue
+    let id = token()
+    while (taken.has(id)) id = token()
+    taken.add(id)
+    create.push({ id, name: label.name, color: label.color })
+    byName.set(key, id)
+    map.set(label.id, id)
+  }
+  return { map, create }
+}
+
+/** Board fields that define `labels`. */
+export function labelDefinitions(labels: readonly Label[]): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const l of labels) {
+    out[nameKey(l.id)] = l.name
+    out[colorKey(l.id)] = l.color
+  }
+  return out
+}
+
+/** A new copy of `card` whose flags follow the plan; unmapped flags are dropped. */
+export function relabel<T extends object>(card: T, plan: LabelCopyPlan): T {
+  const ids = cardLabelIds(card)
+  const out = Object.fromEntries(Object.entries(card).filter(([key]) => !MEMBER.test(key))) as Record<string, unknown>
+  for (const id of ids) {
+    const to = plan.map.get(id)
+    if (to) out[memberKey(to)] = true
+  }
+  return out as T
+}
+
+/** The flag changes for moving an existing card: old flags off (null), mapped flags on. */
+export function relabelPatch(card: object, plan: LabelCopyPlan): Record<string, true | null> {
+  const patch: Record<string, true | null> = {}
+  const ids = cardLabelIds(card)
+  for (const id of ids) patch[memberKey(id)] = null
+  for (const id of ids) {
+    const to = plan.map.get(id)
+    if (to) patch[memberKey(to)] = true
+  }
+  return patch
+}
+
+/** Label definitions from untrusted input (a clipboard), cleaned for use. */
+export function parseLabels(value: unknown): Label[] {
+  if (!Array.isArray(value)) return []
+  const out: Label[] = []
+  for (const l of value.slice(0, MAX_LABELS)) {
+    if (!l || typeof l.id !== 'string' || !LABEL_ID.test(l.id) || !validLabelField('board', nameKey(l.id), l.name)) continue
+    out.push({ id: l.id, name: (l.name as string).trim(), color: labelColor(l.color) })
+  }
+  return out
+}
