@@ -93,7 +93,7 @@ pnpm test                         # unit tests
 pnpm test:e2e                     # Playwright end-to-end tests, WebKit + Chromium
 ```
 
-Every pull request runs typecheck, unit tests, the full end-to-end suite on WebKit and Chromium, and a performance check. Merging to `main` stages signed Mac artifacts, then deploys the server and web app. Each Worker advertises the staged updater matching its own version, so a new desktop is exposed together with its compatible server. The fallback updater and GitHub release publish after deployment. [`CLAUDE.md`](CLAUDE.md) holds the project's rules: colours, performance, privacy and API compatibility.
+Every pull request runs typecheck, unit tests, the full end-to-end suite on WebKit and Chromium, and a performance check. After merging to `main`, manually run the Release workflow to stage signed Mac artifacts and deploy the server and web app. Each Worker advertises the staged updater matching its own version, so a new desktop is exposed together with its compatible server. The fallback updater and GitHub release publish after deployment. [`CLAUDE.md`](CLAUDE.md) holds the project's rules: colours, performance, privacy and API compatibility.
 
 For multiplayer, apply migrations through `0012_multiplayer.sql` and release the Worker, web app and compatible desktop updater together. Desktop versions below `0.3.0`, and clients without sync protocol 3, are prompted to update. Older queued note replacements become recovery drafts. [Multiplayer architecture, release ordering and rollback limits](docs/multiplayer.md) describe the coordinated release; deployment remains a separate action.
 
