@@ -1,7 +1,8 @@
 import { For, Show, createEffect, createMemo, createSignal, type JSX } from 'solid-js'
 import { LABEL_PRESETS, MAX_LABEL_NAME, DEFAULT_LABEL_COLOR, normalizeLabelName, normalizeSwatchHex, type Card, type LabelColor } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
-import { createLabel, findLabel, hasLabel, labelNameProblem, labelsFor, labelsOn, recolorLabel, removeLabel, renameLabel, setLabelOn } from '../state/labels.ts'
+import { createLabel, findLabel, hasLabel, labelNameProblem, labelUsage, labelsFor, labelsOn, recolorLabel, removeLabel, renameLabel, restoreLabel, setLabelOn } from '../state/labels.ts'
+import { showToast } from '../state/toast.ts'
 import { Icon, IconButton, ToolIcons } from './icons.tsx'
 import { Popover } from './Popover.tsx'
 import './labels.css'
@@ -86,19 +87,25 @@ function ColorDots(props: { label: string; value: LabelColor; onPick: (c: LabelC
 }
 
 /**
- * Type to find a label; click one to put it on (or take it off) the selection;
- * Enter or "Create" makes a new one. Each row renames in place.
+ * A combobox over the board's labels. Typing filters and highlights the first
+ * match; arrows move the highlight; Enter toggles it, or creates the typed name
+ * when Create is highlighted (only when nothing matches, or arrowed to). Each
+ * row renames in place; Remove offers Undo in a toast.
  */
 function LabelsPopover(props: { cards: Card[]; anchor: () => HTMLElement; close: () => void }) {
   const boardId = props.cards[0]?.boardId ?? ''
   const [query, setQuery] = createSignal('')
   const [newColor, setNewColor] = createSignal<LabelColor>(DEFAULT_LABEL_COLOR)
+  const [picked, setPicked] = createSignal<string | null>(null)
   const [renaming, setRenaming] = createSignal<string | null>(null)
   const [draft, setDraft] = createSignal('')
+  const [renameError, setRenameError] = createSignal('')
   const [recoloring, setRecoloring] = createSignal<string | null>(null)
   const [error, setError] = createSignal('')
-  let search!: HTMLInputElement
+  let listbox: HTMLUListElement | undefined
   const rows = new Map<string, HTMLButtonElement>()
+  // The toggle that the first click of a double-click made, so the double-click can take it back.
+  let lastToggle: { id: string; at: number } | null = null
 
   const cards = createMemo(() => props.cards.map((c) => doc.getCard(c.id)).filter((c): c is Card => !!c && c.boardId === boardId && !c.deletedAt && !c.purged))
   const writable = () => doc.canWriteObject(doc.getBoard(boardId)) && cards().length > 0 && cards().every((c) => doc.canWriteObject(c))
@@ -107,32 +114,69 @@ function LabelsPopover(props: { cards: Card[]; anchor: () => HTMLElement; close:
   const shown = createMemo(() => labels().filter((l) => !q() || normalizeLabelName(l.name).includes(q())).map((l) => l.id))
   const exact = () => (query().trim() ? findLabel(boardId, query()) : undefined)
   const canCreate = () => writable() && !!query().trim() && !exact()
+  const options = createMemo(() => [...shown(), ...(canCreate() ? [CREATE] : [])])
+  // While typing, the exact name or else the first match is highlighted; Create only when nothing matches.
+  const active = createMemo(() => {
+    const p = picked()
+    if (p && options().includes(p)) return p
+    if (!query().trim()) return null
+    return exact()?.id ?? options()[0] ?? null
+  })
+  const optionId = (key: string) => `label-option-${key}`
   const count = (id: string) => cards().filter((c) => hasLabel(c, id)).length
+  const state = (id: string) => (count(id) === 0 ? false : count(id) === cards().length ? true : 'mixed')
   const toggle = (id: string) => setLabelOn(boardId, id, cards(), count(id) < cards().length)
 
   createEffect(() => { if (!cards().length) props.close() })
   // Someone else removed the label mid-rename: drop the edit rather than resurrect it.
   createEffect(() => { const id = renaming(); if (id && !labels().some((l) => l.id === id)) setRenaming(null) })
+  createEffect(() => { const a = active(); if (a) queueMicrotask(() => listbox?.querySelector(`#${optionId(a)}`)?.scrollIntoView({ block: 'nearest' })) })
 
-  const submit = (e: SubmitEvent) => {
-    e.preventDefault()
-    const match = exact()
-    if (match) {
-      if (writable()) toggle(match.id)
-    } else {
-      const problem = labelNameProblem(boardId, query())
-      if (problem) return setError(problem)
-      createLabel(boardId, query(), newColor(), cards())
+  const create = () => {
+    const problem = labelNameProblem(boardId, query())
+    if (problem) return setError(problem)
+    createLabel(boardId, query(), newColor(), cards())
+    reset()
+  }
+  const reset = () => { setQuery(''); setPicked(null); setError('') }
+  const choose = (key: string) => {
+    if (key === CREATE) return create()
+    if (writable()) toggle(key)
+    reset()
+  }
+
+  const onKeyDown = (e: KeyboardEvent) => {
+    const list = options()
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault()
+      if (!list.length) return
+      const at = list.indexOf(active() ?? '')
+      setPicked(list[e.key === 'ArrowDown' ? Math.min(at + 1, list.length - 1) : Math.max(at - 1, 0)]!)
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      const key = active()
+      if (key) choose(key)
     }
-    setQuery('')
-    setError('')
+  }
+
+  const onToggleClick = (id: string, e: MouseEvent) => {
+    // The second click of a double-click belongs to rename.
+    if (e.detail > 1) return
+    toggle(id)
+    lastToggle = { id, at: performance.now() }
+  }
+  const onChipDblClick = (id: string, e: MouseEvent) => {
+    e.stopPropagation()
+    if (lastToggle?.id === id && performance.now() - lastToggle.at < 1000) doc.undo()
+    lastToggle = null
+    startRename(id)
   }
 
   const startRename = (id: string) => {
     const label = labels().find((l) => l.id === id)
     if (!label || !writable()) return
     setRecoloring(null)
-    setError('')
+    setRenameError('')
     setDraft(label.name)
     setRenaming(id)
   }
@@ -141,41 +185,60 @@ function LabelsPopover(props: { cards: Card[]; anchor: () => HTMLElement; close:
     if (!id) return
     if (save) {
       const problem = labelNameProblem(boardId, draft(), id)
-      if (problem && draft().trim()) return setError(problem)
+      if (problem && draft().trim()) return setRenameError(problem)
       if (!problem) renameLabel(boardId, id, draft())
     }
     setRenaming(null)
-    setError('')
+    setRenameError('')
     queueMicrotask(() => rows.get(id)?.focus())
+  }
+
+  const remove = (id: string) => {
+    const label = labels().find((l) => l.id === id)
+    if (!label) return
+    const used = labelUsage(boardId, id)
+    removeLabel(boardId, id)
+    showToast(used ? `Removed “${label.name}” from ${used} ${used === 1 ? 'card' : 'cards'}` : `Removed “${label.name}”`, 6000, { label: 'Undo', run: () => restoreLabel(boardId, id, label.name) })
   }
 
   return (
     <Popover anchor={props.anchor} label="Labels" testid="labels-popover" class="labels-panel" align="start" close={props.close}>
-      <form class="labels-find" onSubmit={submit}>
-        <input
-          ref={search}
-          class="labels-input"
-          data-testid="labels-input"
-          data-autofocus
-          aria-label="Find or create a label"
-          placeholder="Find or create a label"
-          autocomplete="off"
-          maxLength={MAX_LABEL_NAME}
-          value={query()}
-          onInput={(e) => { setQuery(e.currentTarget.value); setError('') }}
-        />
-      </form>
-      <Show when={shown().length}>
-        <ul class="labels-list" aria-label="Labels on this board">
+      <input
+        class="labels-input"
+        data-testid="labels-input"
+        data-autofocus
+        role="combobox"
+        aria-label={writable() ? 'Find or create a label' : 'Find a label'}
+        aria-expanded={options().length > 0}
+        aria-controls="labels-listbox"
+        aria-autocomplete="list"
+        aria-activedescendant={active() ? optionId(active()!) : undefined}
+        aria-invalid={!!error() || undefined}
+        aria-describedby={error() ? 'labels-error' : undefined}
+        placeholder={writable() ? 'Find or create a label' : 'Find a label'}
+        autocomplete="off"
+        maxLength={MAX_LABEL_NAME}
+        value={query()}
+        onInput={(e) => { setQuery(e.currentTarget.value); setPicked(null); setError('') }}
+        onKeyDown={onKeyDown}
+      />
+      <Show when={options().length}>
+        <ul ref={listbox} id="labels-listbox" class="labels-list" role="listbox" aria-label="Labels on this board" aria-multiselectable="true">
           <For each={shown()}>
             {(id) => {
               const label = () => labels().find((l) => l.id === id)
-              const n = () => count(id)
-              const state = () => (n() === 0 ? false : n() === cards().length ? true : 'mixed')
               return (
                 <Show when={label()}>
                   {(l) => (
-                    <li class="label-row" classList={{ renaming: renaming() === id }} data-testid="label-row" data-label={l().name}>
+                    <li
+                      id={optionId(id)}
+                      role="option"
+                      aria-selected={state(id) === true}
+                      class="label-row"
+                      classList={{ renaming: renaming() === id, active: active() === id }}
+                      data-testid="label-row"
+                      data-label={l().name}
+                    >
                       <Show
                         when={renaming() === id}
                         fallback={
@@ -183,54 +246,57 @@ function LabelsPopover(props: { cards: Card[]; anchor: () => HTMLElement; close:
                             <button
                               ref={(el) => rows.set(id, el)}
                               type="button"
+                              tabIndex={-1}
                               class="label-toggle"
                               data-testid="label-toggle"
-                              aria-pressed={state()}
+                              aria-pressed={state(id)}
                               aria-label={l().name}
                               disabled={!writable()}
-                              onClick={() => toggle(id)}
-                              onDblClick={() => startRename(id)}
+                              onClick={(e) => onToggleClick(id, e)}
                             >
-                              <span class="label-check" aria-hidden="true">
-                                <Show when={state() === true}><Icon size={14}>{ToolIcons.check()}</Icon></Show>
-                                <Show when={state() === 'mixed'}><Icon size={14}>{ToolIcons.minus()}</Icon></Show>
-                              </span>
-                              <span class="label-chip" style={labelStyle(l().color)}>{l().name}</span>
+                              <Check state={state(id)} />
+                              <span class="label-chip" style={labelStyle(l().color)} data-testid="label-chip" onDblClick={(e) => onChipDblClick(id, e)}>{l().name}</span>
                             </button>
                             <Show when={writable()}>
                               <span class="label-actions">
-                                <button type="button" class="label-action label-action-color" data-testid="label-recolor" aria-label={`Colour of ${l().name}`} data-tip="Colour" aria-expanded={recoloring() === id} onClick={() => setRecoloring(recoloring() === id ? null : id)}>
-                                  <span class="label-swatch" style={labelStyle(l().color)} />
+                                <button type="button" class="label-action" data-testid="label-recolor" aria-label={`Colour of ${l().name}`} data-tip="Colour" data-tip-place="below" aria-expanded={recoloring() === id} onClick={() => setRecoloring(recoloring() === id ? null : id)}>
+                                  <Icon size={16}>{ToolIcons.droplet()}</Icon>
                                 </button>
-                                <button type="button" class="label-action" data-testid="label-rename" aria-label={`Rename ${l().name}`} data-tip="Rename" onClick={() => startRename(id)}>
+                                <button type="button" class="label-action" data-testid="label-rename" aria-label={`Rename ${l().name}`} data-tip="Rename" data-tip-place="below" onClick={() => startRename(id)}>
                                   <Icon size={16}>{ToolIcons.edit()}</Icon>
                                 </button>
-                                <button type="button" class="label-action" data-testid="label-remove" aria-label={`Remove ${l().name} from this board`} data-tip="Remove from board" onClick={() => removeLabel(boardId, id)}>
-                                  <Icon size={16}>{ToolIcons.trash()}</Icon>
+                                <button type="button" class="label-action label-remove" data-testid="label-remove" aria-label={`Remove ${l().name} from this board (on ${labelUsage(boardId, id)} ${labelUsage(boardId, id) === 1 ? 'card' : 'cards'})`} data-tip="Remove label" data-tip-place="below" onClick={() => remove(id)}>
+                                  <Icon size={16}>{ToolIcons.labelOff()}</Icon>
                                 </button>
                               </span>
                             </Show>
                           </>
                         }
                       >
+                        <span class="label-toggle label-toggle-static" aria-hidden="true"><Check state={state(id)} /></span>
                         <input
                           ref={(el) => queueMicrotask(() => { el.focus(); el.select() })}
                           class="labels-input label-rename"
                           data-testid="label-rename-input"
                           data-local-escape
                           aria-label={`Rename ${l().name}`}
+                          aria-invalid={!!renameError() || undefined}
+                          aria-describedby={renameError() ? 'label-rename-error' : undefined}
                           maxLength={MAX_LABEL_NAME}
                           value={draft()}
-                          onInput={(e) => { setDraft(e.currentTarget.value); setError('') }}
+                          onInput={(e) => { setDraft(e.currentTarget.value); setRenameError('') }}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') { e.preventDefault(); endRename(true) }
                             else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); endRename(false) }
                           }}
-                          onBlur={() => endRename(!error())}
+                          onBlur={() => endRename(!renameError())}
                         />
+                        <Show when={renameError()}>
+                          <p id="label-rename-error" class="labels-error label-rename-error" role="alert" data-testid="labels-error">{renameError()}</p>
+                        </Show>
                       </Show>
                       <Show when={recoloring() === id && renaming() !== id}>
-                        <ColorDots label={`Colour of ${l().name}`} value={l().color} onPick={(c) => { recolorLabel(boardId, id, c); setRecoloring(null); rows.get(id)?.focus() }} />
+                        <ColorDots label={`Colour of ${l().name}`} value={l().color} onPick={(c) => { recolorLabel(boardId, id, c); setRecoloring(null) }} />
                       </Show>
                     </li>
                   )}
@@ -238,21 +304,37 @@ function LabelsPopover(props: { cards: Card[]; anchor: () => HTMLElement; close:
               )
             }}
           </For>
+          <Show when={canCreate()}>
+            <li id={optionId(CREATE)} role="option" aria-selected={false} class="label-row label-create-row" classList={{ active: active() === CREATE }}>
+              <button type="button" tabIndex={-1} class="label-toggle label-create" data-testid="label-create" onClick={create}>
+                <span class="label-check label-plus" aria-hidden="true"><Icon size={16}>{ToolIcons.plus()}</Icon></span>
+                <span class="label-create-text">Create</span>
+                <span class="label-chip" style={labelStyle(newColor())}>{query().trim()}</span>
+              </button>
+            </li>
+          </Show>
         </ul>
       </Show>
       <Show when={canCreate()}>
-        <div class="labels-create">
-          <button type="button" class="label-toggle label-create" data-testid="label-create" onClick={() => search.form?.requestSubmit()}>
-            <span class="label-check label-plus" aria-hidden="true"><Icon size={16}>{ToolIcons.plus()}</Icon></span>
-            <span class="label-create-text">Create</span>
-            <span class="label-chip" style={labelStyle(newColor())}>{query().trim()}</span>
-          </button>
-          <ColorDots label="Colour for the new label" value={newColor()} live onPick={setNewColor} />
-        </div>
+        <ColorDots label="Colour for the new label" value={newColor()} live onPick={setNewColor} />
+      </Show>
+      <Show when={!writable() && query().trim() && !shown().length}>
+        <p class="labels-empty" data-testid="labels-empty">No labels match</p>
       </Show>
       <Show when={error()}>
-        <p class="form-error labels-error" role="alert" data-testid="labels-error">{error()}</p>
+        <p id="labels-error" class="labels-error" role="alert" data-testid="labels-error">{error()}</p>
       </Show>
     </Popover>
+  )
+}
+
+const CREATE = 'create'
+
+function Check(props: { state: boolean | 'mixed' }) {
+  return (
+    <span class="label-check" aria-hidden="true">
+      <Show when={props.state === true}><Icon size={14}>{ToolIcons.check()}</Icon></Show>
+      <Show when={props.state === 'mixed'}><Icon size={14}>{ToolIcons.minus()}</Icon></Show>
+    </span>
   )
 }

@@ -54,7 +54,17 @@ export function recolorLabel(boardId: Id, id: string, color: LabelColor) {
   if (current && current.color !== color && writableBoard(boardId)) doc.update({ [boardId]: patch({ [colorKey(id)]: color }) })
 }
 
-/** Takes the label off the board. Cards keep their (now unused) flag, so Undo brings it all back. */
+/** How many cards on the board carry the label. */
+export const labelUsage = (boardId: Id, id: string) => doc.cardsOn(boardId).filter((card) => hasLabel(card, id)).length
+
+/** Takes the label off the board. Cards keep their (now unused) flag, so restoring the name brings it all back. */
 export function removeLabel(boardId: Id, id: string) {
   if (writableBoard(boardId)) doc.update({ [boardId]: patch({ [nameKey(id)]: null }) })
+}
+
+/** Undo for `removeLabel`, aimed at that label only, whatever else happened since. Keeps the name if someone reused it meanwhile. */
+export function restoreLabel(boardId: Id, id: string, name: string) {
+  if (!writableBoard(boardId) || labelsOn(boardId).some((label) => label.id === id)) return
+  const clash = !!findLabel(boardId, name)
+  doc.update({ [boardId]: patch({ [nameKey(id)]: clash ? `${name} (restored)`.slice(0, MAX_LABEL_NAME) : name }) })
 }

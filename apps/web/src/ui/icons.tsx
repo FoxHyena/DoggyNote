@@ -184,6 +184,8 @@ export const ToolIcons: Record<string, () => JSX.Element> = {
   restore: () => <path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v4.5h4.5" />,
   info: () => <><circle cx="12" cy="12" r="8.5" /><path d="M12 11v5.5M12 7.8v.1" /></>,
   film: () => <><rect x="3" y="4.5" width="18" height="15" rx="2" /><path d="M7.5 4.5v15M16.5 4.5v15M3 9.5h4.5M3 14.5h4.5M16.5 9.5H21M16.5 14.5H21" /></>,
+  labelOff: () => <><path d="M3.5 12V4.5a1 1 0 0 1 1-1H12l8.3 8.3a1 1 0 0 1 0 1.4l-7.1 7.1a1 1 0 0 1-1.4 0z" /><path d="M3 3l18 18" /></>,
+  droplet: () => <path d="M12 3.5c3 3.6 6 7 6 10.2a6 6 0 0 1-12 0c0-3.2 3-6.6 6-10.2z" />,
   label: () => <><path d="M3.5 12V4.5a1 1 0 0 1 1-1H12l8.3 8.3a1 1 0 0 1 0 1.4l-7.1 7.1a1 1 0 0 1-1.4 0z" /><circle cx="8" cy="8" r="1.5" /></>,
   swatch: () => <><rect x="4" y="4" width="16" height="16" rx="2.5" /><path d="M4 14h16M8 17.5h5" /></>,
   external: () => <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />,
