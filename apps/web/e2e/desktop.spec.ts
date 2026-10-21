@@ -212,6 +212,21 @@ test('desktop: a newer release downloads in the background, then restarts on req
     .toEqual(['plugin:updater|check', 'plugin:updater|download', 'plugin:updater|install', 'plugin:process|restart'])
 })
 
+test('desktop: coming back to a long-open app finds a release published since launch', async ({ page }) => {
+  await page.clock.install()
+  await page.goto('/')
+  await page.getByLabel('Username').fill('rex')
+  await page.getByLabel('Password').fill('goodboy123')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page.getByTestId('canvas')).toBeVisible()
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __fakeKeychain: { calls: string[] } }).__fakeKeychain.calls)).toContain('plugin:updater|check')
+  await page.evaluate(() => sessionStorage.setItem('fake-update', '0.1.51'))
+  // macOS suspended the app's timers while it sat in the background; only the clock moved on.
+  await page.clock.setSystemTime((await page.evaluate(() => Date.now())) + 10 * 60_000)
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+  await expect(page.getByTestId('update-toast')).toContainText('v0.1.51')
+})
+
 test('desktop: snapping across grid points taps the trackpad haptic', async ({ page }) => {
   await page.goto('/')
   await page.getByLabel('Username').fill('rex')

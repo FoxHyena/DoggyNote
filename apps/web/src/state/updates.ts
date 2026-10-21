@@ -5,9 +5,12 @@ import { isTauri } from './platform.ts'
 import { saveBeforeLeaving } from './lifecycle.ts'
 
 // Keeping clients current.
-// - Desktop: the Tauri updater checks the server's latest.json on launch and
-//   every 6 h, downloads in the background, then offers a restart.
+// - Desktop: the Tauri updater checks the server's latest.json, downloads in
+//   the background, then offers a restart.
 // - Browser: polls /api/version; when the server has moved on, offers a reload.
+// - Both check on launch, every 30 min, and on coming back to the window (at
+//   most every 5 min). macOS suspends timers in a hidden app, so a Mac app left
+//   open for days relies on the return check.
 // - Either: if this client is older than the server's minClient, it must update.
 // Builds without VITE_APP_VERSION (local dev, test builds) never check.
 
@@ -19,7 +22,8 @@ export const [updateRequired, setUpdateRequired] = createSignal(false)
 
 type DesktopUpdate = { version: string; download(): Promise<void>; install(): Promise<void> }
 let desktopUpdate: DesktopUpdate | null = null
-let lastWebCheck = 0
+let checkingDesktop = false
+let lastCheck = 0
 
 async function checkServer() {
   const v = await api<{ version: string; minClient: string }>('/api/version').catch(() => null)
@@ -29,7 +33,8 @@ async function checkServer() {
 }
 
 async function checkDesktop() {
-  if (desktopUpdate) return
+  if (desktopUpdate || checkingDesktop) return
+  checkingDesktop = true
   try {
     const { check } = await import('@tauri-apps/plugin-updater')
     const update = await check()
@@ -39,22 +44,25 @@ async function checkDesktop() {
     setPendingUpdate({ kind: 'desktop', version: update.version })
   } catch (e) {
     console.warn('[doggynote] update check failed', e)
+  } finally {
+    checkingDesktop = false
   }
 }
 
 export function startUpdateChecks() {
   if (APP_VERSION === 'dev') return
   const run = () => {
+    lastCheck = Date.now()
     void checkServer()
     if (isTauri) void checkDesktop()
   }
   run()
-  setInterval(run, isTauri ? 6 * 3_600_000 : 30 * 60_000)
-  window.addEventListener('focus', () => {
-    if (Date.now() - lastWebCheck < 5 * 60_000) return
-    lastWebCheck = Date.now()
-    void checkServer()
-  })
+  setInterval(run, 30 * 60_000)
+  const onReturn = () => {
+    if (document.visibilityState === 'visible' && Date.now() - lastCheck >= 5 * 60_000) run()
+  }
+  window.addEventListener('focus', onReturn)
+  document.addEventListener('visibilitychange', onReturn)
 }
 
 /** Save everything, then restart into the new version (desktop) or reload (browser). */
