@@ -20,13 +20,18 @@ async function cdp(page: Page) {
   return s
 }
 
+/** Chromium's double-tap timeout (gesture_configuration: 300 ms), plus a frame. */
+const CHROMIUM_GESTURE_WINDOW_MS = 320
+
 /** A multi-finger gesture. Fingers are numbered from 0. */
 export class Fingers {
   private down = new Map<number, Pt>()
+  private most = 0
   constructor(private page: Page) {}
 
   async press(id: number, p: Pt) {
     this.down.set(id, p)
+    this.most = Math.max(this.most, this.down.size)
     await this.send('touchStart', id, 'pointerdown', p)
   }
   async move(id: number, p: Pt) {
@@ -37,6 +42,12 @@ export class Fingers {
     const p = this.down.get(id)!
     this.down.delete(id)
     await this.send('touchEnd', id, 'pointerup', p)
+    if (this.down.size || this.most < 2) return
+    this.most = 0
+    // Chromium keeps a two-finger gesture open for its double-tap window after the
+    // last finger lifts, and a tap inside it gets no click. A hand can't come back
+    // that fast; synthetic input can (seen on CI's x64 Chromium), so let it close.
+    if (isChromium(this.page)) await this.page.waitForTimeout(CHROMIUM_GESTURE_WINDOW_MS)
   }
 
   private async send(type: 'touchStart' | 'touchMove' | 'touchEnd', id: number, pointer: string, p: Pt) {
