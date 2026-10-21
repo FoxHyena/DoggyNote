@@ -20,6 +20,8 @@ export const COPY = {
   inboxEmpty: 'Nothing to chew on yet. Jot something down, or share a link here from another app.',
   buriedEmpty: 'No bones buried. Good dog.',
   installTitle: 'Keep DoggyNote on your phone',
+  /** A card made by a newer DoggyNote than this one. */
+  unknownCard: 'This card needs a newer DoggyNote. Update to see it.',
   fetchHint: 'Sniff out any board, note, to-do or link by a word in it.',
   telegramBot: {
     connect: [
@@ -53,6 +55,9 @@ export const COPY = {
       'A loose sticker! 🦴 This sticker has no pack information. In DoggyNote, choose Add pack and paste a Telegram pack link instead.',
     ],
   },
+  /** Movie cards. */
+  movieSearch: 'Sniff out a movie or show…',
+  movieNoMatch: 'No scent of that one. Try another title?',
 } as const
 
 /** Reserved personal inboxes keep their IDs and legacy stored titles across upgrades. */

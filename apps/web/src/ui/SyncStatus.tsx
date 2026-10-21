@@ -32,6 +32,30 @@ export function SyncStatus() {
   const reposition = () => { if (open()) position() }
   window.addEventListener('resize', reposition)
   const retry = () => void syncNow()
+  // The details button says what sync is doing: busy while a run is in flight,
+  // then a short "Synced" once it lands, rather than a greyed-out "Sync now".
+  // A sync is often quicker than the eye: "Syncing…" holds for a moment so it reads.
+  const [held, setHeld] = createSignal(false)
+  let heldTimer: ReturnType<typeof setTimeout> | undefined
+  createEffect(() => {
+    if (syncState() !== 'syncing') return
+    setHeld(true)
+    clearTimeout(heldTimer)
+    heldTimer = setTimeout(() => setHeld(false), 500)
+  })
+  const busy = () => syncState() === 'syncing' || held()
+  const [justSynced, setJustSynced] = createSignal(false)
+  let syncedTimer: ReturnType<typeof setTimeout> | undefined
+  createEffect((was: string | undefined) => {
+    const now = syncState()
+    if (was === 'syncing' && now === 'idle' && open()) {
+      setJustSynced(true)
+      clearTimeout(syncedTimer)
+      syncedTimer = setTimeout(() => setJustSynced(false), 2000)
+    } else if (now !== 'idle') setJustSynced(false)
+    return now
+  })
+  const syncButtonState = () => (busy() ? 'syncing' : failure() ? 'retry' : justSynced() ? 'synced' : 'idle')
   const outside = (event: PointerEvent) => {
     if (!(event.target as Element)?.closest('.save-status-wrap')) setOpen(false)
   }
@@ -40,11 +64,11 @@ export function SyncStatus() {
   }
   document.addEventListener('pointerdown', outside)
   window.addEventListener('keydown', escape, true)
-  onCleanup(() => { clearTimeout(timer); document.removeEventListener('pointerdown', outside); window.removeEventListener('keydown', escape, true); window.removeEventListener('resize', reposition) })
+  onCleanup(() => { clearTimeout(timer); clearTimeout(syncedTimer); document.removeEventListener('pointerdown', outside); window.removeEventListener('keydown', escape, true); window.removeEventListener('resize', reposition) })
   return <div class="save-status-wrap">
     <button ref={trigger} class="sync-status" classList={{ attention: attention() }} data-testid="sync-status" data-state={visualState()}
       data-sync-state={syncState()} data-pending={pendingCount()} data-uploads={pendingUploadsCount()}
-      aria-expanded={open()} aria-label={`Save status: ${label()}`} data-tooltip="Save and sync details"
+      aria-expanded={open()} aria-label={label() === 'Save status' ? 'Save status' : `Save status: ${label()}`} data-tooltip="Save and sync details"
       onClick={() => { position(); setOpen(!open()); retry() }}>
       <Show when={attention()} fallback={<Icon size={16}>{ToolIcons.check()}</Icon>}><Icon size={16}><Show when={failure() || recoverableChanges().length} fallback={<path d="M20 7v5h-5M20 12a8 8 0 1 0-2 6" />}><path d="M12 3 2 21h20ZM12 9v5M12 17v.5" /></Show></Icon></Show><span classList={{ 'save-label-quiet': !attention() }}>{label()}</span>
     </button>
@@ -55,7 +79,12 @@ export function SyncStatus() {
         <dt>Image uploads</dt><dd>{pendingUploadsCount()}</dd>
         <dt>Last synced</dt><dd>{savedAt()}</dd></dl>
       <Show when={recoverableChanges().length}><p>Access changed for {recoverableChanges().length} unsynced item(s). A local recovery copy is available.</p><button class="bar-btn" data-testid="download-recovery" onClick={downloadRecovery}>Download unsynced changes</button></Show>
-      <button class="primary-btn" data-testid="sync-now" onClick={retry} disabled={syncState() === 'syncing'}>{failure() ? 'Retry' : 'Sync now'}</button>
+      <button class="primary-btn sync-now" data-testid="sync-now" data-state={syncButtonState()} aria-disabled={busy()} onClick={() => { if (!busy()) retry() }}>
+        <Show when={syncButtonState() === 'syncing'}><svg class="sync-spinner" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="26 12" stroke-linecap="round" /></svg></Show>
+        <Show when={syncButtonState() === 'synced'}><Icon size={14}>{ToolIcons.check()}</Icon></Show>
+        <span>{{ syncing: 'Syncing…', retry: 'Retry', synced: 'Synced', idle: 'Sync now' }[syncButtonState()]}</span>
+      </button>
+      <p class="save-label-quiet" role="status">{syncButtonState() === 'synced' ? 'Synced' : ''}</p>
     </section></Show>
   </div>
 }

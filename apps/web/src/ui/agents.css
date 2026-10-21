@@ -22,7 +22,10 @@
 .agents-setup pre { overflow: auto; font-size: 12px; }
 .agents-review { width: min(1100px, calc(100vw - 32px)); }
 .agents-review-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 20px; }
-.agents-proposal-list { display: grid; align-content: start; gap: 8px; }
+.agents-proposal-list { display: grid; grid-auto-rows: max-content; align-content: start; gap: 8px; }
+.agents-refresh { justify-self: start; }
+/* Room for the home indicator under the last buttons (phones). */
+.agents-dialog { padding-bottom: calc(var(--agents-padding) + env(safe-area-inset-bottom)); }
 .agents-proposal-choice { display: grid; gap: 6px; width: 100%; text-align: left; overflow-wrap: anywhere; background: var(--dn-card); color: var(--dn-text); border: 1px solid var(--dn-border); border-radius: 8px; padding: 12px; cursor: pointer; }
 .agents-proposal-choice.on { border-color: var(--dn-accent); }
 .agents-proposal-detail { min-width: 0; }
@@ -45,7 +48,7 @@
 .agents-changes { margin: 16px 0; }
 .agents-changes pre { max-height: 200px; overflow: auto; white-space: pre-wrap; font-size: 11px; background: var(--dn-bg); padding: 12px; border-radius: 8px; }
 .agents-decisions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin: 16px 0 0; }
-@media (max-width: 700px) { .agents-review-layout { grid-template-columns: 1fr; } .agents-proposal-list { max-height: 140px; overflow: auto; } .agents-dialog { --agents-padding: 16px; } }
+@media (max-width: 700px) { .agents-review-layout { grid-template-columns: 1fr; } .agents-proposal-list { max-height: 200px; overflow: auto; } .agents-proposal-list.single .agents-proposal-choice { display: none; } .agents-dialog { --agents-padding: 16px; } }
 
 .agents-dialog :is(button, input:not([type=checkbox]), select, summary) { min-height: 36px; }
 .agents-dialog summary { padding-block: 8px; line-height: 20px; }
@@ -55,5 +58,65 @@
 .agents-secret > button { margin-top: 8px; }
 @media (pointer: coarse) {
   .agents-dialog :is(button, input:not([type=checkbox]), select, summary), .agents-board-options label { min-height: 44px; }
+}
+
+/* ---- previewing a proposal on the board ---- */
+.proposal-banner {
+  position: absolute; z-index: 40; top: 12px; left: 50%; transform: translateX(-50%);
+  width: min(720px, calc(100% - 24px)); box-sizing: border-box; padding: 10px 12px;
+  display: grid; gap: 8px;
+  background: var(--dn-panel); color: var(--dn-text);
+  border: 1px solid var(--dn-border); border-radius: 14px; box-shadow: 0 10px 30px rgb(0 0 0 / .18);
+}
+.proposal-banner-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.proposal-banner-icon { display: inline-flex; color: var(--dn-accent); flex-shrink: 0; }
+.proposal-banner-text { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; min-width: 0; flex: 1; }
+.proposal-banner-title { font-size: 14px; overflow-wrap: anywhere; }
+.proposal-banner-counts { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.proposal-count { font-size: 12px; font-weight: 600; padding: 1px 7px; border-radius: 999px; color: var(--dn-diff-ink); }
+.proposal-count-added { background: var(--dn-diff-added); }
+.proposal-count-changed, .proposal-count-moved { background: var(--dn-diff-changed); }
+.proposal-count-removed { background: var(--dn-diff-removed); }
+.proposal-banner-exit { flex-shrink: 0; }
+.proposal-banner-note { margin: 0; font-size: 12px; line-height: 1.4; color: var(--dn-text-muted); }
+.proposal-banner-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.proposal-banner-spacer { flex: 1; }
+.proposal-board-select { min-height: 34px; max-width: 200px; border: 1px solid var(--dn-border); border-radius: 8px; background: var(--dn-card); color: var(--dn-text); padding: 0 8px; font: inherit; font-size: 13px; }
+.proposal-banner .primary-btn { min-height: 34px; padding-inline: 16px; }
+@media (pointer: coarse) {
+  .proposal-banner :is(button, select, .primary-btn, .bar-btn, .icon-btn) { min-height: 44px; }
+}
+.agents-change-list { display: grid; gap: 6px; margin: 12px 0 16px; padding: 0; list-style: none; font-size: 13px; }
+.agents-change-list li { display: flex; align-items: baseline; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
+.agents-change-list .proposal-count { flex-shrink: 0; }
+.agents-preview-button { width: 100%; justify-content: center; }
+/* Phones: the banner sits where the dock was, in thumb reach. */
+.app.phone .proposal-banner { top: auto; bottom: calc(8px + env(safe-area-inset-bottom)); width: calc(100% - 16px); }
+.proposal-next-icon { display: none; flex-shrink: 0; }
+.app.phone .proposal-next { display: none; }
+.app.phone .proposal-next-icon { display: inline-flex; }
+
+/* About & credits */
+.about-dialog { max-width: 440px; }
+.about-version { color: var(--dn-text-muted); }
+.about-credit { display: flex; flex-direction: column; gap: 8px; }
+.about-credit img { display: block; height: 18px; width: auto; }
+.about-credit p { margin: 0; }
+
+/* While previewing, Review changes keeps its place (the top bar doesn't shift under the pointer). */
+.preview-hidden { visibility: hidden; }
+.proposal-banner:focus { outline: none; }
+.proposal-banner:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 2px; }
+.proposal-step { font-size: 12px; color: var(--dn-text-muted); white-space: nowrap; }
+.proposal-step-phone { display: none; }
+.app.phone .proposal-step-phone { display: inline; }
+.app.phone .proposal-step:not(.proposal-step-phone) { display: none; }
+/* Short screens (a phone on its side): drop the intro and the lone list row, and keep
+   Preview on the board in reach at the bottom of the sheet. */
+@media (max-height: 500px) {
+  .agents-review > .agents-heading + p { display: none; }
+  .agents-review-layout { grid-template-columns: 1fr; gap: 8px; }
+  .agents-proposal-list.single .agents-proposal-choice { display: none; }
+  .agents-preview-button { position: sticky; bottom: 0; z-index: 1; box-shadow: 0 8px 0 var(--dn-panel), 0 -10px 12px var(--dn-panel); }
 }
 .agents-preview-sticker { position: absolute; pointer-events: none; }

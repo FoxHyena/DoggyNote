@@ -13,6 +13,13 @@
   if (/iP(hone|ad|od)/.test(navigator.platform) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
     var vp = document.querySelector('meta[name=viewport]')
     if (vp) vp.setAttribute('content', vp.getAttribute('content') + ', maximum-scale=1')
+    if (navigator.standalone === true || matchMedia('(display-mode: standalone)').matches) {
+      document.documentElement.classList.add('ios-standalone')
+      document.documentElement.style.setProperty('--app-height', innerHeight + 'px')
+      // The OS token is frozen at 18.x; Version/ identifies the Safari release.
+      var safariVersion = /Version\/(\d+)/.exec(navigator.userAgent)
+      if (safariVersion && Number(safariVersion[1]) === 27) document.documentElement.classList.add('ios-status-bar-blur')
+    }
   }
   var m = 'dark'
   try {

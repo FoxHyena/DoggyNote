@@ -26,11 +26,29 @@ import * as idb from './idb.ts'
 const [state, setState] = createStore<{ objs: Record<Id, Obj> }>({ objs: {} })
 export const objs = state.objs as Readonly<Record<Id, Obj>>
 
+// Previewing an agent proposal: its objects sit in front of the store for every
+// read, so the real canvas draws the proposal with the real cards. Nothing is
+// ever written while previewing (every write below returns early), and the
+// outbox and IndexedDB only ever read the store, so a preview can't be saved or
+// synced. Remote changes keep landing in the store underneath.
+const [overlay, setOverlay] = createStore<{ objs: Record<Id, Obj> | null }>({ objs: null })
+export const previewing = () => overlay.objs !== null
+export function setPreviewObjects(objects: Record<Id, Obj> | null) {
+  // A JSON copy: the objects may hold store proxies, which structuredClone refuses.
+  // Cleared first: setting an object on a store path merges into what's there.
+  batch(() => {
+    setOverlay('objs', null)
+    if (objects) setOverlay('objs', JSON.parse(JSON.stringify(objects)) as Record<Id, Obj>)
+  })
+}
+/** The stored object, ignoring any preview: for sync, access and recovery. */
+export const base = (id: Id | null | undefined): Obj | undefined => (id ? state.objs[id] : undefined)
+
 let persist = true
 let readOnly = false
 let writeGuard: ((object: Obj) => boolean) | null = null
 export const setWriteGuard = (guard: (object: Obj) => boolean) => { writeGuard = guard }
-export const canWriteObject = (object: Obj | undefined) => !!object && !readOnly && (!writeGuard || writeGuard(object))
+export const canWriteObject = (object: Obj | undefined) => !!object && !readOnly && !previewing() && (!writeGuard || writeGuard(object))
 const undoStack = new UndoStack()
 const [undoTick, setUndoTick] = createSignal(0)
 export const [localSaveError, setLocalSaveError] = createSignal<string | null>(null)
@@ -49,7 +67,11 @@ const dirtyOutbox = new Set<Id>()
 let flushTimer: ReturnType<typeof setTimeout> | null = null
 let flushing: Promise<void> | null = null
 
-export const get = (id: Id | null | undefined): Obj | undefined => (id ? state.objs[id] : undefined)
+export const get = (id: Id | null | undefined): Obj | undefined => {
+  if (!id) return undefined
+  const o = overlay.objs
+  return o && id in o ? o[id] : state.objs[id]
+}
 export const getCard = (id: Id | null | undefined) => {
   const o = get(id)
   return o?.kind === 'card' ? (o as Card) : undefined
@@ -89,7 +111,7 @@ function applyTx(tx: Transaction) {
 
 /** Apply a transaction and push it onto the undo stack. */
 export function commit(tx: Transaction) {
-  if (readOnly || !tx.length) return
+  if (readOnly || previewing() || !tx.length) return
   if (writeGuard && tx.some((c) => state.objs[c.id] && !writeGuard!({ ...state.objs[c.id], ...c.after, id: c.id } as Obj))) return
   if (writeGuard) {
     const freshBoards = new Map(tx.filter((change) => !state.objs[change.id] && change.after.kind === 'board').map((change) => [change.id, change.after as Board]))
@@ -131,6 +153,13 @@ export const createChange = (obj: Obj): Change => ({ id: obj.id, before: { purge
 
 /** Persist + sync without an undo entry. */
 export function silent(patches: Record<Id, Partial<Obj>>) {
+  if (previewing()) {
+    // Measured heights of previewed cards stay in the preview.
+    batch(() => {
+      for (const [id, p] of Object.entries(patches)) if (overlay.objs && id in overlay.objs) setOverlay('objs', id, p as Obj)
+    })
+    return
+  }
   if (readOnly) {
     // Viewers still need measured heights in memory.
     batch(() => {
@@ -155,6 +184,7 @@ export function silent(patches: Record<Id, Partial<Obj>>) {
  * that step created/changed this object; otherwise commit it as its own step.
  */
 export function amendOrCommit(id: Id, snap: Partial<Obj>) {
+  if (previewing()) return
   if (!canWriteObject(get(id))) return
   const cur = unwrap(state.objs[id]) as unknown as Record<string, unknown>
   const patch: Record<string, unknown> = {}
@@ -171,6 +201,7 @@ export function amendOrCommit(id: Id, snap: Partial<Obj>) {
  * brings back the in-progress value. Never an undo step of its own.
  */
 export function amendOrSilent(id: Id, patch: Partial<Obj>) {
+  if (previewing()) return
   if (!canWriteObject(get(id))) return
   applyPatchToStore(id, patch)
   const p = structuredClone(unwrap(patch)) as Record<string, unknown>
@@ -179,8 +210,26 @@ export function amendOrSilent(id: Id, patch: Partial<Obj>) {
   for (const l of outboxListeners) l()
 }
 
+/**
+ * A follow-up to the newest edit (a ticked task settling into place a beat later):
+ * folded into the newest undo step when that step changed the same fields of this
+ * object, so one undo reverts both; otherwise committed as its own step.
+ */
+export function amend(id: Id, patch: Partial<Obj>) {
+  if (previewing()) return
+  if (!canWriteObject(get(id))) return
+  const change = undoStack.peek()?.find((c) => c.id === id)
+  if (!change || !Object.keys(patch).every((k) => k in change.before)) return update({ [id]: patch })
+  const p = structuredClone(unwrap(patch)) as Record<string, unknown>
+  applyPatchToStore(id, patch)
+  undoStack.amendTop(id, p)
+  record(id, p as Partial<Obj>)
+  for (const l of outboxListeners) l()
+}
+
 /** Throw away a card that was just created and left empty, without an undo entry. */
 export function discardNew(id: Id) {
+  if (previewing()) return
   const top = undoStack.peek()
   if (top && top.length === 1 && top[0].id === id && top[0].before.purged) {
     undoStack.dropTop()
@@ -191,6 +240,7 @@ export function discardNew(id: Id) {
 
 /** Store only. Commit the final value with `commitFrom` when the gesture ends. */
 export function transient(id: Id, patch: Partial<Obj>) {
+  if (previewing()) return
   if (!canWriteObject(state.objs[id])) return
   applyPatchToStore(id, patch)
   for (const listener of transientListeners) listener(id, patch)
@@ -198,6 +248,7 @@ export function transient(id: Id, patch: Partial<Obj>) {
 
 /** Durable editing checkpoint; the eventual edit commit still owns its undo step. */
 export function checkpoint(id: Id, patch: Partial<Obj>) {
+  if (previewing()) return
   if (!canWriteObject(get(id))) return
   record(id, patch)
   for (const listener of outboxListeners) listener()
@@ -205,6 +256,7 @@ export function checkpoint(id: Id, patch: Partial<Obj>) {
 
 /** Commit the difference between `snapshot` (values before the gesture) and the current store. False if nothing changed. */
 export function commitFrom(snapshot: Record<Id, Partial<Obj>>): boolean {
+  if (previewing()) return false
   const tx: Change[] = []
   for (const [id, before] of Object.entries(snapshot)) {
     if (!canWriteObject(state.objs[id])) continue
@@ -239,12 +291,14 @@ export function snapshot(id: Id, keys: string[]): Partial<Obj> {
 }
 
 export function undo() {
+  if (previewing()) return
   const tx = undoStack.undo()
   if (tx && (!writeGuard || tx.every((change) => state.objs[change.id] && writeGuard!(state.objs[change.id])))) applyTx(tx)
   setUndoTick((n) => n + 1)
 }
 
 export function redo() {
+  if (previewing()) return
   const tx = undoStack.redo()
   if (tx && (!writeGuard || tx.every((change) => state.objs[change.id] && writeGuard!(state.objs[change.id])))) applyTx(tx)
   setUndoTick((n) => n + 1)
@@ -458,7 +512,9 @@ export const index = createRoot(() =>
     const connections = new Map<Id, Connection[]>()
     const boards: Board[] = []
     const comments = new Map<Id, Comment[]>()
-    for (const o of Object.values(state.objs)) {
+    const shown = overlay.objs
+    const all = shown ? [...Object.values(state.objs).filter((o) => !(o.id in shown)), ...Object.values(shown)] : Object.values(state.objs)
+    for (const o of all) {
       if (o.purged || o.deletedAt) continue
       if (o.kind === 'sticker') {
         const list = stickers.get(o.boardId)

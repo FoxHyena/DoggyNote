@@ -1,7 +1,10 @@
-import { ErrorBoundary, For, Match, Show, Switch, onCleanup, onMount, type JSX } from 'solid-js'
+import { ErrorBoundary, For, Match, Show, Switch, createSelector, onCleanup, onMount, type JSX } from 'solid-js'
 import { SIDES, type Card } from '@doggynote/core'
-import { cardColor } from '@doggynote/theme'
-import { camera, editingId, isSelected, selection } from '../state/ui.ts'
+import { COPY, cardColor } from '@doggynote/theme'
+import { isPreviewCurrent, previewBadge, type Badge } from '../state/preview.ts'
+
+const PREVIEW_CHIP: Record<Badge, string> = { added: 'New', changed: 'Edited', moved: 'Moved', removed: 'Buried' }
+import { camera, editingId, isSelected, nearHandle, selection } from '../state/ui.ts'
 import { touch } from '../state/device.ts'
 import { registerCardEl } from './layout.ts'
 import * as doc from '../state/doc.ts'
@@ -16,6 +19,7 @@ import { ImageCard } from '../cards/ImageCard.tsx'
 import { LinkCard } from '../cards/LinkCard.tsx'
 import { ColumnCard } from '../cards/ColumnCard.tsx'
 import { FileCard } from '../cards/FileCard.tsx'
+import { MovieCard } from '../cards/MovieCard.tsx'
 
 export type CardProps<T extends Card['type'] = Card['type']> = {
   card: Card<T>
@@ -29,6 +33,8 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
   onMount(() => onCleanup(registerCardEl(props.card.id, el)))
 
   const editing = () => editingId() === props.card.id
+  // With a mouse, only the handle on the edge the pointer is near shows (canvas/Canvas.tsx).
+  const isNear = createSelector(nearHandle)
   const selected = () => isSelected(props.card.id)
   const free = () => !props.card.columnId
   const single = () => selected() && selection().size === 1
@@ -74,11 +80,24 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
       data-card-id={props.card.id}
       data-testid="card"
       data-type={props.card.type}
+      data-preview={previewBadge(props.card.id)}
+      data-preview-current={isPreviewCurrent(props.card.id) || undefined}
       style={style()}
     >
+      <Show when={!props.lod && previewBadge(props.card.id)}>
+        {(b) => <span class="preview-chip" data-testid="preview-chip">{PREVIEW_CHIP[b()]}</span>}
+      </Show>
       {/* Cards are synced data from other people: one malformed card must not take the board down. */}
       <ErrorBoundary fallback={<p class="card-unreadable" data-testid="card-unreadable">This card can't be shown.</p>}>
-      <Switch>
+      <Switch
+        fallback={
+          // A card type from a newer app. Fixed at its stored height, so this app
+          // never overwrites the real height the newer one measured.
+          <div class="unknown-card" data-testid="unknown-card" style={{ height: `${Math.max(60, props.card.h)}px` }}>
+            {COPY.unknownCard}
+          </div>
+        }
+      >
         <Match when={props.card.type === 'note'}>
           <NoteCard {...(props2() as CardProps<'note'>)} />
         </Match>
@@ -96,6 +115,9 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         </Match>
         <Match when={props.card.type === 'file'}>
           <FileCard {...(props2() as CardProps<'file'>)} />
+        </Match>
+        <Match when={props.card.type === 'movie'}>
+          <MovieCard {...(props2() as CardProps<'movie'>)} />
         </Match>
         <Match when={props.card.type === 'column'}>
           <ColumnCard {...(props2() as CardProps<'column'>)} />
@@ -123,7 +145,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
       </Show>
       <Show when={!props.readOnly && !props.lod && (!touch() || touchHandles())}>
         <For each={SIDES}>
-          {(side) => <div class={`connect-handle ${side}`} data-connect-handle={side} data-testid={`connect-handle-${side}`} title="Drag to connect" />}
+          {(side) => <div class={`connect-handle ${side}`} classList={{ near: isNear(`${props.card.id}:${side}`) }} data-connect-handle={side} data-testid={`connect-handle-${side}`} title="Drag to connect" />}
         </For>
       </Show>
     </div>

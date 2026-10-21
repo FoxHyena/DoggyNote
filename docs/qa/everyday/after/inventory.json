@@ -1,0 +1,2466 @@
+[
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "board",
+    "file": "after/webkit-light-mac1440-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo",
+    "file": "after/webkit-light-mac1440-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo-select",
+    "file": "after/webkit-light-mac1440-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo-options",
+    "file": "after/webkit-light-mac1440-todo-options.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "column-click",
+    "file": "after/webkit-light-mac1440-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "sync",
+    "file": "after/webkit-light-mac1440-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "note-edit",
+    "file": "after/webkit-light-mac1440-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "note-edit-list",
+    "file": "after/webkit-light-mac1440-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "proposals",
+    "file": "after/webkit-light-mac1440-proposals.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "proposal-current",
+    "file": "after/webkit-light-mac1440-proposal-current.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "proposal-dialog",
+    "file": "after/webkit-light-mac1440-proposal-dialog.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "movies",
+    "file": "after/webkit-light-mac1440-movies.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "movie-search",
+    "file": "after/webkit-light-mac1440-movie-search.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "overview",
+    "file": "after/webkit-light-mac1440-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "board",
+    "file": "after/webkit-dark-mac1440-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo",
+    "file": "after/webkit-dark-mac1440-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo-select",
+    "file": "after/webkit-dark-mac1440-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo-options",
+    "file": "after/webkit-dark-mac1440-todo-options.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "column-click",
+    "file": "after/webkit-dark-mac1440-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "sync",
+    "file": "after/webkit-dark-mac1440-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "note-edit",
+    "file": "after/webkit-dark-mac1440-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "note-edit-list",
+    "file": "after/webkit-dark-mac1440-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "proposals",
+    "file": "after/webkit-dark-mac1440-proposals.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "proposal-current",
+    "file": "after/webkit-dark-mac1440-proposal-current.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "proposal-dialog",
+    "file": "after/webkit-dark-mac1440-proposal-dialog.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "movies",
+    "file": "after/webkit-dark-mac1440-movies.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "movie-search",
+    "file": "after/webkit-dark-mac1440-movie-search.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "overview",
+    "file": "after/webkit-dark-mac1440-overview.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "board",
+    "file": "after/chromium-light-chrome1440-board.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo",
+    "file": "after/chromium-light-chrome1440-todo.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo-select",
+    "file": "after/chromium-light-chrome1440-todo-select.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo-options",
+    "file": "after/chromium-light-chrome1440-todo-options.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "column-click",
+    "file": "after/chromium-light-chrome1440-column-click.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "sync",
+    "file": "after/chromium-light-chrome1440-sync.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "note-edit",
+    "file": "after/chromium-light-chrome1440-note-edit.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "note-edit-list",
+    "file": "after/chromium-light-chrome1440-note-edit-list.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "proposals",
+    "file": "after/chromium-light-chrome1440-proposals.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "proposal-current",
+    "file": "after/chromium-light-chrome1440-proposal-current.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "proposal-dialog",
+    "file": "after/chromium-light-chrome1440-proposal-dialog.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "movies",
+    "file": "after/chromium-light-chrome1440-movies.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "movie-search",
+    "file": "after/chromium-light-chrome1440-movie-search.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "overview",
+    "file": "after/chromium-light-chrome1440-overview.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "board",
+    "file": "after/chromium-dark-chrome1440-board.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo",
+    "file": "after/chromium-dark-chrome1440-todo.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo-select",
+    "file": "after/chromium-dark-chrome1440-todo-select.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "todo-options",
+    "file": "after/chromium-dark-chrome1440-todo-options.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "column-click",
+    "file": "after/chromium-dark-chrome1440-column-click.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "sync",
+    "file": "after/chromium-dark-chrome1440-sync.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "note-edit",
+    "file": "after/chromium-dark-chrome1440-note-edit.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "note-edit-list",
+    "file": "after/chromium-dark-chrome1440-note-edit-list.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "proposals",
+    "file": "after/chromium-dark-chrome1440-proposals.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "proposal-current",
+    "file": "after/chromium-dark-chrome1440-proposal-current.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "proposal-dialog",
+    "file": "after/chromium-dark-chrome1440-proposal-dialog.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "movies",
+    "file": "after/chromium-dark-chrome1440-movies.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "movie-search",
+    "file": "after/chromium-dark-chrome1440-movie-search.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "chrome1440",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "state": "overview",
+    "file": "after/chromium-dark-chrome1440-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "board",
+    "file": "after/webkit-light-mac1024-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "todo",
+    "file": "after/webkit-light-mac1024-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "todo-select",
+    "file": "after/webkit-light-mac1024-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "todo-options",
+    "file": "after/webkit-light-mac1024-todo-options.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "column-click",
+    "file": "after/webkit-light-mac1024-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "sync",
+    "file": "after/webkit-light-mac1024-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "note-edit",
+    "file": "after/webkit-light-mac1024-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "note-edit-list",
+    "file": "after/webkit-light-mac1024-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "proposals",
+    "file": "after/webkit-light-mac1024-proposals.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "proposal-current",
+    "file": "after/webkit-light-mac1024-proposal-current.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "proposal-dialog",
+    "file": "after/webkit-light-mac1024-proposal-dialog.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "movies",
+    "file": "after/webkit-light-mac1024-movies.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "movie-search",
+    "file": "after/webkit-light-mac1024-movie-search.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "overview",
+    "file": "after/webkit-light-mac1024-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "board",
+    "file": "after/webkit-dark-mac1024-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "todo",
+    "file": "after/webkit-dark-mac1024-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "todo-select",
+    "file": "after/webkit-dark-mac1024-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "todo-options",
+    "file": "after/webkit-dark-mac1024-todo-options.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "column-click",
+    "file": "after/webkit-dark-mac1024-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "sync",
+    "file": "after/webkit-dark-mac1024-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "note-edit",
+    "file": "after/webkit-dark-mac1024-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "note-edit-list",
+    "file": "after/webkit-dark-mac1024-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "proposals",
+    "file": "after/webkit-dark-mac1024-proposals.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "proposal-current",
+    "file": "after/webkit-dark-mac1024-proposal-current.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "proposal-dialog",
+    "file": "after/webkit-dark-mac1024-proposal-dialog.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "movies",
+    "file": "after/webkit-dark-mac1024-movies.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "movie-search",
+    "file": "after/webkit-dark-mac1024-movie-search.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "mac1024",
+    "viewport": {
+      "width": 1024,
+      "height": 720
+    },
+    "state": "overview",
+    "file": "after/webkit-dark-mac1024-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "board",
+    "file": "after/webkit-light-ipad-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "todo",
+    "file": "after/webkit-light-ipad-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "todo-select",
+    "file": "after/webkit-light-ipad-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "todo-options",
+    "file": "after/webkit-light-ipad-todo-options.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "column-click",
+    "file": "after/webkit-light-ipad-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "sync",
+    "file": "after/webkit-light-ipad-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "note-edit",
+    "file": "after/webkit-light-ipad-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "note-edit-list",
+    "file": "after/webkit-light-ipad-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "proposals",
+    "file": "after/webkit-light-ipad-proposals.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "proposal-current",
+    "file": "after/webkit-light-ipad-proposal-current.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "proposal-dialog",
+    "file": "after/webkit-light-ipad-proposal-dialog.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "movies",
+    "file": "after/webkit-light-ipad-movies.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "movie-search",
+    "file": "after/webkit-light-ipad-movie-search.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "overview",
+    "file": "after/webkit-light-ipad-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "board",
+    "file": "after/webkit-dark-ipad-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "todo",
+    "file": "after/webkit-dark-ipad-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "todo-select",
+    "file": "after/webkit-dark-ipad-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "todo-options",
+    "file": "after/webkit-dark-ipad-todo-options.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "column-click",
+    "file": "after/webkit-dark-ipad-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "sync",
+    "file": "after/webkit-dark-ipad-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "note-edit",
+    "file": "after/webkit-dark-ipad-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "note-edit-list",
+    "file": "after/webkit-dark-ipad-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "proposals",
+    "file": "after/webkit-dark-ipad-proposals.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "proposal-current",
+    "file": "after/webkit-dark-ipad-proposal-current.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "proposal-dialog",
+    "file": "after/webkit-dark-ipad-proposal-dialog.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "movies",
+    "file": "after/webkit-dark-ipad-movies.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "movie-search",
+    "file": "after/webkit-dark-ipad-movie-search.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "ipad",
+    "viewport": {
+      "width": 834,
+      "height": 1194
+    },
+    "state": "overview",
+    "file": "after/webkit-dark-ipad-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "board",
+    "file": "after/webkit-light-se-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "todo",
+    "file": "after/webkit-light-se-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "todo-select",
+    "file": "after/webkit-light-se-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "todo-options",
+    "file": "after/webkit-light-se-todo-options.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "column-click",
+    "file": "after/webkit-light-se-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "sync",
+    "file": "after/webkit-light-se-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "note-edit",
+    "file": "after/webkit-light-se-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "note-edit-list",
+    "file": "after/webkit-light-se-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "proposals",
+    "file": "after/webkit-light-se-proposals.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "proposal-current",
+    "file": "after/webkit-light-se-proposal-current.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "proposal-dialog",
+    "file": "after/webkit-light-se-proposal-dialog.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "movies",
+    "file": "after/webkit-light-se-movies.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "movie-search",
+    "file": "after/webkit-light-se-movie-search.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "overview",
+    "file": "after/webkit-light-se-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "board",
+    "file": "after/webkit-dark-se-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "todo",
+    "file": "after/webkit-dark-se-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "todo-select",
+    "file": "after/webkit-dark-se-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "todo-options",
+    "file": "after/webkit-dark-se-todo-options.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "column-click",
+    "file": "after/webkit-dark-se-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "sync",
+    "file": "after/webkit-dark-se-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "note-edit",
+    "file": "after/webkit-dark-se-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "note-edit-list",
+    "file": "after/webkit-dark-se-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "proposals",
+    "file": "after/webkit-dark-se-proposals.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "proposal-current",
+    "file": "after/webkit-dark-se-proposal-current.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "proposal-dialog",
+    "file": "after/webkit-dark-se-proposal-dialog.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "movies",
+    "file": "after/webkit-dark-se-movies.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "movie-search",
+    "file": "after/webkit-dark-se-movie-search.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "se",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "state": "overview",
+    "file": "after/webkit-dark-se-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "board",
+    "file": "after/webkit-light-iphone15-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "todo",
+    "file": "after/webkit-light-iphone15-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "todo-select",
+    "file": "after/webkit-light-iphone15-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "todo-options",
+    "file": "after/webkit-light-iphone15-todo-options.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "column-click",
+    "file": "after/webkit-light-iphone15-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "sync",
+    "file": "after/webkit-light-iphone15-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "note-edit",
+    "file": "after/webkit-light-iphone15-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "note-edit-list",
+    "file": "after/webkit-light-iphone15-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "proposals",
+    "file": "after/webkit-light-iphone15-proposals.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "proposal-current",
+    "file": "after/webkit-light-iphone15-proposal-current.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "proposal-dialog",
+    "file": "after/webkit-light-iphone15-proposal-dialog.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "movies",
+    "file": "after/webkit-light-iphone15-movies.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "movie-search",
+    "file": "after/webkit-light-iphone15-movie-search.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "overview",
+    "file": "after/webkit-light-iphone15-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "board",
+    "file": "after/webkit-dark-iphone15-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "todo",
+    "file": "after/webkit-dark-iphone15-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "todo-select",
+    "file": "after/webkit-dark-iphone15-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "todo-options",
+    "file": "after/webkit-dark-iphone15-todo-options.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "column-click",
+    "file": "after/webkit-dark-iphone15-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "sync",
+    "file": "after/webkit-dark-iphone15-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "note-edit",
+    "file": "after/webkit-dark-iphone15-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "note-edit-list",
+    "file": "after/webkit-dark-iphone15-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "proposals",
+    "file": "after/webkit-dark-iphone15-proposals.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "proposal-current",
+    "file": "after/webkit-dark-iphone15-proposal-current.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "proposal-dialog",
+    "file": "after/webkit-dark-iphone15-proposal-dialog.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "movies",
+    "file": "after/webkit-dark-iphone15-movies.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "movie-search",
+    "file": "after/webkit-dark-iphone15-movie-search.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "iphone15",
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "state": "overview",
+    "file": "after/webkit-dark-iphone15-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "board",
+    "file": "after/webkit-light-landscape-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "todo",
+    "file": "after/webkit-light-landscape-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "todo-select",
+    "file": "after/webkit-light-landscape-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "todo-options",
+    "file": "after/webkit-light-landscape-todo-options.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "column-click",
+    "file": "after/webkit-light-landscape-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "sync",
+    "file": "after/webkit-light-landscape-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "note-edit",
+    "file": "after/webkit-light-landscape-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "note-edit-list",
+    "file": "after/webkit-light-landscape-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "proposals",
+    "file": "after/webkit-light-landscape-proposals.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "proposal-current",
+    "file": "after/webkit-light-landscape-proposal-current.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "proposal-dialog",
+    "file": "after/webkit-light-landscape-proposal-dialog.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "movies",
+    "file": "after/webkit-light-landscape-movies.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "movie-search",
+    "file": "after/webkit-light-landscape-movie-search.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "light",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "overview",
+    "file": "after/webkit-light-landscape-overview.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "board",
+    "file": "after/webkit-dark-landscape-board.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "todo",
+    "file": "after/webkit-dark-landscape-todo.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "todo-select",
+    "file": "after/webkit-dark-landscape-todo-select.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "todo-options",
+    "file": "after/webkit-dark-landscape-todo-options.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "column-click",
+    "file": "after/webkit-dark-landscape-column-click.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "sync",
+    "file": "after/webkit-dark-landscape-sync.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "note-edit",
+    "file": "after/webkit-dark-landscape-note-edit.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "note-edit-list",
+    "file": "after/webkit-dark-landscape-note-edit-list.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "proposals",
+    "file": "after/webkit-dark-landscape-proposals.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "proposal-current",
+    "file": "after/webkit-dark-landscape-proposal-current.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "proposal-dialog",
+    "file": "after/webkit-dark-landscape-proposal-dialog.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "movies",
+    "file": "after/webkit-dark-landscape-movies.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "movie-search",
+    "file": "after/webkit-dark-landscape-movie-search.jpg"
+  },
+  {
+    "engine": "webkit",
+    "theme": "dark",
+    "device": "landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "state": "overview",
+    "file": "after/webkit-dark-landscape-overview.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "board",
+    "file": "after/chromium-light-pixel7-board.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "todo",
+    "file": "after/chromium-light-pixel7-todo.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "todo-select",
+    "file": "after/chromium-light-pixel7-todo-select.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "todo-options",
+    "file": "after/chromium-light-pixel7-todo-options.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "column-click",
+    "file": "after/chromium-light-pixel7-column-click.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "sync",
+    "file": "after/chromium-light-pixel7-sync.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "note-edit",
+    "file": "after/chromium-light-pixel7-note-edit.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "note-edit-list",
+    "file": "after/chromium-light-pixel7-note-edit-list.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "proposals",
+    "file": "after/chromium-light-pixel7-proposals.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "proposal-current",
+    "file": "after/chromium-light-pixel7-proposal-current.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "proposal-dialog",
+    "file": "after/chromium-light-pixel7-proposal-dialog.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "movies",
+    "file": "after/chromium-light-pixel7-movies.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "movie-search",
+    "file": "after/chromium-light-pixel7-movie-search.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "light",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "overview",
+    "file": "after/chromium-light-pixel7-overview.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "board",
+    "file": "after/chromium-dark-pixel7-board.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "todo",
+    "file": "after/chromium-dark-pixel7-todo.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "todo-select",
+    "file": "after/chromium-dark-pixel7-todo-select.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "todo-options",
+    "file": "after/chromium-dark-pixel7-todo-options.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "column-click",
+    "file": "after/chromium-dark-pixel7-column-click.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "sync",
+    "file": "after/chromium-dark-pixel7-sync.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "note-edit",
+    "file": "after/chromium-dark-pixel7-note-edit.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "note-edit-list",
+    "file": "after/chromium-dark-pixel7-note-edit-list.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "proposals",
+    "file": "after/chromium-dark-pixel7-proposals.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "proposal-current",
+    "file": "after/chromium-dark-pixel7-proposal-current.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "proposal-dialog",
+    "file": "after/chromium-dark-pixel7-proposal-dialog.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "movies",
+    "file": "after/chromium-dark-pixel7-movies.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "movie-search",
+    "file": "after/chromium-dark-pixel7-movie-search.jpg"
+  },
+  {
+    "engine": "chromium",
+    "theme": "dark",
+    "device": "pixel7",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "state": "overview",
+    "file": "after/chromium-dark-pixel7-overview.jpg"
+  }
+]

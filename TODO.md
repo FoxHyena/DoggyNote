@@ -70,6 +70,18 @@ Legend: [x] done + tested · [~] in progress · [ ] not started
 - [ ] Image shares from other apps (needs a service worker for POST share targets); iOS has no web share target at all
 - [ ] Drive the signed-in app in the iOS Simulator with a real keyboard (blocked on an accessibility prompt for scripted keystrokes)
 
+## Round 5: everyday polish (Oct 2026)
+- [x] To-dos: done tasks sink and say when, fold away or clear done (#25)
+- [x] Copy, cut, paste, duplicate; ⌘⇧V pastes plain text (#27)
+- [x] Note lists: Tab/Shift-Tab nesting, live formatting on the caret's line (#26)
+- [x] Agent proposals previewed on the real board (#28)
+- [x] Movie and show cards from TMDB, watched toggle, details (#29 via #30). TMDB_TOKEN is set on the live Worker
+- [x] Connector handles only near their own edge (#31)
+- [x] QA rounds: docs/qa/everyday (3 visual, 2 UX, fixes in #30)
+- [ ] **You:** on real devices, check the iPad toolbar keeps the keyboard up (UXM2-1) and the Mac app's overview greys watched posters (V3-1)
+- [ ] Phone edit dock for non-note cards is an empty bar with Done (VT-6). Redesign it for to-dos, links, titles and movie search together
+- [ ] Dock polish: H/S scroll off the phone dock with no cue; icon alignment; the format bar clips under the top bar (V2-5, V2-6, V2-9)
+
 ## Still open
 1. [ ] Memory: busy boards still ~183–202 MB in the Mac app (target 150). The rest is WebKit graphics surfaces + JS heap; next lever is fewer GPU layers
 2. [ ] Intel Mac build (CI builds Apple silicon only); a universal build if a friend needs it

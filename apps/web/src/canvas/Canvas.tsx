@@ -7,6 +7,7 @@ import {
   GRID,
   LOD_ZOOM,
   dotSpacing,
+  edgeNear,
   snap,
   clampZoom,
   cullRect,
@@ -52,6 +53,7 @@ import {
   selection,
   setCamera,
   setConnectMode,
+  setNearHandle,
   setSelection,
   setTrashOpen,
   setViewport,
@@ -66,6 +68,7 @@ import { cardEl, cardHeight, rectOf, setMeasuring } from './layout.ts'
 import { setDropTarget, dropTarget, connectPreview, setConnectPreview, draggingIds, setDraggingIds, resizingId, setResizingId } from './dnd.ts'
 import { snapTick, snapToGrid } from '../state/grid.ts'
 import { handleCanvasDrop, handleCanvasPaste } from './paste.ts'
+import { isClipProxy } from '../state/clipboard.ts'
 import { BoardIconSvg } from '../ui/icons.tsx'
 import { setToyboxOpen, toyboxOpen } from '../ui/ToyboxPanel.tsx'
 import { setThreadCardId, threadCardId } from '../state/comments.ts'
@@ -225,7 +228,8 @@ export function Canvas(props: { readOnly: boolean }) {
     onCleanup(() => document.removeEventListener('selectionchange', onSelection))
     requestAnimationFrame(revealCaret)
   })
-  createEffect(() => saveCamera(boardId(), camera()))
+  // A proposal preview frames its changes; that camera isn't the board's own.
+  createEffect(() => { if (!doc.previewing()) saveCamera(boardId(), camera()) })
 
   // ---- helpers -----------------------------------------------------------------
   const local = (e: { clientX: number; clientY: number }): Vec => {
@@ -475,7 +479,53 @@ export function Canvas(props: { readOnly: boolean }) {
 
   function onPointerMove(e: PointerEvent) {
     if (e.pointerType === 'touch') return touchMove(e)
+    lastPointer = { clientX: e.clientX, clientY: e.clientY }
     moveGesture(e)
+    trackNearHandle(e)
+  }
+
+  // ---- connector handles (mouse) ---------------------------------------------
+  // A handle shows only while the pointer is near its edge: an edge of the card
+  // under the pointer, else the closest edge just outside a card. Never mid-card,
+  // and never on the card being edited. Checked once a frame.
+  type Hover = { clientX: number; clientY: number; target: Element | null }
+  let nearFrame = 0
+  let nearAt: Hover | null = null
+  function trackNearHandle(e: PointerEvent) {
+    nearAt = { clientX: e.clientX, clientY: e.clientY, target: e.target as Element | null }
+    if (nearFrame) return
+    nearFrame = requestAnimationFrame(() => {
+      nearFrame = 0
+      if (nearAt) setNearHandle(nearHandleAt(nearAt))
+    })
+  }
+  function nearHandleAt(e: Hover): string {
+    if (gesture || lod()) return ''
+    const p = toWorld(e)
+    const zoom = camera().zoom
+    const sideOf = (id: Id) => {
+      const r = id === editingId() ? null : rectOf(id)
+      return r && edgeNear(r, p, 12 / zoom, 24 / zoom)
+    }
+    const under = domCardAt(e.target)
+    if (under) {
+      const side = sideOf(under)
+      return side ? `${under}:${side}` : ''
+    }
+    let best = ''
+    let bestD = Infinity
+    for (const c of doc.cardsOn(boardId())) {
+      if (c.columnId) continue
+      const side = sideOf(c.id)
+      if (!side) continue
+      const r = rectOf(c.id)!
+      const d = Math.hypot(Math.max(r.x - p.x, 0, p.x - r.x - r.w), Math.max(r.y - p.y, 0, p.y - r.y - r.h))
+      if (d < bestD) {
+        best = `${c.id}:${side}`
+        bestD = d
+      }
+    }
+    return best
   }
 
   function moveGesture(e: Client) {
@@ -650,6 +700,13 @@ export function Canvas(props: { readOnly: boolean }) {
         // A click on one of several selected stickers picks it alone.
         if (!c) { if (e.type !== 'pointercancel' && doc.get(g.id)?.kind === 'sticker') select([g.id]); break }
         if (g.shift) {
+          // Shift-clicking another card while typing: stop typing, and keep the
+          // card you were in as part of the selection.
+          const typing = editingId()
+          if (typing && typing !== g.id) {
+            endEdit()
+            select([...new Set([...selection(), typing])])
+          }
           toggle(g.id)
           break
         }
@@ -659,9 +716,11 @@ export function Canvas(props: { readOnly: boolean }) {
           if (e.type !== 'pointercancel') lastPress = { id: g.id, board: boardId(), at: performance.now() }
           break
         }
-        const isTitle = !!g.target.closest('[data-edit-title]')
+        // A column's first click selects it, so its colour and actions are reachable;
+        // a click on the title of the selected column renames it.
+        const renames = c.type === 'column' && !!g.target.closest('[data-edit-title]') && selection().size === 1 && selection().has(g.id)
         // Zoomed out, cards are shapes on a canvas: a click selects, it can't edit.
-        if (!lod() && (c.type === 'note' || c.type === 'todo' || (c.type === 'column' && isTitle))) {
+        if (!lod() && (c.type === 'note' || c.type === 'todo' || renames)) {
           queueEditCaret(g.client)
           beginEdit(g.id)
         } else select([g.id])
@@ -933,6 +992,8 @@ export function Canvas(props: { readOnly: boolean }) {
 
   function swallowNextClick() {
     const stop = (ev: Event) => {
+      // Our own box.click() for a quick next tap is not the browser's echo of this one.
+      if (!ev.isTrusted) return
       ev.preventDefault()
       ev.stopPropagation()
       off()
@@ -1061,15 +1122,17 @@ export function Canvas(props: { readOnly: boolean }) {
     return screenToWorld(camera(), { x: v.width / 2, y: v.height / 2 })
   }
   const onCopy = (e: ClipboardEvent) => {
-    if (props.readOnly || typing(e.target) || editingId()) return
+    if (props.readOnly || (typing(e.target) && !isClipProxy(e.target)) || editingId()) return
     const stickers = [...selection()].map(doc.get).filter(usableSticker)
     if (!stickers.length || stickers.length !== selection().size || !e.clipboardData) return
     e.clipboardData.setData('application/x-doggynote-stickers', JSON.stringify(stickers))
     e.clipboardData.setData('text/plain', stickers.map((s) => s.content.emoji).join(' '))
     e.preventDefault()
   }
+  // Pastes land under the mouse when it's over the board, else in the middle.
+  let lastPointer: { clientX: number; clientY: number } | null = null
   const onPaste = (e: ClipboardEvent) => {
-    if (props.readOnly || typing(e.target) || editingId()) return
+    if (props.readOnly || (typing(e.target) && !isClipProxy(e.target)) || editingId()) return
     const data = e.clipboardData?.getData('application/x-doggynote-stickers')
     if (data) {
       e.preventDefault()
@@ -1083,7 +1146,9 @@ export function Canvas(props: { readOnly: boolean }) {
       } catch { showToast('This sticker copy could not be pasted. Try copying it again.') }
       return
     }
-    if (handleCanvasPaste(e, centerWorld())) e.preventDefault()
+    const at = lastPointer ? toWorld(lastPointer) : centerWorld()
+    const column = lastPointer ? columnAt(at, new Set()) : null
+    if (handleCanvasPaste(e, at, column?.id)) e.preventDefault()
   }
 
   onCleanup(() => { cancelGesture(); cancelStickerPlacement() })
@@ -1141,6 +1206,7 @@ export function Canvas(props: { readOnly: boolean }) {
       classList={{ panning: panning(), moving: moving(), snapping: snapping(), 'snap-on': snapToGrid(), connecting: !!connectPreview(), 'space-held': spaceHeld(), lod: lod(), 'connect-mode': !!connectMode(), readonly: props.readOnly }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
+      onPointerLeave={(e) => { if (e.pointerType !== 'touch') { lastPointer = null; nearAt = null; setNearHandle('') } }}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
       onDblClick={onDblClick}
@@ -1307,6 +1373,23 @@ let anim = 0
 export function cancelCameraAnimation() {
   cancelAnimationFrame(anim)
   anim = 0
+}
+
+/**
+ * Pan (never zoom) so a card's whole height is on screen, clear of the phone's
+ * bottom bars. A card taller than the room shows its top.
+ */
+/** Pan so a card clears the bars. `from` (board units below the card's top) is the
+ *  part that matters most, for a card taller than the room. */
+export function revealCard(id: Id, from = 0) {
+  const r = rectOf(id)
+  if (!r) return
+  const cam = camera()
+  const room = viewport().height - (phone() ? 150 : 24)
+  const top = (r.y + from - cam.y) * cam.zoom
+  const bottom = (r.y + r.h - cam.y) * cam.zoom
+  const dy = bottom > room ? Math.min(bottom - room, top - 16) : top < 16 ? top - 16 : 0
+  if (Math.abs(dy) >= 2) animateCamera({ ...cam, y: cam.y + dy / cam.zoom }, 260)
 }
 
 /** Ease the camera to a target. Short and springy: it should feel physical, not slow. */

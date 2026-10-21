@@ -44,6 +44,18 @@ test('tap selects without opening the keyboard; tap again edits', async ({ page 
   await expect(page.getByTestId('note-editor')).toBeVisible()
 })
 
+test('a tap on a column title selects it for colour; a second tap renames it', async ({ page }) => {
+  await seedCards(page, [{ type: 'column', x: 0, y: 0, w: 280, content: { title: 'Snacks' } }])
+  const column = cardByText(page, 'Snacks')
+  await tapOn(page, column.getByTestId('column-title'))
+  await expect(column).toHaveClass(/selected/)
+  await expect(page.getByTestId('column-title-input')).toHaveCount(0)
+  await page.getByTestId('swatch-sky').tap()
+  await expect(column).toHaveClass(/colored/)
+  await tapOn(page, column.getByTestId('column-title'))
+  await expect(page.getByTestId('column-title-input')).toBeFocused()
+})
+
 test('a selected card follows the finger, and the move is saved', async ({ page }) => {
   await seedCards(page, [note('Fetch', 0, 0)])
   const card = cardByText(page, 'Fetch')

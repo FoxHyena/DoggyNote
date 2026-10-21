@@ -27,6 +27,7 @@ export const EMPTY_CONTENT: { [T in CardType]: () => CardContent[T] } = {
   link: () => ({ url: '', status: 'pending' }),
   column: () => ({ title: '' }),
   file: () => ({ assetId: '', name: '', size: 0, mime: '' }),
+  movie: () => ({ kind: 'movie', title: '' }),
 }
 
 /** Where a new card goes: a world point (card's top-centre lands there) or a column slot. */
@@ -99,7 +100,7 @@ export function createCard(
   doc.commit(tx)
   // Created somewhere else (e.g. straight into the Toy box): don't select or edit it here.
   if (opts.boardId && opts.boardId !== boardId()) return card.id
-  const editable = type === 'note' || type === 'todo' || type === 'column' || type === 'board' || type === 'link'
+  const editable = type === 'note' || type === 'todo' || type === 'column' || type === 'board' || type === 'link' || type === 'movie'
   if (opts.edit ?? editable) beginEdit(card.id, { isNew: true })
   else select([card.id])
   return card.id
@@ -111,11 +112,11 @@ export function createNoteWithText(text: string, place: Placement): Id {
   return createCard('note', place, { content: { md: text }, edit: false })
 }
 
-export function trashSelection() {
+/** Bury the selection. `now` stamps the burial (a cut remembers it to bring the cards back). */
+export function trashSelection(now = Date.now()) {
   const ids = [...selection()]
   if (!ids.length) return
   if (editingId()) endEdit()
-  const now = Date.now()
   const patches: Record<Id, Partial<Obj>> = {}
   for (const id of ids) {
     const o = doc.get(id)

@@ -19,7 +19,7 @@ export async function preserveDenied(ids: string[], reason: string) {
   const pending = doc.pendingOutbox().filter((change) => denied.has(change.id))
   if (!pending.length) return
   const rows = await Promise.all(pending.map(async (change): Promise<Recovery> => {
-    const current = doc.get(change.id)
+    const current = doc.base(change.id)
     const object = current?.kind ? JSON.parse(JSON.stringify(current)) as Obj : undefined
     const previous = await idb.get<Recovery>('meta', `recovery:${change.id}`)
     return { ...change, patch: { ...previous?.patch, ...change.patch } as Partial<Obj>, object: object ?? previous?.object, reason, savedAt: Date.now() }
@@ -47,7 +47,7 @@ export async function downloadRecovery() {
 }
 
 export async function preserveActiveEdit(id: string, reason: string) {
-  const object = doc.get(id)
+  const object = doc.base(id)
   if (!object) return
   const copy = JSON.parse(JSON.stringify(object)) as Obj
   const row: Recovery = { id, patch: copy, object: copy, reason, savedAt: Date.now() }

@@ -1,3 +1,4 @@
+import { FIXTURES } from './ports.ts'
 import { postSync } from './helpers.ts'
 import { waitForSync } from './helpers.ts'
 import { mkdir } from 'node:fs/promises'
@@ -103,7 +104,7 @@ test('README screenshots', async ({ page, browser }) => {
     }),
     card({ id: ids.ask, type: 'note', x: 0, y: 0, w: 260, columnId: ids.column, order: 2, color: 'collar', content: { md: 'Ask Sam about the **big umbrella**' } }),
     card({ id: ids.rules, type: 'note', x: 380, y: 250, w: 300, color: 'sky', content: { md: '## Beach rules\n- Off-leash only north of Stairwell 21\n- Rinse paws before the car\n- No eating kelp' } }),
-    card({ id: id(), type: 'link', x: 720, y: 0, w: 280, h: 230, content: { url: 'http://localhost:5180/og.html', status: 'ok', title: 'Good Boy Supplies & Treats', description: 'Everything a very good dog needs.', siteName: 'Doggo Shop', image: 'http://localhost:5180/dog.svg' } }),
+    card({ id: id(), type: 'link', x: 720, y: 0, w: 280, h: 230, content: { url: `${FIXTURES}/og.html`, status: 'ok', title: 'Good Boy Supplies & Treats', description: 'Everything a very good dog needs.', siteName: 'Doggo Shop', image: `${FIXTURES}/dog.svg` } }),
     card({ id: id(), type: 'image', x: 720, y: 270, w: 280, h: 187, content: { assetId: frisbee, width: 900, height: 600, sizes: ['thumb', 'small', 'medium', 'full'] } }),
     card({ id: id(), type: 'file', x: 380, y: 500, w: 300, content: { assetId: pdf, name: 'Trail map.pdf', size: 248_000, mime: 'application/pdf', status: 'ok' } }),
     { id: ids.vetBoard, kind: 'board', parentId: board, title: 'Vet records', icon: 'heart', color: 'ball', createdAt: now },
@@ -114,7 +115,7 @@ test('README screenshots', async ({ page, browser }) => {
     { id: tb, kind: 'board', parentId: null, title: 'Toy box', icon: 'ball', color: 'gold', createdAt: now },
     card({ id: id(), boardId: tb, type: 'note', x: 0, y: 0, w: 260, content: { md: 'Buy the orange ball again' }, createdAt: now - 3000 }),
     card({ id: id(), boardId: tb, type: 'note', x: 0, y: 0, w: 260, content: { md: "Ideas for Biscuit's birthday" }, createdAt: now - 2000 }),
-    card({ id: id(), boardId: tb, type: 'link', x: 0, y: 0, w: 260, content: { url: 'http://localhost:5180/og.html', status: 'ok', title: 'Good Boy Supplies & Treats' }, createdAt: now - 1000 }),
+    card({ id: id(), boardId: tb, type: 'link', x: 0, y: 0, w: 260, content: { url: `${FIXTURES}/og.html`, status: 'ok', title: 'Good Boy Supplies & Treats' }, createdAt: now - 1000 }),
   ]
   expect((await postSync(page.request, { data: { changes: objs.map((o) => ({ id: o.id, patch: o })) } })).ok()).toBe(true)
   const c1 = id()

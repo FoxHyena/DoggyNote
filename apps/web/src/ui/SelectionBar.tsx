@@ -13,6 +13,9 @@ import { union, worldToScreen } from '@doggynote/core'
 import { BOARD_ICONS, BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
 import { canvasControlsSize } from './CanvasControls.tsx'
 import { openThread } from './CommentsPanel.tsx'
+import { TodoOptions } from './TodoOptions.tsx'
+import { BarMenu } from './BarMenu.tsx'
+import { duplicateSelection } from '../state/clipboard.ts'
 
 // Floating bar for the current selection: colour, board icon, bury (trash).
 // On touch it also offers what a mouse does with clicks and modifier keys
@@ -22,14 +25,18 @@ export function SelectionBar() {
   const [barSize, setBarSize] = createSignal({ width: 400, height: 46 })
   const cards = createMemo(() => [...selection()].map((id) => doc.getCard(id)).filter((c): c is Card => !!c))
   const conns = createMemo(() => [...selection()].filter((id) => doc.get(id)?.kind === 'connection'))
-  const show = () => (cards().length || conns().length) && !draggingIds().size && !editingId() && !connectMode()
   // Touch screens get a bar along the bottom: thumbs reach it, and it never covers the card.
   const docked = () => phone() || touch()
+  // A click on a to-do list edits it straight away; its colour and list options
+  // stay within reach above it (touch selects first, so it has the docked bar).
+  const editingList = () => !docked() && doc.getCard(editingId() ?? '')?.type === 'todo'
+  const show = () => (cards().length || conns().length) && !draggingIds().size && (!editingId() || editingList()) && !connectMode()
   const sole = () => (cards().length === 1 && selection().size === 1 ? cards()[0] : undefined)
   const editable = () => {
     const c = sole()
     return !!c && (c.type === 'note' || c.type === 'todo' || c.type === 'column') && doc.canWriteObject(c)
   }
+  const canDuplicate = () => cards().length > 0 && cards().every((c) => doc.canWriteObject(c))
   const bury = () => {
     const n = selection().size
     trashSelection()
@@ -134,12 +141,23 @@ export function SelectionBar() {
             Edit
           </button>
         </Show>
+        <Show when={sole()?.type === 'todo' && doc.canWriteObject(sole())}>
+          <TodoOptions card={sole() as Card<'todo'>} />
+        </Show>
+        <Show when={!editingList()}>
+        <Show when={!phone() && canDuplicate()}>
+          <button class="bar-btn" data-testid="duplicate" title="Duplicate (⌘D)" onClick={duplicateSelection}>
+            <Icon size={18}>{ToolIcons.duplicate()}</Icon>
+            Duplicate
+          </button>
+        </Show>
         <Show when={cards().length === 1 && cards()[0].type !== 'board'}>
           <button class="bar-btn" data-testid="comment-button" title="Comment on this card" onClick={() => openThread(cards()[0].id)}>
             <Icon size={18}>{ToolIcons.comment()}</Icon>
             Comment
           </button>
         </Show>
+        <Show when={!phone()}>
         <Show when={touch() && sole()}>
           <button class="bar-btn" data-testid="connect-card" onClick={startConnect}>
             <Icon size={18}>{ToolIcons.line()}</Icon>
@@ -152,10 +170,37 @@ export function SelectionBar() {
             {selection().size > 1 ? `${selection().size} picked` : 'Select'}
           </button>
         </Show>
+        </Show>
+        {/* Phones: the less frequent actions share one sheet, so the bar fits a small screen. */}
+        <Show when={phone()}>
+          <BarMenu label={selection().size > 1 ? `${selection().size} picked` : 'More'} title="More for this card" testId="selection-more" menuTestId="selection-more-menu" icon={<Icon size={18}>{ToolIcons.more()}</Icon>}>
+            {(close) => (
+              <>
+                <Show when={canDuplicate()}>
+                  <button class="menu-item" role="menuitem" data-testid="duplicate" onClick={() => { close(); duplicateSelection() }}>
+                    <Icon size={18}>{ToolIcons.duplicate()}</Icon>
+                    Duplicate
+                  </button>
+                </Show>
+                <Show when={sole()}>
+                  <button class="menu-item" role="menuitem" data-testid="connect-card" onClick={() => { close(); startConnect() }}>
+                    <Icon size={18}>{ToolIcons.line()}</Icon>
+                    Connect to another card
+                  </button>
+                </Show>
+                <button class="menu-item" role="menuitemcheckbox" aria-checked={selectMore()} data-testid="select-more" onClick={() => { close(); setSelectMore(!selectMore()) }}>
+                  <Icon size={18}>{ToolIcons.multi()}</Icon>
+                  {selectMore() ? 'Stop picking more' : 'Pick more cards'}
+                </button>
+              </>
+            )}
+          </BarMenu>
+        </Show>
         <button class="bar-btn" data-testid="bury" title={`Move to ${COPY.trash} (Delete)`} onClick={bury}>
           <Icon size={18}>{ToolIcons.trash()}</Icon>
           Bury
         </button>
+        </Show>
         <Show when={phone()}>
           <button class="icon-btn bar-done" data-testid="selection-done" aria-label="Done" title="Done" onClick={clearSelection}>
             <Icon size={18}>{ToolIcons.close()}</Icon>

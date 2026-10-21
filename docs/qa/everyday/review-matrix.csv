@@ -1,0 +1,225 @@
+State,Device,Engine,Appearance,Before,r1,r2,r3,after
+board,Chrome · 1440,chromium,dark,docs/qa/everyday/before/chromium-dark-chrome1440-board.jpg,,,,docs/qa/everyday/after/chromium-dark-chrome1440-board.jpg
+column-click,Chrome · 1440,chromium,dark,docs/qa/everyday/before/chromium-dark-chrome1440-column-click.jpg,,,,docs/qa/everyday/after/chromium-dark-chrome1440-column-click.jpg
+movie-search,Chrome · 1440,chromium,dark,,,,,docs/qa/everyday/after/chromium-dark-chrome1440-movie-search.jpg
+movies,Chrome · 1440,chromium,dark,,,,,docs/qa/everyday/after/chromium-dark-chrome1440-movies.jpg
+note-edit,Chrome · 1440,chromium,dark,docs/qa/everyday/before/chromium-dark-chrome1440-note-edit.jpg,,,,docs/qa/everyday/after/chromium-dark-chrome1440-note-edit.jpg
+note-edit-list,Chrome · 1440,chromium,dark,docs/qa/everyday/before/chromium-dark-chrome1440-note-edit-list.jpg,,,,docs/qa/everyday/after/chromium-dark-chrome1440-note-edit-list.jpg
+overview,Chrome · 1440,chromium,dark,docs/qa/everyday/before/chromium-dark-chrome1440-overview.jpg,,,,docs/qa/everyday/after/chromium-dark-chrome1440-overview.jpg
+proposal-current,Chrome · 1440,chromium,dark,,,,,docs/qa/everyday/after/chromium-dark-chrome1440-proposal-current.jpg
+proposal-dialog,Chrome · 1440,chromium,dark,,,,,docs/qa/everyday/after/chromium-dark-chrome1440-proposal-dialog.jpg
+proposals,Chrome · 1440,chromium,dark,docs/qa/everyday/before/chromium-dark-chrome1440-proposals.jpg,,,,docs/qa/everyday/after/chromium-dark-chrome1440-proposals.jpg
+sync,Chrome · 1440,chromium,dark,docs/qa/everyday/before/chromium-dark-chrome1440-sync.jpg,,,,docs/qa/everyday/after/chromium-dark-chrome1440-sync.jpg
+todo,Chrome · 1440,chromium,dark,docs/qa/everyday/before/chromium-dark-chrome1440-todo.jpg,,,,docs/qa/everyday/after/chromium-dark-chrome1440-todo.jpg
+todo-options,Chrome · 1440,chromium,dark,,,,,docs/qa/everyday/after/chromium-dark-chrome1440-todo-options.jpg
+todo-select,Chrome · 1440,chromium,dark,docs/qa/everyday/before/chromium-dark-chrome1440-todo-select.jpg,,,,docs/qa/everyday/after/chromium-dark-chrome1440-todo-select.jpg
+board,Pixel 7 · 412,chromium,dark,docs/qa/everyday/before/chromium-dark-pixel7-board.jpg,,,,docs/qa/everyday/after/chromium-dark-pixel7-board.jpg
+column-click,Pixel 7 · 412,chromium,dark,docs/qa/everyday/before/chromium-dark-pixel7-column-click.jpg,,,,docs/qa/everyday/after/chromium-dark-pixel7-column-click.jpg
+movie-search,Pixel 7 · 412,chromium,dark,,,,,docs/qa/everyday/after/chromium-dark-pixel7-movie-search.jpg
+movies,Pixel 7 · 412,chromium,dark,,,,,docs/qa/everyday/after/chromium-dark-pixel7-movies.jpg
+note-edit,Pixel 7 · 412,chromium,dark,docs/qa/everyday/before/chromium-dark-pixel7-note-edit.jpg,,,,docs/qa/everyday/after/chromium-dark-pixel7-note-edit.jpg
+note-edit-list,Pixel 7 · 412,chromium,dark,docs/qa/everyday/before/chromium-dark-pixel7-note-edit-list.jpg,,,,docs/qa/everyday/after/chromium-dark-pixel7-note-edit-list.jpg
+overview,Pixel 7 · 412,chromium,dark,docs/qa/everyday/before/chromium-dark-pixel7-overview.jpg,,,,docs/qa/everyday/after/chromium-dark-pixel7-overview.jpg
+proposal-current,Pixel 7 · 412,chromium,dark,,,,,docs/qa/everyday/after/chromium-dark-pixel7-proposal-current.jpg
+proposal-dialog,Pixel 7 · 412,chromium,dark,,,,,docs/qa/everyday/after/chromium-dark-pixel7-proposal-dialog.jpg
+proposals,Pixel 7 · 412,chromium,dark,,,,,docs/qa/everyday/after/chromium-dark-pixel7-proposals.jpg
+sync,Pixel 7 · 412,chromium,dark,docs/qa/everyday/before/chromium-dark-pixel7-sync.jpg,,,,docs/qa/everyday/after/chromium-dark-pixel7-sync.jpg
+todo,Pixel 7 · 412,chromium,dark,docs/qa/everyday/before/chromium-dark-pixel7-todo.jpg,,,,docs/qa/everyday/after/chromium-dark-pixel7-todo.jpg
+todo-options,Pixel 7 · 412,chromium,dark,,,,,docs/qa/everyday/after/chromium-dark-pixel7-todo-options.jpg
+todo-select,Pixel 7 · 412,chromium,dark,docs/qa/everyday/before/chromium-dark-pixel7-todo-select.jpg,,,,docs/qa/everyday/after/chromium-dark-pixel7-todo-select.jpg
+board,Chrome · 1440,chromium,light,docs/qa/everyday/before/chromium-light-chrome1440-board.jpg,,,,docs/qa/everyday/after/chromium-light-chrome1440-board.jpg
+column-click,Chrome · 1440,chromium,light,docs/qa/everyday/before/chromium-light-chrome1440-column-click.jpg,,,,docs/qa/everyday/after/chromium-light-chrome1440-column-click.jpg
+movie-search,Chrome · 1440,chromium,light,,,,,docs/qa/everyday/after/chromium-light-chrome1440-movie-search.jpg
+movies,Chrome · 1440,chromium,light,,,,,docs/qa/everyday/after/chromium-light-chrome1440-movies.jpg
+note-edit,Chrome · 1440,chromium,light,docs/qa/everyday/before/chromium-light-chrome1440-note-edit.jpg,,,,docs/qa/everyday/after/chromium-light-chrome1440-note-edit.jpg
+note-edit-list,Chrome · 1440,chromium,light,docs/qa/everyday/before/chromium-light-chrome1440-note-edit-list.jpg,,,,docs/qa/everyday/after/chromium-light-chrome1440-note-edit-list.jpg
+overview,Chrome · 1440,chromium,light,docs/qa/everyday/before/chromium-light-chrome1440-overview.jpg,,,,docs/qa/everyday/after/chromium-light-chrome1440-overview.jpg
+proposal-current,Chrome · 1440,chromium,light,,,,,docs/qa/everyday/after/chromium-light-chrome1440-proposal-current.jpg
+proposal-dialog,Chrome · 1440,chromium,light,,,,,docs/qa/everyday/after/chromium-light-chrome1440-proposal-dialog.jpg
+proposals,Chrome · 1440,chromium,light,docs/qa/everyday/before/chromium-light-chrome1440-proposals.jpg,,,,docs/qa/everyday/after/chromium-light-chrome1440-proposals.jpg
+sync,Chrome · 1440,chromium,light,docs/qa/everyday/before/chromium-light-chrome1440-sync.jpg,,,,docs/qa/everyday/after/chromium-light-chrome1440-sync.jpg
+todo,Chrome · 1440,chromium,light,docs/qa/everyday/before/chromium-light-chrome1440-todo.jpg,,,,docs/qa/everyday/after/chromium-light-chrome1440-todo.jpg
+todo-options,Chrome · 1440,chromium,light,,,,,docs/qa/everyday/after/chromium-light-chrome1440-todo-options.jpg
+todo-select,Chrome · 1440,chromium,light,docs/qa/everyday/before/chromium-light-chrome1440-todo-select.jpg,,,,docs/qa/everyday/after/chromium-light-chrome1440-todo-select.jpg
+board,Pixel 7 · 412,chromium,light,docs/qa/everyday/before/chromium-light-pixel7-board.jpg,,,,docs/qa/everyday/after/chromium-light-pixel7-board.jpg
+column-click,Pixel 7 · 412,chromium,light,docs/qa/everyday/before/chromium-light-pixel7-column-click.jpg,,,,docs/qa/everyday/after/chromium-light-pixel7-column-click.jpg
+movie-search,Pixel 7 · 412,chromium,light,,,,,docs/qa/everyday/after/chromium-light-pixel7-movie-search.jpg
+movies,Pixel 7 · 412,chromium,light,,,,,docs/qa/everyday/after/chromium-light-pixel7-movies.jpg
+note-edit,Pixel 7 · 412,chromium,light,docs/qa/everyday/before/chromium-light-pixel7-note-edit.jpg,,,,docs/qa/everyday/after/chromium-light-pixel7-note-edit.jpg
+note-edit-list,Pixel 7 · 412,chromium,light,docs/qa/everyday/before/chromium-light-pixel7-note-edit-list.jpg,,,,docs/qa/everyday/after/chromium-light-pixel7-note-edit-list.jpg
+overview,Pixel 7 · 412,chromium,light,docs/qa/everyday/before/chromium-light-pixel7-overview.jpg,,,,docs/qa/everyday/after/chromium-light-pixel7-overview.jpg
+proposal-current,Pixel 7 · 412,chromium,light,,,,,docs/qa/everyday/after/chromium-light-pixel7-proposal-current.jpg
+proposal-dialog,Pixel 7 · 412,chromium,light,,,,,docs/qa/everyday/after/chromium-light-pixel7-proposal-dialog.jpg
+proposals,Pixel 7 · 412,chromium,light,,,,,docs/qa/everyday/after/chromium-light-pixel7-proposals.jpg
+sync,Pixel 7 · 412,chromium,light,docs/qa/everyday/before/chromium-light-pixel7-sync.jpg,,,,docs/qa/everyday/after/chromium-light-pixel7-sync.jpg
+todo,Pixel 7 · 412,chromium,light,docs/qa/everyday/before/chromium-light-pixel7-todo.jpg,,,,docs/qa/everyday/after/chromium-light-pixel7-todo.jpg
+todo-options,Pixel 7 · 412,chromium,light,,,,,docs/qa/everyday/after/chromium-light-pixel7-todo-options.jpg
+todo-select,Pixel 7 · 412,chromium,light,docs/qa/everyday/before/chromium-light-pixel7-todo-select.jpg,,,,docs/qa/everyday/after/chromium-light-pixel7-todo-select.jpg
+board,iPad Pro 11,webkit,dark,docs/qa/everyday/before/webkit-dark-ipad-board.jpg,,,,docs/qa/everyday/after/webkit-dark-ipad-board.jpg
+column-click,iPad Pro 11,webkit,dark,docs/qa/everyday/before/webkit-dark-ipad-column-click.jpg,,,,docs/qa/everyday/after/webkit-dark-ipad-column-click.jpg
+movie-search,iPad Pro 11,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-ipad-movie-search.jpg
+movies,iPad Pro 11,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-ipad-movies.jpg
+note-edit,iPad Pro 11,webkit,dark,docs/qa/everyday/before/webkit-dark-ipad-note-edit.jpg,,,,docs/qa/everyday/after/webkit-dark-ipad-note-edit.jpg
+note-edit-list,iPad Pro 11,webkit,dark,docs/qa/everyday/before/webkit-dark-ipad-note-edit-list.jpg,,,,docs/qa/everyday/after/webkit-dark-ipad-note-edit-list.jpg
+overview,iPad Pro 11,webkit,dark,docs/qa/everyday/before/webkit-dark-ipad-overview.jpg,,,,docs/qa/everyday/after/webkit-dark-ipad-overview.jpg
+proposal-current,iPad Pro 11,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-ipad-proposal-current.jpg
+proposal-dialog,iPad Pro 11,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-ipad-proposal-dialog.jpg
+proposals,iPad Pro 11,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-ipad-proposals.jpg
+sync,iPad Pro 11,webkit,dark,docs/qa/everyday/before/webkit-dark-ipad-sync.jpg,,,,docs/qa/everyday/after/webkit-dark-ipad-sync.jpg
+todo,iPad Pro 11,webkit,dark,docs/qa/everyday/before/webkit-dark-ipad-todo.jpg,,,,docs/qa/everyday/after/webkit-dark-ipad-todo.jpg
+todo-options,iPad Pro 11,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-ipad-todo-options.jpg
+todo-select,iPad Pro 11,webkit,dark,docs/qa/everyday/before/webkit-dark-ipad-todo-select.jpg,,,,docs/qa/everyday/after/webkit-dark-ipad-todo-select.jpg
+board,iPhone 15 Pro · 393,webkit,dark,docs/qa/everyday/before/webkit-dark-iphone15-board.jpg,,,,docs/qa/everyday/after/webkit-dark-iphone15-board.jpg
+column-click,iPhone 15 Pro · 393,webkit,dark,docs/qa/everyday/before/webkit-dark-iphone15-column-click.jpg,,,,docs/qa/everyday/after/webkit-dark-iphone15-column-click.jpg
+movie-search,iPhone 15 Pro · 393,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-iphone15-movie-search.jpg
+movies,iPhone 15 Pro · 393,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-iphone15-movies.jpg
+note-edit,iPhone 15 Pro · 393,webkit,dark,docs/qa/everyday/before/webkit-dark-iphone15-note-edit.jpg,,,,docs/qa/everyday/after/webkit-dark-iphone15-note-edit.jpg
+note-edit-list,iPhone 15 Pro · 393,webkit,dark,docs/qa/everyday/before/webkit-dark-iphone15-note-edit-list.jpg,,,,docs/qa/everyday/after/webkit-dark-iphone15-note-edit-list.jpg
+overview,iPhone 15 Pro · 393,webkit,dark,docs/qa/everyday/before/webkit-dark-iphone15-overview.jpg,,,,docs/qa/everyday/after/webkit-dark-iphone15-overview.jpg
+proposal-current,iPhone 15 Pro · 393,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-iphone15-proposal-current.jpg
+proposal-dialog,iPhone 15 Pro · 393,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-iphone15-proposal-dialog.jpg
+proposals,iPhone 15 Pro · 393,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-iphone15-proposals.jpg
+sync,iPhone 15 Pro · 393,webkit,dark,docs/qa/everyday/before/webkit-dark-iphone15-sync.jpg,,,,docs/qa/everyday/after/webkit-dark-iphone15-sync.jpg
+todo,iPhone 15 Pro · 393,webkit,dark,docs/qa/everyday/before/webkit-dark-iphone15-todo.jpg,,,,docs/qa/everyday/after/webkit-dark-iphone15-todo.jpg
+todo-options,iPhone 15 Pro · 393,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-iphone15-todo-options.jpg
+todo-select,iPhone 15 Pro · 393,webkit,dark,docs/qa/everyday/before/webkit-dark-iphone15-todo-select.jpg,,,,docs/qa/everyday/after/webkit-dark-iphone15-todo-select.jpg
+board,iPhone landscape · 852×393,webkit,dark,docs/qa/everyday/before/webkit-dark-landscape-board.jpg,,,,docs/qa/everyday/after/webkit-dark-landscape-board.jpg
+column-click,iPhone landscape · 852×393,webkit,dark,docs/qa/everyday/before/webkit-dark-landscape-column-click.jpg,,,,docs/qa/everyday/after/webkit-dark-landscape-column-click.jpg
+movie-search,iPhone landscape · 852×393,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-landscape-movie-search.jpg
+movies,iPhone landscape · 852×393,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-landscape-movies.jpg
+note-edit,iPhone landscape · 852×393,webkit,dark,docs/qa/everyday/before/webkit-dark-landscape-note-edit.jpg,,,,docs/qa/everyday/after/webkit-dark-landscape-note-edit.jpg
+note-edit-list,iPhone landscape · 852×393,webkit,dark,docs/qa/everyday/before/webkit-dark-landscape-note-edit-list.jpg,,,,docs/qa/everyday/after/webkit-dark-landscape-note-edit-list.jpg
+overview,iPhone landscape · 852×393,webkit,dark,docs/qa/everyday/before/webkit-dark-landscape-overview.jpg,,,,docs/qa/everyday/after/webkit-dark-landscape-overview.jpg
+proposal-current,iPhone landscape · 852×393,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-landscape-proposal-current.jpg
+proposal-dialog,iPhone landscape · 852×393,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-landscape-proposal-dialog.jpg
+proposals,iPhone landscape · 852×393,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-landscape-proposals.jpg
+sync,iPhone landscape · 852×393,webkit,dark,docs/qa/everyday/before/webkit-dark-landscape-sync.jpg,,,,docs/qa/everyday/after/webkit-dark-landscape-sync.jpg
+todo,iPhone landscape · 852×393,webkit,dark,docs/qa/everyday/before/webkit-dark-landscape-todo.jpg,,,,docs/qa/everyday/after/webkit-dark-landscape-todo.jpg
+todo-options,iPhone landscape · 852×393,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-landscape-todo-options.jpg
+todo-select,iPhone landscape · 852×393,webkit,dark,docs/qa/everyday/before/webkit-dark-landscape-todo-select.jpg,,,,docs/qa/everyday/after/webkit-dark-landscape-todo-select.jpg
+board,Safari · 1024,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1024-board.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1024-board.jpg
+column-click,Safari · 1024,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1024-column-click.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1024-column-click.jpg
+movie-search,Safari · 1024,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-mac1024-movie-search.jpg
+movies,Safari · 1024,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-mac1024-movies.jpg
+note-edit,Safari · 1024,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1024-note-edit.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1024-note-edit.jpg
+note-edit-list,Safari · 1024,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1024-note-edit-list.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1024-note-edit-list.jpg
+overview,Safari · 1024,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1024-overview.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1024-overview.jpg
+proposal-current,Safari · 1024,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-mac1024-proposal-current.jpg
+proposal-dialog,Safari · 1024,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-mac1024-proposal-dialog.jpg
+proposals,Safari · 1024,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1024-proposals.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1024-proposals.jpg
+sync,Safari · 1024,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1024-sync.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1024-sync.jpg
+todo,Safari · 1024,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1024-todo.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1024-todo.jpg
+todo-options,Safari · 1024,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-mac1024-todo-options.jpg
+todo-select,Safari · 1024,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1024-todo-select.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1024-todo-select.jpg
+board,Safari · 1440,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1440-board.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1440-board.jpg
+column-click,Safari · 1440,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1440-column-click.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1440-column-click.jpg
+movie-search,Safari · 1440,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-mac1440-movie-search.jpg
+movies,Safari · 1440,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-mac1440-movies.jpg
+note-edit,Safari · 1440,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1440-note-edit.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1440-note-edit.jpg
+note-edit-list,Safari · 1440,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1440-note-edit-list.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1440-note-edit-list.jpg
+overview,Safari · 1440,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1440-overview.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1440-overview.jpg
+proposal-current,Safari · 1440,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-mac1440-proposal-current.jpg
+proposal-dialog,Safari · 1440,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-mac1440-proposal-dialog.jpg
+proposals,Safari · 1440,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1440-proposals.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1440-proposals.jpg
+sync,Safari · 1440,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1440-sync.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1440-sync.jpg
+todo,Safari · 1440,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1440-todo.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1440-todo.jpg
+todo-options,Safari · 1440,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-mac1440-todo-options.jpg
+todo-select,Safari · 1440,webkit,dark,docs/qa/everyday/before/webkit-dark-mac1440-todo-select.jpg,,,,docs/qa/everyday/after/webkit-dark-mac1440-todo-select.jpg
+board,iPhone SE · 375,webkit,dark,docs/qa/everyday/before/webkit-dark-se-board.jpg,,,,docs/qa/everyday/after/webkit-dark-se-board.jpg
+column-click,iPhone SE · 375,webkit,dark,docs/qa/everyday/before/webkit-dark-se-column-click.jpg,,,,docs/qa/everyday/after/webkit-dark-se-column-click.jpg
+movie-search,iPhone SE · 375,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-se-movie-search.jpg
+movies,iPhone SE · 375,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-se-movies.jpg
+note-edit,iPhone SE · 375,webkit,dark,docs/qa/everyday/before/webkit-dark-se-note-edit.jpg,,,,docs/qa/everyday/after/webkit-dark-se-note-edit.jpg
+note-edit-list,iPhone SE · 375,webkit,dark,docs/qa/everyday/before/webkit-dark-se-note-edit-list.jpg,,,,docs/qa/everyday/after/webkit-dark-se-note-edit-list.jpg
+overview,iPhone SE · 375,webkit,dark,docs/qa/everyday/before/webkit-dark-se-overview.jpg,,,,docs/qa/everyday/after/webkit-dark-se-overview.jpg
+proposal-current,iPhone SE · 375,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-se-proposal-current.jpg
+proposal-dialog,iPhone SE · 375,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-se-proposal-dialog.jpg
+proposals,iPhone SE · 375,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-se-proposals.jpg
+sync,iPhone SE · 375,webkit,dark,docs/qa/everyday/before/webkit-dark-se-sync.jpg,,,,docs/qa/everyday/after/webkit-dark-se-sync.jpg
+todo,iPhone SE · 375,webkit,dark,docs/qa/everyday/before/webkit-dark-se-todo.jpg,,,,docs/qa/everyday/after/webkit-dark-se-todo.jpg
+todo-options,iPhone SE · 375,webkit,dark,,,,,docs/qa/everyday/after/webkit-dark-se-todo-options.jpg
+todo-select,iPhone SE · 375,webkit,dark,docs/qa/everyday/before/webkit-dark-se-todo-select.jpg,,,,docs/qa/everyday/after/webkit-dark-se-todo-select.jpg
+board,iPad Pro 11,webkit,light,docs/qa/everyday/before/webkit-light-ipad-board.jpg,,,,docs/qa/everyday/after/webkit-light-ipad-board.jpg
+column-click,iPad Pro 11,webkit,light,docs/qa/everyday/before/webkit-light-ipad-column-click.jpg,,,,docs/qa/everyday/after/webkit-light-ipad-column-click.jpg
+movie-search,iPad Pro 11,webkit,light,,,,,docs/qa/everyday/after/webkit-light-ipad-movie-search.jpg
+movies,iPad Pro 11,webkit,light,,,,,docs/qa/everyday/after/webkit-light-ipad-movies.jpg
+note-edit,iPad Pro 11,webkit,light,docs/qa/everyday/before/webkit-light-ipad-note-edit.jpg,,,,docs/qa/everyday/after/webkit-light-ipad-note-edit.jpg
+note-edit-list,iPad Pro 11,webkit,light,docs/qa/everyday/before/webkit-light-ipad-note-edit-list.jpg,,,,docs/qa/everyday/after/webkit-light-ipad-note-edit-list.jpg
+overview,iPad Pro 11,webkit,light,docs/qa/everyday/before/webkit-light-ipad-overview.jpg,,,,docs/qa/everyday/after/webkit-light-ipad-overview.jpg
+proposal-current,iPad Pro 11,webkit,light,,,,,docs/qa/everyday/after/webkit-light-ipad-proposal-current.jpg
+proposal-dialog,iPad Pro 11,webkit,light,,,,,docs/qa/everyday/after/webkit-light-ipad-proposal-dialog.jpg
+proposals,iPad Pro 11,webkit,light,,,,,docs/qa/everyday/after/webkit-light-ipad-proposals.jpg
+sync,iPad Pro 11,webkit,light,docs/qa/everyday/before/webkit-light-ipad-sync.jpg,,,,docs/qa/everyday/after/webkit-light-ipad-sync.jpg
+todo,iPad Pro 11,webkit,light,docs/qa/everyday/before/webkit-light-ipad-todo.jpg,,,,docs/qa/everyday/after/webkit-light-ipad-todo.jpg
+todo-options,iPad Pro 11,webkit,light,,,,,docs/qa/everyday/after/webkit-light-ipad-todo-options.jpg
+todo-select,iPad Pro 11,webkit,light,docs/qa/everyday/before/webkit-light-ipad-todo-select.jpg,,,,docs/qa/everyday/after/webkit-light-ipad-todo-select.jpg
+board,iPhone 15 Pro · 393,webkit,light,docs/qa/everyday/before/webkit-light-iphone15-board.jpg,,,,docs/qa/everyday/after/webkit-light-iphone15-board.jpg
+column-click,iPhone 15 Pro · 393,webkit,light,docs/qa/everyday/before/webkit-light-iphone15-column-click.jpg,,,,docs/qa/everyday/after/webkit-light-iphone15-column-click.jpg
+movie-search,iPhone 15 Pro · 393,webkit,light,,,,,docs/qa/everyday/after/webkit-light-iphone15-movie-search.jpg
+movies,iPhone 15 Pro · 393,webkit,light,,,,,docs/qa/everyday/after/webkit-light-iphone15-movies.jpg
+note-edit,iPhone 15 Pro · 393,webkit,light,docs/qa/everyday/before/webkit-light-iphone15-note-edit.jpg,,,,docs/qa/everyday/after/webkit-light-iphone15-note-edit.jpg
+note-edit-list,iPhone 15 Pro · 393,webkit,light,docs/qa/everyday/before/webkit-light-iphone15-note-edit-list.jpg,,,,docs/qa/everyday/after/webkit-light-iphone15-note-edit-list.jpg
+overview,iPhone 15 Pro · 393,webkit,light,docs/qa/everyday/before/webkit-light-iphone15-overview.jpg,,,,docs/qa/everyday/after/webkit-light-iphone15-overview.jpg
+proposal-current,iPhone 15 Pro · 393,webkit,light,,,,,docs/qa/everyday/after/webkit-light-iphone15-proposal-current.jpg
+proposal-dialog,iPhone 15 Pro · 393,webkit,light,,,,,docs/qa/everyday/after/webkit-light-iphone15-proposal-dialog.jpg
+proposals,iPhone 15 Pro · 393,webkit,light,,,,,docs/qa/everyday/after/webkit-light-iphone15-proposals.jpg
+sync,iPhone 15 Pro · 393,webkit,light,docs/qa/everyday/before/webkit-light-iphone15-sync.jpg,,,,docs/qa/everyday/after/webkit-light-iphone15-sync.jpg
+todo,iPhone 15 Pro · 393,webkit,light,docs/qa/everyday/before/webkit-light-iphone15-todo.jpg,,,,docs/qa/everyday/after/webkit-light-iphone15-todo.jpg
+todo-options,iPhone 15 Pro · 393,webkit,light,,,,,docs/qa/everyday/after/webkit-light-iphone15-todo-options.jpg
+todo-select,iPhone 15 Pro · 393,webkit,light,docs/qa/everyday/before/webkit-light-iphone15-todo-select.jpg,,,,docs/qa/everyday/after/webkit-light-iphone15-todo-select.jpg
+board,iPhone landscape · 852×393,webkit,light,docs/qa/everyday/before/webkit-light-landscape-board.jpg,,,,docs/qa/everyday/after/webkit-light-landscape-board.jpg
+column-click,iPhone landscape · 852×393,webkit,light,docs/qa/everyday/before/webkit-light-landscape-column-click.jpg,,,,docs/qa/everyday/after/webkit-light-landscape-column-click.jpg
+movie-search,iPhone landscape · 852×393,webkit,light,,,,,docs/qa/everyday/after/webkit-light-landscape-movie-search.jpg
+movies,iPhone landscape · 852×393,webkit,light,,,,,docs/qa/everyday/after/webkit-light-landscape-movies.jpg
+note-edit,iPhone landscape · 852×393,webkit,light,docs/qa/everyday/before/webkit-light-landscape-note-edit.jpg,,,,docs/qa/everyday/after/webkit-light-landscape-note-edit.jpg
+note-edit-list,iPhone landscape · 852×393,webkit,light,docs/qa/everyday/before/webkit-light-landscape-note-edit-list.jpg,,,,docs/qa/everyday/after/webkit-light-landscape-note-edit-list.jpg
+overview,iPhone landscape · 852×393,webkit,light,docs/qa/everyday/before/webkit-light-landscape-overview.jpg,,,,docs/qa/everyday/after/webkit-light-landscape-overview.jpg
+proposal-current,iPhone landscape · 852×393,webkit,light,,,,,docs/qa/everyday/after/webkit-light-landscape-proposal-current.jpg
+proposal-dialog,iPhone landscape · 852×393,webkit,light,,,,,docs/qa/everyday/after/webkit-light-landscape-proposal-dialog.jpg
+proposals,iPhone landscape · 852×393,webkit,light,,,,,docs/qa/everyday/after/webkit-light-landscape-proposals.jpg
+sync,iPhone landscape · 852×393,webkit,light,docs/qa/everyday/before/webkit-light-landscape-sync.jpg,,,,docs/qa/everyday/after/webkit-light-landscape-sync.jpg
+todo,iPhone landscape · 852×393,webkit,light,docs/qa/everyday/before/webkit-light-landscape-todo.jpg,,,,docs/qa/everyday/after/webkit-light-landscape-todo.jpg
+todo-options,iPhone landscape · 852×393,webkit,light,,,,,docs/qa/everyday/after/webkit-light-landscape-todo-options.jpg
+todo-select,iPhone landscape · 852×393,webkit,light,docs/qa/everyday/before/webkit-light-landscape-todo-select.jpg,,,,docs/qa/everyday/after/webkit-light-landscape-todo-select.jpg
+board,Safari · 1024,webkit,light,docs/qa/everyday/before/webkit-light-mac1024-board.jpg,,,,docs/qa/everyday/after/webkit-light-mac1024-board.jpg
+column-click,Safari · 1024,webkit,light,docs/qa/everyday/before/webkit-light-mac1024-column-click.jpg,,,,docs/qa/everyday/after/webkit-light-mac1024-column-click.jpg
+movie-search,Safari · 1024,webkit,light,,,,,docs/qa/everyday/after/webkit-light-mac1024-movie-search.jpg
+movies,Safari · 1024,webkit,light,,,,,docs/qa/everyday/after/webkit-light-mac1024-movies.jpg
+note-edit,Safari · 1024,webkit,light,docs/qa/everyday/before/webkit-light-mac1024-note-edit.jpg,,,,docs/qa/everyday/after/webkit-light-mac1024-note-edit.jpg
+note-edit-list,Safari · 1024,webkit,light,docs/qa/everyday/before/webkit-light-mac1024-note-edit-list.jpg,,,,docs/qa/everyday/after/webkit-light-mac1024-note-edit-list.jpg
+overview,Safari · 1024,webkit,light,docs/qa/everyday/before/webkit-light-mac1024-overview.jpg,,,,docs/qa/everyday/after/webkit-light-mac1024-overview.jpg
+proposal-current,Safari · 1024,webkit,light,,,,,docs/qa/everyday/after/webkit-light-mac1024-proposal-current.jpg
+proposal-dialog,Safari · 1024,webkit,light,,,,,docs/qa/everyday/after/webkit-light-mac1024-proposal-dialog.jpg
+proposals,Safari · 1024,webkit,light,docs/qa/everyday/before/webkit-light-mac1024-proposals.jpg,,,,docs/qa/everyday/after/webkit-light-mac1024-proposals.jpg
+sync,Safari · 1024,webkit,light,docs/qa/everyday/before/webkit-light-mac1024-sync.jpg,,,,docs/qa/everyday/after/webkit-light-mac1024-sync.jpg
+todo,Safari · 1024,webkit,light,docs/qa/everyday/before/webkit-light-mac1024-todo.jpg,,,,docs/qa/everyday/after/webkit-light-mac1024-todo.jpg
+todo-options,Safari · 1024,webkit,light,,,,,docs/qa/everyday/after/webkit-light-mac1024-todo-options.jpg
+todo-select,Safari · 1024,webkit,light,docs/qa/everyday/before/webkit-light-mac1024-todo-select.jpg,,,,docs/qa/everyday/after/webkit-light-mac1024-todo-select.jpg
+board,Safari · 1440,webkit,light,docs/qa/everyday/before/webkit-light-mac1440-board.jpg,,,,docs/qa/everyday/after/webkit-light-mac1440-board.jpg
+column-click,Safari · 1440,webkit,light,docs/qa/everyday/before/webkit-light-mac1440-column-click.jpg,,,,docs/qa/everyday/after/webkit-light-mac1440-column-click.jpg
+movie-search,Safari · 1440,webkit,light,,,,,docs/qa/everyday/after/webkit-light-mac1440-movie-search.jpg
+movies,Safari · 1440,webkit,light,,,,,docs/qa/everyday/after/webkit-light-mac1440-movies.jpg
+note-edit,Safari · 1440,webkit,light,docs/qa/everyday/before/webkit-light-mac1440-note-edit.jpg,,,,docs/qa/everyday/after/webkit-light-mac1440-note-edit.jpg
+note-edit-list,Safari · 1440,webkit,light,docs/qa/everyday/before/webkit-light-mac1440-note-edit-list.jpg,,,,docs/qa/everyday/after/webkit-light-mac1440-note-edit-list.jpg
+overview,Safari · 1440,webkit,light,docs/qa/everyday/before/webkit-light-mac1440-overview.jpg,,,,docs/qa/everyday/after/webkit-light-mac1440-overview.jpg
+proposal-current,Safari · 1440,webkit,light,,,,,docs/qa/everyday/after/webkit-light-mac1440-proposal-current.jpg
+proposal-dialog,Safari · 1440,webkit,light,,,,,docs/qa/everyday/after/webkit-light-mac1440-proposal-dialog.jpg
+proposals,Safari · 1440,webkit,light,docs/qa/everyday/before/webkit-light-mac1440-proposals.jpg,,,,docs/qa/everyday/after/webkit-light-mac1440-proposals.jpg
+sync,Safari · 1440,webkit,light,docs/qa/everyday/before/webkit-light-mac1440-sync.jpg,,,,docs/qa/everyday/after/webkit-light-mac1440-sync.jpg
+todo,Safari · 1440,webkit,light,docs/qa/everyday/before/webkit-light-mac1440-todo.jpg,,,,docs/qa/everyday/after/webkit-light-mac1440-todo.jpg
+todo-options,Safari · 1440,webkit,light,,,,,docs/qa/everyday/after/webkit-light-mac1440-todo-options.jpg
+todo-select,Safari · 1440,webkit,light,docs/qa/everyday/before/webkit-light-mac1440-todo-select.jpg,,,,docs/qa/everyday/after/webkit-light-mac1440-todo-select.jpg
+board,iPhone SE · 375,webkit,light,docs/qa/everyday/before/webkit-light-se-board.jpg,,,,docs/qa/everyday/after/webkit-light-se-board.jpg
+column-click,iPhone SE · 375,webkit,light,docs/qa/everyday/before/webkit-light-se-column-click.jpg,,,,docs/qa/everyday/after/webkit-light-se-column-click.jpg
+movie-search,iPhone SE · 375,webkit,light,,,,,docs/qa/everyday/after/webkit-light-se-movie-search.jpg
+movies,iPhone SE · 375,webkit,light,,,,,docs/qa/everyday/after/webkit-light-se-movies.jpg
+note-edit,iPhone SE · 375,webkit,light,docs/qa/everyday/before/webkit-light-se-note-edit.jpg,,,,docs/qa/everyday/after/webkit-light-se-note-edit.jpg
+note-edit-list,iPhone SE · 375,webkit,light,docs/qa/everyday/before/webkit-light-se-note-edit-list.jpg,,,,docs/qa/everyday/after/webkit-light-se-note-edit-list.jpg
+overview,iPhone SE · 375,webkit,light,docs/qa/everyday/before/webkit-light-se-overview.jpg,,,,docs/qa/everyday/after/webkit-light-se-overview.jpg
+proposal-current,iPhone SE · 375,webkit,light,,,,,docs/qa/everyday/after/webkit-light-se-proposal-current.jpg
+proposal-dialog,iPhone SE · 375,webkit,light,,,,,docs/qa/everyday/after/webkit-light-se-proposal-dialog.jpg
+proposals,iPhone SE · 375,webkit,light,,,,,docs/qa/everyday/after/webkit-light-se-proposals.jpg
+sync,iPhone SE · 375,webkit,light,docs/qa/everyday/before/webkit-light-se-sync.jpg,,,,docs/qa/everyday/after/webkit-light-se-sync.jpg
+todo,iPhone SE · 375,webkit,light,docs/qa/everyday/before/webkit-light-se-todo.jpg,,,,docs/qa/everyday/after/webkit-light-se-todo.jpg
+todo-options,iPhone SE · 375,webkit,light,,,,,docs/qa/everyday/after/webkit-light-se-todo-options.jpg
+todo-select,iPhone SE · 375,webkit,light,docs/qa/everyday/before/webkit-light-se-todo-select.jpg,,,,docs/qa/everyday/after/webkit-light-se-todo-select.jpg

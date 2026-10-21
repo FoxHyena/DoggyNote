@@ -123,6 +123,8 @@ test('selecting a card docks the actions along the bottom', async ({ page }) => 
 test('Connect in the bar ties two cards together', async ({ page }) => {
   await seedCards(page, [note('Leash', 0, 0, { w: 140 }), note('Walk', 0, 160, { w: 140 })])
   await tapOn(page, cardByText(page, 'Leash'))
+  // Phones keep Connect in the More sheet, so the bar fits.
+  await page.getByTestId('selection-more').tap()
   await page.getByTestId('connect-card').tap()
   await expect(page.getByTestId('connect-banner')).toBeVisible()
   await tapOn(page, cardByText(page, 'Walk'))
@@ -134,11 +136,12 @@ test('Connect in the bar ties two cards together', async ({ page }) => {
 test('Select more picks several cards for one action', async ({ page }) => {
   await seedCards(page, [note('One', 0, 0, { w: 120 }), note('Two', 160, 0, { w: 120 }), note('Three', 0, 140, { w: 120 })])
   await tapOn(page, cardByText(page, 'One'))
+  await page.getByTestId('selection-more').tap()
   await page.getByTestId('select-more').tap()
   await tapOn(page, cardByText(page, 'Two'))
   await tapOn(page, cardByText(page, 'Three'))
   await expect(page.locator('.card.selected')).toHaveCount(3)
-  await expect(page.getByTestId('select-more')).toContainText('3 picked')
+  await expect(page.getByTestId('selection-more')).toContainText('3 picked')
   await page.getByTestId('bury').tap()
   await expect(page.getByTestId('card')).toHaveCount(0)
 })

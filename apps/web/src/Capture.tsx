@@ -1,6 +1,6 @@
 import './ui/canvas-entry.css'
 import { Match, Switch, createSignal, onMount } from 'solid-js'
-import { DEFAULT_SIZE, newId, safeHref, type Board, type Card } from '@doggynote/core'
+import { DEFAULT_SIZE, movieRefFromUrl, newId, safeHref, type Board, type Card } from '@doggynote/core'
 import { BoardIconSvg } from './ui/icons.tsx'
 import { COPY } from '@doggynote/theme'
 import { api } from './state/api.ts'
@@ -98,9 +98,13 @@ export function Capture() {
     const u = user()
     if (!t || !u) return
     const href = safeHref(t)
-    const card =
-      href && !/\s/.test(t)
-        ? baseCard('link', `toybox:${u.id}`, { url: href, status: 'pending' })
+    const isUrl = !!href && !/\s/.test(t)
+    const movie = isUrl ? movieRefFromUrl(href!) : null
+    // Movie and link cards fill in their details when the Inbox first shows them.
+    const card = movie
+      ? baseCard('movie', `toybox:${u.id}`, { kind: 'imdbId' in movie ? 'movie' : movie.kind, title: '', ...('imdbId' in movie ? { imdbId: movie.imdbId } : { tmdbId: movie.tmdbId }), status: 'pending' })
+      : isUrl
+        ? baseCard('link', `toybox:${u.id}`, { url: href!, status: 'pending' })
         : baseCard('note', `toybox:${u.id}`, { md: t })
     void save([card])
   }

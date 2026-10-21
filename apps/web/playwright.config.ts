@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
-import { API_PORT, WEB_PORT } from './e2e/ports.ts'
+import { API_PORT, DESKTOP_PORT, FIXTURE_PORT, WEB_PORT } from './e2e/ports.ts'
 
 export const AUTH_FILE = 'e2e/.auth/rex.json'
 const TOUCH_SPECS = /(mobile|tablet)-.*\.spec\.ts/
@@ -33,7 +33,7 @@ export default defineConfig({
     // The real Worker on a fresh local D1 + R2, seeded with users rex (admin) and fido.
     {
       // Never reused: every run gets a fresh database.
-      command: `PORT=${API_PORT} pnpm --filter server e2e:serve`,
+      command: `PORT=${API_PORT} DESKTOP_PORT=${DESKTOP_PORT} FIXTURE_PORT=${FIXTURE_PORT} pnpm --filter server e2e:serve`,
       url: `http://localhost:${API_PORT}/api/health`,
       reuseExistingServer: false,
       timeout: 120_000,
@@ -41,12 +41,12 @@ export default defineConfig({
     // The desktop flavour of the build (talks to the API cross-origin with a bearer
     // token), served from another origin to stand in for tauri://localhost.
     {
-      command: `VITE_APP_VERSION=0.0.1 VITE_API_BASE=http://localhost:${API_PORT} pnpm exec vite build --outDir dist-desktop && pnpm exec vite preview --outDir dist-desktop --port 4174 --strictPort`,
-      url: 'http://localhost:4174',
+      command: `VITE_APP_VERSION=0.0.1 VITE_API_BASE=http://localhost:${API_PORT} pnpm exec vite build --outDir dist-desktop && pnpm exec vite preview --outDir dist-desktop --port ${DESKTOP_PORT} --strictPort`,
+      url: `http://localhost:${DESKTOP_PORT}`,
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
     },
     // Pages for link previews, so tests never touch the internet.
-    { command: 'node e2e/fixture-server.mjs', url: 'http://localhost:5180/og.html', reuseExistingServer: !process.env.CI },
+    { command: `FIXTURE_PORT=${FIXTURE_PORT} node e2e/fixture-server.mjs`, url: `http://localhost:${FIXTURE_PORT}/og.html`, reuseExistingServer: !process.env.CI },
   ],
 })

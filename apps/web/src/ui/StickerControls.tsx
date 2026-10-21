@@ -61,7 +61,7 @@ export function StickerControls() {
           <div class="bar-sep" />
           {action('View pack', 'Pack', ToolIcons.sticker(), () => viewStickerPack(selected()!.content.packName))}
           {action('Duplicate', 'Duplicate', ToolIcons.duplicate(), () => duplicateSticker(selected()!))}
-          {action('Bury', 'Bury', ToolIcons.trash(), trashSelection, `Move to ${COPY.trash} (Delete)`)}
+          {action('Bury', 'Bury', ToolIcons.trash(), () => trashSelection(), `Move to ${COPY.trash} (Delete)`)}
         </div>
       </div>
     </Show>

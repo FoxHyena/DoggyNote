@@ -519,3 +519,23 @@ test('personal packs and favorites refresh across two devices while placed stick
     await expect.poll(() => page.getByTestId('placed-sticker').locator('img').evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true)
   } finally { await ctx.close() }
 })
+
+test('an agent proposal that adds a sticker is labelled in review and drawn by the board preview', async ({ page, request }) => {
+  const { id } = await stickerBoard(page, request); await importFixturePack(page)
+  await page.getByRole('button', { name: 'Close stickers', exact: true }).click()
+  const [existing] = await seedStickers(page, id, [{ x: 100, y: 100 }])
+  await setCamera(page, { x: -24, y: -24, zoom: 1 })
+  await expect(page.getByTestId('placed-sticker')).toHaveCount(1); await waitForSync(page)
+  const connection = await (await page.request.post('/api/agent-connections', { data: { name: 'Sticker helper', mode: 'propose', boardIds: [id] } })).json()
+  const source = (await placedStickers(page, id)).find((s: { id: string }) => s.id === existing)
+  const { id: _old, kind, boardId, w, angle, z, createdAt, content } = source
+  const staged = await page.request.post('/api/agent/proposals', { headers: { authorization: `Bearer ${connection.token}` }, data: { idempotencyKey: `sticker-${crypto.randomUUID()}`, label: 'Add a second pup', operations: [{ action: 'create', object: { id: crypto.randomUUID(), kind, boardId, x: 320, y: 100, w, angle, z: z + 1, createdAt, content } }] } })
+  expect(staged.status(), await staged.text()).toBe(201)
+  await page.getByTestId('board-more').click(); await page.getByTestId('agent-proposals').click()
+  await page.getByTestId('agent-review').getByRole('button', { name: /Add a second pup/ }).click()
+  await expect(page.getByTestId('agent-change-list')).toContainText(`Sticker · ${content.emoji} ${content.packName}`)
+  await page.getByTestId('preview-on-board').click()
+  await expect(page.getByTestId('placed-sticker')).toHaveCount(2)
+  await page.getByTestId('proposal-exit').click()
+  await expect(page.getByTestId('placed-sticker')).toHaveCount(1)
+})

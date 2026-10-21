@@ -4,6 +4,7 @@ import { logout, user } from '../state/session.ts'
 import { Icon, ToolIcons } from './icons.tsx'
 import { AdminDashboard } from './AdminDashboard.tsx'
 import { AgentConnections } from './AgentConnections.tsx'
+import { AboutDialog } from './AboutDialog.tsx'
 import { ThemeChoices, type ThemeChoicesProps } from './ThemeChoices.tsx'
 import { COPY } from '@doggynote/theme'
 import { canPrompt, installed, isIOS, promptInstall } from '../state/install.ts'
@@ -16,6 +17,7 @@ export function AccountMenu(props: ThemeChoicesProps) {
   const [open, setOpen] = createSignal(false)
   const [people, setPeople] = createSignal(false)
   const [agents, setAgents] = createSignal(false)
+  const [about, setAbout] = createSignal(false)
   const [installHelp, setInstallHelp] = createSignal(false)
   const offerInstall = () => !isTauri && !installed() && (canPrompt() || (touch() && isIOS))
   const menuId = createUniqueId()
@@ -107,11 +109,13 @@ export function AccountMenu(props: ThemeChoicesProps) {
             </Show>
           </Show>
           <button class="menu-item" data-testid="manage-agents" onClick={() => { close(); setAgents(true) }}>Agent connections</button>
+          <button class="menu-item" data-testid="about" onClick={() => { close(); setAbout(true) }}>About &amp; credits</button>
           <button class="menu-item" data-testid="sign-out" onClick={() => { close(); void logout() }}>
             Sign out
           </button>
         </div>
       </Show>
+      <Show when={about()}><AboutDialog onClose={() => { setAbout(false); trigger.focus() }} /></Show>
       <Show when={agents()}><AgentConnections onClose={() => { setAgents(false); trigger.focus() }} /></Show>
       <Show when={people()}>
         <AdminDashboard onClose={() => { setPeople(false); trigger.focus() }} />

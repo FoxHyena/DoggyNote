@@ -49,6 +49,13 @@ describe('contrast', () => {
     it(`${t}: selection outline clears 3:1 on canvas`, () => {
       expect(contrast(s.selection, s.bg)).toBeGreaterThanOrEqual(3)
     })
+    it(`${t}: proposal outlines clear 3:1 on canvas and card, and their chip text 4.5:1`, () => {
+      for (const d of [s.diffAdded, s.diffChanged, s.diffRemoved]) {
+        expect(contrast(d, s.bg)).toBeGreaterThanOrEqual(3)
+        expect(contrast(d, s.card)).toBeGreaterThanOrEqual(3)
+        expect(contrast(s.diffInk, d)).toBeGreaterThanOrEqual(4.5)
+      }
+    })
     for (const c of CARD_COLORS) {
       it(`${t}: ${c} card text clears 4.5:1`, () => {
         expect(contrast(cardColors[t][c].text, cardColors[t][c].bg)).toBeGreaterThanOrEqual(4.5)

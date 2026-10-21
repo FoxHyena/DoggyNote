@@ -9,6 +9,7 @@ import { agents } from './agents.ts'
 import { accessRoutes } from './access.ts'
 import { desktop } from './desktop.ts'
 import { isFetchableUrl, proxyImage, unfurl } from './unfurl.ts'
+import { movies } from './movies.ts'
 
 export type { Env } from './env.ts'
 
@@ -88,6 +89,7 @@ authed.use('/sync', async (c, next) => {
 authed.route('/', users)
 authed.route('/', sync)
 authed.route('/', stickers)
+authed.route('/', movies)
 authed.get('/unfurl', async (c) => {
   const target = isFetchableUrl(c.req.query('url') ?? '')
   if (!target) return c.json({ error: 'Only http(s) links can be previewed' }, 400)

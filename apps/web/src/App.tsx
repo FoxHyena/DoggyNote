@@ -48,6 +48,12 @@ import { EditDock } from './ui/EditDock.tsx'
 import { MobileDock, MobileStickerButton } from './ui/MobileDock.tsx'
 import { installSheetDrag } from './ui/sheet.ts'
 import { phone } from './state/device.ts'
+import { installClipboard } from './state/clipboard.ts'
+import { isPreviewBoard } from './state/preview.ts'
+import { ProposalBanner } from './ui/ProposalBanner.tsx'
+
+/** The board can be edited now: you may edit it, and no agent proposal is being previewed. */
+const editable = () => canEditBoard(boardId()) && !doc.previewing()
 
 export default function Root() {
   installLinkHandler()
@@ -110,7 +116,8 @@ function EditorApp() {
   onMount(() => onCleanup(installSheetDrag()))
 
   onMount(() => {
-    const off = installShortcuts({ get readOnly() { return !canEditBoard(boardId()) } })
+    const off = installShortcuts({ get readOnly() { return !editable() } })
+    const clipOff = installClipboard({ get readOnly() { return !editable() } })
     let nativeOff: (() => void) | undefined
     let disposed = false
     void installNativeSave().then((cleanup) => { if (disposed) cleanup(); else nativeOff = cleanup }).catch(console.warn)
@@ -126,6 +133,7 @@ function EditorApp() {
       disposed = true
       nativeOff?.()
       off()
+      clipOff()
       window.removeEventListener('pagehide', save)
       document.removeEventListener('visibilitychange', onVis)
     })
@@ -140,9 +148,9 @@ function EditorApp() {
         <Login onLogin={() => void boot()} />
       </Match>
       <Match when={phase() === 'ready'}>
-        <div class="app" classList={{ 'read-only': !canEditBoard(boardId()), phone: phone() }}>
+        <div class="app" classList={{ 'read-only': !editable(), phone: phone() }}>
           <TopBar
-            readOnly={!canEditBoard(boardId())}
+            readOnly={!editable()}
             left={<Show when={!phone()}><BoardNavigation /></Show>}
             status={<SyncStatus />}
             permission={<Show when={!canManageBoard(boardId())}><span class="share-permission" data-testid="board-permission">{canEditBoard(boardId()) ? 'Can edit' : 'View only'}</span></Show>}
@@ -157,18 +165,19 @@ function EditorApp() {
               </>
             }
           />
-          <Show when={canEditBoard(boardId()) && !phone()}><Toolbar /></Show>
+          <Show when={editable() && !phone()}><Toolbar /></Show>
           <main class="stage">
-            <Show when={canReadBoard(boardId()) && doc.getBoard(boardId())} fallback={<div class="gone"><h1>This board is unavailable</h1><p>Your access may have changed. Your other boards are still available.</p><button class="primary-btn" onClick={() => openBoard(homeBoardId())}>My Doghouse</button></div>}>
-              <Canvas readOnly={!canEditBoard(boardId())} />
+            <Show when={(canReadBoard(boardId()) || isPreviewBoard(boardId())) && doc.getBoard(boardId())} fallback={<div class="gone"><h1>This board is unavailable</h1><p>Your access may have changed. Your other boards are still available.</p><button class="primary-btn" onClick={() => openBoard(homeBoardId())}>My Doghouse</button></div>}>
+              <Canvas readOnly={!editable()} />
             </Show>
-            <Show when={canEditBoard(boardId())}><SelectionBar /><StickerTray /><StickerControls /><Show when={phone()}><MobileStickerButton /></Show><ConnectBanner /><TrashPanel /></Show>
-            <CanvasControls readOnly={!canEditBoard(boardId())} />
+            <Show when={editable()}><SelectionBar /><StickerTray /><StickerControls /><Show when={phone()}><MobileStickerButton /></Show><ConnectBanner /><TrashPanel /></Show>
+            <CanvasControls readOnly={!editable()} />
             <ToyboxPanel />
-            <CommentsPanel readOnly={!canEditBoard(boardId())} />
+            <CommentsPanel readOnly={!editable()} />
+            <ProposalBanner />
             <Toast />
           </main>
-          <Show when={phone()}><MobileDock readOnly={!canEditBoard(boardId())} /></Show>
+          <Show when={phone() && !doc.previewing()}><MobileDock readOnly={!editable()} /></Show>
         </div>
         <Show when={paletteOpen()}>
           <FetchPalette />

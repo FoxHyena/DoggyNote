@@ -14,6 +14,7 @@ import {
   connectorPath,
   edgePoint,
   nearestSide,
+  edgeNear,
   sideAnchor,
   findFreeSpot,
   intersects,
@@ -99,6 +100,16 @@ describe('connector anchors', () => {
     expect(nearestSide(r, { x: 100, y: 8 })).toBe('top')
     expect(nearestSide(r, { x: 190, y: 60 })).toBe('right')
     expect(nearestSide(r, { x: 100, y: 140 })).toBe('bottom')
+  })
+  it('edgeNear finds the edge the pointer is close to, and nothing in the middle', () => {
+    expect(edgeNear(r, { x: 100, y: 50 }, 12, 24)).toBe(null)
+    expect(edgeNear(r, { x: 100, y: 6 }, 12, 24)).toBe('top')
+    expect(edgeNear(r, { x: 100, y: -20 }, 12, 24)).toBe('top')
+    expect(edgeNear(r, { x: 100, y: -30 }, 12, 24)).toBe(null)
+    expect(edgeNear(r, { x: 210, y: 50 }, 12, 24)).toBe('right')
+    expect(edgeNear(r, { x: 5, y: 95 }, 12, 24)).toBe('bottom')
+    expect(edgeNear(r, { x: -10, y: 50 }, 12, 24)).toBe('left')
+    expect(edgeNear(r, { x: 40, y: 80 }, 12, 24)).toBe(null)
   })
   it('autoSides faces the rects along the dominant axis', () => {
     expect(autoSides(r, { x: 400, y: 10, w: 200, h: 100 })).toEqual(['right', 'left'])

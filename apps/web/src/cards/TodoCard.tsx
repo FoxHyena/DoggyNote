@@ -1,36 +1,98 @@
-import { For, Index, Show, createSignal, onMount } from 'solid-js'
-import { newId, type Card, type TodoItem } from '@doggynote/core'
+import { For, Index, Show, createEffect, createSignal, on, onMount } from 'solid-js'
+import { doneLabel, newId, sameOrder, settleItems, toggleItem, type Card, type Id, type TodoItem } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { editIsNewCard, endEdit, onEndEdit } from '../state/ui.ts'
 import { takeEditCaret } from '../canvas/Canvas.tsx'
 import { BoardIconSvg } from '../ui/icons.tsx'
 import type { CardProps } from '../canvas/CardView.tsx'
+import { clock, noteTick, postponeSettle, recentlyTicked, scheduleSettle, sortsDone } from '../state/todos.ts'
 
 type Content = Card<'todo'>['content']
 
 onEndEdit((id) => {
   const c = doc.getCard(id) as Card<'todo'> | undefined
   if (c?.type !== 'todo') return
-  const items = c.content.items.filter((i) => i.text.trim())
-  if (editIsNewCard() && !items.length && !c.content.title.trim()) return doc.discardNew(id)
-  // Drop blank rows left over from typing.
-  if (items.length !== c.content.items.length) doc.transient(id, { content: { ...c.content, items } } as Partial<Card>)
+  const kept = c.content.items.filter((i) => i.text.trim())
+  if (editIsNewCard() && !kept.length && !c.content.title.trim()) return doc.discardNew(id)
+  // Drop blank rows left over from typing, and let tasks ticked while editing
+  // settle now that rows no longer hold an editor (folds into the edit's commit).
+  const items = sortsDone(c) ? settleItems(kept) : kept
+  if (items.length !== c.content.items.length || items.some((i, n) => i !== c.content.items[n])) doc.transient(id, { content: { ...c.content, items } } as Partial<Card>)
 })
 
 const [cheer, setCheer] = createSignal<string | null>(null)
+/** Lists whose folded done tasks are open on this device (not synced). */
+const [expanded, setExpanded] = createSignal(new Set<Id>())
+const toggleExpanded = (id: Id) => setExpanded((s) => { const n = new Set(s); if (!n.delete(id)) n.add(id); return n })
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+
+/** Rows glide to their new place when the order changes (FLIP on the rows only). */
+function glide(list: () => HTMLElement | undefined, order: () => string) {
+  let last = new Map<string, number>()
+  const measure = () => {
+    const m = new Map<string, number>()
+    list()?.querySelectorAll<HTMLElement>('[data-item-id]').forEach((el) => m.set(el.dataset.itemId!, el.offsetTop))
+    return m
+  }
+  onMount(() => (last = measure()))
+  let lastEl: HTMLElement | undefined
+  onMount(() => (lastEl = list()))
+  createEffect(on(order, () => {
+    const now = measure()
+    // A new list (back from editing) has nothing to glide from: just remember it.
+    const same = list() === lastEl
+    lastEl = list()
+    if (same && !reducedMotion.matches) {
+      let moved = false
+      list()?.querySelectorAll<HTMLElement>('[data-item-id]').forEach((el) => {
+        const was = last.get(el.dataset.itemId!)
+        const dy = was === undefined ? 0 : was - now.get(el.dataset.itemId!)!
+        if (Math.abs(dy) > 1) {
+          moved = true
+          el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' })
+        }
+      })
+      // While rows slide, and for a reaction time after, a tap aimed at the old spot
+      // would land on another task.
+      const el = list()
+      if (el && moved) el.dataset.glideUntil = String(Date.now() + 600)
+    }
+    last = now
+  }, { defer: true }))
+}
 
 export function TodoCard(props: CardProps<'todo'>) {
   const id = props.card.id
   const content = () => props.card.content
   const setContent = (next: Content) => doc.transient(id, { content: next } as Partial<Card>)
   const done = () => content().items.filter((i) => i.done).length
+  const folded = () => !!content().hideDone && done() > 0 && !expanded().has(id)
+  // A list that arrives out of order (synced, from an agent, older lists) is
+  // tidied once when shown, if sorting is on: not an undo step.
+  onMount(() => {
+    const items = content().items
+    if (props.readOnly || props.editing || !sortsDone(props.card)) return
+    const settled = settleItems(items)
+    if (!sameOrder(items, settled)) doc.silent({ [id]: { content: { ...content(), items: settled } } as Partial<Card> })
+  })
+  const shown = () => (folded() ? content().items.filter((i) => !i.done || recentlyTicked(id, i.id)) : content().items)
+  let list: HTMLUListElement | undefined
+  glide(() => list, () => shown().map((i) => i.id).join())
 
   function toggle(item: TodoItem) {
-    const items = content().items.map((i) => (i.id === item.id ? { ...i, done: !i.done } : i))
+    // Ignore taps while the rows are still sliding into their new order.
+    if (!props.editing && Number(list?.dataset.glideUntil ?? 0) > Date.now()) return
+    const items = toggleItem(content().items, item.id, Date.now())
     const next = { ...content(), items }
     if (props.editing) setContent(next)
-    else doc.update({ [id]: { content: next } as Partial<Card> })
+    else {
+      doc.update({ [id]: { content: next } as Partial<Card> })
+      if (sortsDone(props.card)) {
+        if (!item.done) noteTick(id, item.id)
+        scheduleSettle(id)
+      }
+    }
     if (!item.done && items.length > 0 && items.every((i) => i.done)) {
       setCheer(id)
       setTimeout(() => setCheer((c) => (c === id ? null : c)), 1600)
@@ -39,7 +101,7 @@ export function TodoCard(props: CardProps<'todo'>) {
 
   return (
     <Show when={!props.lod} fallback={<div class="lod-box" style={{ height: `${Math.max(24, props.card.h - 24)}px` }} />}>
-      <div class="todo">
+      <div class="todo" onPointerDown={() => postponeSettle(id)}>
         <Show
           when={props.editing}
           fallback={
@@ -47,10 +109,10 @@ export function TodoCard(props: CardProps<'todo'>) {
               <Show when={content().title}>
                 <div class="todo-title">{content().title}</div>
               </Show>
-              <ul class="todo-list">
-                <For each={content().items}>
+              <ul class="todo-list" ref={list}>
+                <For each={shown()}>
                   {(item) => (
-                    <li class="todo-item" classList={{ done: item.done }}>
+                    <li class="todo-item" classList={{ done: item.done }} data-item-id={item.id}>
                       <input
                         type="checkbox"
                         class="todo-check"
@@ -60,12 +122,28 @@ export function TodoCard(props: CardProps<'todo'>) {
                         aria-label={item.text || 'task'}
                         onChange={() => toggle(item)}
                       />
-                      <span class="todo-text">{item.text}</span>
+                      <span class="todo-text">
+                        {item.text}
+                        <Show when={item.done && item.doneAt}>
+                          <span class="todo-done-at" data-testid="todo-done-at">
+                            {' '}done {doneLabel(item.doneAt!, clock())}
+                          </span>
+                        </Show>
+                      </span>
                     </li>
                   )}
                 </For>
+                <Show when={content().hideDone && done() > 0}>
+                  <li class="todo-done-row">
+                    <button class="todo-done-toggle" data-nodrag data-testid="todo-done-toggle" aria-expanded={!folded()} onClick={() => toggleExpanded(id)}>
+                      <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                      {done()} done
+                      <svg class="todo-done-chevron" viewBox="0 0 16 16" width="10" height="10" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </button>
+                  </li>
+                </Show>
               </ul>
-              <Show when={content().items.length > 1}>
+              <Show when={content().items.length > 1 && !content().hideDone}>
                 <div class="todo-progress">
                   {done()}/{content().items.length} done
                 </div>
@@ -181,7 +259,17 @@ function TodoEditor(props: { card: Card<'todo'>; setContent: (c: Content) => voi
   }
 
   return (
-    <div ref={root} class="todo-editing">
+    <div
+      ref={root}
+      class="todo-editing"
+      // Escape leaves editing from anywhere in the list, including a checkbox Chrome focused on click.
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && !e.defaultPrevented) {
+          e.preventDefault()
+          endEdit()
+        }
+      }}
+    >
       <input
         class="todo-title-input"
         data-testid="todo-title"

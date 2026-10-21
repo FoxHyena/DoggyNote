@@ -182,6 +182,13 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
 .mobile-dock,
 .count-badge { display: none; }
 
+/* iOS 27 draws a system blur below the status bar even when it reserves the
+   status bar outside the web view (safe-area-inset-top can then be zero).
+   Keep the phone header's controls below that fade; landscape needs no gap. */
+@media (orientation: portrait) {
+  html.ios-status-bar-blur { --ios-header-clearance: 15px; }
+}
+
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .app,
   .app.read-only {
@@ -194,9 +201,9 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   .tauri .topbar {
     display: flex;
     gap: 4px;
-    /* 52px of row below the notch (border-box would fold the inset into it). */
-    min-height: calc(52px + env(safe-area-inset-top));
-    padding: env(safe-area-inset-top) max(6px, env(safe-area-inset-right)) 0 max(6px, env(safe-area-inset-left));
+    /* Keep a 52px control row below the safe area and any iOS blur clearance. */
+    min-height: calc(52px + env(safe-area-inset-top) + var(--ios-header-clearance, 0px));
+    padding: calc(env(safe-area-inset-top) + var(--ios-header-clearance, 0px)) max(6px, env(safe-area-inset-right)) 0 max(6px, env(safe-area-inset-left));
     z-index: 90;
   }
   .topbar-left,
@@ -516,8 +523,9 @@ body:has(.edit-dock) .mobile-dock { visibility: hidden; }
 /* V2-06: non-modal sheets lift clearly off the board, especially in the dark. */
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .trash { box-shadow: 0 -2px 0 var(--dn-border), 0 -14px 40px rgb(0 0 0 / 0.32); }
-  /* V2-15: a tidy three-by-three Add grid. */
+  /* V2-15: a tidy three-column Add grid; a lone last tile takes the whole row. */
   .add-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .add-grid > .add-tile:last-child:nth-child(3n + 1) { grid-column: 1 / -1; flex-direction: row; justify-content: center; gap: 10px; min-height: 56px; }
   /* V2-14: colours centred in their row; Done lines up with the actions. */
   .selection-bar.docked .swatches { margin-inline: auto; }
   .selection-bar.docked .bar-done { align-self: flex-start; margin-top: 5px; }
@@ -615,7 +623,7 @@ html[data-input='touch'] .card > .connect-handle { border-color: var(--dn-select
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .toast {
     position: fixed;
-    top: calc(env(safe-area-inset-top) + 60px);
+    top: calc(env(safe-area-inset-top) + var(--ios-header-clearance, 0px) + 60px);
     bottom: auto;
     z-index: 120;
     width: max-content;
@@ -635,9 +643,9 @@ html[data-input='touch'] :is(.icon-btn, .bar-btn, .menu-item, .tool, .toast-acti
 
 /* ---- round 3 visual fixes ------------------------------------------------------ */
 
-/* V3-05: on the narrowest phones Done is a tick, so every format fits. */
-@media (max-width: 399px) {
-  .edit-done { width: 48px; padding: 0; justify-content: center; }
+/* V3-05: on phones Done is a tick, so the list controls always fit beside it. */
+@media (max-width: 599px) {
+  .edit-done { width: 44px; height: 44px; padding: 0; justify-content: center; }
   .edit-done-label { display: none; }
   .edit-dock-tools { mask-image: none; }
 }

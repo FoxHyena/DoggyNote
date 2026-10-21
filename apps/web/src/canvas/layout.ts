@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js'
-import { usableSticker, stickerBounds, type Card, type Id, type Rect } from '@doggynote/core'
+import { isKnownCardType, usableSticker, stickerBounds, type Card, type Id, type Rect } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
 
 // Measured card geometry. Cards report their rendered height through one shared
@@ -31,7 +31,7 @@ const ro = new ResizeObserver((entries) => {
       changed = true
     }
     const card = doc.getCard(id)
-    if (card && Math.abs((card.h ?? 0) - h) > 1) {
+    if (card && isKnownCardType(card.type) && Math.abs((card.h ?? 0) - h) > 1) {
       pendingHeights[id] = { h }
       heightTimer ??= setTimeout(flushHeights, 400)
     }

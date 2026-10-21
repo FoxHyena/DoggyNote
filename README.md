@@ -99,4 +99,6 @@ For this access-control migration, deploy migrations `0005`–`0008` with the ne
 
 The Worker needs one secret, `ASSET_TOKEN_SECRET`, which signs image and file URLs for the desktop app. `deploy:all` generates it if it's missing. To set it by hand, run `openssl rand -base64 32 | pnpm --filter server exec wrangler secret put ASSET_TOKEN_SECRET`. The security review and its open items are in [`docs/security-review-2026-10.md`](docs/security-review-2026-10.md).
 
+Movie and show cards use [TMDB](https://www.themoviedb.org). Make a free account, open Settings → API, and copy the **API Read Access Token**. Then run `pnpm --filter server exec wrangler secret put TMDB_TOKEN` and paste it. Without the token the app still works, and movie search says it isn't set up yet. Posters are copied into R2 when a title is picked, so boards, share links and exports don't depend on TMDB afterwards.
+
 The screenshots above come from a seeded demo board. To regenerate them, run `SHOTS=1 pnpm --filter web exec playwright test readme-shots --project=chromium`.

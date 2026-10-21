@@ -1,3 +1,4 @@
+import { FIXTURES } from './ports.ts'
 import { openParentBoard } from './helpers.ts'
 import { postSync } from './helpers.ts'
 import { waitForSync } from './helpers.ts'
@@ -151,6 +152,25 @@ test.describe('columns', () => {
     await expect(cardByText(page, 'first idea')).toHaveClass(/free/)
   })
 
+  test('the first click on a column selects it for colour; a click on its title then renames it', async ({ page }) => {
+    await page.getByTestId('tool-column').click()
+    await page.keyboard.type('Snacks')
+    await page.keyboard.press('Enter')
+    await clickEmpty(page)
+    const column = cardByText(page, 'Snacks')
+    await column.getByTestId('column-title').click()
+    await expect(column).toHaveClass(/selected/)
+    await expect(page.getByTestId('column-title-input')).toHaveCount(0)
+    await page.getByTestId('swatch-sky').click()
+    await expect(column).toHaveClass(/colored/)
+    await column.getByTestId('column-title').click()
+    await expect(page.getByTestId('column-title-input')).toBeFocused()
+    await page.keyboard.press(`${MOD}+A`)
+    await page.keyboard.type('Treats')
+    await page.keyboard.press('Enter')
+    await expect(cardByText(page, 'Treats')).toBeVisible()
+  })
+
   test('drag a tool straight into a column', async ({ page }) => {
     await page.getByTestId('tool-column').click()
     await page.keyboard.type('Inbox')
@@ -169,6 +189,33 @@ test.describe('columns', () => {
 })
 
 test.describe('connectors', () => {
+  test('a connect handle shows only near its own edge, never mid-card or while editing', async ({ page }) => {
+    const card = await addNote(page, 'handles here', 0.4, 0.4)
+    await clickEmpty(page)
+    const box = (await card.boundingBox())!
+    const shown = () => card.locator('.connect-handle').evaluateAll((els) =>
+      els.filter((el) => getComputedStyle(el).opacity === '1').map((el) => (el as HTMLElement).dataset.connectHandle))
+    // The middle of the card: none.
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+    await page.waitForTimeout(250)
+    expect(await shown()).toEqual([])
+    // Just outside the right edge: that one only.
+    await page.mouse.move(box.x + box.width + 12, box.y + box.height / 2 + 6, { steps: 4 })
+    await expect.poll(shown).toEqual(['right'])
+    // Just inside the top edge, off its middle: the top one only.
+    await page.mouse.move(box.x + 30, box.y + 4, { steps: 4 })
+    await expect.poll(shown).toEqual(['top'])
+    // Off into empty board: none.
+    await page.mouse.move(box.x + box.width + 120, box.y - 120, { steps: 4 })
+    await expect.poll(shown).toEqual([])
+    // Editing the card: none, even at its edge.
+    await card.dblclick()
+    await expect(page.getByTestId('note-editor')).toBeVisible()
+    await page.mouse.move(box.x + box.width + 10, box.y + box.height / 2, { steps: 4 })
+    await page.waitForTimeout(250)
+    expect(await shown()).toEqual([])
+  })
+
   test('drag from a connect handle to another card; the arrow follows moves; delete it', async ({ page }) => {
     const a = await addNote(page, 'from here', 0.25, 0.3)
     const b = await addNote(page, 'to there', 0.7, 0.6)
@@ -360,13 +407,13 @@ test.describe('images', () => {
 test.describe('links', () => {
   test('Link tool: paste a URL, get a preview from the Worker', async ({ page }) => {
     await page.getByTestId('tool-link').click()
-    await page.getByTestId('link-input').fill('http://localhost:5180/og.html')
+    await page.getByTestId('link-input').fill(`${FIXTURES}/og.html`)
     await page.keyboard.press('Enter')
     const card = page.locator('.card-link')
     await expect(card.getByTestId('link-title')).toHaveText('Good Boy Supplies & Treats')
     await expect(card).toContainText('Everything a very good dog needs.')
     await expect(card).toContainText('Doggo Shop')
-    await expect(card.getByTestId('link-title')).toHaveAttribute('href', 'http://localhost:5180/og.html')
+    await expect(card.getByTestId('link-title')).toHaveAttribute('href', `${FIXTURES}/og.html`)
   })
 
   test('pasting a URL on the canvas makes a link card; other text makes a note', async ({ page }) => {
@@ -376,7 +423,7 @@ test.describe('links', () => {
         dt.setData('text/plain', t)
         document.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }))
       }, text)
-    await paste('http://localhost:5180/plain.html')
+    await paste(`${FIXTURES}/plain.html`)
     await expect(page.locator('.card-link').getByTestId('link-title')).toHaveText('Just a title')
     await paste('a pasted thought')
     await expect(cardByText(page, 'a pasted thought')).toHaveAttribute('data-type', 'note')

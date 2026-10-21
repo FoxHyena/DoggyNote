@@ -27,40 +27,77 @@ test('a real stdio MCP client stages a board layout, a person previews/approves 
   expect(response.status()).toBe(201)
   const { token, id: connectionId } = await response.json()
   const result = JSON.parse(execFileSync(process.execPath, ['--experimental-strip-types', `${appRoot}/apps/mcp/src/client-smoke.ts`], { cwd: appRoot, env: { ...process.env, DOGGYNOTE_URL: new URL(page.url()).origin, DOGGYNOTE_TOKEN: token, DOGGYNOTE_SMOKE_BOARD: boardId }, timeout: 20_000, encoding: 'utf8' })) as { proposalId: string; label: string; noteId: string }
-  await expect(cardByText(page, 'A note built through the MCP client')).toHaveCount(0)
+  const built = 'A note built through the MCP client'
+  await expect(cardByText(page, built)).toHaveCount(0)
   await openProposals(page)
   await page.getByTestId('agent-review').getByRole('button', { name: new RegExp(result.label) }).click()
-  await expect(page.getByTestId('agent-board-preview')).toContainText('A note built through the MCP client')
-  expect(await page.getByTestId('agent-board-preview').locator('.rich p').first().evaluate((paragraph) => getComputedStyle(paragraph).color === getComputedStyle(paragraph.closest('.agents-preview-card')!).color)).toBe(true)
-  const columnHeading = await page.locator('.agents-preview-column > .agents-preview-text').boundingBox()
-  const todoPreview = await page.locator('.agents-preview-card').filter({ hasText: 'Review checklist' }).boundingBox()
-  expect(todoPreview!.y).toBeGreaterThanOrEqual(columnHeading!.y + columnHeading!.height)
+  await expect(page.getByTestId('agent-change-list')).toContainText(built.slice(0, 20))
+  await page.getByTestId('preview-on-board').click()
+  // The proposal on the real board, drawn by the real cards, each marked.
+  const banner = page.getByTestId('proposal-banner')
+  await expect(banner).toContainText(result.label)
+  const note = page.locator('[data-testid="canvas"] [data-type=note]', { hasText: built })
+  await expect(note).toHaveAttribute('data-preview', 'added')
+  await expect(note.getByTestId('preview-chip')).toHaveText('New')
+  await expect(note.locator('.rich p').first()).toBeVisible()
+  await expect(page.locator('[data-type=todo][data-preview=added]', { hasText: 'Review checklist' }).locator('.todo-check')).not.toHaveCount(0)
+  await expect(page.locator('[data-type=column][data-preview=added]')).toHaveCount(1)
+  // Read-only while previewing: no tools, and nothing is saved or queued.
+  await expect(page.getByTestId('tool-note')).toHaveCount(0)
+  await page.keyboard.press(`${MOD}+z`)
+  await expect(note).toBeVisible()
+  // On this board only: the same test in another browser may have approved its own copy.
+  const board = new URL(page.url()).hash.split('/').at(-1)
+  const stored = await page.evaluate(([text, board]) => new Promise<string>((resolve) => {
+    const request = indexedDB.open('doggynote')
+    request.onsuccess = () => { const q = request.result.transaction('objects', 'readonly').objectStore('objects').getAll(); q.onsuccess = () => resolve(JSON.stringify(q.result.find((o) => o.boardId === board && !o.deletedAt && !o.purged && o.content?.md?.includes(text)) ?? null)) }
+  }), [built, board] as const)
+  expect(stored).toBe('null')
+  await expect(page.getByTestId('sync-status')).toHaveAttribute('data-pending', '0')
   await capture(page, testInfo, 'proposal-dark.png')
-  await page.getByTestId('agent-review').getByRole('button', { name: 'Current board', exact: true }).click()
-  await expect(page.getByTestId('agent-board-preview')).not.toContainText('A note built through the MCP client')
-  await page.getByTestId('agent-review').getByRole('button', { name: 'Proposed board', exact: true }).click()
-  await page.getByTestId('agent-review').getByRole('button', { name: 'Close', exact: true }).click()
+  // Current shows the board as it is; Proposed brings the proposal back.
+  await page.getByTestId('proposal-show-before').click()
+  await expect(note).toHaveCount(0)
+  await expect(page.locator('[data-preview]')).toHaveCount(0)
+  await page.getByTestId('proposal-show-after').click()
+  await expect(note).toBeVisible()
+  // Next change says where it is and marks the card it lands on.
+  await page.getByTestId('proposal-next').click()
+  await expect(page.getByTestId('proposal-step')).toHaveText(/^1 of \d+$/)
+  await expect(page.locator('[data-preview-current]')).toHaveCount(1)
+  // It wears a tinted band in both themes (the light theme's card shadow once replaced it).
+  for (const theme of ['dark', 'light']) {
+    await page.evaluate((t) => (document.documentElement.dataset.theme = t), theme)
+    await expect(page.locator('[data-preview-current]')).toHaveCSS('box-shadow', /0px 0px 0px 5px/)
+  }
+  // Escape leaves the preview, and the live board is untouched.
+  await page.keyboard.press('Escape')
+  await expect(banner).toHaveCount(0)
+  await expect(cardByText(page, built)).toHaveCount(0)
+  await expect(page.getByTestId('tool-note')).toBeVisible()
+  // Phone-ish width, light: the banner fits.
   await page.getByTestId('account').click()
   await page.getByRole('dialog', { name: 'Account', exact: true }).getByRole('radio', { name: 'Light', exact: true }).click()
   await page.keyboard.press('Escape')
   await page.setViewportSize({ width: 600, height: 900 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await openProposals(page)
-  await page.getByTestId('agent-review').getByRole('button', { name: new RegExp(result.label) }).click()
-  await expect(page.getByTestId('agent-board-preview')).toContainText('A note built through the MCP client')
-  await expect.poll(() => page.getByTestId('agent-board-preview').evaluate((el) => {
-    const edge = el.getBoundingClientRect().right
-    return [...el.querySelectorAll('.agents-preview-card')].every((card) => card.getBoundingClientRect().right <= edge + 1)
-  })).toBe(true)
+  // A lone proposal opens already selected (its list row is hidden on narrow screens).
+  await expect(page.getByTestId('agent-review').getByRole('heading', { name: result.label })).toBeVisible()
+  await page.getByTestId('preview-on-board').click()
+  const bounds = (await banner.boundingBox())!
+  expect(bounds.x).toBeGreaterThanOrEqual(0)
+  expect(bounds.x + bounds.width).toBeLessThanOrEqual(600)
   await capture(page, testInfo, 'proposal-light-narrow.png')
-  const reviewBounds = (await page.getByTestId('agent-review').boundingBox())!
-  expect(reviewBounds.x).toBeGreaterThanOrEqual(0)
-  expect(reviewBounds.x + reviewBounds.width).toBeLessThanOrEqual(600)
-  // A preview does not install the proposal as the live document.
-  await expect(page.locator('[data-testid="canvas"] [data-testid="card"]').filter({ hasText: 'A note built through the MCP client' })).toHaveCount(0)
-  await page.getByTestId('approve-agent-proposal').click()
+  // Approve from the banner: the cards land on the live board, unmarked.
+  await page.getByTestId('proposal-approve').click()
+  await expect(banner).toHaveCount(0)
+  await expect(cardByText(page, built)).toBeVisible()
+  await expect(cardByText(page, built)).not.toHaveAttribute('data-preview', /.+/)
+  await openProposals(page)
+  // A lone proposal opens already selected (its list row is hidden on narrow screens).
+  await expect(page.getByTestId('agent-review').getByRole('heading', { name: result.label })).toBeVisible()
   await expect(page.getByTestId('reverse-agent-proposal')).toBeVisible()
-  await expect(cardByText(page, 'A note built through the MCP client')).toBeVisible()
   await page.getByTestId('reverse-agent-proposal').click()
   await expect(page.getByTestId('agent-review')).toContainText('reversed')
   await expect(cardByText(page, 'A note built through the MCP client')).toHaveCount(0)
@@ -124,7 +161,7 @@ test('failed agent lists and proposal previews keep the board usable and can be 
   page.on('pageerror', (e) => errors.push(e.message))
   await page.route('**/api/agent-proposals?*', (route) => route.abort('failed'))
   await openProposals(page)
-  await expect(page.getByTestId('agent-review')).toContainText('Could not load proposals.')
+  await expect(page.getByTestId('agent-review')).toContainText('Could not refresh the list.')
   await page.getByTestId('agent-review').getByRole('button', { name: 'Close', exact: true }).click()
   await expect(page.getByTestId('canvas')).toBeVisible()
   await page.unroute('**/api/agent-proposals?*')
@@ -144,10 +181,10 @@ test('failed agent lists and proposal previews keep the board usable and can be 
   await page.route(path, (route) => route.abort('failed'))
   await openProposals(page)
   await page.getByTestId('agent-review').getByRole('button', { name: /Retry this preview/ }).click()
-  await expect(page.getByRole('button', { name: 'Retry preview', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Retry', exact: true })).toBeVisible()
   await page.unroute(path)
-  await page.getByRole('button', { name: 'Retry preview', exact: true }).click()
-  await expect(page.getByTestId('agent-board-preview')).toContainText('Retry succeeds')
+  await page.getByRole('button', { name: 'Retry', exact: true }).click()
+  await expect(page.getByTestId('agent-change-list')).toContainText('Retry succeeds')
   await page.getByTestId('agent-review').getByRole('button', { name: 'Reject', exact: true }).click()
   await expect(page.getByTestId('agent-review')).toContainText('rejected')
   expect(errors).toEqual([])
@@ -196,12 +233,90 @@ test('image and file proposals reuse scoped assets and cannot borrow assets from
   const proposalId = (await staged.json()).id
   await openProposals(page)
   await page.getByTestId('agent-review').getByRole('button', { name: /Reuse authorized assets/ }).click()
-  const preview = page.getByTestId('agent-board-preview')
-  await expect(preview).toContainText('reference.txt')
-  await expect.poll(() => preview.getByAltText('Proposed image').first().evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBe(16)
-  const approval = await page.request.post(`/api/agent-proposals/${proposalId}/approve`, { data: {} })
-  expect(approval.status(), await approval.text()).toBe(200)
+  await page.getByTestId('preview-on-board').click()
+  // The real image and file cards draw the proposed assets.
+  await expect(page.locator('[data-type=file][data-preview=added]')).toContainText('reference.txt')
+  await expect.poll(() => page.locator('[data-type=image][data-preview=added] img').first().evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBe(16)
+  await page.getByTestId('proposal-exit').click()
+  const approved = await page.request.post(`/api/agent-proposals/${proposalId}/approve`, { data: {} })
+  expect(approved.status(), await approved.text()).toBe(200)
   const forbidden = await page.request.post('/api/agent/proposals', { headers, data: { idempotencyKey: `outside-${crypto.randomUUID()}`, label: 'Forbidden outside asset', operations: [{ action: 'create', object: { ...file, id: crypto.randomUUID(), content: { ...file.content, assetId: outsideAsset } } }] } })
   expect(forbidden.status()).toBe(409)
   expect((await forbidden.json()).error).toContain('asset already visible')
+})
+
+test('a preview spans boards, keeps remote edits underneath, flags a stale proposal, and a failed poll keeps Review changes', async ({ page }) => {
+  await freshBoard(page, 'Preview home')
+  const home = new URL(page.url()).hash.split('/').at(-1)!
+  const other = crypto.randomUUID(), here = crypto.randomUUID(), there = crypto.randomUUID()
+  const card = (id: string, boardId: string, md: string, x = 40) => ({ id, kind: 'card', type: 'note', boardId, x, y: 40, w: 240, h: 60, z: 1, color: 'none', content: { md }, createdAt: Date.now() })
+  expect((await postSync(page.request, { data: { changes: [
+    { id: other, patch: { id: other, kind: 'board', parentId: home, title: 'Second board', icon: 'bone', color: 'sky', createdAt: Date.now() } },
+    { id: here, patch: card(here, home, 'Keep me') },
+    { id: there, patch: card(there, other, 'Over there') },
+  ] } })).ok()).toBe(true)
+  await page.reload()
+  await waitForSync(page)
+  const { token } = await (await page.request.post('/api/agent-connections', { data: { name: 'Two boards', mode: 'propose', boardIds: [home, other] } })).json()
+  const headers = { authorization: `Bearer ${token}` }
+  const read = await (await page.request.get(`/api/agent/boards/${other}`, { headers })).json()
+  const row = read.objects.find((r: { object: { id: string } }) => r.object.id === there)
+  expect((await page.request.post('/api/agent/proposals', { headers, data: { idempotencyKey: `two-${crypto.randomUUID()}`, label: 'Across two boards', operations: [
+    { action: 'create', object: card(crypto.randomUUID(), home, 'New on the first board', 340) },
+    { action: 'replace', expectedRevision: row.revision, object: { ...row.object, content: { md: 'Edited over there' } } },
+  ] } })).status()).toBe(201)
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+  // One pending proposal: Review changes goes straight to the board.
+  await page.getByTestId('review-changes').click()
+  const banner = page.getByTestId('proposal-banner')
+  await expect(banner).toBeVisible()
+  await expect(page.locator('[data-preview=added]', { hasText: 'New on the first board' })).toBeVisible()
+  const boards = page.getByTestId('proposal-board')
+  await expect(boards.locator('option')).toHaveCount(2)
+  await boards.selectOption(other)
+  await expect(page.locator('[data-preview=changed]', { hasText: 'Edited over there' })).toBeVisible()
+  // Someone edits the card while you look: it lands underneath, and the proposal is now stale.
+  expect((await postSync(page.request, { data: { changes: [{ id: there, patch: { content: { md: 'Someone else got here first' } } }] } })).ok()).toBe(true)
+  await page.getByTestId('sync-status').click()
+  await waitForSync(page)
+  await page.keyboard.press('Escape')
+  await expect(page.locator('[data-preview=changed]', { hasText: 'Edited over there' })).toBeVisible()
+  await page.getByTestId('proposal-exit').click()
+  await expect(banner).toHaveCount(0)
+  await expect(page.getByTestId('board-name')).toHaveText('Preview home')
+  // A failed poll keeps the button where it was.
+  await expect(page.getByTestId('review-changes')).toBeVisible()
+  await page.route('**/api/agent-proposals?*', (route) => route.abort('failed'))
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+  await page.waitForTimeout(500)
+  await expect(page.getByTestId('review-changes')).toBeVisible()
+  await page.unroute('**/api/agent-proposals?*')
+  await page.getByTestId('review-changes').click()
+  await expect(banner).toContainText('edited after the agent read them')
+  await page.getByTestId('proposal-approve').click()
+  await expect(banner.getByRole('alert')).toBeVisible()
+  await expect(banner).toBeVisible()
+  await page.getByTestId('proposal-reject').click()
+  await expect(banner).toHaveCount(0)
+})
+
+test('a card re-measured since the agent read it can still be approved, keeping its new height', async ({ page }) => {
+  await freshBoard(page, 'Re-measured')
+  await waitForSync(page)
+  const boardId = new URL(page.url()).hash.split('/').at(-1)!
+  const id = crypto.randomUUID()
+  const note = { id, kind: 'card', type: 'note', boardId, x: 0, y: 0, w: 240, h: 60, z: 1, color: 'none', content: { md: 'Walk at noon' }, createdAt: Date.now() }
+  expect((await postSync(page.request, { data: { changes: [{ id, patch: note }] } })).ok()).toBe(true)
+  const { token } = await (await page.request.post('/api/agent-connections', { data: { name: 'Mover', mode: 'propose', boardIds: [boardId] } })).json()
+  const headers = { authorization: `Bearer ${token}` }
+  const read = await (await page.request.get(`/api/agent/boards/${boardId}`, { headers })).json()
+  const row = read.objects.find((o: { object: { id: string } }) => o.object.id === id)
+  const staged = await page.request.post('/api/agent/proposals', { headers, data: { idempotencyKey: `move-${crypto.randomUUID()}`, label: 'Move it', operations: [{ action: 'replace', expectedRevision: row.revision, object: { ...row.object, x: 400 } }] } })
+  expect(staged.status(), await staged.text()).toBe(201)
+  // Another device measures the card: only its height changes.
+  expect((await postSync(page.request, { data: { changes: [{ id, patch: { h: 74 } }] } })).ok()).toBe(true)
+  const approved = await page.request.post(`/api/agent-proposals/${(await staged.json()).id}/approve`, { data: {} })
+  expect(approved.status(), await approved.text()).toBe(200)
+  const { objects } = await pullAllObjects(page.request)
+  expect(objects.find((o: { id: string }) => o.id === id)).toMatchObject({ x: 400, h: 74 })
 })

@@ -169,7 +169,6 @@ export const ToolIcons: Record<string, () => JSX.Element> = {
   forward: () => <><rect x="5" y="15" width="14" height="5" rx="1.5" /><path d="M12 12V3.5M8 7.5l4-4 4 4" /></>,
   backward: () => <><rect x="5" y="4" width="14" height="5" rx="1.5" /><path d="M12 12v8.5M8 16.5l4 4 4-4" /></>,
   layers: () => <><path d="m12 4 8 4-8 4-8-4z" /><path d="m4 12 8 4 8-4M4 16l8 4 8-4" /></>,
-  duplicate: () => <><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" /></>,
   sticker: () => <path d="M4 4h16v10l-6 6H4Z M14 20v-6h6 M8 9h.01 M15 9h.01 M8 12q4 5 8 0" />,
   minus: () => <path d="M5 12h14" />,
   edit: () => <path d="M15.5 5.5 18.5 8.5M4 20l1-4L16 5a2.1 2.1 0 0 1 3 3L8 19z" />,
@@ -179,9 +178,14 @@ export const ToolIcons: Record<string, () => JSX.Element> = {
   fit: () => <path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4" />,
   comment: () => <path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4.5 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" />,
   check: () => <path d="M5 12.5 10 17l9-10" />,
+  duplicate: () => <><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2M14 11v6M11 14h6" /></>,
+  more: () => <><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none" /></>,
+  sliders: () => <><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" /></>,
   download: () => <path d="M12 4v12M7 11l5 5 5-5M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" />,
   upload: () => <path d="M12 16V4M7 9l5-5 5 5M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" />,
   restore: () => <path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v4.5h4.5" />,
+  info: () => <><circle cx="12" cy="12" r="8.5" /><path d="M12 11v5.5M12 7.8v.1" /></>,
+  film: () => <><rect x="3" y="4.5" width="18" height="15" rx="2" /><path d="M7.5 4.5v15M16.5 4.5v15M3 9.5h4.5M3 14.5h4.5M16.5 9.5H21M16.5 14.5H21" /></>,
   external: () => <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />,
   user: () => (
     <>

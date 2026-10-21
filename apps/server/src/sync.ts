@@ -248,7 +248,7 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
       if (typeof board !== 'string' || next.get(board)?.kind !== 'board' || !editable(board)) ok = false
       if (prev && (typeof prev.data.boardId !== 'string' || !editable(prev.data.boardId))) ok = false
       if (o.kind === 'card') {
-        if (!['note', 'todo', 'board', 'image', 'link', 'column', 'file'].includes(o.type as string)) ok = false
+        if (!['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie'].includes(o.type as string)) ok = false
         if (o.type === 'column' && o.columnId != null) ok = false
         if (o.columnId) {
           const col = next.get(o.columnId as string)
@@ -258,7 +258,8 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
           const target = (o.content as { boardId?: string } | undefined)?.boardId
           if (!target || next.get(target)?.kind !== 'board' || !readable(target)) ok = false
         }
-        if ((o.type === 'image' || o.type === 'file') && !o.purged) {
+        // Any card that names an asset (images, files, movie posters) grants reading it.
+        if (!o.purged) {
           const assetId = (o.content as { assetId?: string } | undefined)?.assetId
           // A card reference must not be usable to steal somebody else's asset.
           if (assetId && (prev?.data.content as { assetId?: string } | undefined)?.assetId !== assetId) {
