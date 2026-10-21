@@ -112,7 +112,12 @@ test('circle, arrow, highlight, cancellation, stroke erase/undo, resize/reopen, 
   await dragBy(page, card, 50, 30)
   await expect.poll(() => card.evaluate((el: HTMLElement) => parseFloat(el.style.left))).toBeGreaterThan(before.x)
   await expect.poll(() => card.evaluate((el: HTMLElement) => parseFloat(el.style.top))).toBeGreaterThan(before.y)
-  await dragBy(page, card.getByTestId('resize-handle'), 100, 50)
+  // The moved card's bottom edge sits below a 720px viewport, so its resize handle
+  // is off screen. Pan the board up over empty canvas until the handle can be grabbed.
+  const handle = card.getByTestId('resize-handle')
+  await page.mouse.move(400, 300); await page.mouse.wheel(0, 200)
+  await expect(handle).toBeInViewport({ ratio: 1 })
+  await dragBy(page, handle, 100, 50)
   await expect.poll(() => card.evaluate((el: HTMLElement) => el.clientWidth)).toBeGreaterThan(before.width)
   const resizedWidth = await card.evaluate((el: HTMLElement) => el.clientWidth)
   await waitForSync(page); await page.reload()

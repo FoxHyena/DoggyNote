@@ -3,6 +3,16 @@ import { expect, type APIRequestContext, type Locator, type Page } from '@playwr
 
 export const MOD = 'ControlOrMeta'
 
+/**
+ * Select all text in the focused editor. ControlOrMeta follows the machine running
+ * the tests, but CodeMirror follows the emulated device: an iPhone or iPad means
+ * ⌘A, and there Ctrl+A only moves to the start of the line (the macOS binding).
+ */
+export async function selectAllText(page: Page) {
+  const apple = await page.evaluate(() => /Mac|iPhone|iPad/.test(navigator.platform) || /iPhone|iPad/.test(navigator.userAgent))
+  await page.keyboard.press(apple ? 'Meta+a' : 'Control+a')
+}
+
 /** Camera from the world transform: translate(tx, ty) scale(z). */
 export async function camera(page: Page) {
   return page.getByTestId('world').evaluate((el) => {

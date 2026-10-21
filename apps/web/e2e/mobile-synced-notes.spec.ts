@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { freshBoard, postSync, pullAllObjects, waitForSync } from './helpers.ts'
+import { freshBoard, postSync, pullAllObjects, selectAllText, waitForSync } from './helpers.ts'
 import { note, seedCards } from './touch.ts'
 import { captureSyncedFlow } from './synced-note-shots.ts'
 
@@ -31,7 +31,7 @@ test('touch creates a synced note on another board, edits it, and unlinks withou
   const copyId = await page.getByTestId('card').getAttribute('data-card-id')
   await page.getByTestId('edit-card').tap()
   await expect(page.getByTestId('note-editor')).toBeFocused()
-  await page.keyboard.press('ControlOrMeta+a')
+  await selectAllText(page)
   await page.keyboard.type('Shared phone revision')
   await page.getByTestId('edit-done').tap()
   await expect(page.getByTestId('note-editor')).toHaveCount(0)
@@ -54,7 +54,7 @@ test('touch creates a synced note on another board, edits it, and unlinks withou
   await expect(page.getByTestId('synced-note-hint')).toHaveCount(0)
   await page.getByTestId('edit-card').tap()
   await expect(page.getByTestId('note-editor')).toBeFocused()
-  await page.keyboard.press('ControlOrMeta+a')
+  await selectAllText(page)
   await page.keyboard.type('Independent phone version')
   await page.getByTestId('edit-done').tap()
   await waitForSync(page)

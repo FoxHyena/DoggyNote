@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { freshBoard, waitForSync } from './helpers.ts'
+import { freshBoard, selectAllText, waitForSync } from './helpers.ts'
 import { note, seedCards, tapOn } from './touch.ts'
 
 test('touch Focus opens a readable note and returns to the same card', async ({ page }, info) => {
@@ -22,7 +22,7 @@ test('touch Focus opens a readable note and returns to the same card', async ({ 
   expect(boldBounds.height).toBeGreaterThanOrEqual(44)
   expect((await surface.getByTestId('focus-return').boundingBox())!.height).toBeGreaterThanOrEqual(44)
   await page.keyboard.type(' expanded')
-  await page.keyboard.press('ControlOrMeta+a')
+  await selectAllText(page)
   await bold.tap()
   if (process.env.FOCUS_SHOTS) await page.screenshot({ path: info.outputPath('focus-touch-writing.png'), scale: 'css' })
   await surface.getByTestId('focus-return').tap()
