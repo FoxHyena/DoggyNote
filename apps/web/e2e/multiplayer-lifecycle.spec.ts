@@ -48,6 +48,8 @@ test('background tabs suspend presence; returning restores current state and a c
       const timeout = setTimeout(() => chrome.kill('SIGKILL'), 2000)
       chrome.once('exit', () => { clearTimeout(timeout); resolve() }); chrome.kill('SIGTERM')
     })
-    rmSync(profile, { recursive: true, force: true })
+    // Chrome's helper processes can still write to the profile for a moment after
+    // it exits (ENOTEMPTY on CI). Retry, and never fail the test over a temp folder.
+    try { rmSync(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }) } catch { /* left in tmp */ }
   }
 })
