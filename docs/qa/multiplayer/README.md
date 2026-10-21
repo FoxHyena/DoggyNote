@@ -46,7 +46,7 @@ Nine other identities send cursor updates every 75 ms while the main page pans/z
 
 ## Design review
 
-Method: two isolated Impeccable assessments. Assessment A finished before Assessment B ran the required CLI detector once. The independent pre-correction score was 30/40; it is retained rather than rescored after implementation. Reports: `design-assessment.md`, `technical-assessment.md`; detector output: `detector.json`, `browser-detector.json`.
+Two independent design and technical reviews were completed, followed by one correction batch and one confirmation round. Internal assessment reports are omitted from the PR. Detector output is retained in `detector.json` and `browser-detector.json`.
 
 The CLI scan found zero issues. Browser injection succeeded with CSP unchanged and displayed actual overlays; all five browser advisories were triaged as incumbent/expected/unproven. Both independent reviews identified inaccessible pings. The single correction batch added announcements, off-screen edge cues, action focus restoration, correct column/sticker geometry, and accessible connection state.
 
