@@ -130,7 +130,9 @@ export function FetchPalette() {
                   classList={{ active: i() === active() }}
                   data-testid="fetch-hit"
                   onPointerEnter={() => setActive(i())}
-                  onClick={() => jumpTo(h)}
+                  // A direct listener, not Solid's document-level delegation: touch
+                  // WebKit only turns a tap into a click on an element that listens itself.
+                  on:click={() => jumpTo(h)}
                 >
                   <span class="fetch-icon">
                     <Show when={h.kind === 'board'} fallback={<Icon size={16}>{ToolIcons.note()}</Icon>}>
