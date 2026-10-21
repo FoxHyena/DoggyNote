@@ -416,3 +416,18 @@ test('an inactive offline draft is retained when another editor moves its note i
   const { readFile } = await import('node:fs/promises')
   expect(await readFile((await (await downloaded).path())!, 'utf8')).toContain('unsent private-move recovery')
 })
+
+test('right-clicking the canvas opens a compact Look here menu at the pointer', async ({ page }) => {
+  await freshBoard(page)
+  const canvas = (await page.getByTestId('canvas').boundingBox())!
+  const at = { x: canvas.x + canvas.width / 3, y: canvas.y + canvas.height / 3 }
+  await page.mouse.click(at.x, at.y, { button: 'right' })
+  const menu = page.locator('.canvas-ping-menu')
+  await expect(menu.getByRole('button', { name: 'Look here', exact: true })).toBeFocused()
+  const box = (await menu.boundingBox())!
+  expect(Math.abs(box.x - at.x)).toBeLessThanOrEqual(1)
+  expect(Math.abs(box.y - at.y)).toBeLessThanOrEqual(1)
+  expect(box.width).toBeLessThan(200)
+  await page.keyboard.press('Escape')
+  await expect(menu).toHaveCount(0)
+})
