@@ -31,11 +31,18 @@ export function isFetchableUrl(raw: string): URL | null {
   }
 }
 
+/**
+ * Safari on a Mac. Some sites (Amazon) send a bare page with no title or
+ * OpenGraph tags to anything that looks like a bot.
+ */
+export const BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15'
+
 export async function unfurl(target: URL, fetcher: typeof fetch = fetch): Promise<Unfurled> {
   const res = await fetcher(target.href, {
     headers: {
-      'user-agent': 'Mozilla/5.0 (compatible; DoggyNoteBot/1.0; +link-preview)',
-      accept: 'text/html,application/xhtml+xml',
+      'user-agent': BROWSER_UA,
+      accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'accept-language': 'en-US,en;q=0.9',
     },
     redirect: 'follow',
     signal: AbortSignal.timeout(6000),
@@ -94,7 +101,7 @@ export const MAX_PROXY_BYTES = 5 * 1024 * 1024
 /** Fetches an image and passes it on, refusing anything that isn't a reasonably sized image. */
 export async function proxyImage(target: URL, fetcher: typeof fetch = fetch): Promise<Response> {
   const res = await fetcher(target.href, {
-    headers: { 'user-agent': 'Mozilla/5.0 (compatible; DoggyNoteBot/1.0; +link-preview)', accept: 'image/*' },
+    headers: { 'user-agent': BROWSER_UA, accept: 'image/*' },
     redirect: 'follow',
     signal: AbortSignal.timeout(8000),
   })

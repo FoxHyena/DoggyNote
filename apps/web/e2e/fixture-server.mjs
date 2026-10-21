@@ -3,8 +3,8 @@
 import { createServer } from 'node:http'
 import { crc32, deflateSync } from 'node:zlib'
 
-/** A solid 16×16 PNG, built here so there's no binary fixture to check in. */
-function solidPng([r, g, b]) {
+/** A solid PNG (16×16 unless sized), built here so there's no binary fixture to check in. */
+function solidPng([r, g, b], w = 16, h = 16) {
   const chunk = (type, data) => {
     const len = Buffer.alloc(4)
     len.writeUInt32BE(data.length)
@@ -14,11 +14,12 @@ function solidPng([r, g, b]) {
     return Buffer.concat([len, td, crc])
   }
   const ihdr = Buffer.alloc(13)
-  ihdr.writeUInt32BE(16, 0)
-  ihdr.writeUInt32BE(16, 4)
+  ihdr.writeUInt32BE(w, 0)
+  ihdr.writeUInt32BE(h, 4)
   ihdr.set([8, 2, 0, 0, 0], 8) // 8-bit RGB
-  const rows = Buffer.alloc(16 * (1 + 16 * 3))
-  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) rows.set([r, g, b], y * 49 + 1 + x * 3)
+  const stride = 1 + w * 3
+  const rows = Buffer.alloc(h * stride)
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) rows.set([r, g, b], y * stride + 1 + x * 3)
   return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(rows)), chunk('IEND', Buffer.alloc(0))])
 }
 
@@ -33,9 +34,26 @@ const PAGES = {
   // Like a real site's preview image: a PNG with no CORS headers.
   '/og-png.html': `<!doctype html><html><head><meta property="og:title" content="Green dog"><meta property="og:image" content="/green.png"></head></html>`,
   '/green.png': solidPng([60, 154, 95]),
+  // Like a Nextcloud public preview: refuses browsers, serves our Worker (see GUARDED).
+  '/guarded.html': `<!doctype html><html><head><meta property="og:title" content="Woofcloud photo"><meta property="og:image" content="/guarded.png"></head></html>`,
+  '/guarded.png': solidPng([150, 90, 40], 40, 30),
+  // A portrait image (2:3): shown whole, never cropped.
+  '/tall.html': `<!doctype html><html><head><meta property="og:title" content="Tall dog"><meta property="og:image" content="/tall.png"></head></html>`,
+  '/tall.png': solidPng([90, 60, 160], 20, 30),
+  '/dead.html': `<!doctype html><html><head><meta property="og:title" content="Gone dog"><meta property="og:image" content="/missing.png"></head></html>`,
   '/plain.html': `<!doctype html><html><head><title>Just a title</title></head><body></body></html>`,
   '/dog.svg': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 20"><rect width="40" height="20" fill="#e8a849"/></svg>`,
 }
+
+/** Requests from a browser's <img>, as opposed to the Worker's proxy fetch (accept: image/*). */
+const fromBrowser = (req) => !!req.headers['sec-fetch-dest'] || (req.headers.accept ?? '').includes(',')
+const GUARDED = new Set(['/guarded.png'])
+
+// Like Amazon: a bare page for bots, the real product page for a browser.
+const shop = (ua = '') =>
+  /bot/i.test(ua) || !/Safari\//.test(ua)
+    ? `<!doctype html><html><head><title>Amazon.com</title></head></html>`
+    : `<!doctype html><html><head><title>Amazon.com: Squeaky Bone</title><meta property="og:title" content="Squeaky Bone, 3 Pack"><meta property="og:image" content="/green.png"></head></html>`
 
 // A stand-in for TMDB (the Worker's TMDB_BASE / TMDB_IMAGE_BASE point here in e2e).
 const TMDB_TOKEN = 'e2e-tmdb-token'
@@ -76,7 +94,15 @@ createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'image/png' }).end(solidPng(POSTERS[poster[1]]))
     return
   }
-  const body = PAGES[new URL(req.url, 'http://x').pathname]
+  if (url.pathname === '/shop.html') {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(shop(req.headers['user-agent']))
+    return
+  }
+  if (GUARDED.has(url.pathname) && fromBrowser(req)) {
+    res.writeHead(403, { 'content-type': 'text/plain' }).end('no hotlinking')
+    return
+  }
+  const body = PAGES[url.pathname]
   if (!body) {
     res.writeHead(404).end('nope')
     return

@@ -63,6 +63,8 @@ export async function api<T>(path: string, init: RequestInit & { json?: unknown 
 
 let shareToken: string | null = null
 export const setShareToken = (t: string | null) => (shareToken = t)
+/** True in the share viewer, which has no session for signed-in-only endpoints. */
+export const isShareViewer = () => !!shareToken
 
 let assetToken: { token: string; expiresAt: number } | null = null
 let assetTokenReq: Promise<string | null> | null = null
