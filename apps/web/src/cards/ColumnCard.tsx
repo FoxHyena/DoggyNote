@@ -11,16 +11,18 @@ export function ColumnCard(props: CardProps<'column'>) {
   const collapsed = () => columnCollapsed(props.card)
   const title = () => typeof props.card.content?.title === 'string' ? props.card.content.title : ''
   const kids = createMemo(() => columnChildren(props.card.id))
-  // The body slides shut before it unmounts, and slides open after it mounts.
+  // The body fades and slides shut before it unmounts, and back in after it mounts.
+  // Only opacity and transform animate: animating height re-measured the whole board every frame.
   const [open, setOpen] = createSignal(!collapsed())
   let body: HTMLDivElement | undefined
   let expanding = false
   const animate = () => !props.lod && !matchMedia('(prefers-reduced-motion: reduce)').matches
-  const slide = (el: HTMLElement, from: number, to: number) => el.animate([{ height: `${from}px`, overflow: 'hidden' }, { height: `${to}px`, overflow: 'hidden' }], { duration: 160, easing: 'cubic-bezier(.2,.7,.3,1)' })
+  const shown = { opacity: 1, transform: 'translateY(0)' }, hidden = { opacity: 0, transform: 'translateY(-8px)' }
+  const slide = (el: HTMLElement, opening: boolean) => el.animate(opening ? [hidden, shown] : [shown, hidden], { duration: 140, easing: 'cubic-bezier(.2,.7,.3,1)' })
   createEffect(on(collapsed, (shut) => {
     if (!shut) { expanding = !open(); setOpen(true); return }
     if (!body || !animate()) { setOpen(false); return }
-    const anim = slide(body, body.offsetHeight, 0)
+    const anim = slide(body, false)
     anim.onfinish = anim.oncancel = () => { if (collapsed()) setOpen(false) }
   }, { defer: true }))
   const drop = () => {
@@ -69,7 +71,7 @@ export function ColumnCard(props: CardProps<'column'>) {
         </div>
       </div>
       <Show when={open()}>
-      <div class="column-body" data-testid="column-body" ref={(el) => { body = el; onMount(() => { if (expanding && animate()) slide(el, 0, el.offsetHeight); expanding = false }) }}>
+      <div class="column-body" data-testid="column-body" ref={(el) => { body = el; onMount(() => { if (expanding && animate()) slide(el, true); expanding = false }) }}>
         <For each={kids()}>
           {(k, i) => (
             <>

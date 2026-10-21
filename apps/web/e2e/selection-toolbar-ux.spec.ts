@@ -291,8 +291,7 @@ test('a column header centres its title and count, and collapse slides', async (
   expect(Math.abs((title.x + title.width / 2) - (head.x + head.width / 2))).toBeLessThan(2)
   const expanded = (await column.boundingBox())!.height
   await column.getByTestId('column-toggle').click()
-  // Mid-slide the column is between its open and collapsed heights.
-  const mid = (await column.boundingBox())!.height
+  // The body fades out (a compositor-only animation) before the column shortens.
+  expect(await column.getByTestId('column-body').evaluate((el) => el.getAnimations().length)).toBeGreaterThan(0)
   await expect.poll(async () => (await column.boundingBox())!.height).toBeLessThan(expanded)
-  expect(mid).toBeGreaterThan(58)
 })
