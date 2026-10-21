@@ -47,7 +47,10 @@ export function revealCard(id: Id) {
     const r = rectOf(id)
     if (!r) return
     const v = viewport()
-    animateCamera({ x: r.x + r.w / 2 - v.width / 2, y: r.y + Math.min(r.h, v.height) / 2 - v.height / 2, zoom: 1 })
-    cardEl(id)?.focus({ preventScroll: true })
+    // An off-screen card isn't mounted until the glide brings it into view, so
+    // focus it again once the camera arrives (if it's still the selection).
+    const focus = () => { if (selection().has(id)) cardEl(id)?.focus({ preventScroll: true }) }
+    animateCamera({ x: r.x + r.w / 2 - v.width / 2, y: r.y + Math.min(r.h, v.height) / 2 - v.height / 2, zoom: 1 }, undefined, focus)
+    focus()
   }))
 }
