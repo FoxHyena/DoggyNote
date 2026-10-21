@@ -77,7 +77,7 @@ import { BoardIconSvg } from '../ui/icons.tsx'
 import { setToyboxOpen, toyboxOpen } from '../ui/ToyboxPanel.tsx'
 import { setThreadCardId, threadCardId } from '../state/comments.ts'
 import { haptic, phone, touch } from '../state/device.ts'
-import { resetPageScroll, visible } from '../state/viewport.ts'
+import { resetPageScroll, visible as visibleArea } from '../state/viewport.ts'
 import { showToast } from '../state/toast.ts'
 
 type Gesture =
@@ -255,6 +255,7 @@ export function Canvas(props: { readOnly: boolean }) {
         if (id && focusEdits() && doc.getCard(id)?.type !== 'swatch') {
           if (!prev) editReturn = camera()
           movedWhileEditing = false
+          resetPageScroll()
           const r = rectOf(id)
           if (r) animateCamera(editCamera(r, editRoom(), camera()), 260, () => requestAnimationFrame(revealCaret))
         } else if (!id && prev) {
@@ -266,14 +267,61 @@ export function Canvas(props: { readOnly: boolean }) {
       { defer: true },
     ),
   )
+  // Only changes when editing starts, stops or moves to another card (not with the keyboard).
+  const touchEditing = createMemo(() => (focusEdits() ? editingId() : null))
   createEffect(() => {
-    if (!editingId() || !focusEdits()) return
-    visible()
+    const id = touchEditing()
+    if (!id) return
     const onSelection = () => requestAnimationFrame(revealCaret)
     document.addEventListener('selectionchange', onSelection)
-    onCleanup(() => document.removeEventListener('selectionchange', onSelection))
-    requestAnimationFrame(revealCaret)
+    // The app never scrolls; iOS scrolling the page to a field slides the grid away.
+    const onScroll = () => resetPageScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    // Focus leaving the card (the keyboard's own ✓ just blurs) means done, like
+    // the dock's Done. A frame later, so focus moving within the card (a note's
+    // buffer handing over to its editor) or to the dock's buttons doesn't count.
+    // A colour card has nothing to type into: its panel owns focus, and closes itself.
+    const typed = doc.getCard(id)?.type !== 'swatch'
+    let blurFrame = 0
+    const onFocusOut = () => {
+      if (!typed) return
+      cancelAnimationFrame(blurFrame)
+      blurFrame = requestAnimationFrame(() => {
+        // A finger on the board: the tap decides what happens to the edit.
+        if (editingId() !== id || fingers.size) return
+        const active = document.activeElement
+        if (active && active !== document.body && (cardEl(id)?.contains(active) || active.closest('.edit-dock, .selection-bar'))) return
+        endEdit()
+        clearSelection()
+      })
+    }
+    document.addEventListener('focusout', onFocusOut)
+    onCleanup(() => {
+      cancelAnimationFrame(blurFrame)
+      document.removeEventListener('selectionchange', onSelection)
+      window.removeEventListener('scroll', onScroll)
+      document.removeEventListener('focusout', onFocusOut)
+    })
   })
+  // The keyboard arriving (or leaving) changes the room: glide to the new aim
+  // rather than snapping. Once the user has panned, only keep the caret in view.
+  createEffect(
+    on(
+      visibleArea,
+      () => {
+        const id = editingId()
+        if (!id || !focusEdits()) return
+        const r = rectOf(id)
+        if (movedWhileEditing || !r || doc.getCard(id)?.type === 'swatch') return void requestAnimationFrame(revealCaret)
+        const aim = editCamera(r, editRoom(), camera())
+        aim.y += caretShift(aim) / aim.zoom
+        const c = camera()
+        if (Math.abs(aim.x - c.x) * c.zoom < 1 && Math.abs(aim.y - c.y) * c.zoom < 1 && Math.abs(aim.zoom - c.zoom) < 0.001) return
+        animateCamera(aim, 160, () => requestAnimationFrame(revealCaret))
+      },
+      { defer: true },
+    ),
+  )
   // A proposal preview frames its changes; that camera isn't the board's own.
   createEffect(() => { if (!doc.previewing()) saveCamera(boardId(), camera()) })
 
@@ -902,7 +950,12 @@ export function Canvas(props: { readOnly: boolean }) {
     if (startStickerGesture(e)) return
     const target = e.target as HTMLElement
     // The editor owns single touches inside the card being edited (caret, selection).
-    if (insideEditor(e, editingId())) return
+    if (insideEditor(e, editingId())) {
+      // A touch on the rest of the card (an image above its caption) would blur
+      // the field, and focus leaving the card ends the edit.
+      if (!target.closest('textarea, input, select, label, a, button, [contenteditable], .cm-editor')) e.preventDefault()
+      return
+    }
     const nodrag = !!target.closest('[data-nodrag]')
     // Ours from here: no compatibility mouse events (their mousedown would steal
     // focus from an editor this touch opens), no text selection or callout.
@@ -1347,12 +1400,12 @@ export function Canvas(props: { readOnly: boolean }) {
 
 let movedWhileEditing = false
 /** Phones and short touch screens get the editing camera and keyboard handling. */
-const focusEdits = () => touch() && (phone() || visible().height < 600)
+const focusEdits = () => touch() && (phone() || visibleArea().height < 600)
 
 /** The part of the canvas the keyboard and the edit dock leave visible, in canvas px. */
 function editRoom() {
   const v = viewport()
-  const vis = visible()
+  const vis = visibleArea()
   const top = Math.max(0, vis.top - v.top)
   const bottom = Math.min(v.height, vis.top + vis.height - v.top) - EDIT_DOCK
   return { width: v.width, top, bottom }
@@ -1380,21 +1433,33 @@ function caretRect(within: HTMLElement): DOMRect | null {
   return node?.getBoundingClientRect() ?? null
 }
 
-/** Pan just enough to keep the caret between the top of the screen and the keyboard. */
-function revealCaret() {
+/**
+ * How far (screen px, + is down) the caret sits outside the room between the top
+ * of the screen and the keyboard, were the camera at `at`. 0 when it's in view.
+ */
+function caretShift(at: Camera): number {
   const id = editingId()
   const el = id ? cardEl(id) : null
   const caret = el ? caretRect(el) : null
-  // The edit glide checks again when it lands.
-  if (!caret || anim) return
+  if (!caret) return 0
   const v = viewport()
+  const now = camera()
+  // The caret in board units, then on screen under `at`.
+  const y = (px: number) => (now.y + (px - v.top) / now.zoom - at.y) * at.zoom
+  const top = y(caret.top)
+  const bottom = y(caret.bottom)
   const room = editRoom()
-  const top = caret.top - v.top
-  const bottom = caret.bottom - v.top
   const margin = 20
-  let dy = 0
-  if (bottom > room.bottom - margin) dy = room.bottom - margin - bottom
-  else if (top < room.top + margin) dy = room.top + margin - top
+  if (bottom > room.bottom - margin) return bottom - (room.bottom - margin)
+  if (top < room.top + margin) return top - (room.top + margin)
+  return 0
+}
+
+/** Pan just enough to keep the caret between the top of the screen and the keyboard. */
+function revealCaret() {
+  // The edit glide checks again when it lands.
+  if (anim) return
+  const dy = -caretShift(camera())
   if (Math.abs(dy) > 1) {
     cancelCameraAnimation()
     setCamera(panBy(camera(), 0, dy))
@@ -1477,16 +1542,17 @@ export function animateCamera(to: { x: number; y: number; zoom: number }, ms = 2
   cancelAnimationFrame(anim)
   stopMomentum()
   const from = camera()
-  const v = viewport()
-  // Interpolate the viewport centre linearly and zoom geometrically, so a zoom
-  // around the centre doesn't drift and it feels even at every scale.
-  const cf = { x: from.x + v.width / 2 / from.zoom, y: from.y + v.height / 2 / from.zoom }
-  const ct = { x: to.x + v.width / 2 / to.zoom, y: to.y + v.height / 2 / to.zoom }
   const t0 = performance.now()
   const ease = (t: number) => 1 - Math.pow(1 - t, 3)
   const step = (now: number) => {
     const t = Math.min(1, (now - t0) / ms)
     const k = ease(t)
+    // Read every frame: the viewport can change size mid-glide (a phone's keyboard).
+    const v = viewport()
+    // Interpolate the viewport centre linearly and zoom geometrically, so a zoom
+    // around the centre doesn't drift and it feels even at every scale.
+    const cf = { x: from.x + v.width / 2 / from.zoom, y: from.y + v.height / 2 / from.zoom }
+    const ct = { x: to.x + v.width / 2 / to.zoom, y: to.y + v.height / 2 / to.zoom }
     const zoom = from.zoom * Math.pow(to.zoom / from.zoom, k)
     const cx = cf.x + (ct.x - cf.x) * k
     const cy = cf.y + (ct.y - cf.y) * k

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { camera, freshBoard, waitForSync } from './helpers.ts'
 import { tap, tapOn } from './touch.ts'
 
@@ -50,4 +50,105 @@ test('double-tap an image to caption it; Edit in the selection bar opens it agai
   await waitForSync(page)
   await page.reload()
   await expect(page.locator('[data-testid="card"][data-type="image"]').getByTestId('image-caption')).toHaveText('Zoomies!')
+})
+
+/** Upload a plain image and open its caption with two taps. */
+async function captionAnImage(page: Page, size = { w: 200, h: 150 }) {
+  const png = Buffer.from(await page.evaluate(async ({ w, h }) => {
+    const c = new OffscreenCanvas(w, h)
+    const ctx = c.getContext('2d')!
+    ctx.fillStyle = '#4a90c2'
+    ctx.fillRect(0, 0, w, h)
+    const buf = new Uint8Array(await (await c.convertToBlob({ type: 'image/png' })).arrayBuffer())
+    let s = ''
+    for (const b of buf) s += String.fromCharCode(b)
+    return btoa(s)
+  }, size), 'base64')
+  await page.getByTestId('image-input').setInputFiles({ name: 'rex.png', mimeType: 'image/png', buffer: png })
+  const card = page.locator('[data-testid="card"][data-type="image"]')
+  await expect(card).toHaveCount(1)
+  const before = await camera(page)
+  const box = (await card.getByTestId('card-image').boundingBox())!
+  const p = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+  await tap(page, p)
+  await expect(card).toHaveClass(/selected/)
+  await tap(page, p)
+  const input = page.getByTestId('image-caption-input')
+  await expect(input).toBeFocused()
+  return { card, input, before }
+}
+
+/** Wait until the camera stops moving. */
+async function settled(page: Page) {
+  let last = ''
+  await expect.poll(async () => {
+    const now = JSON.stringify(await camera(page))
+    const same = now === last
+    last = now
+    return same
+  }, { intervals: [150] }).toBe(true)
+}
+
+test('the keyboard’s own ✓ finishes the caption, like Done', async ({ page }) => {
+  const { card, input, before } = await captionAnImage(page)
+  await expect(page.getByTestId('edit-dock')).toBeVisible()
+  await page.keyboard.type('Good boy')
+  // The iOS keyboard's ✓ only blurs the field.
+  await input.evaluate((el) => el.blur())
+  await expect(page.getByTestId('edit-dock')).toHaveCount(0)
+  await expect(input).toHaveCount(0)
+  await expect(card.getByTestId('image-caption')).toHaveText('Good boy')
+  await expect(card).not.toHaveClass(/selected/)
+  await expect.poll(async () => JSON.stringify(await camera(page))).toBe(JSON.stringify(before))
+  await waitForSync(page)
+  await page.reload()
+  await expect(page.locator('[data-testid="card"][data-type="image"]').getByTestId('image-caption')).toHaveText('Good boy')
+})
+
+test('captioning never scrolls the page, and a tap on the picture keeps typing', async ({ page }) => {
+  const { card, input } = await captionAnImage(page)
+  expect(await page.evaluate(() => scrollY)).toBe(0)
+  await settled(page)
+  expect(await page.evaluate(() => scrollY)).toBe(0)
+  // The dotted board behind stays where it was: nothing slid it up.
+  expect(await page.locator('.viewport').evaluate((el) => el.getBoundingClientRect().top)).toBeGreaterThanOrEqual(0)
+  await tapOn(page, card.getByTestId('card-image'))
+  await page.waitForTimeout(100)
+  await expect(input).toBeFocused()
+  await expect(page.getByTestId('edit-dock')).toBeVisible()
+})
+
+test('when the keyboard opens, the caption glides above it in one move', async ({ page }) => {
+  // A tall picture, so the caption under it lands behind the keyboard.
+  const { input } = await captionAnImage(page, { w: 200, h: 340 })
+  await settled(page)
+  const full = await page.evaluate(() => innerHeight)
+  const kb = Math.round(full * 0.45)
+  // Record the camera every frame while the keyboard "opens".
+  await page.evaluate((height) => {
+    const w = window as unknown as { __ys: number[] }
+    w.__ys = []
+    const world = document.querySelector<HTMLElement>('[data-testid=world]')!
+    const t0 = performance.now()
+    const rec = () => {
+      const t = getComputedStyle(world).transform
+      w.__ys.push(t === 'none' ? 0 : new DOMMatrix(t).f)
+      if (performance.now() - t0 < 700) requestAnimationFrame(rec)
+    }
+    requestAnimationFrame(rec)
+    Object.defineProperty(visualViewport!, 'height', { configurable: true, value: height })
+    visualViewport!.dispatchEvent(new Event('resize'))
+  }, full - kb)
+  await page.waitForTimeout(900)
+  const ys = await page.evaluate(() => (window as unknown as { __ys: number[] }).__ys)
+  const moved = Math.abs(ys[ys.length - 1] - ys[0])
+  expect(moved).toBeGreaterThan(20)
+  // Over several frames, never one snap.
+  const steps = ys.slice(1).map((y, i) => Math.abs(y - ys[i]))
+  expect(Math.max(...steps)).toBeLessThan(moved * 0.6)
+  expect(steps.filter((s) => s > 0.5).length).toBeGreaterThan(2)
+  // The caption ends up above the keyboard and the edit dock.
+  const box = (await input.boundingBox())!
+  expect(box.y + box.height).toBeLessThanOrEqual(full - kb - 56)
+  expect(box.y).toBeGreaterThanOrEqual(0)
 })

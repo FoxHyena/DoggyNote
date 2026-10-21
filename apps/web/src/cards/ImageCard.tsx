@@ -72,7 +72,8 @@ function CaptionEditor(props: { card: Card<'image'> }) {
   }
   onMount(() => {
     grow()
-    input.focus()
+    // No page scroll: the canvas moves the card into view itself.
+    input.focus({ preventScroll: true })
     input.setSelectionRange(input.value.length, input.value.length)
   })
   return (
