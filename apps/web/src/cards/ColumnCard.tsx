@@ -21,13 +21,16 @@ export function ColumnCard(props: CardProps<'column'>) {
   const animate = () => !props.lod && !matchMedia('(prefers-reduced-motion: reduce)').matches
   const slide = (el: HTMLElement, opening: boolean) => {
     // The body's min-height and padding would hold it open at 56px and then snap
-    // shut, so they slide too.
-    const cs = getComputedStyle(el)
-    const full = { height: `${el.offsetHeight}px`, minHeight: '0px', paddingTop: cs.paddingTop, paddingBottom: cs.paddingBottom, opacity: 1 }
+    // shut, so they slide too. The top padding holds until the very end, so the
+    // cards stay put while the bottom edge sweeps over them.
+    const cs = getComputedStyle(el), top = cs.paddingTop
+    const full = { height: `${el.offsetHeight}px`, minHeight: '0px', paddingTop: top, paddingBottom: cs.paddingBottom, opacity: 1 }
+    const edge = { height: top, minHeight: '0px', paddingTop: top, paddingBottom: '0px', opacity: 0.1 }
     const shut = { height: '0px', minHeight: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 }
     setMeasuring(false)
     el.classList.add('sliding')
-    const anim = el.animate(opening ? [shut, full] : [full, shut], { duration: 200, easing: 'cubic-bezier(.2,.7,.3,1)' })
+    const frames = opening ? [shut, { ...edge, offset: 0.1 }, full] : [full, { ...edge, offset: 0.9 }, shut]
+    const anim = el.animate(frames, { duration: 240, easing: 'cubic-bezier(.4,0,.2,1)' })
     const done = () => { el.classList.remove('sliding'); setMeasuring(true); remeasure(el.closest<HTMLElement>('[data-card-id]')); setLayoutTick((n) => n + 1) }
     anim.addEventListener('finish', done); anim.addEventListener('cancel', done)
     return anim

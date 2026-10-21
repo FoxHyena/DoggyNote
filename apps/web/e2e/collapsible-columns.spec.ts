@@ -249,3 +249,23 @@ test('authenticated view-only search reveals a hidden member locally and the ser
   await expect(viewer.getByTestId('column-toggle')).toHaveAttribute('aria-expanded', 'false')
   await context.close()
 })
+
+test('a collapsing column slides its edge over the cards inside, which hold still', async ({ page }) => {
+  const f = await fixture(page)
+  const body = f.column.getByTestId('column-body')
+  const tops = () => body.evaluate((el) => [...el.querySelectorAll<HTMLElement>(':scope > [data-testid="card"]')].slice(0, 3).map((c) => [c.getBoundingClientRect().top, c.offsetHeight]))
+  const before = await tops()
+  const full = await body.evaluate((el) => el.offsetHeight)
+  await f.toggle.click()
+  // Freeze the slide halfway, as a frame mid-animation.
+  const mid = await body.evaluate((el) => {
+    const anim = el.getAnimations()[0]!
+    anim.pause(); anim.currentTime = 120
+    return el.offsetHeight
+  })
+  expect(mid).toBeGreaterThan(0)
+  expect(mid).toBeLessThan(full)
+  expect(await tops()).toEqual(before)
+  await body.evaluate((el) => el.getAnimations()[0]!.finish())
+  await expect(f.column.getByTestId('card')).toHaveCount(0)
+})
