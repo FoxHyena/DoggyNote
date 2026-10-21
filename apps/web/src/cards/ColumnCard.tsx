@@ -6,7 +6,7 @@ import { endEdit } from '../state/ui.ts'
 import { columnChildren } from '../state/actions.ts'
 import { CardView, type CardProps } from '../canvas/CardView.tsx'
 import { dropTarget } from '../canvas/dnd.ts'
-import { remeasure, setMeasuring } from '../canvas/layout.ts'
+import { remeasure, setLayoutTick, setMeasuring } from '../canvas/layout.ts'
 
 export function ColumnCard(props: CardProps<'column'>) {
   const collapsed = () => columnCollapsed(props.card)
@@ -20,11 +20,15 @@ export function ColumnCard(props: CardProps<'column'>) {
   let expanding = false
   const animate = () => !props.lod && !matchMedia('(prefers-reduced-motion: reduce)').matches
   const slide = (el: HTMLElement, opening: boolean) => {
-    const full = { height: `${el.offsetHeight}px`, opacity: 1 }, shut = { height: '0px', opacity: 0 }
+    // The body's min-height and padding would hold it open at 56px and then snap
+    // shut, so they slide too.
+    const cs = getComputedStyle(el)
+    const full = { height: `${el.offsetHeight}px`, minHeight: '0px', paddingTop: cs.paddingTop, paddingBottom: cs.paddingBottom, opacity: 1 }
+    const shut = { height: '0px', minHeight: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 }
     setMeasuring(false)
     el.classList.add('sliding')
     const anim = el.animate(opening ? [shut, full] : [full, shut], { duration: 200, easing: 'cubic-bezier(.2,.7,.3,1)' })
-    const done = () => { el.classList.remove('sliding'); setMeasuring(true); remeasure(el.closest<HTMLElement>('[data-card-id]')) }
+    const done = () => { el.classList.remove('sliding'); setMeasuring(true); remeasure(el.closest<HTMLElement>('[data-card-id]')); setLayoutTick((n) => n + 1) }
     anim.addEventListener('finish', done); anim.addEventListener('cancel', done)
     return anim
   }
