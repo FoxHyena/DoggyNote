@@ -2,7 +2,10 @@ import { batch, createMemo, createRoot, createSignal } from 'solid-js'
 import { createStore, unwrap } from 'solid-js/store'
 import {
   HOME_BOARD_ID,
+  POSITION_FIELDS,
   UndoStack,
+  changesPosition,
+  positionLocks,
   diff,
   type Board,
   type Card,
@@ -16,6 +19,7 @@ import {
   usableSticker,
 } from '@doggynote/core'
 import * as idb from './idb.ts'
+import { setToastAction, showToast } from './toast.ts'
 import * as Y from 'yjs'
 import { decodeUpdate, noteDocument, noteMarkdown, noteState, replaceText, REMOTE_ORIGIN } from '@doggynote/core'
 
@@ -95,7 +99,7 @@ export function noteUndo(id: string) {
       if (type !== 'undo' || applyingTextUndo || origin === manager) return
       if (newNoteEdit === id) return
       undoStack.push([{ id, before: { noteUpdate: 'undo' }, after: { noteUpdate: 'redo' } }])
-      setUndoTick((n) => n + 1)
+      historyChanged()
     })
     manager.on('stack-item-popped', ({ type }: { type: string }) => {
       if (applyingTextUndo) return
@@ -183,6 +187,31 @@ export const isReadOnly = () => readOnly
 export const canUndo = () => (undoTick(), undoStack.canUndo)
 export const canRedo = () => (undoTick(), undoStack.canRedo)
 
+function historyChanged() {
+  // An Undo offer describes the previous command. Once history changes, its
+  // button must not silently undo a different command. Keyboard Undo remains.
+  setToastAction(null)
+  setUndoTick((n) => n + 1)
+}
+
+/** Position locks guard explicit layout changes. Content edits and natural height reflow stay allowed. */
+function layoutAllowed(tx: Transaction): boolean {
+  if (tx.every((ch) => { const c = getCard(ch.id); return !c || !changesPosition(c, ch.after as Partial<Card>, true) })) return true
+  const cards = Object.values(state.objs).filter((o): o is Card => o.kind === 'card')
+  const byId = new Map(tx.map((ch) => [ch.id, ch]))
+  // An explicit unlock in this command is deliberate.
+  const nextLocks = positionLocks(cards.map((c) => {
+    const change = byId.get(c.id)
+    return change && 'positionLocked' in change.after && (change.after as Partial<Card>).positionLocked !== true ? { ...c, positionLocked: false } : c
+  }))
+  return tx.every((ch) => {
+    const c = getCard(ch.id)
+    if (!c || !changesPosition(c, ch.after as Partial<Card>, true)) return true
+    const target = (ch.after as Partial<Card>).columnId
+    return !nextLocks.has(c.id) && (!target || !nextLocks.has(target))
+  })
+}
+
 function applyPatchToStore(id: Id, patch: Partial<Obj>) {
   if (state.objs[id]) setState('objs', id, patch as Obj)
   else setState('objs', id, { ...patch } as Obj)
@@ -231,7 +260,7 @@ function applyTx(tx: Transaction) {
 
 /** Apply a transaction and push it onto the undo stack. */
 export function commit(tx: Transaction) {
-  if (readOnly || previewing() || !tx.length) return
+  if (readOnly || previewing() || !tx.length || !layoutAllowed(tx)) return
   if (writeGuard && tx.some((c) => state.objs[c.id] && !writeGuard!({ ...state.objs[c.id], ...c.after, id: c.id } as Obj))) return
   if (writeGuard) {
     const freshBoards = new Map(tx.filter((change) => !state.objs[change.id] && change.after.kind === 'board').map((change) => [change.id, change.after as Board]))
@@ -260,7 +289,7 @@ export function commit(tx: Transaction) {
     return Object.keys(after).length ? [{ ...c, before, after }] : []
   })
   undoStack.push(undoTx)
-  setUndoTick((n) => n + 1)
+  historyChanged()
 }
 
 /** Build changes from `{id: fields}` against current values and commit them. */
@@ -319,6 +348,7 @@ export function amendOrCommit(id: Id, snap: Partial<Obj>) {
   const patch: Record<string, unknown> = {}
   for (const k of Object.keys(snap)) patch[k] = structuredClone(cur[k])
   if (undoStack.amendTop(id, patch)) {
+    historyChanged()
     record(id, patch as Partial<Obj>)
     for (const l of outboxListeners) l()
   } else commitFrom({ [id]: snap })
@@ -362,7 +392,7 @@ export function discardNew(id: Id) {
   const top = undoStack.peek()
   if (top && top.length === 1 && top[0].id === id && top[0].before.purged) {
     undoStack.dropTop()
-    setUndoTick((n) => n + 1)
+    historyChanged()
   }
   silent({ [id]: { purged: true } })
 }
@@ -370,7 +400,7 @@ export function discardNew(id: Id) {
 /** Store only. Commit the final value with `commitFrom` when the gesture ends. */
 export function transient(id: Id, patch: Partial<Obj>) {
   if (previewing()) return
-  if (!canWriteObject(state.objs[id])) return
+  if (!canWriteObject(state.objs[id]) || !layoutAllowed([{ id, before: {}, after: patch }])) return
   applyPatchToStore(id, patch)
   for (const listener of transientListeners) listener(id, patch)
 }
@@ -402,12 +432,12 @@ export function commitFrom(snapshot: Record<Id, Partial<Obj>>): boolean {
     }
     if (Object.keys(a).length) tx.push({ id, before: b as Partial<Obj>, after: a as Partial<Obj> })
   }
-  if (!tx.length) return false
+  if (!tx.length || !layoutAllowed(tx)) return false
   // Already in the store; persist + record undo.
   for (const c of tx) record(c.id, c.after)
   for (const l of outboxListeners) l()
   undoStack.push(tx)
-  setUndoTick((n) => n + 1)
+  historyChanged()
   return true
 }
 
@@ -419,18 +449,31 @@ export function snapshot(id: Id, keys: string[]): Partial<Obj> {
   return s as Partial<Obj>
 }
 
+function historyAllowed(tx: Transaction): boolean {
+  if (readOnly || !layoutAllowed(tx)) return false
+  return tx.every((change) => {
+    const current = state.objs[change.id]
+    if (!current || (writeGuard && !writeGuard(current))) return false
+    if (current.kind !== 'card' || (current.purged && change.before.purged === true)) return true
+    // Geometry undo is conditional: don't overwrite a newer collaborator move.
+    return [...POSITION_FIELDS, 'h'].every((key) => !(key in change.after) || JSON.stringify((current as unknown as Record<string, unknown>)[key] ?? null) === JSON.stringify((change.before as Record<string, unknown>)[key] ?? null))
+  })
+}
+
 export function undo() {
   if (previewing()) return
   const tx = undoStack.undo()
-  if (tx && (!writeGuard || tx.every((change) => state.objs[change.id] && writeGuard!(state.objs[change.id])))) applyTx(tx)
-  setUndoTick((n) => n + 1)
+  if (tx && historyAllowed(tx)) applyTx(tx)
+  else if (tx) { undoStack.redo(); showToast('Cannot undo because this item changed or is no longer editable.') }
+  historyChanged()
 }
 
 export function redo() {
   if (previewing()) return
   const tx = undoStack.redo()
-  if (tx && (!writeGuard || tx.every((change) => state.objs[change.id] && writeGuard!(state.objs[change.id])))) applyTx(tx)
-  setUndoTick((n) => n + 1)
+  if (tx && historyAllowed(tx)) applyTx(tx)
+  else if (tx) { undoStack.undo(); showToast('Cannot redo because this item changed or is no longer editable.') }
+  historyChanged()
 }
 
 function scheduleFlush() {
@@ -489,7 +532,7 @@ export function ackOutbox(sent: { id: Id; patch: Partial<Obj> }[]) {
     if (!cur) continue
     const rest: Record<string, unknown> = {}
     for (const [k, v] of Object.entries(cur)) {
-      if (JSON.stringify(v ?? null) !== JSON.stringify((s.patch as Record<string, unknown>)[k] ?? null)) rest[k] = v
+      if (!(k in s.patch) || JSON.stringify(v ?? null) !== JSON.stringify((s.patch as Record<string, unknown>)[k] ?? null)) rest[k] = v
     }
     if (Object.keys(rest).length) outbox.set(s.id, rest as Partial<Obj>)
     else outbox.delete(s.id)

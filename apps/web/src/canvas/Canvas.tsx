@@ -1,4 +1,5 @@
 import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, onMount } from 'solid-js'
+import { isPositionLocked } from '../state/position.ts'
 import { StickerLayer, groupTurn, selectionRing, setGroupTurn, setManipulatingSticker, stickerAt, stickerRingAt } from './StickerLayer.tsx'
 import { armedSticker, cancelStickerPlacement, placeSticker, setStickerGhost } from '../state/stickers.ts'
 import { ringGesture, transformSticker, transformStickerGroup, stickerBounds, usableSticker, newId, type Sticker } from '@doggynote/core'
@@ -62,6 +63,7 @@ import {
   trashOpen,
   viewport,
 } from '../state/ui.ts'
+import { columnCollapsed, connectionEndpoint, hiddenByColumn } from '../state/columns.ts'
 import { columnChildren, connect, createCard } from '../state/actions.ts'
 import { CardView } from './CardView.tsx'
 import { LodLayer } from './LodLayer.tsx'
@@ -151,6 +153,42 @@ export function Canvas(props: { readOnly: boolean }) {
   )
   createEffect(() => setMeasuring(!lod()))
 
+  // Cards hidden in a collapsed column can't stay selected, edited or mid-gesture.
+  createEffect(() => {
+    const hidden = [...selection()].filter(hiddenByColumn)
+    if (hidden.length) {
+      const parents = hidden.map((id) => doc.getCard(id)!.columnId!)
+      select(new Set([...selection()].filter((id) => !hidden.includes(id)).concat(parents)))
+      // Undoing a search reveal (or a remote collapse) must not strand the
+      // selection below the now-hidden stack. Keep its header in context.
+      if (selection().size === 1) {
+        const parent = parents[0], board = boardId()
+        requestAnimationFrame(() => {
+          if (boardId() !== board || !selection().has(parent) || !columnCollapsed(doc.getCard(parent))) return
+          const r = rectOf(parent), v = viewport(), cam = camera()
+          if (!r) return
+          const focus = () => requestAnimationFrame(() => cardEl(parent)?.querySelector<HTMLButtonElement>('.column-toggle')?.focus({ preventScroll: true }))
+          if (!intersects(r, viewRect(cam, v.width, v.height))) {
+            animateCamera({ x: r.x + r.w / 2 - v.width / cam.zoom / 2, y: r.y + r.h / 2 - v.height / cam.zoom / 2, zoom: cam.zoom }, 180, focus)
+          } else focus()
+        })
+      }
+    }
+    const hiddenConnections = [...selection()].filter((id) => {
+      const conn = doc.get(id)
+      return conn?.kind === 'connection' && connectionEndpoint(conn.from) === connectionEndpoint(conn.to)
+    })
+    if (hiddenConnections.length) select([...selection()].filter((id) => !hiddenConnections.includes(id)))
+    const editing = editingId()
+    if (editing && hiddenByColumn(editing)) endEdit()
+    const connecting = connectMode()?.from
+    if (connecting && hiddenByColumn(connecting)) setConnectMode(null)
+    const target = dropTarget()
+    if (target && columnCollapsed(doc.getCard(target.columnId))) setDropTarget(null)
+    const g = gesture
+    if (g && (('id' in g && g.id && hiddenByColumn(g.id)) || (g.kind === 'connect' && hiddenByColumn(g.from)))) cancelGesture()
+  })
+
   // ---- culling ---------------------------------------------------------------
   const cull = createMemo(
     () => {
@@ -169,7 +207,9 @@ export function Canvas(props: { readOnly: boolean }) {
   const visible = createMemo(() => {
     if (exporting()) return doc.cardsOn(boardId()).filter((c) => !c.columnId)
     const r = cull()
-    return doc.cardsOn(boardId()).filter((c) => !c.columnId && intersects(r, { x: c.x, y: c.y, w: c.w, h: cardHeight(c) }))
+    const active = doc.getCard(editingId())
+    const editingRoot = active?.columnId ?? active?.id
+    return doc.cardsOn(boardId()).filter((c) => !c.columnId && (c.id === editingRoot || intersects(r, { x: c.x, y: c.y, w: c.w, h: cardHeight(c) })))
   })
 
   const measure = () => {
@@ -180,12 +220,14 @@ export function Canvas(props: { readOnly: boolean }) {
   // ---- camera per board ------------------------------------------------------
   createEffect(
     on(boardId, (id) => {
+      // Effects can run before the ResizeObserver's first callback. Measure even when a
+      // saved camera is restored: a ⌘1 or ⌘0 that lands first would otherwise fit the
+      // board into the 1×1 placeholder viewport and zoom out to the minimum.
+      measure()
       const saved = loadCamera(id)
       if (saved) return setCamera(saved)
-      // Effects can run before the ResizeObserver's first callback; fit needs the real size.
-      measure()
       const v = viewport()
-      const rects = doc.cardsOn(id).filter((c) => !c.columnId).map((c) => ({ x: c.x, y: c.y, w: c.w, h: c.h }))
+      const rects = doc.cardsOn(id).filter((c) => !c.columnId).map((c) => ({ x: c.x, y: c.y, w: c.w, h: cardHeight(c) }))
       rects.push(...doc.stickersOn(id).map(stickerBounds))
       const b = union(rects)
       if (!b) return setCamera({ x: -v.width / 2, y: -v.height / 3, zoom: 1 })
@@ -251,7 +293,7 @@ export function Canvas(props: { readOnly: boolean }) {
       const r = { x: c.x, y: c.y, w: c.w, h: cardHeight(c) }
       if (p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h && (!best || (c.z ?? 0) > (best.z ?? 0))) best = c
     }
-    if (best?.type === 'column') {
+    if (best?.type === 'column' && !columnCollapsed(best)) {
       // A card inside the column, if the point is on one.
       for (const k of columnChildren(best.id)) {
         const r = rectOf(k.id)
@@ -266,7 +308,7 @@ export function Canvas(props: { readOnly: boolean }) {
 
   function columnAt(p: Vec, exclude: Set<Id>): Card | null {
     for (const c of doc.cardsOn(boardId())) {
-      if (c.type !== 'column' || c.columnId || exclude.has(c.id)) continue
+      if (c.type !== 'column' || columnCollapsed(c) || c.columnId || exclude.has(c.id) || isPositionLocked(c.id)) continue
       const r = rectOf(c.id)
       if (r && p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h + 40) return c
     }
@@ -388,6 +430,7 @@ export function Canvas(props: { readOnly: boolean }) {
     if (target.closest('[data-resize]')) {
       const id = cardIdAt(target)!
       const c = doc.getCard(id)!
+      if (isPositionLocked(id)) return true
       doc.markBusy([id])
       startGesture(e, { kind: 'resize', id, startX: e.clientX, w0: c.w, snap: { [id]: doc.snapshot(id, ['w']) } })
       return true
@@ -453,8 +496,17 @@ export function Canvas(props: { readOnly: boolean }) {
       if (g.shift) toggle(g.id)
       else select([g.id])
     }
+    const candidates = [...selection()].filter((id) => doc.getCard(id) && !hiddenByColumn(id))
+    if (isPositionLocked(g.id)) {
+      showToast('Position locked. Select the card and choose Unlock position.')
+      gesture = null
+      return
+    }
+    // A selected column carries its members; locked cards stay where they are.
+    const selectedColumns = new Set(candidates.filter((id) => doc.getCard(id)?.type === 'column'))
+    const cardIds = candidates.filter((id) => !isPositionLocked(id) && !selectedColumns.has(doc.getCard(id)?.columnId ?? ''))
+    if (cardIds.length < candidates.length) showToast('Locked positions stay in place. Columns move with their members.')
     const b = boardId()
-    const cardIds = [...selection()].filter((id) => doc.getCard(id))
     // Selected stickers come along, lifted above the others in their own stacking order.
     const stickers = doc.stickersOn(b).filter((s) => selection().has(s.id) && doc.canWriteObject(s)).sort((p, q) => p.z - q.z)
     const ids = [...cardIds, ...stickers.map((s) => s.id)]
@@ -476,7 +528,7 @@ export function Canvas(props: { readOnly: boolean }) {
     }
     setDraggingIds(new Set(ids))
     doc.markBusy(ids)
-    gesture = { kind: 'drag', ids, primary: g.id, startWorld: toWorld({ clientX: g.client.x, clientY: g.client.y }), origins, snap }
+    gesture = { kind: 'drag', ids, primary: selectedColumns.has(doc.getCard(g.id)?.columnId ?? '') ? doc.getCard(g.id)!.columnId! : g.id, startWorld: toWorld({ clientX: g.client.x, clientY: g.client.y }), origins, snap }
     moveGesture(e)
   }
 
@@ -718,17 +770,20 @@ export function Canvas(props: { readOnly: boolean }) {
           toggle(g.id)
           break
         }
+        // Remembered so a double-click knows which card it landed on: pointer capture
+        // retargets the dblclick to the canvas itself.
+        if (e.type !== 'pointercancel') lastPress = { id: g.id, board: boardId(), at: performance.now() }
         if (c.type === 'board') {
           endEdit()
           select([g.id])
-          if (e.type !== 'pointercancel') lastPress = { id: g.id, board: boardId(), at: performance.now() }
           break
         }
-        // A column's first click selects it, so its colour and actions are reachable;
-        // a click on the title of the selected column renames it.
-        const renames = c.type === 'column' && !!g.target.closest('[data-edit-title]') && selection().size === 1 && selection().has(g.id)
+        // The first click selects a card, so its toolbar is reachable; clicking the
+        // selected card again (or double-clicking) edits it. For a column, that's its title.
+        const again = selection().size === 1 && selection().has(g.id)
+        const renames = c.type === 'column' && !!g.target.closest('[data-edit-title]') && again
         // Zoomed out, cards are shapes on a canvas: a click selects, it can't edit.
-        if (!lod() && (c.type === 'note' || c.type === 'todo' || renames)) {
+        if (!lod() && (((c.type === 'note' || c.type === 'todo') && again) || renames)) {
           queueEditCaret(g.client)
           beginEdit(g.id)
         } else select([g.id])
@@ -1051,6 +1106,8 @@ export function Canvas(props: { readOnly: boolean }) {
         openBoard((card as Card<'board'>).content.boardId)
         return
       }
+      // Any other card: the press already selected or began editing it. Never drop a new note on top.
+      if (card) return
     }
     if (target.closest('[data-card-id],[data-connection-id]')) return
     if (lod() && cardAtWorld(toWorld(e))) return

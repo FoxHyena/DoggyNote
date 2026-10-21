@@ -78,6 +78,7 @@ class CheckboxWidget extends WidgetType {
 
 const hidden = Decoration.replace({})
 const faded = Decoration.mark({ class: 'cm-md-mark' })
+const gap = Decoration.line({ class: 'cm-md-gap' })
 const MARK_CLASS: Record<string, string> = {
   StrongEmphasis: 'cm-md-strong',
   Emphasis: 'cm-md-em',
@@ -178,6 +179,15 @@ function buildDecorations(view: EditorView): { decorations: DecorationSet; atomi
       const first = item.from === line.from + lead
       if (lead) out.push(hidden.range(line.from, line.from + lead))
       out.push(Decoration.line({ class: 'cm-md-li', attributes: { style: `--li-depth: ${depth + 1}` + (first ? '' : '; text-indent: 0') } }).range(line.from))
+    }
+  }
+  // A blank line between blocks is spacing, not a line of text: shrink it to the
+  // gap the rendered note uses, unless the caret is on it.
+  for (const { from, to } of view.visibleRanges) {
+    for (let pos = from; pos <= to; ) {
+      const line = lineOf(pos)
+      if (!line.length && !touched(line.from, line.to) && line.number > 1 && line.number < state.doc.lines) out.push(gap.range(line.from))
+      pos = line.to + 1
     }
   }
   const decorations = Decoration.set(out, true)

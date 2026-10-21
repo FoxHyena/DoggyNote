@@ -21,7 +21,7 @@ export function BoardNavigation() {
   // Phones have no breadcrumbs to hop back with: the last few boards, one tap away.
   const recent = () => recentBoards().filter((id) => id !== boardId() && !id.startsWith('toybox:') && doc.getBoard(id) && canReadBoard(id)).slice(0, 5)
   return <div class="zoom board-navigation" ref={root}>
-    <button ref={trigger} class="icon-btn" data-testid="board-navigation" data-tooltip="My boards and shared boards" title="My boards and shared boards" aria-label="My boards and shared boards" aria-haspopup="dialog" aria-controls={open() ? menuId : undefined} aria-expanded={open()} onClick={() => setOpen(!open())}><BoardIconSvg icon="kennel" size={19} /><span class="icon-btn-label">Boards</span><span class="boards-caret" aria-hidden="true">⌄</span></button>
+    <button ref={trigger} class="icon-btn" data-testid="board-navigation" data-tooltip="My boards and shared boards" title="My boards and shared boards" aria-label="My boards and shared boards" aria-haspopup="dialog" aria-controls={open() ? menuId : undefined} aria-expanded={open()} onClick={() => setOpen(!open())}><BoardIconSvg icon="kennel" size={19} /><span class="icon-btn-label">Boards</span><span class="boards-caret" aria-hidden="true"><Icon size={14}>{ToolIcons.chevronDown()}</Icon></span></button>
     <Show when={open()}><div id={menuId} class="menu nav-menu board-nav-menu" role="dialog" aria-label="Your spaces" data-testid="board-navigation-menu">
       <div class="nav-menu-head"><strong>Your spaces</strong><button class="icon-btn" aria-label="Close boards" onClick={() => { setOpen(false); trigger.focus() }}><Icon size={16}>{ToolIcons.close()}</Icon></button></div>
       <div class="board-nav-scroll" data-testid="board-navigation-list">

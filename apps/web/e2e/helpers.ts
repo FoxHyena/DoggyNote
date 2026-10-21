@@ -4,12 +4,25 @@ import { noteDocument, noteState, replaceText } from '@doggynote/core'
 
 export const MOD = 'ControlOrMeta'
 
+/**
+ * Select all text in the focused editor. ControlOrMeta follows the machine running
+ * the tests, but CodeMirror follows the emulated device: an iPhone or iPad means
+ * ⌘A, and there Ctrl+A only moves to the start of the line (the macOS binding).
+ */
+export async function selectAllText(page: Page) {
+  const apple = await page.evaluate(() => /Mac|iPhone|iPad/.test(navigator.platform) || /iPhone|iPad/.test(navigator.userAgent))
+  await page.keyboard.press(apple ? 'Meta+a' : 'Control+a')
+}
+
 /** Camera from the world transform: translate(tx, ty) scale(z). */
 export async function camera(page: Page) {
-  const t = await page.getByTestId('world').evaluate((el) => (el as HTMLElement).style.transform)
-  const m = t.match(/translate\((-?[\d.e-]+)px, (-?[\d.e-]+)px\) scale\(([\d.e-]+)\)/)
-  if (!m) throw new Error(`unexpected transform ${t}`)
-  return { tx: Number(m[1]), ty: Number(m[2]), zoom: Number(m[3]) }
+  return page.getByTestId('world').evaluate((el) => {
+    const transform = getComputedStyle(el).transform
+    // WebKit may serialize a zero Y translation as translate(0px). Read the
+    // browser's actual matrix instead of requiring a particular CSS spelling.
+    const matrix = transform === 'none' ? new DOMMatrix() : new DOMMatrix(transform)
+    return { tx: matrix.e, ty: matrix.f, zoom: matrix.a }
+  })
 }
 
 export async function canvasBox(page: Page) {

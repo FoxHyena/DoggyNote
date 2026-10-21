@@ -20,13 +20,18 @@ async function cdp(page: Page) {
   return s
 }
 
+/** Chromium's double-tap timeout (gesture_configuration: 300 ms), plus a frame. */
+const CHROMIUM_GESTURE_WINDOW_MS = 320
+
 /** A multi-finger gesture. Fingers are numbered from 0. */
 export class Fingers {
   private down = new Map<number, Pt>()
+  private most = 0
   constructor(private page: Page) {}
 
   async press(id: number, p: Pt) {
     this.down.set(id, p)
+    this.most = Math.max(this.most, this.down.size)
     await this.send('touchStart', id, 'pointerdown', p)
   }
   async move(id: number, p: Pt) {
@@ -37,6 +42,12 @@ export class Fingers {
     const p = this.down.get(id)!
     this.down.delete(id)
     await this.send('touchEnd', id, 'pointerup', p)
+    if (this.down.size || this.most < 2) return
+    this.most = 0
+    // Chromium keeps a two-finger gesture open for its double-tap window after the
+    // last finger lifts, and a tap inside it gets no click. A hand can't come back
+    // that fast; synthetic input can (seen on CI's x64 Chromium), so let it close.
+    if (isChromium(this.page)) await this.page.waitForTimeout(CHROMIUM_GESTURE_WINDOW_MS)
   }
 
   private async send(type: 'touchStart' | 'touchMove' | 'touchEnd', id: number, pointer: string, p: Pt) {
@@ -169,3 +180,31 @@ export async function setCamera(page: Page, cam: { x: number; y: number; zoom: n
 }
 
 export const note = (md: string, x = 0, y = 0, extra: Partial<Seed> = {}): Seed => ({ type: 'note', x, y, content: { md }, ...extra })
+
+/**
+ * The docked selection bar stays within the screen in a few short rows (position,
+ * colours, actions). The action row may scroll sideways; every button in it can be
+ * scrolled fully into view with its label intact, and Done is always on screen.
+ */
+export async function selectionBarFits(page: Page) {
+  const bar = page.getByTestId('selection-bar')
+  await expect.poll(() => bar.evaluate((bar) => {
+    const box = bar.getBoundingClientRect()
+    const inside = (r: DOMRect) => r.left >= box.left - 0.5 && r.right <= box.right + 0.5 && r.top >= box.top - 0.5 && r.bottom <= box.bottom + 0.5
+      && r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight
+    if (box.left < 0 || box.right > innerWidth || box.bottom > innerHeight || bar.scrollWidth > bar.clientWidth + 1) return 'bar overflows'
+    const done = bar.querySelector('[data-testid="selection-done"]')
+    if (done && !inside(done.getBoundingClientRect())) return 'done hidden'
+    const buttons = [...bar.querySelectorAll('button')].filter((b) => b.getClientRects().length)
+    if (!buttons.length) return 'no buttons'
+    const groups = [...bar.querySelectorAll<HTMLElement>('.bar-group')]
+    try {
+      for (const b of buttons) {
+        b.scrollIntoView({ inline: 'center', block: 'nearest' })
+        if (!inside(b.getBoundingClientRect())) return `unreachable: ${b.getAttribute('aria-label') ?? b.textContent}`
+        if (b.scrollWidth > b.clientWidth + 1) return `clipped: ${b.getAttribute('aria-label') ?? b.textContent}`
+      }
+    } finally { for (const g of groups) g.scrollLeft = 0 }
+    return 'ok'
+  })).toBe('ok')
+}

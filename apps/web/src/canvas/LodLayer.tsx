@@ -5,6 +5,7 @@ import { theme as themeSignal } from '../theme.ts'
 import * as doc from '../state/doc.ts'
 import { boardId, camera, selection, viewport } from '../state/ui.ts'
 import { columnChildren } from '../state/actions.ts'
+import { columnCollapsed } from '../state/columns.ts'
 import { assetUrl } from '../state/api.ts'
 import { acquireUrl, releaseUrl } from '../state/assets.ts'
 import { acquireStickerOutline } from '../state/stickerOutline.ts'
@@ -260,10 +261,18 @@ export function LodLayer() {
           ctx.fillStyle = bg
           ctx.fillRect(x, y, w, Math.min(h, 50 * z))
         }
-        let cy = y + COLUMN_HEADER * z
+        if (columnCollapsed(c)) {
+          ctx.fillStyle = pal.muted
+          ctx.font = `${Math.max(1, 12 * z)}px sans-serif`
+          ctx.fillText(typeof (c as Card<'column'>).content?.title === 'string' ? (c as Card<'column'>).content.title || 'Column' : 'Column', x + 14 * z, y + 20 * z, w - 28 * z)
+          const count = columnChildren(c.id).length
+          ctx.fillText(`${count} ${count === 1 ? 'card' : 'cards'}`, x + 14 * z, y + 40 * z, w - 28 * z)
+          return
+        }
+        let cy = y + (COLUMN_HEADER + COLUMN_INSET - 1) * z
         for (const k of columnChildren(c.id)) {
           const kh = cardHeight(k) * z
-          drawCard(k, x + COLUMN_INSET * z, cy, w - COLUMN_INSET * 2 * z, kh)
+          drawCard(k, x + (COLUMN_INSET + 1) * z, cy, w - (COLUMN_INSET + 1) * 2 * z, kh)
           cy += kh + COLUMN_INSET * z
         }
         return
@@ -313,7 +322,7 @@ export function LodLayer() {
     selection()
     thumbTick()
     for (const s of doc.stickersOn(boardId())) void (s.x, s.y, s.w, s.angle, s.z, s.content.assetId)
-    for (const c of doc.cardsOn(boardId())) void (c.x, c.y, c.w, c.h, c.z, c.color, c.columnId, c.order)
+    for (const c of doc.cardsOn(boardId())) void (c.x, c.y, c.w, c.h, c.z, c.color, c.columnId, c.order, columnCollapsed(c))
     if (!frame) frame = requestAnimationFrame(draw)
   })
   onCleanup(() => {

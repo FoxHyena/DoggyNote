@@ -49,6 +49,15 @@ export async function downloadRecovery() {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
+/** Throw away the recovery copy (after downloading it, or when it isn't needed). Undo restores it. */
+export async function discardRecovery() {
+  const rows = recoverableChanges()
+  if (!rows.length) return
+  await idb.putMany('meta', rows.map((row) => [`recovery:${row.id}`, undefined]))
+  setRecoverableChanges([])
+  showToast(`Recovery copy discarded (${rows.length} ${rows.length === 1 ? 'item' : 'items'}).`, 6000, { label: 'Undo', run: () => { void idb.putMany('meta', rows.map((row) => [`recovery:${row.id}`, row])).then(loadRecovery) } })
+}
+
 export async function preserveActiveEdit(id: string, reason: string) {
   flushEdit()
   const object = doc.base(id)

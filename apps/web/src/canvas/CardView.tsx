@@ -2,6 +2,7 @@ import { ErrorBoundary, For, Match, Show, Switch, createSelector, onCleanup, onM
 import { SIDES, type Card } from '@doggynote/core'
 import { COPY, cardColor } from '@doggynote/theme'
 import { isPreviewCurrent, previewBadge, type Badge } from '../state/preview.ts'
+import { isPositionLocked } from '../state/position.ts'
 
 const PREVIEW_CHIP: Record<Badge, string> = { added: 'New', changed: 'Edited', moved: 'Moved', removed: 'Buried' }
 import { camera, editingId, isSelected, nearHandle, selection } from '../state/ui.ts'
@@ -77,6 +78,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         resizing: resizingId() === props.card.id,
         colored: props.card.color !== 'none' && !!props.card.color,
       }}
+      tabIndex={-1}
       data-card-id={props.card.id}
       data-testid="card"
       data-type={props.card.type}
@@ -124,6 +126,9 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         </Match>
       </Switch>
       </ErrorBoundary>
+      <Show when={isPositionLocked(props.card.id) && !props.readOnly && !props.lod}>
+        <span class="position-lock-badge" data-testid="position-lock-badge" title={props.card.positionLocked === true ? 'Position locked — select to unlock' : 'Column layout locked — unlock the column or its locked member'} aria-label="Position locked"><svg width="12" height="14" viewBox="0 0 12 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="6" width="9" height="7" rx="1.5" /><path d="M3.5 6V3.5a2.5 2.5 0 0 1 5 0V6" /></svg></span>
+      </Show>
       <Show when={comments() && !props.lod}>
         <button
           class="comment-badge"
@@ -140,7 +145,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
           {comments()}
         </button>
       </Show>
-      <Show when={!props.readOnly && single() && free() && props.card.type !== 'board' && !props.lod}>
+      <Show when={!props.readOnly && single() && free() && !isPositionLocked(props.card.id) && props.card.type !== 'board' && !props.lod}>
         <div class="resize-handle" data-resize data-testid="resize-handle" title="Resize" />
       </Show>
       <Show when={!props.readOnly && !props.lod && (!touch() || touchHandles())}>

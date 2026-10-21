@@ -5,8 +5,10 @@ import App from './App.tsx'
 // After every component's CSS: phone and touch rules override desktop ones.
 import './ui/mobile.css'
 import { installThemeCss } from './theme.ts'
+import { installTooltips } from './ui/tooltip.ts'
 
 installThemeCss()
 // The desktop window draws its traffic lights over our top bar.
 if ('__TAURI_INTERNALS__' in window) document.documentElement.classList.add('tauri')
+installTooltips()
 render(() => <App />, document.getElementById('root')!)

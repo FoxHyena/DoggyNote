@@ -51,7 +51,7 @@ test('a quick untick stays put; an untick from the done tasks rises to the end o
 
 test('tasks ticked while editing settle when editing ends', async ({ page }) => {
   const list = await seedList(page, [item('Vacuum'), item('Dishes')])
-  await list.locator('.todo-text', { hasText: 'Dishes' }).click()
+  await list.locator('.todo-text', { hasText: 'Dishes' }).dblclick()
   await expect(page.getByTestId('todo-item-input').first()).toBeVisible()
   await list.getByRole('checkbox', { name: 'Vacuum' }).check()
   await page.waitForTimeout(1000)
@@ -120,7 +120,7 @@ test('a list that arrives out of order is tidied when shown, if sorting is on', 
 
 test('Clear done from the List menu while typing in the list: shows at once, and ⌘Z brings them back', async ({ page }) => {
   await seedCards(page, [{ type: 'todo', w: 260, content: { title: 'Chores', items: [{ id: 'a', text: 'Vacuum', done: false }, { id: 'b', text: 'Dishes', done: true, doneAt: Date.now() }] } }])
-  await page.locator('[data-type=todo] .todo-item', { hasText: 'Vacuum' }).click()
+  await page.locator('[data-type=todo] .todo-item', { hasText: 'Vacuum' }).dblclick()
   await expect(page.getByTestId('todo-item-input').first()).toBeVisible()
   await page.getByTestId('todo-options').click()
   await page.getByTestId('todo-clear-done').click()
