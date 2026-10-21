@@ -54,7 +54,17 @@ test('phone scroll and preview never place; tap, cancel, move, resize, rotate an
   await expect.poll(() => page.evaluate(() => {
     return { width: Math.round(visualViewport!.width), height: Math.round(visualViewport!.height) }
   })).toEqual({ width: 844, height: 390 })
-  await openStickerTray(page)
+  const inputEvents: unknown[] = []
+  await page.exposeFunction('recordLandscapeInput', (event: unknown) => inputEvents.push(event))
+  await page.evaluate(() => {
+    for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'click']) document.addEventListener(type, (event) => {
+      const target = event.target as Element | null, pointer = event as PointerEvent
+      void (window as unknown as { recordLandscapeInput: (value: unknown) => Promise<void> }).recordLandscapeInput({ type, target: target?.outerHTML.slice(0, 500), x: pointer.clientX, y: pointer.clientY, prevented: event.defaultPrevented })
+    }, { passive: true })
+  })
+  try { await openStickerTray(page) } finally {
+    await test.info().attach('landscape-input', { body: JSON.stringify(inputEvents, null, 2), contentType: 'application/json' })
+  }
   await page.screenshot({ path: resolve(dir, `${test.info().project.name}-landscape-tray.png`) })
   const bone = tray.getByRole('button', { name: /^Choose 🦴 from/ }).first()
   await bone.scrollIntoViewIfNeeded()
