@@ -9,7 +9,7 @@ const images = new Map<string, Entry>()
 let worker: Worker | undefined, unavailable = false, nextId = 0
 const pending = new Map<number, { resolve: (blob: Blob) => void; reject: (error: Error) => void }>()
 
-function outline(blob: Blob): Promise<Blob> {
+function outline(blob: Blob, color: [number, number, number]): Promise<Blob> {
   if (unavailable) return Promise.reject(new Error('Background image processing unavailable'))
   try {
     worker ??= new Worker(new URL('./stickerOutline.worker.ts', import.meta.url), { type: 'module' })
@@ -36,7 +36,7 @@ function outline(blob: Blob): Promise<Blob> {
       resolve: (value) => { clearTimeout(timer); resolve(value) },
       reject: (error) => { clearTimeout(timer); reject(error) },
     })
-    worker!.postMessage({ id, blob })
+    worker!.postMessage({ id, blob, color })
   })
 }
 
@@ -44,7 +44,9 @@ function outline(blob: Blob): Promise<Blob> {
  * encoded PNG per account, and release decoded-image URLs with the last view.
  * Anonymous share viewers use memory only. No API or persisted sticker changes. */
 export function acquireStickerOutline(assetId: string, accountId: string | null) {
-  const key = `sticker-outline:v1:${accountId ?? 'share'}:${assetId}`
+  // The die-cut colour is a theme token; a new value renders anew.
+  const hex = getComputedStyle(document.documentElement).getPropertyValue('--dn-sticker-outline').trim()
+  const key = `sticker-outline:v2:${hex}:${accountId ?? 'share'}:${assetId}`
   let entry = images.get(key)
   if (!entry) {
     const controller = new AbortController(), signal = controller.signal
@@ -58,9 +60,13 @@ export function acquireStickerOutline(assetId: string, accountId: string | null)
         let rendered: Blob
         if (stored) rendered = new Blob([stored.data], { type: stored.type })
         else {
+          const color = /^#[0-9a-f]{6}$/i.test(hex) ? [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as [number, number, number] : null
+          if (!color) throw new Error('Sticker outline colour unavailable')
+          // v1 renders grew a halo from soft shadows; drop them as v2 replaces them.
+          if (accountId) void idb.del('assets', `sticker-outline:v1:${accountId}:${assetId}`).catch(() => {})
           const response = await fetch(original, { signal, credentials: 'same-origin' })
           if (!response.ok) throw new Error('Sticker image unavailable')
-          rendered = await outline(await response.blob())
+          rendered = await outline(await response.blob(), color)
           signal.throwIfAborted()
           if (accountId) {
             const data = await rendered.arrayBuffer()
