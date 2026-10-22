@@ -37,6 +37,8 @@ const host = (url: string) => {
 function LinkImage(props: { url: string }) {
   const [src, setSrc] = createSignal<string | null>(props.url)
   const [via, setVia] = createSignal<'direct' | 'proxy'>('direct')
+  // Its shape, once known: in a column the thumbnail takes it, so it fills without bars.
+  const [ratio, setRatio] = createSignal(1)
   const onError = async () => {
     setSrc(null)
     if (via() === 'proxy') return
@@ -55,6 +57,8 @@ function LinkImage(props: { url: string }) {
           draggable={false}
           loading="lazy"
           referrerpolicy="no-referrer"
+          style={{ '--ar': String(ratio()) }}
+          onLoad={(e) => { const i = e.currentTarget; if (i.naturalWidth && i.naturalHeight) setRatio(i.naturalWidth / i.naturalHeight) }}
           onError={() => void onError()}
         />
       )}

@@ -8,7 +8,8 @@ import { loaded, seedLinks } from './link-fixture.ts'
 // a dead image disappears instead of leaving a broken box.
 
 test('an image the site refuses to hot-link loads through our proxy', async ({ page }) => {
-  const { card } = await seedLinks(page, [{ url: `${FIXTURES}/guarded.html`, title: 'Woofcloud photo', image: `${FIXTURES}/guarded.png` }])
+  const guarded = { url: `${FIXTURES}/guarded.html`, title: 'Woofcloud photo', image: `${FIXTURES}/guarded.png` }
+  const { card } = await seedLinks(page, [guarded, { ...guarded, column: true }])
   const img = card(0).getByTestId('link-image')
   await expect(img).toHaveAttribute('data-via', 'proxy')
   await expect.poll(() => loaded(img)).toBe(true)
@@ -17,6 +18,10 @@ test('an image the site refuses to hot-link loads through our proxy', async ({ p
   // Whole picture, full card width: 40×30 at 260 px wide.
   const box = await img.evaluate((el) => [el.offsetWidth, el.offsetHeight])
   expect(Math.abs(box[1] - (box[0] * 30) / 40)).toBeLessThan(2)
+  // In a column a wide picture keeps its shape, 88 px wide: 88 × 66, no bars.
+  const thumb = card(1).getByTestId('link-image')
+  await expect.poll(() => loaded(thumb)).toBe(true)
+  await expect.poll(() => thumb.evaluate((el) => [el.offsetWidth, el.offsetHeight])).toEqual([88, 66])
 })
 
 test('the Link tool previews a fresh guarded link with its image', async ({ page }) => {
@@ -66,15 +71,15 @@ test('tall images are shown whole; in a column the card is a row with a whole th
   expect(Math.abs(f.h - (f.w * 30) / 20)).toBeLessThan(2)
   expect(f.h).toBeGreaterThan(300)
 
-  // In a column: a compact row, like a movie card. A 72 px thumbnail, still the whole
-  // picture (contained, not covered), with the title beside it.
+  // In a column: a compact row, like a movie card. The thumbnail takes the picture's own
+  // shape inside 88 × 108, so a 2:3 picture fills a 72 × 108 poster with no bars.
   await expect(card(1).getByTestId('link-card')).toHaveClass(/link-row/)
   const c = await inColumn.evaluate((el) => ({ w: el.offsetWidth, h: el.offsetHeight, fit: getComputedStyle(el).objectFit }))
-  expect(c).toEqual({ w: 72, h: 72, fit: 'contain' })
+  expect(c).toEqual({ w: 72, h: 108, fit: 'contain' })
   const thumb = (await inColumn.boundingBox())!, title = (await card(1).getByTestId('link-title').boundingBox())!
   expect(title.x).toBeGreaterThan(thumb.x + thumb.width)
   expect(title.y).toBeLessThan(thumb.y + thumb.height)
-  expect(await card(1).evaluate((el) => el.offsetHeight)).toBeLessThan(110)
+  expect(await card(1).evaluate((el) => el.offsetHeight)).toBeLessThan(140)
 
   // The measured card height (image included) syncs, so other devices cull it right.
   const cardH = await card(0).evaluate((el) => el.offsetHeight)
