@@ -1,3 +1,4 @@
+import { SheetGrip } from './SheetGrip.tsx'
 import { installCanvasPanel } from './canvasPanel.ts'
 import './canvas-entry.css'
 import { For, Show, createMemo } from 'solid-js'
@@ -23,7 +24,7 @@ export function TrashPanel() {
   const comments = createMemo(() => (doc.index(), trashOpen() ? doc.trashedCommentsOn(boardId()) : []))
   return (
     <Show when={trashOpen()}>
-      <aside ref={panel} class="trash" data-testid="trash-panel" aria-label={COPY.trash}>
+      <aside ref={panel} class="trash" data-testid="trash-panel" aria-label={COPY.trash}><SheetGrip onDismiss={() => setTrashOpen(false)} />
         <header class="trash-head">
           <h2>{COPY.trash}</h2>
           <button class="icon-btn" title="Close" onClick={() => setTrashOpen(false)}>

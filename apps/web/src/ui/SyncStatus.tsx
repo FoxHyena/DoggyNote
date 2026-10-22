@@ -1,3 +1,4 @@
+import { SheetGrip } from './SheetGrip.tsx'
 import { Show, createEffect, createMemo, createSignal, onCleanup } from 'solid-js'
 import * as doc from '../state/doc.ts'
 import { lastError, lastSyncAt, pendingCount, pendingUploadsCount, syncNow, syncState } from '../state/sync.ts'
@@ -75,7 +76,7 @@ export function SyncStatus() {
       onClick={() => { position(); setOpen(!open()); retry() }}>
       <Icon size={16} name={attention() ? failure() || recoverableChanges().length ? 'warning' : 'sync' : 'check'} /><span classList={{ 'save-label-quiet': !attention() }}>{label()}</span>
     </button>
-    <Show when={open()}><section class="save-details" style={popupPosition()} role="dialog" aria-label="Save and sync details" data-testid="sync-details">
+    <Show when={open()}><section class="save-details" style={popupPosition()} role="dialog" aria-label="Save and sync details" data-testid="sync-details"><SheetGrip onDismiss={() => { setOpen(false); trigger.focus() }} />
       <h3>Your changes</h3>
       <p role={failure() ? 'alert' : undefined}>{doc.localSaveError() ?? (serverTrouble() ? COPY.syncSafe : syncState() === 'offline' ? 'Offline. Changes saved on this device will sync when you reconnect.' : syncState() === 'signed-out' ? 'Sign in to resume syncing.' : doc.lastLocalSave() ? 'Saved on this device.' : 'Local storage is ready.')}</p>
       {/* The server's reason is for the curious, not the headline. */}

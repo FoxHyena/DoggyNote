@@ -317,7 +317,7 @@ Image stickers with a white die-cut outline and a hard offset shadow, placed dir
 - **Standard:** 120ms for hover colour and background; 140–160ms ease-out for pop-ins, toasts and menus; 70ms ease-out for snap-to-grid glides.
 - **Fetch:** no entrance animation. The frequent keyboard command is visible and focused immediately.
 - **Phone sheets:** 200–240ms on `cubic-bezier(0.22, 1, 0.36, 1)`, a fast settle with no overshoot.
-- **Sheet gestures:** follow the active pointer directly; cancellation restores the sheet and re-grabbing interrupts dismissal. Release settles over 180ms on the sheet curve, or immediately under reduced motion.
+- **Sheet gestures:** only the explicit grip owns a pull; the body keeps native scrolling. Follow the active pointer directly; cancellation restores the sheet and re-grabbing interrupts dismissal. Release settles over 180ms ease-out, or immediately under reduced motion.
 - **Toasts:** preserve horizontal centering throughout entry. Transform/opacity transitions take 160ms on desktop and 200ms on phones; message replacement and dismissal remain immediate.
 - **Dog moment overshoot:** `cubic-bezier(0.3, 1.6, 0.6, 1)` at about 140ms, reserved for playful pickups (board tile hover, the phone dock's amber add button).
 - **Bury sink:** a buried card's copy falls into Buried bones over 380ms (`cubic-bezier(0.5, 0, 0.75, 0)`, shrinking and tilting −12°), then the icon bumps. Only the copy animates, never the canvas card.

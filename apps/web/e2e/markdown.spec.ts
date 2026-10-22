@@ -115,9 +115,12 @@ test('Tab nests list items and Shift-Tab brings them back', async ({ page }) => 
   const note = cardByText(page, 'Walk plan')
   await expect(note.locator('li li')).toHaveText('river')
   // Nested items sit one step right of their parent, as in the editor.
-  const parent = (await note.locator('li', { hasText: 'park' }).first().locator('> p').boundingBox())!
-  const child = (await note.locator('li li', { hasText: 'river' }).first().boundingBox())!
-  expect(child.x).toBeGreaterThan(parent.x + 10)
+  // A sync acknowledgement can replace the static tree between measurements.
+  await expect.poll(() => note.evaluate((element) => {
+    const parent = [...element.querySelectorAll('li > p')].find((p) => p.textContent === 'park')?.getBoundingClientRect()
+    const child = [...element.querySelectorAll('li li')].find((li) => li.textContent === 'river')?.getBoundingClientRect()
+    return parent?.width && child?.width ? child.x - parent.x : 0
+  })).toBeGreaterThan(10)
 })
 
 test('Backspace at the start of a list item outdents it, then makes it a line of its own', async ({ page }) => {

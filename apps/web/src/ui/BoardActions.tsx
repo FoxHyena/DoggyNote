@@ -1,3 +1,4 @@
+import { SheetGrip } from './SheetGrip.tsx'
 import * as doc from '../state/doc.ts'
 import './navigation.css'
 import { Show, createSignal, onCleanup, onMount, type JSX } from 'solid-js'
@@ -45,7 +46,7 @@ export function BoardActions(props: { boardId: string; primary?: JSX.Element }) 
     <button ref={more} class="icon-btn board-actions-more" data-testid="board-more" data-tooltip="More board actions" aria-label={`More board actions${proposal.pending() ? `, ${proposal.pending()} pending proposals` : ''}`} aria-haspopup="menu" aria-expanded={open()} onClick={() => { png.close(false); setOpen(!open()) }} onKeyDown={(event) => { if (event.key === 'ArrowDown') { event.preventDefault(); event.stopPropagation(); png.close(false); setOpen(true) } }}>
       <Icon name="more" /><Show when={proposal.pending() > 0}><span class="board-actions-more-badge" aria-hidden="true">{proposal.pending()}</span></Show>
     </button>
-    <Show when={open()}><div ref={(el) => { menu = el; queueMicrotask(() => menu.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()) }} class="menu nav-menu board-actions-menu" role="menu" aria-label="Board actions" data-testid="board-actions-menu" onKeyDown={menuKeys}>
+    <Show when={open()}><div ref={(el) => { menu = el; queueMicrotask(() => menu.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()) }} class="menu nav-menu board-actions-menu" role="menu" aria-label="Board actions" data-testid="board-actions-menu" onKeyDown={menuKeys}><SheetGrip onDismiss={() => close(true)} />
       <div class="nav-menu-head sheet-only" aria-hidden="true"><strong>This board</strong></div>
       <Show when={canCopy()}>
         <Show when={canDuplicate(props.boardId)}>

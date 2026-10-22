@@ -6,12 +6,13 @@ import { note, seedCards, setCamera, tapOn } from './touch.ts'
 /** Exercise cancellation/extra pointers explicitly; a native tap cannot generate these browser events. */
 async function cancelPull(sheet: Locator) {
   return sheet.evaluate(async el => {
+    const grip = el.querySelector<HTMLElement>('[data-testid="sheet-grip"]')!
     const b = el.getBoundingClientRect(), x = b.x + b.width / 2, y = b.y + 8
     const send = (target: EventTarget, type: string, id: number, yy: number) => target.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: id, pointerType: 'touch', clientX: x, clientY: yy, button: 0 }))
-    send(el, 'pointerdown', 71, y)
+    send(grip, 'pointerdown', 71, y)
     send(window, 'pointermove', 71, y + 100)
     const pulled = el.style.transform
-    send(el, 'pointerdown', 72, y + 100)
+    send(grip, 'pointerdown', 72, y + 100)
     send(window, 'pointermove', 72, y + 200)
     send(window, 'pointerup', 72, y + 200)
     send(window, 'pointercancel', 72, y + 200)
@@ -109,21 +110,22 @@ for (const theme of ['dark', 'light'] as const) {
     const sheet = page.getByTestId('board-navigation-menu')
     await settled(sheet)
     const result = await sheet.evaluate(async el => {
+      const grip = el.querySelector<HTMLElement>('[data-testid="sheet-grip"]')!
       const b = el.getBoundingClientRect(), x = b.x + b.width / 2, y = b.y + 8
       const send = (target: EventTarget, type: string, id: number, yy: number) => target.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: id, pointerType: 'touch', clientX: x, clientY: yy, button: 0 }))
-      send(el, 'pointerdown', 81, y)
+      send(grip, 'pointerdown', 81, y)
       send(window, 'pointermove', 81, y + 100)
       // Commit the synthetic pull before release; a single rAF runs before paint
       // and need not expose the new transform on a busy Linux WebKit runner.
       const pulled = new DOMMatrixReadOnly(getComputedStyle(el).transform).m42
       send(window, 'pointerup', 81, y + 100)
-      const departure = el.getAnimations().find(a => (a as CSSTransition).transitionProperty === 'transform')
-      // Catch the actual CSS transition at a deterministic in-flight position.
-      // Its real dismissal fallback still runs unless re-grabbing cancels it.
+      const departure = el.getAnimations().find(a => (a.effect as KeyframeEffect).getKeyframes().some(frame => frame.transform))
+      // Catch the actual Web Animation at a deterministic in-flight position.
+      // Its completion still dismisses unless re-grabbing cancels it.
       if (departure) { departure.pause(); departure.currentTime = 60 }
       const offset = new DOMMatrixReadOnly(getComputedStyle(el).transform).m42
       const top = el.getBoundingClientRect().top + 8
-      send(el, 'pointerdown', 82, top)
+      send(grip, 'pointerdown', 82, top)
       const held = new DOMMatrixReadOnly(getComputedStyle(el).transform).m42
       send(window, 'pointermove', 82, top - offset)
       send(window, 'pointercancel', 82, top - offset)
@@ -145,9 +147,10 @@ test('removing a departing sheet never dismisses the next sheet', async ({ page 
   const sheet = page.getByTestId('board-navigation-menu')
   await settled(sheet)
   await sheet.evaluate(el => {
+    const grip = el.querySelector<HTMLElement>('[data-testid="sheet-grip"]')!
     const b = el.getBoundingClientRect(), x = b.x + b.width / 2, y = b.y + 8
     for (const [type, yy] of [['pointerdown', y], ['pointermove', y + 100], ['pointerup', y + 100]] as const) {
-      ;(type === 'pointerdown' ? el : window).dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 91, pointerType: 'touch', clientX: x, clientY: yy, button: 0 }))
+      ;(type === 'pointerdown' ? grip : window).dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 91, pointerType: 'touch', clientX: x, clientY: yy, button: 0 }))
     }
   })
   await page.keyboard.press('Escape')
@@ -162,9 +165,10 @@ test('a deliberate reduced-motion sheet release closes synchronously', async ({ 
   const sheet = page.getByTestId('board-navigation-menu')
   await settled(sheet)
   const connected = await sheet.evaluate(el => {
+    const grip = el.querySelector<HTMLElement>('[data-testid="sheet-grip"]')!
     const b = el.getBoundingClientRect(), x = b.x + b.width / 2, y = b.y + 8
     for (const [type, yy] of [['pointerdown', y], ['pointermove', y + 100], ['pointerup', y + 100]] as const) {
-      ;(type === 'pointerdown' ? el : window).dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 101, pointerType: 'touch', clientX: x, clientY: yy, button: 0 }))
+      ;(type === 'pointerdown' ? grip : window).dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 101, pointerType: 'touch', clientX: x, clientY: yy, button: 0 }))
     }
     return el.isConnected
   })
