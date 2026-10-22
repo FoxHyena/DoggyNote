@@ -105,3 +105,34 @@ test('100 unique pack images stay bounded and two static stickers keep pan smoot
   await tray.getByRole('button', { name: 'Close stickers', exact: true }).click()
   await expect(page.locator('.sticker-tray img, .sticker-animation canvas, .sticker-animation video')).toHaveCount(0)
 })
+
+test('a board full of animated stickers plays at most twelve at once and keeps pan smooth @perf', async ({ page, request, browserName }) => {
+  test.setTimeout(120_000)
+  await page.setViewportSize({ width: 1440, height: 900 })
+  const { id } = await stickerBoard(page, request)
+  await page.request.post('/api/stickers/preview', { data: { link: 'DoggyFixture' } })
+  const animated = (await (await page.request.post('/api/stickers/packs/DoggyFixture', { data: {} })).json()).pack.stickers.filter((s: { format: string }) => s.format !== 'static')
+  // 200 TGS and WEBM stickers, 110 px apart: far more on screen than may play.
+  const objects = Array.from({ length: 200 }, (_, i) => {
+    const { assetId, stickerId, packName, emoji, width, height, format } = animated[i % animated.length]
+    // The last one sits far away, so fitting the board drops to the overview.
+    const far = i === 199 ? 8000 : 0
+    return { id: crypto.randomUUID(), kind: 'sticker', boardId: id, x: i % 20 * 110 + far, y: Math.floor(i / 20) * 110 + far, w: 100, angle: 0, z: i, createdAt: Date.now(), content: { assetId, stickerId, packName, emoji, width, height, format } }
+  })
+  expect((await postSync(page.request, { data: { changes: objects.map((o) => ({ id: o.id, patch: o })) } })).ok()).toBe(true)
+  await page.reload(); await expect(page.getByTestId('canvas')).toBeVisible()
+  const players = page.locator('.sticker-image.playing')
+  await expect.poll(() => players.count(), { timeout: 15_000 }).toBe(12)
+  expect(await page.getByTestId('placed-sticker').count()).toBeGreaterThan(12)
+  const box = (await page.getByTestId('canvas').boundingBox())!
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  const sample = await frames(page)
+  expect(await page.locator('.sticker-animation canvas, .sticker-animation video').count()).toBeLessThanOrEqual(12)
+  const report = { browserName, sample, players: await players.count() }
+  console.log('STICKER_ANIMATED_PERF', JSON.stringify(report)); test.info().annotations.push({ type: 'perf', description: JSON.stringify(report) })
+  expect(sample.samples).toBeGreaterThan(30)
+  expect(sample.p95).toBeLessThan(33.4)
+  // Overview draws stills only.
+  await page.keyboard.press('ControlOrMeta+1'); await expect(page.getByTestId('lod-layer')).toBeVisible()
+  await expect(page.locator('.sticker-animation canvas, .sticker-animation video')).toHaveCount(0)
+})
