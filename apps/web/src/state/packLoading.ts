@@ -64,7 +64,7 @@ export function preparePack(name: string): Promise<void> {
   if (!load || load.retryAt > Date.now()) return Promise.resolve()
   const current = generation, signal = controller.signal, step = 3, pack = load.pack
   const ranges = Array.from({ length: Math.ceil(pack.stickers.length / step) }, (_, i) => i * step)
-    .filter((i) => pack.stickers.slice(i, i + step).some((s) => !s.available))
+    .filter((i) => pack.stickers.slice(i, i + step).some((s) => !s.available || !!s.animationError))
   setLoads(k, { preparing: true, error: '', retryAt: 0 })
   let next = 0, failure: unknown
   const worker = async () => {
@@ -109,6 +109,12 @@ createRoot(() => createEffect(() => {
     const k = key(s.name)
     if (queued.has(k) || untrack(() => loads[k])) continue
     queued.add(k); queue.push(s.name)
+  }
+  // A collection pack whose animations failed to import retries them once per session.
+  for (const p of packs()) {
+    const k = key(p.name)
+    if (queued.has(k) || !p.stickers.some((s) => s.available && s.animationError)) continue
+    queued.add(k); queue.push(p.name)
   }
   untrack(pump)
 }))

@@ -12,6 +12,7 @@ import { viewStickerPack } from './StickerTray.tsx'
 import { StickerImage } from './StickerImage.tsx'
 import { Icon, ToolIcons } from './icons.tsx'
 import { manipulatingSticker } from '../canvas/StickerLayer.tsx'
+import { playbackPaused, togglePlayback } from '../state/stickerPlayback.ts'
 
 // One selected sticker: a compact bar of icon actions just above its ring (a bottom sheet on phones).
 // Turning and resizing belong to the ring itself (drag it, or use the arrow keys while it has focus).
@@ -59,6 +60,9 @@ export function StickerControls() {
           {action('Backward', 'Back', ToolIcons.backward(), () => reorderSticker(selected()!, -1), 'Send backward')}
           {action('Select underneath', 'Under', ToolIcons.layers(), () => underneath(selected()!), 'Select the card underneath')}
           <div class="bar-sep" />
+          <Show when={selected()!.content.format !== 'static'}>
+            {playbackPaused(selected()!.id) ? action('Play animation', 'Play', ToolIcons.play(), () => togglePlayback(selected()!.id)) : action('Pause animation', 'Pause', ToolIcons.pause(), () => togglePlayback(selected()!.id))}
+          </Show>
           {action('View pack', 'Pack', ToolIcons.sticker(), () => viewStickerPack(selected()!.content.packName))}
           {action('Duplicate', 'Duplicate', ToolIcons.duplicate(), () => duplicateSticker(selected()!))}
           {action('Bury', 'Bury', ToolIcons.trash(), burySelection, `Move to ${COPY.trash} (Delete)`)}

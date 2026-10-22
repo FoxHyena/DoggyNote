@@ -171,6 +171,8 @@ export const ToolIcons: Record<string, () => JSX.Element> = {
   layers: () => <><path d="m12 4 8 4-8 4-8-4z" /><path d="m4 12 8 4 8-4M4 16l8 4 8-4" /></>,
   sticker: () => <path d="M4 4h16v10l-6 6H4Z M14 20v-6h6 M8 9h.01 M15 9h.01 M8 12q4 5 8 0" />,
   minus: () => <path d="M5 12h14" />,
+  play: () => <path d="M8 5.5v13l10-6.5z" />,
+  pause: () => <path d="M9 5.5v13M15 5.5v13" />,
   edit: () => <path d="M15.5 5.5 18.5 8.5M4 20l1-4L16 5a2.1 2.1 0 0 1 3 3L8 19z" />,
   multi: () => <><rect x="3" y="7" width="11" height="11" rx="2" /><path d="M8 4h10a2 2 0 0 1 2 2v10" /><path d="m6 12.5 2 2 3.5-4" /></>,
   camera: () => <><path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" /><circle cx="12" cy="13" r="3.5" /></>,
