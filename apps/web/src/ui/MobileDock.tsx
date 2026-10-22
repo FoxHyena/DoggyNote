@@ -44,13 +44,6 @@ function AddButton() {
   const [open, setOpen] = createSignal(false)
   let root!: HTMLDivElement, trigger!: HTMLButtonElement, photo!: HTMLInputElement, camInput!: HTMLInputElement, files!: HTMLInputElement
   installMenu(open, () => setOpen(false), () => root, () => trigger)
-  // A burst of taps on ＋ shouldn't flicker the sheet open and shut: ignore taps while it animates.
-  let toggledAt = -Infinity
-  const toggle = () => {
-    if (performance.now() - toggledAt < 350) return
-    toggledAt = performance.now()
-    setOpen(!open())
-  }
 
   // Zoomed out there's no card DOM to type into; come in to 100% first.
   const comeClose = () => {
@@ -79,7 +72,7 @@ function AddButton() {
 
   return (
     <div class="dock-add-wrap" ref={root}>
-      <button ref={trigger} class="dock-add" data-testid="dock-add" aria-label="Add to this board" aria-haspopup="menu" aria-expanded={open()} onClick={toggle}>
+      <button ref={trigger} class="dock-add" data-testid="dock-add" aria-label="Add to this board" aria-haspopup="menu" aria-expanded={open()} onClick={() => setOpen(!open())}>
         <Icon size={26} name="plus" />
       </button>
       <Show when={open()}>

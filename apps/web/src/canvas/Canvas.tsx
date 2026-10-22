@@ -1688,13 +1688,22 @@ export function revealCard(id: Id, from = 0) {
 
 /** Ease the camera to a target. Short and springy: it should feel physical, not slow. */
 export function animateCamera(to: { x: number; y: number; zoom: number }, ms = 220, done?: () => void) {
-  cancelAnimationFrame(anim)
+  cancelCameraAnimation()
   stopMomentum()
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+  const finish = () => {
+    anim = 0
+    setCamera(to)
+    done?.()
+  }
+  if (reducedMotion.matches || ms <= 0) return finish()
   const from = camera()
   const t0 = performance.now()
   const ease = (t: number) => 1 - Math.pow(1 - t, 3)
   const step = (now: number) => {
     const t = Math.min(1, (now - t0) / ms)
+    // Preferences can change during a glide, as can the phone's viewport.
+    if (reducedMotion.matches || t === 1) return finish()
     const k = ease(t)
     // Read every frame: the viewport can change size mid-glide (a phone's keyboard).
     const v = viewport()
@@ -1706,11 +1715,7 @@ export function animateCamera(to: { x: number; y: number; zoom: number }, ms = 2
     const cx = cf.x + (ct.x - cf.x) * k
     const cy = cf.y + (ct.y - cf.y) * k
     setCamera({ x: cx - v.width / 2 / zoom, y: cy - v.height / 2 / zoom, zoom })
-    if (t < 1) anim = requestAnimationFrame(step)
-    else {
-      anim = 0
-      done?.()
-    }
+    anim = requestAnimationFrame(step)
   }
   anim = requestAnimationFrame(step)
 }

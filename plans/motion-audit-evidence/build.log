@@ -1,0 +1,72 @@
+
+> doggynote@ build /Users/oreo/.paseo/worktrees/2pf6ay6i/mundane-bulldog
+> pnpm -r build
+
+Scope: 6 of 7 workspace projects
+apps/desktop build$ tauri build --bundles app && sh scripts/make-dmg.sh
+apps/desktop build:         Info Looking up installed tauri packages to check mismatched versions...
+apps/desktop build:         Warn The bundle identifier "dog.doggynote.app" set in `"tauri.conf.json" identifier` ends with `.app`. This is not recommended because it conflicts with the application bundle extension on macOS.
+apps/desktop build:      Running beforeBuildCommand `pnpm --filter web exec vite build --outDir dist-desktop --emptyOutDir`
+apps/desktop build: vite v8.3.4 building client environment for production...
+apps/desktop build: transforming...
+apps/desktop build: ✓ 314 modules transformed.
+apps/desktop build: rendering chunks...
+apps/desktop build: computing gzip size...
+apps/desktop build: dist-desktop/manifest.webmanifest                          0.71 kB
+apps/desktop build: dist-desktop/index.html                                    1.13 kB │ gzip:   0.51 kB
+apps/desktop build: dist-desktop/assets/stickerOutline.worker-uSfHFBon.js      1.57 kB
+apps/desktop build: dist-desktop/assets/pdf.worker.min-Dswkl-cV.mjs        1,265.41 kB
+apps/desktop build: dist-desktop/assets/index-AX8MmUua.css                   127.21 kB │ gzip:  24.14 kB
+apps/desktop build: dist-desktop/assets/pdf.worker.min-zC6nfbxG.js             0.06 kB │ gzip:   0.08 kB
+apps/desktop build: dist-desktop/assets/rolldown-runtime-hePW80VL.js           0.71 kB │ gzip:   0.42 kB
+apps/desktop build: dist-desktop/assets/event-DgOCphlC.js                      1.37 kB │ gzip:   0.65 kB
+apps/desktop build: dist-desktop/assets/core-Djq8_Zg8.js                       2.75 kB │ gzip:   1.08 kB
+apps/desktop build: dist-desktop/assets/window-BUUelDs0.js                    13.26 kB │ gzip:   3.19 kB
+apps/desktop build: dist-desktop/assets/dist-DyVmH21U.js                      22.22 kB │ gzip:   8.59 kB
+apps/desktop build: dist-desktop/assets/lottie_light_canvas-Cs-g0YX2.js      203.79 kB │ gzip:  55.46 kB
+apps/desktop build: dist-desktop/assets/pdf-5clZUyQa.js                      430.30 kB │ gzip: 128.99 kB
+apps/desktop build: dist-desktop/assets/codemirror-vW2ijagD.js               510.96 kB │ gzip: 178.19 kB
+apps/desktop build: dist-desktop/assets/index-DFzAKZMN.js                    649.53 kB │ gzip: 220.78 kB
+apps/desktop build: ✓ built in 2.17s
+apps/desktop build: [plugin builtin:vite-reporter]
+apps/desktop build: (!) Some chunks are larger than 500 kB after minification. Consider:
+apps/desktop build: - Using dynamic import() to code-split the application
+apps/desktop build: - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+apps/desktop build: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+apps/desktop build:    Compiling doggynote v0.1.0 (/Users/oreo/.paseo/worktrees/2pf6ay6i/mundane-bulldog/apps/desktop/src-tauri)
+apps/desktop build:     Finished `release` profile [optimized] target(s) in 20.35s
+apps/desktop build:        Built application at: /Users/oreo/.paseo/worktrees/2pf6ay6i/mundane-bulldog/apps/desktop/src-tauri/target/release/doggynote
+apps/desktop build:     Bundling DoggyNote.app (/Users/oreo/.paseo/worktrees/2pf6ay6i/mundane-bulldog/apps/desktop/src-tauri/target/release/bundle/macos/DoggyNote.app)
+apps/desktop build:     Finished 1 bundle at:
+apps/desktop build:         /Users/oreo/.paseo/worktrees/2pf6ay6i/mundane-bulldog/apps/desktop/src-tauri/target/release/bundle/macos/DoggyNote.app (13.69 MiB)
+apps/desktop build: hdiutil: WARNING: 'hdiutil create -volname -format ...' is deprecated. Please use 'diskutil image create from/blank --volumeName --format ...' instead.
+apps/desktop build: ✓ src-tauri/target/release/bundle/DoggyNote_0.1.0_arm64.dmg
+apps/desktop build: Done
+apps/web build$ tsc -b && vite build
+apps/web build: vite v8.3.4 building client environment for production...
+apps/web build: transforming...
+apps/web build: ✓ 314 modules transformed.
+apps/web build: rendering chunks...
+apps/web build: computing gzip size...
+apps/web build: dist/manifest.webmanifest                          0.71 kB
+apps/web build: dist/index.html                                    1.13 kB │ gzip:   0.51 kB
+apps/web build: dist/assets/stickerOutline.worker-uSfHFBon.js      1.57 kB
+apps/web build: dist/assets/pdf.worker.min-Dswkl-cV.mjs        1,265.41 kB
+apps/web build: dist/assets/index-AX8MmUua.css                   127.21 kB │ gzip:  24.14 kB
+apps/web build: dist/assets/pdf.worker.min-zC6nfbxG.js             0.06 kB │ gzip:   0.08 kB
+apps/web build: dist/assets/rolldown-runtime-hePW80VL.js           0.71 kB │ gzip:   0.42 kB
+apps/web build: dist/assets/event-DgOCphlC.js                      1.37 kB │ gzip:   0.65 kB
+apps/web build: dist/assets/core-Djq8_Zg8.js                       2.75 kB │ gzip:   1.08 kB
+apps/web build: dist/assets/window-BUUelDs0.js                    13.26 kB │ gzip:   3.19 kB
+apps/web build: dist/assets/dist-DyVmH21U.js                      22.22 kB │ gzip:   8.59 kB
+apps/web build: dist/assets/lottie_light_canvas-Cs-g0YX2.js      203.79 kB │ gzip:  55.46 kB
+apps/web build: dist/assets/pdf-5clZUyQa.js                      430.30 kB │ gzip: 128.99 kB
+apps/web build: dist/assets/codemirror-vW2ijagD.js               510.96 kB │ gzip: 178.19 kB
+apps/web build: dist/assets/index-DFzAKZMN.js                    649.53 kB │ gzip: 220.78 kB
+apps/web build: ✓ built in 937ms
+apps/web build: [plugin builtin:vite-reporter]
+apps/web build: (!) Some chunks are larger than 500 kB after minification. Consider:
+apps/web build: - Using dynamic import() to code-split the application
+apps/web build: - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+apps/web build: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+apps/web build: Done

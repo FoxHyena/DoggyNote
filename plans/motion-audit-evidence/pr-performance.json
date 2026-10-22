@@ -1,0 +1,73 @@
+{
+  "base": "6ddbe4c5",
+  "measurements": {
+    "STICKER_PERF": {
+      "browserName": "chromium",
+      "overview": {
+        "p50": 10,
+        "p95": 10.899999999999977,
+        "samples": 118
+      },
+      "detail": {
+        "p50": 10,
+        "p95": 10.900000000000091,
+        "samples": 119
+      },
+      "detailNodes": 70,
+      "heapMB": 10
+    },
+    "STICKER_PACK_PERF": {
+      "browserName": "chromium",
+      "baseline": {
+        "p50": 10,
+        "p95": 10.899999999999864,
+        "samples": 119
+      },
+      "closed": {
+        "p50": 10,
+        "p95": 10.899999999999864,
+        "samples": 118
+      },
+      "open": {
+        "p50": 10,
+        "p95": 10.900000000000091,
+        "samples": 123
+      },
+      "mountedImages": 21,
+      "requestedImages": 20
+    },
+    "STICKER_ANIMATED_PERF": {
+      "browserName": "chromium",
+      "sample": {
+        "p50": 10,
+        "p95": 10.900000000000091,
+        "samples": 124
+      },
+      "players": 9
+    },
+    "PERF": {
+      "loadMs": 310,
+      "fitCards": 0,
+      "bigImages": 0,
+      "mountedAt100": 35,
+      "pan": {
+        "frames": 244,
+        "p50": 10,
+        "p95": 11,
+        "max": 11.100000000000364
+      },
+      "zoomOut": {
+        "frames": 78,
+        "p50": 10,
+        "p95": 11,
+        "max": 11
+      },
+      "panFar": {
+        "p95": 11,
+        "worst": 11
+      },
+      "heapMB": 12,
+      "nodes": 473
+    }
+  }
+}
