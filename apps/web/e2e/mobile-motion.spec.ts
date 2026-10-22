@@ -35,10 +35,8 @@ for (const theme of ['dark', 'light'] as const) for (const reduced of [false, tr
         el.addEventListener('click', () => times.push(performance.now()))
       })
       await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2)
-      await page.waitForTimeout(90)
       await page.touchscreen.tap(20, 120)
       await expect(page.getByTestId('add-sheet')).toHaveCount(0)
-      await page.waitForTimeout(60)
       await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2)
       const times = await page.evaluate(() => (window as unknown as { addTimes: number[] }).addTimes)
       expect(times).toHaveLength(2)
@@ -115,9 +113,14 @@ for (const theme of ['dark', 'light'] as const) {
       const send = (target: EventTarget, type: string, id: number, yy: number) => target.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: id, pointerType: 'touch', clientX: x, clientY: yy, button: 0 }))
       send(el, 'pointerdown', 81, y)
       send(window, 'pointermove', 81, y + 100)
-      await new Promise(requestAnimationFrame)
+      // Commit the synthetic pull before release; a single rAF runs before paint
+      // and need not expose the new transform on a busy Linux WebKit runner.
+      const pulled = new DOMMatrixReadOnly(getComputedStyle(el).transform).m42
       send(window, 'pointerup', 81, y + 100)
-      await new Promise(requestAnimationFrame)
+      const departure = el.getAnimations().find(a => (a as CSSTransition).transitionProperty === 'transform')
+      // Catch the actual CSS transition at a deterministic in-flight position.
+      // Its real dismissal fallback still runs unless re-grabbing cancels it.
+      if (departure) { departure.pause(); departure.currentTime = 60 }
       const offset = new DOMMatrixReadOnly(getComputedStyle(el).transform).m42
       const top = el.getBoundingClientRect().top + 8
       send(el, 'pointerdown', 82, top)
@@ -125,8 +128,10 @@ for (const theme of ['dark', 'light'] as const) {
       send(window, 'pointermove', 82, top - offset)
       send(window, 'pointercancel', 82, top - offset)
       await new Promise(r => setTimeout(r, 300))
-      return { connected: el.isConnected, offset, held, finalTop: el.getBoundingClientRect().top, startTop: b.top }
+      return { connected: el.isConnected, pulled, departing: !!departure, offset, held, finalTop: el.getBoundingClientRect().top, startTop: b.top }
     })
+    expect(result.pulled).toBe(100)
+    expect(result.departing).toBe(true)
     expect(result.offset).toBeGreaterThan(0)
     expect(Math.abs(result.held - result.offset)).toBeLessThanOrEqual(1)
     expect(result.connected).toBe(true)

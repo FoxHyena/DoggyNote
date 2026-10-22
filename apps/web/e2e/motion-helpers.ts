@@ -35,7 +35,8 @@ export async function cameraSamples(page: Page) {
 export async function watchToast(page: Page) {
   await page.evaluate(() => {
     const samples: { center: number; top: number; width: number }[] = []
-    ;(window as unknown as { toastProbe: typeof samples }).toastProbe = samples
+    const probe = { samples, done: false }
+    ;(window as unknown as { toastProbe: typeof probe }).toastProbe = probe
     const observer = new MutationObserver(() => {
       const el = document.querySelector('[data-testid="toast"]')
       if (!el) return
@@ -45,6 +46,7 @@ export async function watchToast(page: Page) {
         const b = el.getBoundingClientRect()
         samples.push({ center: b.x + b.width / 2, top: b.y, width: b.width })
         if (el.isConnected && performance.now() - start < 280) requestAnimationFrame(sample)
+        else probe.done = true
       }
       sample()
     })
@@ -54,10 +56,10 @@ export async function watchToast(page: Page) {
 
 export async function expectCenteredToast(page: Page) {
   await expect(page.getByTestId('toast')).toBeVisible()
-  await expect.poll(() => page.evaluate(() => (window as unknown as { toastProbe: unknown[] }).toastProbe.length)).toBeGreaterThan(5)
-  // Include the entire 160/200ms entrance, not only the settled final frame.
-  await page.waitForTimeout(300)
-  const samples = await page.evaluate(() => (window as unknown as { toastProbe: { center: number; top: number; width: number }[] }).toastProbe)
+  // Include mount through the entire 160/200ms entrance without imposing a frame-rate budget.
+  await expect.poll(() => page.evaluate(() => (window as unknown as { toastProbe: { done: boolean } }).toastProbe.done)).toBe(true)
+  const samples = await page.evaluate(() => (window as unknown as { toastProbe: { samples: { center: number; top: number; width: number }[] } }).toastProbe.samples)
+  expect(samples.length, 'capture both mount and a rendered frame after entry').toBeGreaterThan(1)
   const centers = samples.map(s => s.center)
   expect(Math.max(...centers) - Math.min(...centers), 'toast stays horizontally centered throughout entry').toBeLessThanOrEqual(1)
   return samples

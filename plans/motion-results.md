@@ -87,6 +87,14 @@ The branch was rebased onto `6ddbe4c5` (the merged Phosphor icon update). The Ad
 
 The performance comparison above isolates the selected motion changes before the icon integration. After rebasing, all **4 headed performance checks passed again**, serially, with unchanged assertions. Canvas pan and zoom-out p95 were both **11.0ms**, heap **12MB** and DOM nodes **473**. [Final PR performance log](motion-audit-evidence/pr-performance.log) and [measurements](motion-audit-evidence/pr-performance.json) preserve this separate run.
 
+### CI probe correction
+
+The [first PR CI run](https://github.com/FoxHyena/DoggyNote/actions/runs/39839416424) passed Chromium, the first WebKit shard, typecheck/unit tests and performance. Touch finished with **263 passed, 2 failed and 1 flaky**. Both re-grab failures sampled an offset of zero after a single rAF; the flaky toast check collected only three samples inside its 280ms observation window, below an arbitrary six-frame requirement. These browser probes were sensitive to Linux WebKit rendering and runner scheduling.
+
+The re-grab test now flushes and verifies the 100px synthetic pull, then pauses the actual CSS departure at 60ms before re-grabbing. It still requires a real departure transition, continuity at the grab, cancellation of the real dismissal fallback and restoration of the original position. The toast probe waits for its complete observation window and checks mount plus rendered geometry, retaining the same 1px horizontal-travel assertion without adding a frame-rate budget to an interaction test. Product code and existing performance assertions are unchanged.
+
+The first repeated local run passed **131/132**, including every corrected re-grab and toast case. One Add setup took 376ms because it combined 150ms of fixed pauses with runner latency, missing the old guard window. The fixed pauses were removed; real touchscreen taps, the strict **less than 350ms** assertion, visible reopening and editor-focus assertions remain. The complete corrected motion matrix then passed **132/132** across both desktop and phone engines, with two repeats and no retries. [Corrected-probe log](motion-audit-evidence/ci-probes-corrected.log). Follow-up CI status is tracked in [PR #69's checks](https://github.com/FoxHyena/DoggyNote/pull/69/checks).
+
 ## Completion boundary
 
 All selected fixes have an explicit **Approve** verdict in [the review](motion-review.md). Integrated automated verification is complete. Native and physical-device walkthroughs remain separate, visible requirements; this report does not claim the original hardware success state has been reached. The progress run remains open for these checks.
