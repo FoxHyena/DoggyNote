@@ -62,6 +62,8 @@ function LinkImage(props: { url: string }) {
   )
 }
 
+// On the board the picture leads, whole, with the text under it. In a column the
+// card is a compact row, like a movie: a small thumbnail beside the title.
 export function LinkCard(props: CardProps<'link'>) {
   const c = () => props.card.content
   onMount(() => {
@@ -91,7 +93,7 @@ export function LinkCard(props: CardProps<'link'>) {
           />
         }
       >
-        <div class="link-card" data-status={c().status}>
+        <div class="link-card" classList={{ 'link-row': !!props.card.columnId }} data-status={c().status} data-testid="link-card">
           <Show when={c().image && safeHref(c().image)} keyed>
             {(url) => <LinkImage url={url} />}
           </Show>
