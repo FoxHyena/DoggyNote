@@ -93,11 +93,15 @@ type Gesture =
   // Touch: a finger is down but hasn't decided yet (tap, pan, drag or long-press).
   | { kind: 'tpress'; id: Id | null; start: Vec; last: Vec; target: HTMLElement; pointerId: number; nodrag: boolean; timer: ReturnType<typeof setTimeout> }
   | { kind: 'pinch'; ids: [number, number]; startCam: Camera; a0: Vec; b0: Vec }
+  // Touch: double-tap, hold, then slide up to zoom in or down to zoom out.
+  | { kind: 'tzoom'; anchor: Vec; startY: number; startCam: Camera }
 
 const DRAG_THRESHOLD = 4
 /** Fingers wobble: a touch has to travel further before it counts as a drag. */
 const TOUCH_SLOP = 10
 const LONG_PRESS_MS = 350
+/** Double-tap-and-slide zoom: the zoom doubles every ~90 screen px. */
+const TAP_ZOOM_RATE = 0.008
 /** Screen px around a checkbox that still toggles it on touch. */
 const CHECK_REACH = 24
 /** Smallest zoom a phone opens a board at: below this, notes stop being readable. */
@@ -944,6 +948,13 @@ export function Canvas(props: { readOnly: boolean }) {
   // tapping the selected card again edits or opens it.
   const fingers = new Map<number, Vec>()
   let lastTap: Tap | null = null
+  // A quick tap anywhere (card, sticker or canvas): a finger coming back down
+  // right after one, near it, is ready to slide-zoom.
+  let fingerDown: (Tap & { moved: boolean }) | null = null
+  let quickTap: Tap | null = null
+  let zoomArm: Vec | null = null
+  // The finger is on a sticker: nothing it does may select text.
+  let stickerTouch = false
   // A paw print where the finger asked for something.
   const [paw, setPaw] = createSignal<{ x: number; y: number; n: number } | null>(null)
   let pawTimer: ReturnType<typeof setTimeout> | undefined
@@ -964,7 +975,14 @@ export function Canvas(props: { readOnly: boolean }) {
       return
     }
     fingers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    const now = { x: e.clientX, y: e.clientY, t: performance.now() }
+    if (fingers.size === 1) {
+      zoomArm = isDoubleTap(quickTap, now) ? { x: now.x, y: now.y } : null
+      fingerDown = { ...now, moved: false }
+    } else if (fingerDown) fingerDown.moved = true
+    quickTap = null
     if (fingers.size === 2) {
+      zoomArm = null
       cancelGesture()
       const [[ia, a], [ib, b]] = [...fingers]
       gesture = { kind: 'pinch', ids: [ia, ib], startCam: camera(), a0: local({ clientX: a.x, clientY: a.y }), b0: local({ clientX: b.x, clientY: b.y }) }
@@ -973,7 +991,12 @@ export function Canvas(props: { readOnly: boolean }) {
       return
     }
     if (fingers.size > 2) return
-    if (startStickerGesture(e)) return
+    if (startStickerGesture(e)) {
+      stickerTouch = true
+      // A selection left from before (an editor this touch just closed) mustn't follow the finger.
+      if (!editingId()) getSelection()?.removeAllRanges()
+      return
+    }
     const target = e.target as HTMLElement
     // The editor owns single touches inside the card being edited (caret, selection).
     if (insideEditor(e, editingId())) {
@@ -1000,7 +1023,8 @@ export function Canvas(props: { readOnly: boolean }) {
 
   function longPress() {
     const g = gesture
-    if (g?.kind !== 'tpress' || props.readOnly) return
+    // A second tap held still is a slide-zoom waiting to happen, not a lift.
+    if (g?.kind !== 'tpress' || props.readOnly || zoomArm) return
     capture(g.pointerId)
     haptic('lift')
     pawAt(g.last)
@@ -1021,8 +1045,23 @@ export function Canvas(props: { readOnly: boolean }) {
   function touchMove(e: PointerEvent) {
     if (!fingers.has(e.pointerId)) return
     fingers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (fingerDown && Math.hypot(e.clientX - fingerDown.x, e.clientY - fingerDown.y) > TOUCH_SLOP) fingerDown.moved = true
     const g = gesture
     if (!g) return
+    if (g.kind === 'tzoom') {
+      setCamera(zoomAt(g.startCam, g.anchor, g.startCam.zoom * Math.exp((g.startY - e.clientY) * TAP_ZOOM_RATE)))
+      return
+    }
+    // Double-tap, hold and slide: zoom, whatever the finger came down on.
+    if (zoomArm && fingers.size === 1 && undecided(g) && Math.hypot(e.clientX - zoomArm.x, e.clientY - zoomArm.y) > TOUCH_SLOP) {
+      const anchor = local({ clientX: zoomArm.x, clientY: zoomArm.y })
+      cancelGesture()
+      capture(e.pointerId)
+      gesture = { kind: 'tzoom', anchor, startY: e.clientY, startCam: camera() }
+      movedWhileEditing = true
+      haptic('tick')
+      return
+    }
     if (g.kind === 'pinch') {
       const a = fingers.get(g.ids[0])
       const b = fingers.get(g.ids[1])
@@ -1045,8 +1084,21 @@ export function Canvas(props: { readOnly: boolean }) {
     moveGesture(e)
   }
 
+  /** Whether a touch hasn't yet become a pan, drag or turn. */
+  function undecided(g: Gesture) {
+    return g.kind === 'tpress' || g.kind === 'press' || ((g.kind === 'sticker' || g.kind === 'sticker-group') && !g.moved)
+  }
+
   function touchUp(e: PointerEvent) {
     fingers.delete(e.pointerId)
+    if (!fingers.size) {
+      const t = performance.now()
+      // A tap that placed a sticker is done: dragging the new sticker straight away moves it.
+      quickTap = fingerDown && !fingerDown.moved && e.type !== 'pointercancel' && gesture?.kind !== 'sticker-place' && t - fingerDown.t < 300 ? { x: e.clientX, y: e.clientY, t } : null
+      fingerDown = null
+      zoomArm = null
+      stickerTouch = false
+    }
     const g = gesture
     if (!g) return
     if (g.kind === 'pinch') {
@@ -1070,6 +1122,9 @@ export function Canvas(props: { readOnly: boolean }) {
         break
       case 'pan':
         if (!cancelled && g.samples) flick(g.samples)
+        break
+      case 'tzoom':
+        lastTap = quickTap = null
         break
       default:
         endGesture(g, e)
@@ -1306,11 +1361,18 @@ export function Canvas(props: { readOnly: boolean }) {
     if (handleCanvasPaste(e, at, column?.id)) e.preventDefault()
   }
 
+  // iOS starts its own text selection from a held, moving finger; cancelling the
+  // pointer events doesn't stop it. A touch the canvas owns never selects text.
+  const onSelectStart = (e: Event) => { if (gesture && lastPointerType === 'touch') e.preventDefault() }
+  const onTouchMoveNative = (e: TouchEvent) => { if (stickerTouch || gesture?.kind === 'tzoom') e.preventDefault() }
+
   onCleanup(() => { cancelGesture(); cancelStickerPlacement() })
   onMount(() => {
     const ro = new ResizeObserver(measure)
     ro.observe(vp)
     vp.addEventListener('wheel', onWheel, { passive: false })
+    vp.addEventListener('touchmove', onTouchMoveNative, { passive: false })
+    document.addEventListener('selectstart', onSelectStart)
     vp.addEventListener('gesturestart', onGestureStart)
     vp.addEventListener('gesturechange', onGestureChange)
     vp.addEventListener('gestureend', onGestureEnd)
@@ -1322,6 +1384,8 @@ export function Canvas(props: { readOnly: boolean }) {
     onCleanup(() => {
       ro.disconnect()
       vp.removeEventListener('wheel', onWheel)
+      vp.removeEventListener('touchmove', onTouchMoveNative)
+      document.removeEventListener('selectstart', onSelectStart)
       vp.removeEventListener('gesturestart', onGestureStart)
       vp.removeEventListener('gesturechange', onGestureChange)
       vp.removeEventListener('gestureend', onGestureEnd)
