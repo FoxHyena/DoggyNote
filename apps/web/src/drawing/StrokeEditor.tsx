@@ -132,9 +132,11 @@ export function StrokeEditor(props: {
     ro.observe(viewport)
     const blur = () => cancel()
     window.addEventListener('blur', blur)
+    window.addEventListener('keydown', windowKeys, true)
     onCleanup(() => {
       ro.disconnect()
       window.removeEventListener('blur', blur)
+      window.removeEventListener('keydown', windowKeys, true)
       cancel()
       if (back?.isConnected) back.focus({ preventScroll: true })
     })
@@ -143,22 +145,33 @@ export function StrokeEditor(props: {
   function keys(e: KeyboardEvent) {
     // Nothing here reaches the board's shortcuts (Delete would bury the card).
     agentDialogKeys(e)
-    const typing = !!(e.target as Element).closest('input')
-    if (e.key === 'Escape') {
-      e.preventDefault()
-      if (typing) return surface.focus({ preventScroll: true })
-      if (pointer !== null) cancel()
-      else done()
-      return
-    }
-    if (typing) return
-    const mod = e.metaKey || e.ctrlKey
-    if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); return e.shiftKey ? redo() : undo() }
-    if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo() }
     // WebKit treats Backspace as "go back".
-    if (e.key === 'Backspace') e.preventDefault()
+    if (e.key === 'Backspace' && !(e.target as Element).closest('input')) e.preventDefault()
   }
 
+  /**
+   * Escape, Undo and Redo work wherever focus is, even after a button that
+   * just disabled itself (Redo with nothing left) dropped focus to the page.
+   * A popover open over the editor (the paper picker) handles its own Escape.
+   */
+  function windowKeys(e: KeyboardEvent) {
+    if (e.defaultPrevented || document.querySelector('.popover')) return
+    const typing = !!(e.target as Element | null)?.closest?.('input')
+    const mod = e.metaKey || e.ctrlKey
+    const key = e.key.toLowerCase()
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      e.stopPropagation()
+      if (typing) surface.focus({ preventScroll: true })
+      else if (pointer !== null) cancel()
+      else done()
+    } else if (!typing && mod && (key === 'z' || key === 'y')) {
+      e.preventDefault()
+      e.stopPropagation()
+      if (key === 'y' || e.shiftKey) redo()
+      else undo()
+    }
+  }
   const stop = (e: Event) => e.stopPropagation()
   return (
     <Portal>
