@@ -5,7 +5,7 @@ import * as doc from '../state/doc.ts'
 import { armedSticker, cancelStickerPlacement, duplicateSticker, reorderSticker, placeSticker, stickerGhost, stickerCenter, STICKER_TOUCH_OFFSET } from '../state/stickers.ts'
 import { boardId, camera, select, selection, viewport } from '../state/ui.ts'
 import { phone, touch } from '../state/device.ts'
-import { trashSelection } from '../state/actions.ts'
+import { burySelection } from '../state/actions.ts'
 import { contains } from '@doggynote/core'
 import { rectOf } from '../canvas/layout.ts'
 import { viewStickerPack } from './StickerTray.tsx'
@@ -61,7 +61,7 @@ export function StickerControls() {
           <div class="bar-sep" />
           {action('View pack', 'Pack', ToolIcons.sticker(), () => viewStickerPack(selected()!.content.packName))}
           {action('Duplicate', 'Duplicate', ToolIcons.duplicate(), () => duplicateSticker(selected()!))}
-          {action('Bury', 'Bury', ToolIcons.trash(), () => trashSelection(), `Move to ${COPY.trash} (Delete)`)}
+          {action('Bury', 'Bury', ToolIcons.trash(), burySelection, `Move to ${COPY.trash} (Delete)`)}
         </div>
       </div>
     </Show>

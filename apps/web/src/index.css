@@ -2318,7 +2318,8 @@ html[data-input='touch'] .movie-icon-btn::after {
 .toast {
   position: absolute;
   left: 50%;
-  bottom: 24px;
+  /* Level with the canvas controls beside it. */
+  bottom: 16px;
   transform: translateX(-50%);
   max-width: min(520px, calc(100% - 32px));
   padding: 10px 16px;
@@ -2326,6 +2327,7 @@ html[data-input='touch'] .movie-icon-btn::after {
   border-radius: 10px;
   background: var(--dn-panel);
   color: var(--dn-text);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
   z-index: 60;
   animation: slide-in 160ms ease-out;
 }
@@ -2388,6 +2390,7 @@ html[data-input='mouse'] [data-tooltip]:hover::after, [data-tooltip]:focus-visib
   .tauri .topbar .crumb.current { max-width: 35vw; }
   .canvas-controls { left: 12px; bottom: 12px; }
   .canvas-controls .icon-btn { padding-inline: 6px; }
+  .toast { bottom: 12px; }
   .update-toast { left: 76px; max-width: calc(100vw - 88px); bottom: 72px; flex-wrap: wrap; }
 }
 .deep-crumbs .ancestor-crumbs { display: none; }

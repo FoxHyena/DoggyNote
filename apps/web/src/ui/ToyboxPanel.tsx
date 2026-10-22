@@ -182,7 +182,7 @@ export function ToyboxPanel() {
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={() => {
                       doc.update({ [c.id]: { deletedAt: Date.now() } })
-                      if (touch()) showToast(`${COPY.buried} 1 card`, 5000, { label: 'Undo', run: () => doc.undo() })
+                      showToast(`${COPY.buried} 1 card`, 5000, { label: 'Undo', run: () => doc.undo() })
                     }}
                   >
                     <Icon size={16}>{ToolIcons.trash()}</Icon>
