@@ -15,10 +15,11 @@ import {
   type Side,
   type Vec,
 } from '@doggynote/core'
-import type { CardColor } from '@doggynote/theme'
+import { COPY, type CardColor } from '@doggynote/theme'
 import * as doc from './doc.ts'
 import { snapToGrid } from './grid.ts'
 import { labelsOn, moveLabels } from './labels.ts'
+import { showToast } from './toast.ts'
 import { beginEdit, boardId, clearSelection, editingId, endEdit, select, selection } from './ui.ts'
 
 export const EMPTY_CONTENT: { [T in CardType]: () => CardContent[T] } = {
@@ -130,6 +131,17 @@ export function trashSelection(now = Date.now()) {
   }
   doc.update(patches)
   clearSelection()
+}
+
+/** Bury the selection and say so, with Undo. Every way of burying (bar, Delete key, sheet) goes through here. */
+export function burySelection() {
+  let n = 0
+  for (const id of selection()) {
+    const kind = doc.get(id)?.kind
+    if (kind === 'card' || kind === 'sticker') n++
+  }
+  trashSelection()
+  if (n) showToast(`${COPY.buried} ${n} ${n === 1 ? 'card' : 'cards'}`, 5000, { label: 'Undo', run: () => doc.undo() })
 }
 
 export function restoreCard(id: Id) {

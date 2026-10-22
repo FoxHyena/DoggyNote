@@ -607,7 +607,7 @@ html[data-input='touch'] .card > .connect-handle { border-color: var(--dn-select
   background: var(--dn-card-hover);
   color: var(--dn-accent);
   font: inherit;
-  font-weight: 650;
+  font-weight: 600;
 }
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .toast {

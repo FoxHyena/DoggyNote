@@ -4,11 +4,10 @@ import { ALIGNMENTS, DEFAULT_SWATCH_HEX, type Alignment, type BoardIcon, type Ca
 import { CARD_COLORS, COPY, cardColor, isPresetColor, normalizeHex, type CardColor } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { columnCollapsed, setColumnCollapsed } from '../state/columns.ts'
-import { setColor, trashSelection } from '../state/actions.ts'
+import { burySelection, setColor } from '../state/actions.ts'
 import { alignSelection, isPositionLocked, lockSelection, selectedAlignmentUnits, unlockSelectionLayouts } from '../state/position.ts'
 import { beginEdit, camera, clearSelection, connectMode, editingId, openBoard, selectMore, selection, setConnectMode, setSelectMore, viewport } from '../state/ui.ts'
 import { phone, touch } from '../state/device.ts'
-import { showToast } from '../state/toast.ts'
 import { draggingIds } from '../canvas/dnd.ts'
 import { layoutTick, rectOf } from '../canvas/layout.ts'
 import { union, worldToScreen } from '@doggynote/core'
@@ -47,11 +46,6 @@ export function SelectionBar() {
   // Labels go on the cards of one board; a column is a container, so it has none.
   const canLabel = () => cards().length > 0 && cards().every((c) => c.type !== 'column' && c.boardId === cards()[0].boardId && doc.canWriteObject(c))
   const canDuplicate = () => cards().length > 0 && cards().every((c) => doc.canWriteObject(c))
-  const bury = () => {
-    const n = selection().size
-    trashSelection()
-    if (touch()) showToast(`${COPY.buried} ${n} ${n === 1 ? 'card' : 'cards'}`, 5000, { label: 'Undo', run: () => doc.undo() })
-  }
   const startConnect = () => {
     const c = sole()
     if (!c) return
@@ -280,7 +274,7 @@ export function SelectionBar() {
             )}
           </BarMenu>
         </Show>
-        <BarAction testid="bury" icon={ToolIcons.trash} label={COPY.bury} title={`${COPY.bury}: move to ${COPY.trash} (Delete)`} labelled={docked()} onClick={bury} />
+        <BarAction testid="bury" icon={ToolIcons.trash} label={COPY.bury} title={`${COPY.bury}: move to ${COPY.trash} (Delete)`} labelled={docked()} onClick={burySelection} />
         </Show>
         <Show when={phone()}>
           <button class="bar-btn bar-done" data-testid="selection-done" aria-label="Done" title="Done" onClick={clearSelection}>
