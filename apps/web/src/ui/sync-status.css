@@ -26,3 +26,8 @@
 @media (prefers-reduced-motion: reduce) { .sync-spinner { animation: none; } }
 /* Done is quiet: not a call to action. */
 .save-details .sync-now[data-state='synced'] { background: transparent; border: 1px solid var(--dn-border); color: var(--dn-text); }
+
+/* A sync failure leads with reassurance; the reason folds away underneath. */
+.save-error-detail { margin-top: -4px; font-size: 13px; color: var(--dn-text-muted); }
+.save-error-detail summary { cursor: pointer; width: fit-content; padding: 2px 0; }
+.save-error-detail p { margin: 6px 0 0; }

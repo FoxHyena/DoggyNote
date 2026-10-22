@@ -14,6 +14,8 @@ export const COPY = {
   search: 'Fetch',
   loading: 'Fetching…',
   allDone: 'Good dog!',
+  /** The server didn't take a sync. Lead with what matters: nothing is lost. */
+  syncSafe: "Your changes are safe on this device. We'll keep fetching until the server answers.",
   /** Touch hints and moments. */
   connectHint: 'Tap another card to tie them together.',
   emptyTouch: 'Double-tap anywhere for a note, or tap + below.',

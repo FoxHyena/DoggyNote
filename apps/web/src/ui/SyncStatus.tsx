@@ -2,6 +2,7 @@ import { Show, createEffect, createMemo, createSignal, onCleanup } from 'solid-j
 import * as doc from '../state/doc.ts'
 import { lastError, lastSyncAt, pendingCount, pendingUploadsCount, syncNow, syncState } from '../state/sync.ts'
 import './sync-status.css'
+import { COPY } from '@doggynote/theme'
 import { Icon, ToolIcons } from './icons.tsx'
 import { discardRecovery, downloadRecovery, recoverableChanges } from '../state/recovery.ts'
 
@@ -21,6 +22,8 @@ export function SyncStatus() {
       timer = setTimeout(() => setSlow(false), Math.max(0, 500 - (Date.now() - shownAt)))
     }
   })
+  // A server failure stays put through retries: lastError only clears when a sync lands.
+  const serverTrouble = () => !doc.localSaveError() && !!lastError() && syncState() !== 'offline' && syncState() !== 'signed-out'
   const failure = () => doc.localSaveError() || (['offline', 'error', 'signed-out'].includes(syncState()) ? syncState() : null)
   const visualState = () => failure() ? (doc.localSaveError() ? 'error' : syncState()) : slow() ? 'syncing' : 'idle'
   const label = () => doc.localSaveError() ? 'Save problem' : syncState() === 'offline' ? 'Offline' : syncState() === 'error' ? 'Sync problem' : syncState() === 'signed-out' ? 'Signed out' : recoverableChanges().length ? 'Review edits' : slow() ? 'Syncing…' : 'Save status'
@@ -74,7 +77,9 @@ export function SyncStatus() {
     </button>
     <Show when={open()}><section class="save-details" style={popupPosition()} role="dialog" aria-label="Save and sync details" data-testid="sync-details">
       <h3>Your changes</h3>
-      <p role={failure() ? 'alert' : undefined}>{doc.localSaveError() ?? lastError() ?? (syncState() === 'offline' ? 'Offline. Changes saved on this device will sync when you reconnect.' : syncState() === 'signed-out' ? 'Sign in to resume syncing.' : doc.lastLocalSave() ? 'Saved on this device.' : 'Local storage is ready.')}</p>
+      <p role={failure() ? 'alert' : undefined}>{doc.localSaveError() ?? (serverTrouble() ? COPY.syncSafe : syncState() === 'offline' ? 'Offline. Changes saved on this device will sync when you reconnect.' : syncState() === 'signed-out' ? 'Sign in to resume syncing.' : doc.lastLocalSave() ? 'Saved on this device.' : 'Local storage is ready.')}</p>
+      {/* The server's reason is for the curious, not the headline. */}
+      <Show when={serverTrouble()}><details class="save-error-detail" data-testid="sync-error-detail"><summary>What happened</summary><p>{lastError()}</p></details></Show>
       <dl><dt>Changes waiting</dt><dd data-testid="pending-changes">{pendingCount()}</dd>
         <dt>Image uploads</dt><dd>{pendingUploadsCount()}</dd>
         <dt>Last synced</dt><dd>{savedAt()}</dd></dl>
