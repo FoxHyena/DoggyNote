@@ -1,6 +1,6 @@
 import * as doc from '../state/doc.ts'
 import { nudgeSelection } from '../state/position.ts'
-import { selectAll, trashSelection } from '../state/actions.ts'
+import { burySelection, selectAll } from '../state/actions.ts'
 import {
   beginEdit,
   clearSelection,
@@ -88,7 +88,7 @@ export function installShortcuts(opts: { readOnly: boolean }) {
     if (e.key === 'Delete' || e.key === 'Backspace') {
       if (selection().size) {
         e.preventDefault()
-        trashSelection()
+        burySelection()
       }
       return
     }

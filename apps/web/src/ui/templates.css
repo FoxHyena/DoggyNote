@@ -1,0 +1,40 @@
+/* Template picker (ui/TemplatePicker.tsx): a small popover under the board "…" button.
+   Same metrics as the other popovers: 12px padding, 8px gaps, 32px rows (44px for fingers). */
+.templates-popover { --tp-row: 32px; width: 260px; padding: 12px; }
+.templates-title { margin: 0 0 8px; padding: 0 4px; font-size: 13px; font-weight: 600; line-height: 20px; color: var(--dn-text); }
+.templates-empty { margin: 0; font-size: 13px; line-height: 18px; color: var(--dn-text-muted); }
+.templates-list { display: flex; flex-direction: column; gap: 2px; margin: 0 -4px; padding: 0; list-style: none; }
+.template-row { display: flex; align-items: center; gap: 4px; min-height: var(--tp-row); border-radius: 8px; }
+.template-use {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: var(--tp-row);
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dn-text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+}
+.template-use > svg { flex-shrink: 0; color: var(--dn-text-muted); }
+.template-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* When it was saved: tells two templates with the same name apart. */
+.template-date { flex-shrink: 0; color: var(--dn-text-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.template-remove { flex-shrink: 0; min-width: var(--tp-row); min-height: var(--tp-row); padding: 0; }
+html[data-input='mouse'] .template-use:hover,
+html[data-input='mouse'] .template-remove:hover { background: var(--dn-card-hover); color: var(--dn-text); }
+.template-use:focus-visible,
+.template-remove:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: -2px; }
+/* The remove × stays quiet until its row is pointed at, so names read first. */
+html[data-input='mouse'] .template-row:not(:hover):not(:focus-within) .template-remove { opacity: 0; }
+
+@media (pointer: coarse) {
+  .templates-popover { --tp-row: 44px; width: min(320px, calc(100vw - 16px)); }
+  .templates-title { font-size: 15px; }
+  .template-use { font-size: 15px; }
+}

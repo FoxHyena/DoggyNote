@@ -1,14 +1,13 @@
 import './canvas-entry.css'
 import { For, Show, createMemo, createSignal, onCleanup, type JSX } from 'solid-js'
-import { ALIGNMENTS, type Alignment, type BoardIcon, type Card } from '@doggynote/core'
-import { CARD_COLORS, COPY } from '@doggynote/theme'
+import { ALIGNMENTS, DEFAULT_SWATCH_HEX, type Alignment, type BoardIcon, type Card } from '@doggynote/core'
+import { CARD_COLORS, COPY, cardColor, isPresetColor, normalizeHex, type CardColor } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { columnCollapsed, setColumnCollapsed } from '../state/columns.ts'
-import { setColor, trashSelection } from '../state/actions.ts'
+import { burySelection, setColor } from '../state/actions.ts'
 import { alignSelection, isPositionLocked, lockSelection, selectedAlignmentUnits, unlockSelectionLayouts } from '../state/position.ts'
 import { beginEdit, camera, clearSelection, connectMode, editingId, openBoard, selectMore, selection, setConnectMode, setSelectMore, viewport } from '../state/ui.ts'
 import { phone, touch } from '../state/device.ts'
-import { showToast } from '../state/toast.ts'
 import { draggingIds } from '../canvas/dnd.ts'
 import { layoutTick, rectOf } from '../canvas/layout.ts'
 import { union, worldToScreen } from '@doggynote/core'
@@ -47,11 +46,6 @@ export function SelectionBar() {
   // Labels go on the cards of one board; a column is a container, so it has none.
   const canLabel = () => cards().length > 0 && cards().every((c) => c.type !== 'column' && c.boardId === cards()[0].boardId && doc.canWriteObject(c))
   const canDuplicate = () => cards().length > 0 && cards().every((c) => doc.canWriteObject(c))
-  const bury = () => {
-    const n = selection().size
-    trashSelection()
-    if (touch()) showToast(`${COPY.buried} ${n} ${n === 1 ? 'card' : 'cards'}`, 5000, { label: 'Undo', run: () => doc.undo() })
-  }
   const startConnect = () => {
     const c = sole()
     if (!c) return
@@ -65,10 +59,27 @@ export function SelectionBar() {
     const c = cards()
     return c.length === 1 && c[0].type === 'board' ? doc.getBoard((c[0] as Card<'board'>).content.boardId) : undefined
   }
-  const currentColor = () => {
-    const c = cards()
-    return c.length && c.every((x) => x.color === c[0].color) ? c[0].color : null
+  /** The selection's shared colour (synced data, so checked), or null when they differ. */
+  const currentColor = (): CardColor | null => {
+    const c = cards().map((x) => cardColor(x.color))
+    return c.length && c.every((x) => x === c[0]) ? c[0] : null
   }
+  const customColor = () => {
+    const c = currentColor()
+    return c && !isPresetColor(c) ? c : null
+  }
+  const pickCustom = (value: string) => {
+    const hex = normalizeHex(value)
+    if (hex) setColor(selection(), hex)
+  }
+  const lockLabel = () => (allLocked() ? 'Unlock position' : 'Lock position')
+  const lockButton = () => (
+    <BarAction testid="position-lock" icon={allLocked() ? ToolIcons.lock : ToolIcons.unlock} label={lockLabel()} text={allLocked() ? 'Unlock' : 'Lock'} title={allLocked() ? 'Unlock position' : 'Lock position: protect layout while keeping content editable'} pressed={allLocked()} labelled={docked()} onClick={() => lockSelection(!allLocked())} />
+  )
+  const partlyLocked = () => cards().some((c) => c.positionLocked === true) && !cards().every((c) => c.positionLocked === true)
+  const columnLocked = () => cards().some((c) => isPositionLocked(c.id) && c.positionLocked !== true)
+  // Docked, the lock is one of the labelled actions; the position row only holds what's left.
+  const positionRow = () => !docked() || partlyLocked() || columnLocked() || canAlign()
 
   // Float just above the selection, or below it if there's no room.
   const pos = createMemo(() => {
@@ -125,13 +136,13 @@ export function SelectionBar() {
               {columnCollapsed(selectedColumn()) ? 'Expand column' : 'Collapse column'}
             </button>
           </Show>
-          <Show when={writable()}>
+          <Show when={writable() && positionRow()}>
           <div class="bar-group bar-position">
-            <IconButton testid="position-lock" icon={allLocked() ? ToolIcons.lock : ToolIcons.unlock} label={allLocked() ? 'Unlock position' : 'Lock position'} title={allLocked() ? 'Unlock position' : 'Lock position: protect layout while keeping content editable'} pressed={allLocked()} onClick={() => lockSelection(!allLocked())} />
-            <Show when={cards().some((c) => c.positionLocked === true) && !cards().every((c) => c.positionLocked === true)}>
+            <Show when={!docked()}>{lockButton()}</Show>
+            <Show when={partlyLocked()}>
               <button class="bar-btn" onClick={() => lockSelection(false)}>Unlock selected</button>
             </Show>
-            <Show when={cards().some((c) => isPositionLocked(c.id) && c.positionLocked !== true)}>
+            <Show when={columnLocked()}>
               <button class="bar-btn" data-testid="unlock-column-layout" data-tip="Unlock the position locks in this column" onClick={unlockSelectionLayouts}>Unlock column layout</button>
             </Show>
             <Show when={canAlign()}>
@@ -154,8 +165,8 @@ export function SelectionBar() {
                 <button
                   class="swatch"
                   aria-pressed={currentColor() === c}
-                  classList={{ on: currentColor() === c }}
-                  style={{ background: `var(--dn-card-${c}-bg)` }}
+                  classList={{ on: currentColor() === c, 'swatch-none': c === 'none' }}
+                  style={{ '--sw': `var(--dn-card-${c}-bg)` }}
                   data-testid={`swatch-${c}`}
                   data-tip={c === 'none' ? 'No colour' : c[0]!.toUpperCase() + c.slice(1)}
                   aria-label={c === 'none' ? 'No colour' : c}
@@ -163,6 +174,19 @@ export function SelectionBar() {
                 />
               )}
             </For>
+            {/* Any other colour: the system picker. One change, one undo step. */}
+            <label class="swatch swatch-custom" classList={{ on: !!customColor() }} style={customColor() ? { '--sw': customColor()! } : undefined} data-tip={customColor() ? `Custom colour ${customColor()}` : 'Custom colour'} data-testid="swatch-custom">
+              <Show when={!customColor()}>
+                <Icon size={16}>{ToolIcons.plus()}</Icon>
+              </Show>
+              <input
+                type="color"
+                data-testid="swatch-custom-input"
+                aria-label="Custom colour"
+                value={(customColor() ?? DEFAULT_SWATCH_HEX).toLowerCase()}
+                onChange={(e) => pickCustom(e.currentTarget.value)}
+              />
+            </label>
           </div>
         </Show>
         <Show when={soleBoard()}>
@@ -201,14 +225,15 @@ export function SelectionBar() {
           <TodoOptions card={sole() as Card<'todo'>} />
         </Show>
         <Show when={!editingList()}>
+        <Show when={docked() && writable() && cards().length}>{lockButton()}</Show>
         <Show when={canLabel()}>
-          <LabelsButton cards={cards()} />
+          <LabelsButton cards={cards()} labelled={docked()} />
         </Show>
-        <Show when={canDuplicate()}>
-          <IconButton testid="duplicate-selection" icon={ToolIcons.duplicate} label="Duplicate" title="Duplicate (⌘D)" onClick={() => duplicateSelection()} />
+        <Show when={canDuplicate() && !phone()}>
+          <BarAction testid="duplicate-selection" icon={ToolIcons.duplicate} label="Duplicate" title="Duplicate (⌘D)" labelled={docked()} onClick={() => duplicateSelection()} />
         </Show>
         <Show when={cards().length === 1 && cards()[0].type !== 'board'}>
-          <IconButton testid="comment-button" icon={ToolIcons.comment} label="Comment" title="Comment on this card" onClick={() => openThread(cards()[0].id)} />
+          <BarAction testid="comment-button" icon={ToolIcons.comment} label="Comment" title="Comment on this card" labelled={docked()} onClick={() => openThread(cards()[0].id)} />
         </Show>
         <Show when={!phone()}>
         <Show when={touch() && sole()}>
@@ -229,6 +254,12 @@ export function SelectionBar() {
           <BarMenu label={selection().size > 1 ? `${selection().size} picked` : 'More'} title="More for this card" testId="selection-more" menuTestId="selection-more-menu" icon={<Icon size={18}>{ToolIcons.more()}</Icon>}>
             {(close) => (
               <>
+                <Show when={canDuplicate()}>
+                  <button class="menu-item" role="menuitem" data-testid="duplicate-selection" onClick={() => { close(); duplicateSelection() }}>
+                    <Icon size={18}>{ToolIcons.duplicate()}</Icon>
+                    Duplicate
+                  </button>
+                </Show>
                 <Show when={sole()}>
                   <button class="menu-item" role="menuitem" data-testid="connect-card" onClick={() => { close(); startConnect() }}>
                     <Icon size={18}>{ToolIcons.line()}</Icon>
@@ -243,15 +274,28 @@ export function SelectionBar() {
             )}
           </BarMenu>
         </Show>
-        <IconButton testid="bury" icon={ToolIcons.trash} label="Bury" title={`Bury: move to ${COPY.trash} (Delete)`} onClick={bury} />
+        <BarAction testid="bury" icon={ToolIcons.trash} label={COPY.bury} title={`${COPY.bury}: move to ${COPY.trash} (Delete)`} labelled={docked()} onClick={burySelection} />
         </Show>
         <Show when={phone()}>
-          <button class="icon-btn bar-done" data-testid="selection-done" aria-label="Done" title="Done" onClick={clearSelection}>
+          <button class="bar-btn bar-done" data-testid="selection-done" aria-label="Done" title="Done" onClick={clearSelection}>
             <Icon size={18}>{ToolIcons.close()}</Icon>
+            <span class="bar-btn-label">Done</span>
           </button>
         </Show>
         </div>
       </div>
+    </Show>
+  )
+}
+
+/** An icon button, or on the docked bar an icon over its label (glass has no hover tips). */
+function BarAction(props: { testid: string; icon: () => JSX.Element; label: string; text?: string; title?: string; pressed?: boolean; labelled: boolean; onClick: () => void }) {
+  return (
+    <Show when={props.labelled} fallback={<IconButton testid={props.testid} icon={props.icon} label={props.label} title={props.title} pressed={props.pressed} onClick={props.onClick} />}>
+      <button class="bar-btn" classList={{ on: !!props.pressed }} data-testid={props.testid} aria-label={props.label} aria-pressed={props.pressed} onClick={() => props.onClick()}>
+        <Icon size={18}>{props.icon()}</Icon>
+        <span class="bar-btn-label">{props.text ?? props.label}</span>
+      </button>
     </Show>
   )
 }

@@ -121,6 +121,17 @@ export async function longPress(page: Page, p: Pt, ms = 600) {
   await f.release(0)
 }
 
+/** Double-tap, keep the second tap down, and slide `dy` px (up is negative). */
+export async function tapHoldSlide(page: Page, p: Pt, dy: number) {
+  await tap(page, p)
+  await page.waitForTimeout(80)
+  const f = new Fingers(page)
+  await f.press(0, p)
+  await steps(f, 0, p, { x: p.x, y: p.y + dy }, 8)
+  await page.waitForTimeout(150)
+  await f.release(0)
+}
+
 /** Two fingers spread (scale > 1) or pinched (scale < 1) around a centre. */
 export async function pinch(page: Page, c: Pt, scale: number, opts: { spread?: number; pan?: Pt } = {}) {
   const r0 = opts.spread ?? 60
@@ -148,10 +159,44 @@ export async function touchAddNote(page: Page, text: string, fx = 0.5, fy = 0.5)
   await tap(page, p)
   await expect(page.getByTestId('note-editor')).toBeVisible()
   await page.keyboard.type(text)
-  await page.getByTestId('edit-done').tap()
+  await closeKeyboard(page)
+  await expect(page.getByTestId('note-editor')).toHaveCount(0)
   const card = cardByText(page, text)
   await expect(card).toBeVisible()
   return card
+}
+
+/** Put the keyboard away as its ✓ does on iOS: the field just loses focus, and that finishes the edit. */
+export async function closeKeyboard(page: Page) {
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+}
+
+/** Pretend the on-screen keyboard opens (the visual viewport shrinks) or closes. */
+export async function fakeKeyboard(page: Page, open: boolean) {
+  await page.evaluate((open) => {
+    const height = open ? Math.round(innerHeight * 0.55) : innerHeight
+    Object.defineProperty(visualViewport!, 'height', { configurable: true, value: height })
+    visualViewport!.dispatchEvent(new Event('resize'))
+  }, open)
+  // The app reads the viewport on the next frame.
+  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))))
+}
+
+/** Tap a bit of bare board (no card, panel or bar under the finger). */
+export async function tapEmpty(page: Page) {
+  const p = await page.evaluate(() => {
+    const canvas = document.querySelector('[data-testid=canvas]')!.getBoundingClientRect()
+    for (let fy = 0.9; fy > 0.1; fy -= 0.05) {
+      for (let fx = 0.9; fx > 0.1; fx -= 0.1) {
+        const x = canvas.left + canvas.width * fx
+        const y = canvas.top + canvas.height * fy
+        const el = document.elementFromPoint(x, y)
+        if (el && el.closest('[data-testid=canvas]') && !el.closest('[data-card-id], [data-nodrag], button, input, textarea')) return { x, y }
+      }
+    }
+    throw new Error('no bare board to tap')
+  })
+  await tap(page, p)
 }
 
 export const boardOf = (page: Page) => decodeURIComponent(page.url().match(/#\/b\/([^/?#]+)/)![1])

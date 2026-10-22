@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { cardByText, freshBoard, postSync, waitForSync } from './helpers.ts'
-import { Fingers, center, longPress, note, seedCards, tapOn } from './touch.ts'
+import { Fingers, center, closeKeyboard, longPress, note, seedCards, tapOn } from './touch.ts'
 
 // The phone shell: a thumb dock instead of the rail, an Add sheet, menus and
 // panels as bottom sheets that never spill off the screen.
@@ -50,8 +50,8 @@ test('the Add sheet makes each kind of card', async ({ page }) => {
     await expect(ready).toBeFocused()
     if (kind === 'add-note') await page.keyboard.type('From the sheet')
     if (kind === 'add-column') await page.keyboard.type('Ideas')
-    if (await page.getByTestId('edit-done').isVisible()) await page.getByTestId('edit-done').tap()
-    else await page.keyboard.press('Escape')
+    await closeKeyboard(page)
+    await expect(ready).toHaveCount(0)
   }
   await expect(cardByText(page, 'From the sheet')).toBeVisible()
   await expect(cardByText(page, 'Ideas')).toBeVisible()

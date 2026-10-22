@@ -1,9 +1,9 @@
 import { mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { expect, test } from '@playwright/test'
-import { at, waitForSync } from './helpers.ts'
-import { Fingers, center, longPress, touchDrag } from './touch.ts'
-import { importFixturePack, openStickerTray, stickerBoard, stickerRingPoint, stickerState } from './sticker-helpers.ts'
+import { at, camera, cardByText, waitForSync } from './helpers.ts'
+import { Fingers, center, longPress, note, seedCards, tap, tapHoldSlide, tapOn, touchDrag } from './touch.ts'
+import { importFixturePack, openStickerTray, seedStickers, stickerBoard, stickerRingPoint, stickerState } from './sticker-helpers.ts'
 
 test.use({ trace: 'retain-on-failure' })
 
@@ -160,4 +160,34 @@ test('bottom-right sticker shelf browses sideways and lifts one sticker onto the
   await cancel.release(0) // still inside the shelf: dropping here cancels
   await expect(page.getByTestId('placed-sticker')).toHaveCount(1)
   await expect(page.getByTestId('sticker-ghost')).toHaveCount(0)
+})
+
+test('moving a sticker over a note being edited never selects text; a double-tap-hold slide on it zooms instead', async ({ page, request }) => {
+  const { id } = await stickerBoard(page, request); await importFixturePack(page)
+  await seedStickers(page, id, [{ x: 130, y: 0 }])
+  await seedCards(page, [note('Words to not select here', 0, 0, { w: 300 })])
+  const sticker = page.getByTestId('placed-sticker')
+  await expect(sticker).toHaveCount(1)
+  // Edit the note beside the sticker, then pick the sticker up from on top of it.
+  const words = cardByText(page, 'Words to not select')
+  await tapOn(page, words); await tapOn(page, words)
+  await expect(page.getByTestId('note-editor')).toBeVisible()
+  const p = await center(sticker)
+  await tap(page, p)
+  await expect(page.getByTestId('note-editor')).toHaveCount(0)
+  const before = await stickerState(page)
+  // A finger back down within 300 ms would be a double-tap (slide-zoom); a person lifts and regrips slower.
+  await page.waitForTimeout(400)
+  // Held still first, the way a long-press would start a native selection.
+  await touchDrag(page, p, { x: p.x + 40, y: p.y + 60 }, { hold: 600 })
+  expect((await stickerState(page)).x).toBeGreaterThan(before.x + 25)
+  expect(await page.evaluate(() => String(getSelection()))).toBe('')
+  // Double-tap and slide on the sticker: the board zooms, the sticker stays.
+  const moved = await stickerState(page), z0 = (await camera(page)).zoom
+  await tapHoldSlide(page, await center(sticker), -100)
+  expect((await camera(page)).zoom).toBeGreaterThan(z0 * 1.4)
+  const after = await stickerState(page)
+  expect(after.x).toBe(moved.x); expect(after.y).toBe(moved.y); expect(after.w).toBe(moved.w)
+  expect(await page.evaluate(() => String(getSelection()))).toBe('')
+  await waitForSync(page)
 })

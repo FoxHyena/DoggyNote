@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, onMount } from 'solid-js'
+import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, onMount, untrack } from 'solid-js'
 import { isPositionLocked } from '../state/position.ts'
 import { StickerLayer, groupTurn, selectionRing, setGroupTurn, setManipulatingSticker, stickerAt, stickerRingAt } from './StickerLayer.tsx'
 import { armedSticker, cancelStickerPlacement, placeSticker, setStickerGhost } from '../state/stickers.ts'
@@ -77,7 +77,7 @@ import { BoardIconSvg } from '../ui/icons.tsx'
 import { setToyboxOpen, toyboxOpen } from '../ui/ToyboxPanel.tsx'
 import { setThreadCardId, threadCardId } from '../state/comments.ts'
 import { haptic, phone, touch } from '../state/device.ts'
-import { resetPageScroll, visible } from '../state/viewport.ts'
+import { resetPageScroll, visible as visibleArea } from '../state/viewport.ts'
 import { showToast } from '../state/toast.ts'
 
 type Gesture =
@@ -93,16 +93,20 @@ type Gesture =
   // Touch: a finger is down but hasn't decided yet (tap, pan, drag or long-press).
   | { kind: 'tpress'; id: Id | null; start: Vec; last: Vec; target: HTMLElement; pointerId: number; nodrag: boolean; timer: ReturnType<typeof setTimeout> }
   | { kind: 'pinch'; ids: [number, number]; startCam: Camera; a0: Vec; b0: Vec }
+  // Touch: double-tap, hold, then slide up to zoom in or down to zoom out.
+  | { kind: 'tzoom'; anchor: Vec; startY: number; startCam: Camera }
 
 const DRAG_THRESHOLD = 4
 /** Fingers wobble: a touch has to travel further before it counts as a drag. */
 const TOUCH_SLOP = 10
 const LONG_PRESS_MS = 350
+/** Double-tap-and-slide zoom: the zoom doubles every ~90 screen px. */
+const TAP_ZOOM_RATE = 0.008
 /** Screen px around a checkbox that still toggles it on touch. */
 const CHECK_REACH = 24
 /** Smallest zoom a phone opens a board at: below this, notes stop being readable. */
 const PHONE_MIN_ZOOM = 0.8
-/** Height of the formatting dock that sits on the keyboard while editing (EditDock). */
+/** Height of the formatting dock that sits on the keyboard while editing a note (EditDock). */
 const EDIT_DOCK = 56
 
 type Client = { clientX: number; clientY: number; altKey?: boolean }
@@ -255,6 +259,7 @@ export function Canvas(props: { readOnly: boolean }) {
         if (id && focusEdits() && doc.getCard(id)?.type !== 'swatch') {
           if (!prev) editReturn = camera()
           movedWhileEditing = false
+          resetPageScroll()
           const r = rectOf(id)
           if (r) animateCamera(editCamera(r, editRoom(), camera()), 260, () => requestAnimationFrame(revealCaret))
         } else if (!id && prev) {
@@ -266,14 +271,87 @@ export function Canvas(props: { readOnly: boolean }) {
       { defer: true },
     ),
   )
+  // Only changes when editing starts, stops or moves to another card (not with the keyboard).
+  const touchEditing = createMemo(() => (focusEdits() ? editingId() : null))
   createEffect(() => {
-    if (!editingId() || !focusEdits()) return
-    visible()
+    const id = touchEditing()
+    if (!id) return
     const onSelection = () => requestAnimationFrame(revealCaret)
     document.addEventListener('selectionchange', onSelection)
-    onCleanup(() => document.removeEventListener('selectionchange', onSelection))
-    requestAnimationFrame(revealCaret)
+    // The app never scrolls; iOS scrolling the page to a field slides the grid away.
+    const onScroll = () => resetPageScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    const done = () => {
+      endEdit()
+      clearSelection()
+    }
+    // A colour card has nothing to type into: its panel owns focus and there's no
+    // keyboard. Tapping the board finishes it.
+    const typed = doc.getCard(id)?.type !== 'swatch'
+    // The keyboard going away means done, however it went (iOS ✓, Android's back
+    // gesture, which keeps focus). Only once it was seen to open: a hardware
+    // keyboard never opens one, and turning the phone resizes everything.
+    let opened = false
+    let width = untrack(visibleArea).width
+    createEffect(
+      on(visibleArea, (v) => {
+        if (!typed) return
+        if (v.width !== width) {
+          width = v.width
+          opened = false
+          return
+        }
+        // A pinch-zoomed page shrinks the visual viewport too.
+        if (Math.abs((window.visualViewport?.scale ?? 1) - 1) > 0.01) return
+        if (v.height < innerHeight * 0.8) opened = true
+        else if (opened && v.height >= innerHeight * 0.9 && editingId() === id) {
+          opened = false
+          done()
+        }
+      }),
+    )
+    // Focus leaving the card (the keyboard's own ✓ just blurs) means done too. A
+    // frame later, so focus moving within the card (a note's buffer handing over
+    // to its editor) or to the dock's format buttons doesn't count.
+    let blurFrame = 0
+    const onFocusOut = () => {
+      if (!typed) return
+      cancelAnimationFrame(blurFrame)
+      blurFrame = requestAnimationFrame(() => {
+        // A finger on the board: the tap decides what happens to the edit.
+        if (editingId() !== id || fingers.size) return
+        const active = document.activeElement
+        if (active && active !== document.body && (cardEl(id)?.contains(active) || active.closest('.edit-dock, .selection-bar'))) return
+        done()
+      })
+    }
+    document.addEventListener('focusout', onFocusOut)
+    onCleanup(() => {
+      cancelAnimationFrame(blurFrame)
+      document.removeEventListener('selectionchange', onSelection)
+      window.removeEventListener('scroll', onScroll)
+      document.removeEventListener('focusout', onFocusOut)
+    })
   })
+  // The keyboard arriving (or leaving) changes the room: glide to the new aim
+  // rather than snapping. Once the user has panned, only keep the caret in view.
+  createEffect(
+    on(
+      visibleArea,
+      () => {
+        const id = editingId()
+        if (!id || !focusEdits()) return
+        const r = rectOf(id)
+        if (movedWhileEditing || !r || doc.getCard(id)?.type === 'swatch') return void requestAnimationFrame(revealCaret)
+        const aim = editCamera(r, editRoom(), camera())
+        aim.y += caretShift(aim) / aim.zoom
+        const c = camera()
+        if (Math.abs(aim.x - c.x) * c.zoom < 1 && Math.abs(aim.y - c.y) * c.zoom < 1 && Math.abs(aim.zoom - c.zoom) < 0.001) return
+        animateCamera(aim, 160, () => requestAnimationFrame(revealCaret))
+      },
+      { defer: true },
+    ),
+  )
   // A proposal preview frames its changes; that camera isn't the board's own.
   createEffect(() => { if (!doc.previewing()) saveCamera(boardId(), camera()) })
 
@@ -870,6 +948,13 @@ export function Canvas(props: { readOnly: boolean }) {
   // tapping the selected card again edits or opens it.
   const fingers = new Map<number, Vec>()
   let lastTap: Tap | null = null
+  // A quick tap anywhere (card, sticker or canvas): a finger coming back down
+  // right after one, near it, is ready to slide-zoom.
+  let fingerDown: (Tap & { moved: boolean }) | null = null
+  let quickTap: Tap | null = null
+  let zoomArm: Vec | null = null
+  // The finger is on a sticker: nothing it does may select text.
+  let stickerTouch = false
   // A paw print where the finger asked for something.
   const [paw, setPaw] = createSignal<{ x: number; y: number; n: number } | null>(null)
   let pawTimer: ReturnType<typeof setTimeout> | undefined
@@ -890,7 +975,14 @@ export function Canvas(props: { readOnly: boolean }) {
       return
     }
     fingers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    const now = { x: e.clientX, y: e.clientY, t: performance.now() }
+    if (fingers.size === 1) {
+      zoomArm = isDoubleTap(quickTap, now) ? { x: now.x, y: now.y } : null
+      fingerDown = { ...now, moved: false }
+    } else if (fingerDown) fingerDown.moved = true
+    quickTap = null
     if (fingers.size === 2) {
+      zoomArm = null
       cancelGesture()
       const [[ia, a], [ib, b]] = [...fingers]
       gesture = { kind: 'pinch', ids: [ia, ib], startCam: camera(), a0: local({ clientX: a.x, clientY: a.y }), b0: local({ clientX: b.x, clientY: b.y }) }
@@ -899,10 +991,20 @@ export function Canvas(props: { readOnly: boolean }) {
       return
     }
     if (fingers.size > 2) return
-    if (startStickerGesture(e)) return
+    if (startStickerGesture(e)) {
+      stickerTouch = true
+      // A selection left from before (an editor this touch just closed) mustn't follow the finger.
+      if (!editingId()) getSelection()?.removeAllRanges()
+      return
+    }
     const target = e.target as HTMLElement
     // The editor owns single touches inside the card being edited (caret, selection).
-    if (insideEditor(e, editingId())) return
+    if (insideEditor(e, editingId())) {
+      // A touch on the rest of the card (an image above its caption) would blur
+      // the field, and focus leaving the card ends the edit.
+      if (!target.closest('textarea, input, select, label, a, button, [contenteditable], .cm-editor')) e.preventDefault()
+      return
+    }
     const nodrag = !!target.closest('[data-nodrag]')
     // Ours from here: no compatibility mouse events (their mousedown would steal
     // focus from an editor this touch opens), no text selection or callout.
@@ -921,7 +1023,8 @@ export function Canvas(props: { readOnly: boolean }) {
 
   function longPress() {
     const g = gesture
-    if (g?.kind !== 'tpress' || props.readOnly) return
+    // A second tap held still is a slide-zoom waiting to happen, not a lift.
+    if (g?.kind !== 'tpress' || props.readOnly || zoomArm) return
     capture(g.pointerId)
     haptic('lift')
     pawAt(g.last)
@@ -942,8 +1045,23 @@ export function Canvas(props: { readOnly: boolean }) {
   function touchMove(e: PointerEvent) {
     if (!fingers.has(e.pointerId)) return
     fingers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (fingerDown && Math.hypot(e.clientX - fingerDown.x, e.clientY - fingerDown.y) > TOUCH_SLOP) fingerDown.moved = true
     const g = gesture
     if (!g) return
+    if (g.kind === 'tzoom') {
+      setCamera(zoomAt(g.startCam, g.anchor, g.startCam.zoom * Math.exp((g.startY - e.clientY) * TAP_ZOOM_RATE)))
+      return
+    }
+    // Double-tap, hold and slide: zoom, whatever the finger came down on.
+    if (zoomArm && fingers.size === 1 && undecided(g) && Math.hypot(e.clientX - zoomArm.x, e.clientY - zoomArm.y) > TOUCH_SLOP) {
+      const anchor = local({ clientX: zoomArm.x, clientY: zoomArm.y })
+      cancelGesture()
+      capture(e.pointerId)
+      gesture = { kind: 'tzoom', anchor, startY: e.clientY, startCam: camera() }
+      movedWhileEditing = true
+      haptic('tick')
+      return
+    }
     if (g.kind === 'pinch') {
       const a = fingers.get(g.ids[0])
       const b = fingers.get(g.ids[1])
@@ -966,8 +1084,21 @@ export function Canvas(props: { readOnly: boolean }) {
     moveGesture(e)
   }
 
+  /** Whether a touch hasn't yet become a pan, drag or turn. */
+  function undecided(g: Gesture) {
+    return g.kind === 'tpress' || g.kind === 'press' || ((g.kind === 'sticker' || g.kind === 'sticker-group') && !g.moved)
+  }
+
   function touchUp(e: PointerEvent) {
     fingers.delete(e.pointerId)
+    if (!fingers.size) {
+      const t = performance.now()
+      // A tap that placed a sticker is done: dragging the new sticker straight away moves it.
+      quickTap = fingerDown && !fingerDown.moved && e.type !== 'pointercancel' && gesture?.kind !== 'sticker-place' && t - fingerDown.t < 300 ? { x: e.clientX, y: e.clientY, t } : null
+      fingerDown = null
+      zoomArm = null
+      stickerTouch = false
+    }
     const g = gesture
     if (!g) return
     if (g.kind === 'pinch') {
@@ -991,6 +1122,9 @@ export function Canvas(props: { readOnly: boolean }) {
         break
       case 'pan':
         if (!cancelled && g.samples) flick(g.samples)
+        break
+      case 'tzoom':
+        lastTap = quickTap = null
         break
       default:
         endGesture(g, e)
@@ -1227,11 +1361,18 @@ export function Canvas(props: { readOnly: boolean }) {
     if (handleCanvasPaste(e, at, column?.id)) e.preventDefault()
   }
 
+  // iOS starts its own text selection from a held, moving finger; cancelling the
+  // pointer events doesn't stop it. A touch the canvas owns never selects text.
+  const onSelectStart = (e: Event) => { if (gesture && lastPointerType === 'touch') e.preventDefault() }
+  const onTouchMoveNative = (e: TouchEvent) => { if (stickerTouch || gesture?.kind === 'tzoom') e.preventDefault() }
+
   onCleanup(() => { cancelGesture(); cancelStickerPlacement() })
   onMount(() => {
     const ro = new ResizeObserver(measure)
     ro.observe(vp)
     vp.addEventListener('wheel', onWheel, { passive: false })
+    vp.addEventListener('touchmove', onTouchMoveNative, { passive: false })
+    document.addEventListener('selectstart', onSelectStart)
     vp.addEventListener('gesturestart', onGestureStart)
     vp.addEventListener('gesturechange', onGestureChange)
     vp.addEventListener('gestureend', onGestureEnd)
@@ -1243,6 +1384,8 @@ export function Canvas(props: { readOnly: boolean }) {
     onCleanup(() => {
       ro.disconnect()
       vp.removeEventListener('wheel', onWheel)
+      vp.removeEventListener('touchmove', onTouchMoveNative)
+      document.removeEventListener('selectstart', onSelectStart)
       vp.removeEventListener('gesturestart', onGestureStart)
       vp.removeEventListener('gesturechange', onGestureChange)
       vp.removeEventListener('gestureend', onGestureEnd)
@@ -1347,14 +1490,15 @@ export function Canvas(props: { readOnly: boolean }) {
 
 let movedWhileEditing = false
 /** Phones and short touch screens get the editing camera and keyboard handling. */
-const focusEdits = () => touch() && (phone() || visible().height < 600)
+const focusEdits = () => touch() && (phone() || visibleArea().height < 600)
 
 /** The part of the canvas the keyboard and the edit dock leave visible, in canvas px. */
 function editRoom() {
   const v = viewport()
-  const vis = visible()
+  const vis = visibleArea()
   const top = Math.max(0, vis.top - v.top)
-  const bottom = Math.min(v.height, vis.top + vis.height - v.top) - EDIT_DOCK
+  const dock = doc.getCard(editingId())?.type === 'note' ? EDIT_DOCK : 0
+  const bottom = Math.min(v.height, vis.top + vis.height - v.top) - dock
   return { width: v.width, top, bottom }
 }
 
@@ -1365,6 +1509,39 @@ export function touchEdit(id: Id, caret?: Vec) {
   // Queue the caret first: the editor mounts (and reads it) inside beginEdit.
   if (caret) queueEditCaret(caret)
   beginEdit(id)
+  const el = cardEl(id)
+  // iOS only raises the keyboard for focus inside the touch, so focus the field
+  // here rather than relying on when the editor's onMount runs.
+  const field = el?.querySelector<HTMLTextAreaElement>('textarea.image-caption-input')
+  if (field && document.activeElement !== field) field.focus({ preventScroll: true })
+  if (el) keepEditFocus(id, el)
+}
+
+/**
+ * The browser's own mouse events for a tap must not take focus from the field it
+ * just opened. iOS answers a double-tap with a mousedown and dblclick on what's
+ * under the finger (the picture, for a caption), and a mousedown on something
+ * that can't take focus blurs the field and drops the keyboard.
+ * - On the card being edited, for the whole edit: nothing else there should take
+ *   focus, however late the mousedown comes (a slow phone, a later tap on the picture).
+ * - Anywhere else, only for a moment after the tap: the camera glides the card
+ *   away, so the tap's own mousedown can land on the board.
+ * Fields and the note editor keep their mousedown (caret placement).
+ */
+let stopKeepingEditFocus = () => {}
+function keepEditFocus(id: Id, card: HTMLElement, ms = 600) {
+  stopKeepingEditFocus()
+  const until = performance.now() + ms
+  const stop = (e: MouseEvent) => {
+    if (editingId() !== id) return off()
+    const t = e.target as Element | null
+    if (!e.isTrusted || !t || t.closest('textarea, input, select, [contenteditable], .cm-editor')) return
+    if (card.contains(t) || (performance.now() <= until && !t.closest('[data-nodrag], button, a, label'))) e.preventDefault()
+  }
+  // Ends with the edit (at the next mousedown after it), or when another edit starts.
+  const off = () => window.removeEventListener('mousedown', stop, true)
+  window.addEventListener('mousedown', stop, true)
+  stopKeepingEditFocus = off
 }
 
 function caretRect(within: HTMLElement): DOMRect | null {
@@ -1380,21 +1557,33 @@ function caretRect(within: HTMLElement): DOMRect | null {
   return node?.getBoundingClientRect() ?? null
 }
 
-/** Pan just enough to keep the caret between the top of the screen and the keyboard. */
-function revealCaret() {
+/**
+ * How far (screen px, + is down) the caret sits outside the room between the top
+ * of the screen and the keyboard, were the camera at `at`. 0 when it's in view.
+ */
+function caretShift(at: Camera): number {
   const id = editingId()
   const el = id ? cardEl(id) : null
   const caret = el ? caretRect(el) : null
-  // The edit glide checks again when it lands.
-  if (!caret || anim) return
+  if (!caret) return 0
   const v = viewport()
+  const now = camera()
+  // The caret in board units, then on screen under `at`.
+  const y = (px: number) => (now.y + (px - v.top) / now.zoom - at.y) * at.zoom
+  const top = y(caret.top)
+  const bottom = y(caret.bottom)
   const room = editRoom()
-  const top = caret.top - v.top
-  const bottom = caret.bottom - v.top
   const margin = 20
-  let dy = 0
-  if (bottom > room.bottom - margin) dy = room.bottom - margin - bottom
-  else if (top < room.top + margin) dy = room.top + margin - top
+  if (bottom > room.bottom - margin) return bottom - (room.bottom - margin)
+  if (top < room.top + margin) return top - (room.top + margin)
+  return 0
+}
+
+/** Pan just enough to keep the caret between the top of the screen and the keyboard. */
+function revealCaret() {
+  // The edit glide checks again when it lands.
+  if (anim) return
+  const dy = -caretShift(camera())
   if (Math.abs(dy) > 1) {
     cancelCameraAnimation()
     setCamera(panBy(camera(), 0, dy))
@@ -1477,16 +1666,17 @@ export function animateCamera(to: { x: number; y: number; zoom: number }, ms = 2
   cancelAnimationFrame(anim)
   stopMomentum()
   const from = camera()
-  const v = viewport()
-  // Interpolate the viewport centre linearly and zoom geometrically, so a zoom
-  // around the centre doesn't drift and it feels even at every scale.
-  const cf = { x: from.x + v.width / 2 / from.zoom, y: from.y + v.height / 2 / from.zoom }
-  const ct = { x: to.x + v.width / 2 / to.zoom, y: to.y + v.height / 2 / to.zoom }
   const t0 = performance.now()
   const ease = (t: number) => 1 - Math.pow(1 - t, 3)
   const step = (now: number) => {
     const t = Math.min(1, (now - t0) / ms)
     const k = ease(t)
+    // Read every frame: the viewport can change size mid-glide (a phone's keyboard).
+    const v = viewport()
+    // Interpolate the viewport centre linearly and zoom geometrically, so a zoom
+    // around the centre doesn't drift and it feels even at every scale.
+    const cf = { x: from.x + v.width / 2 / from.zoom, y: from.y + v.height / 2 / from.zoom }
+    const ct = { x: to.x + v.width / 2 / to.zoom, y: to.y + v.height / 2 / to.zoom }
     const zoom = from.zoom * Math.pow(to.zoom / from.zoom, k)
     const cx = cf.x + (ct.x - cf.x) * k
     const cy = cf.y + (ct.y - cf.y) * k

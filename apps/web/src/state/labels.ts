@@ -1,4 +1,4 @@
-import { MAX_LABELS, MAX_LABEL_NAME, boardLabels, cardLabels, colorKey, labelToken, memberKey, nameKey, normalizeLabelName, type Card, type Id, type Label, type LabelColor, type Obj } from '@doggynote/core'
+import { MAX_LABELS, MAX_LABEL_NAME, boardLabels, cardLabelIds, labelDefinitions, planLabelCopy, relabel, relabelPatch, type LabelCopyPlan, cardLabels, colorKey, labelToken, memberKey, nameKey, normalizeLabelName, type Card, type Id, type Label, type LabelColor, type Obj } from '@doggynote/core'
 import { canReadBoard } from './access.ts'
 import * as doc from './doc.ts'
 
@@ -67,4 +67,34 @@ export function restoreLabel(boardId: Id, id: string, name: string) {
   if (!writableBoard(boardId) || labelsOn(boardId).some((label) => label.id === id)) return
   const clash = !!findLabel(boardId, name)
   doc.update({ [boardId]: patch({ [nameKey(id)]: clash ? `${name} (restored)`.slice(0, MAX_LABEL_NAME) : name }) })
+}
+
+// ---- labels that travel with copied or moved cards ------------------------------
+
+/**
+ * The plan for cards with `source` labels landing on `target`, and the target
+ * board's new label fields (or null). See planLabelCopy.
+ */
+export function labelPlan(source: readonly Label[], cards: readonly object[], target: Id): { plan: LabelCopyPlan; defs: Record<string, string> | null } {
+  const plan = planLabelCopy(source, cards.flatMap(cardLabelIds), labelsOn(target))
+  return { plan, defs: plan.create.length ? labelDefinitions(plan.create) : null }
+}
+
+/** New objects from another board, their flags mapped onto `target`'s labels. */
+export function carryLabels(objects: Obj[], source: readonly Label[], target: Id): { objects: Obj[]; defs: Record<string, string> | null } {
+  const onTarget = (o: Obj) => o.kind === 'card' && o.boardId === target
+  const { plan, defs } = labelPlan(source, objects.filter(onTarget), target)
+  return { objects: objects.map((o) => (onTarget(o) ? relabel(o, plan) : o)), defs }
+}
+
+/** Patches moving existing cards' flags onto `target`'s labels, plus the board's new labels. */
+export function moveLabels(cards: readonly Card[], source: readonly Label[], target: Id): Record<Id, Partial<Obj>> {
+  const { plan, defs } = labelPlan(source, cards, target)
+  const patches: Record<Id, Partial<Obj>> = {}
+  for (const c of cards) {
+    const flags = relabelPatch(c, plan)
+    if (Object.keys(flags).length) patches[c.id] = patch(flags)
+  }
+  if (defs) patches[target] = patch(defs)
+  return patches
 }

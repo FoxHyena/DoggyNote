@@ -8,6 +8,8 @@ export const COPY = {
   trashShort: 'Bones',
   /** "Buried 3 cards" (toast after moving cards to the trash). */
   buried: 'Buried',
+  /** The action that moves cards to the trash (a button label). */
+  bury: 'Bury',
   unsorted: 'Inbox',
   search: 'Fetch',
   loading: 'Fetching…',
@@ -56,6 +58,11 @@ export const COPY = {
       'A loose sticker! 🦴 This sticker has no pack information. In DoggyNote, choose Add pack and paste a Telegram pack link instead.',
     ],
   },
+  /** Board templates (the board "…" menu). */
+  templates: 'Templates',
+  templatesEmpty: 'No templates yet. Save a board as a template to teach it the trick.',
+  templateSaved: 'Saved as a template. Good trick!',
+  templateRemoved: 'Template removed.',
   /** Placeholder while typing an image's caption. */
   captionPlaceholder: 'Add a caption…',
   /** Placeholder for a colour card's name. */
