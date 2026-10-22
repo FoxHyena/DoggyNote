@@ -294,13 +294,13 @@ Pill-shaped, 12px weight 500, 1px × 8px padding, with each label's own backgrou
 Den Floor fill, 1px border, 8px radius, at least 44px tall, 14px text. Focus is a 2px selection outline with no offset. Errors appear as Collar Coral text beneath, or as a Collar swatch block for form-level errors.
 
 ### Menus and popovers
-Shelf background, 1px border, 10px radius, floating shadow, 4px inner padding. Rows are at least 36px tall, 13px text, 6px radius, with a hover fill. Keyboard hints sit right-aligned in muted 12px. Separators are 1px border lines inset 6px.
+Shelf background, 1px border, 10px radius, floating shadow, 4px inner padding. Rows are at least 36px tall, 13px text, 6px radius, with a hover fill. Keyboard hints sit right-aligned in muted 12px. Right-clicking a card hides the selection bar while its menu offers edit, duplicate, label, comment and bury actions; arrows move through the menu and Escape returns focus to the card. A location ping appears only when another live participant is present. Separators are 1px border lines inset 6px.
 
 ### Dialogs and sheets
 Shelf background, 14px radius, at most 460px wide, over a 45% black backdrop. Headings are 16px. On phones, dialogs and panels become bottom sheets over the scrim token.
 
 ### Selection bar
-A floating shelf pill (12px radius, floating shadow) centred above the selection, popping in over 140ms. It holds the swatches, icon picker, labels and actions. It wraps rather than scrolls on narrow windows, and docks to the bottom edge on phones.
+A floating shelf pill (12px radius, floating shadow) centred above the selection, popping in over 140ms. If it would cover a visible card, it flips below or slides into the nearest clear space. Labels popovers also avoid card content and the bar; crowded boards use the position covering the least content. It holds the swatches, icon picker, labels and actions. It wraps rather than scrolls on narrow windows, and docks to the bottom edge on phones.
 
 ### Stickers
 Image stickers with a white die-cut outline and a hard offset shadow, placed directly on the canvas. They are browsed in a rounded 18px tray with a 4-column grid of 12px-radius tiles.
