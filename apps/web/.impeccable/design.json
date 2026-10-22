@@ -1,0 +1,835 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-22T00:05:21.063Z",
+  "title": "Design System: DoggyNote",
+  "extensions": {
+    "sourceOfTruth": "packages/theme/src/tokens.ts (CSS variables var(--dn-*); dark on :root, light on [data-theme=\"light\"])",
+    "colorMeta": {
+      "den-floor": {
+        "role": "neutral",
+        "displayName": "Den Floor",
+        "theme": "dark",
+        "cssVar": "--dn-bg",
+        "canonical": "#1c1b1a",
+        "oklch": "oklch(22.3% 0.002 67.7)",
+        "tonalRamp": [
+          "oklch(15% 0.002 67.7)",
+          "oklch(26.4% 0.002 67.7)",
+          "oklch(37.9% 0.002 67.7)",
+          "oklch(49.3% 0.002 67.7)",
+          "oklch(60.7% 0.002 67.7)",
+          "oklch(72.1% 0.002 67.7)",
+          "oklch(83.6% 0.002 67.7)",
+          "oklch(95% 0.002 67.7)"
+        ]
+      },
+      "den-shelf": {
+        "role": "neutral",
+        "displayName": "Den Shelf",
+        "theme": "dark",
+        "cssVar": "--dn-panel",
+        "canonical": "#242220",
+        "oklch": "oklch(25.3% 0.005 67.6)",
+        "tonalRamp": [
+          "oklch(15% 0.005 67.6)",
+          "oklch(26.4% 0.005 67.6)",
+          "oklch(37.9% 0.005 67.6)",
+          "oklch(49.3% 0.005 67.6)",
+          "oklch(60.7% 0.005 67.6)",
+          "oklch(72.1% 0.005 67.6)",
+          "oklch(83.6% 0.005 67.6)",
+          "oklch(95% 0.005 67.6)"
+        ]
+      },
+      "den-card": {
+        "role": "neutral",
+        "displayName": "Den Card",
+        "theme": "dark",
+        "cssVar": "--dn-card",
+        "canonical": "#2c2a27",
+        "oklch": "oklch(28.6% 0.006 78.2)",
+        "tonalRamp": [
+          "oklch(15% 0.006 78.2)",
+          "oklch(26.4% 0.006 78.2)",
+          "oklch(37.9% 0.006 78.2)",
+          "oklch(49.3% 0.006 78.2)",
+          "oklch(60.7% 0.006 78.2)",
+          "oklch(72.1% 0.006 78.2)",
+          "oklch(83.6% 0.006 78.2)",
+          "oklch(95% 0.006 78.2)"
+        ]
+      },
+      "den-card-hover": {
+        "role": "neutral",
+        "displayName": "Den Card Hover",
+        "theme": "dark",
+        "cssVar": "--dn-card-hover",
+        "canonical": "#34312d",
+        "oklch": "oklch(31.5% 0.008 75.3)",
+        "tonalRamp": [
+          "oklch(15% 0.008 75.3)",
+          "oklch(26.4% 0.008 75.3)",
+          "oklch(37.9% 0.008 75.3)",
+          "oklch(49.3% 0.008 75.3)",
+          "oklch(60.7% 0.008 75.3)",
+          "oklch(72.1% 0.008 75.3)",
+          "oklch(83.6% 0.008 75.3)",
+          "oklch(95% 0.008 75.3)"
+        ]
+      },
+      "den-border": {
+        "role": "neutral",
+        "displayName": "Den Border",
+        "theme": "dark",
+        "cssVar": "--dn-border",
+        "canonical": "#3d3934",
+        "oklch": "oklch(34.7% 0.01 73.6)",
+        "tonalRamp": [
+          "oklch(15% 0.01 73.6)",
+          "oklch(26.4% 0.01 73.6)",
+          "oklch(37.9% 0.01 73.6)",
+          "oklch(49.3% 0.01 73.6)",
+          "oklch(60.7% 0.01 73.6)",
+          "oklch(72.1% 0.01 73.6)",
+          "oklch(83.6% 0.01 73.6)",
+          "oklch(95% 0.01 73.6)"
+        ]
+      },
+      "cream-fur": {
+        "role": "neutral",
+        "displayName": "Cream Fur",
+        "theme": "dark",
+        "cssVar": "--dn-text",
+        "canonical": "#ece7e1",
+        "oklch": "oklch(93% 0.01 72.7)",
+        "tonalRamp": [
+          "oklch(15% 0.01 72.7)",
+          "oklch(26.4% 0.01 72.7)",
+          "oklch(37.9% 0.01 72.7)",
+          "oklch(49.3% 0.01 72.7)",
+          "oklch(60.7% 0.01 72.7)",
+          "oklch(72.1% 0.01 72.7)",
+          "oklch(83.6% 0.01 72.7)",
+          "oklch(95% 0.01 72.7)"
+        ]
+      },
+      "muzzle-grey": {
+        "role": "neutral",
+        "displayName": "Muzzle Grey",
+        "theme": "dark",
+        "cssVar": "--dn-text-muted",
+        "canonical": "#a69d93",
+        "oklch": "oklch(70.1% 0.018 70.4)",
+        "tonalRamp": [
+          "oklch(15% 0.018 70.4)",
+          "oklch(26.4% 0.018 70.4)",
+          "oklch(37.9% 0.018 70.4)",
+          "oklch(49.3% 0.018 70.4)",
+          "oklch(60.7% 0.018 70.4)",
+          "oklch(72.1% 0.018 70.4)",
+          "oklch(83.6% 0.018 70.4)",
+          "oklch(95% 0.018 70.4)"
+        ]
+      },
+      "retriever-gold": {
+        "role": "primary",
+        "displayName": "Retriever Gold",
+        "theme": "dark",
+        "cssVar": "--dn-accent",
+        "canonical": "#e8a849",
+        "oklch": "oklch(77.5% 0.133 74.1)",
+        "tonalRamp": [
+          "oklch(15% 0.133 74.1)",
+          "oklch(26.4% 0.133 74.1)",
+          "oklch(37.9% 0.133 74.1)",
+          "oklch(49.3% 0.133 74.1)",
+          "oklch(60.7% 0.133 74.1)",
+          "oklch(72.1% 0.133 74.1)",
+          "oklch(83.6% 0.133 74.1)",
+          "oklch(95% 0.133 74.1)"
+        ]
+      },
+      "collar-coral": {
+        "role": "neutral",
+        "displayName": "Collar Coral",
+        "theme": "dark",
+        "cssVar": "--dn-error-text",
+        "canonical": "#f08a7b",
+        "oklch": "oklch(73.9% 0.127 29.3)",
+        "tonalRamp": [
+          "oklch(15% 0.127 29.3)",
+          "oklch(26.4% 0.127 29.3)",
+          "oklch(37.9% 0.127 29.3)",
+          "oklch(49.3% 0.127 29.3)",
+          "oklch(60.7% 0.127 29.3)",
+          "oklch(72.1% 0.127 29.3)",
+          "oklch(83.6% 0.127 29.3)",
+          "oklch(95% 0.127 29.3)"
+        ]
+      },
+      "oat-biscuit": {
+        "role": "neutral",
+        "displayName": "Oat Biscuit",
+        "theme": "light",
+        "cssVar": "--dn-bg",
+        "canonical": "#f3efe9",
+        "oklch": "oklch(95.4% 0.009 78.3)",
+        "tonalRamp": [
+          "oklch(15% 0.009 78.3)",
+          "oklch(26.4% 0.009 78.3)",
+          "oklch(37.9% 0.009 78.3)",
+          "oklch(49.3% 0.009 78.3)",
+          "oklch(60.7% 0.009 78.3)",
+          "oklch(72.1% 0.009 78.3)",
+          "oklch(83.6% 0.009 78.3)",
+          "oklch(95% 0.009 78.3)"
+        ]
+      },
+      "milk-bowl": {
+        "role": "neutral",
+        "displayName": "Milk Bowl",
+        "theme": "light",
+        "cssVar": "--dn-panel",
+        "canonical": "#fbf9f6",
+        "oklch": "oklch(98.3% 0.005 78.3)",
+        "tonalRamp": [
+          "oklch(15% 0.005 78.3)",
+          "oklch(26.4% 0.005 78.3)",
+          "oklch(37.9% 0.005 78.3)",
+          "oklch(49.3% 0.005 78.3)",
+          "oklch(60.7% 0.005 78.3)",
+          "oklch(72.1% 0.005 78.3)",
+          "oklch(83.6% 0.005 78.3)",
+          "oklch(95% 0.005 78.3)"
+        ]
+      },
+      "paper-white": {
+        "role": "neutral",
+        "displayName": "Paper White",
+        "theme": "light",
+        "cssVar": "--dn-card",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100% 0 89.9)",
+        "tonalRamp": [
+          "oklch(15% 0 89.9)",
+          "oklch(26.4% 0 89.9)",
+          "oklch(37.9% 0 89.9)",
+          "oklch(49.3% 0 89.9)",
+          "oklch(60.7% 0 89.9)",
+          "oklch(72.1% 0 89.9)",
+          "oklch(83.6% 0 89.9)",
+          "oklch(95% 0 89.9)"
+        ]
+      },
+      "oat-hover": {
+        "role": "neutral",
+        "displayName": "Oat Hover",
+        "theme": "light",
+        "cssVar": "--dn-card-hover",
+        "canonical": "#f7f3ee",
+        "oklch": "oklch(96.6% 0.008 73.7)",
+        "tonalRamp": [
+          "oklch(15% 0.008 73.7)",
+          "oklch(26.4% 0.008 73.7)",
+          "oklch(37.9% 0.008 73.7)",
+          "oklch(49.3% 0.008 73.7)",
+          "oklch(60.7% 0.008 73.7)",
+          "oklch(72.1% 0.008 73.7)",
+          "oklch(83.6% 0.008 73.7)",
+          "oklch(95% 0.008 73.7)"
+        ]
+      },
+      "oat-border": {
+        "role": "neutral",
+        "displayName": "Oat Border",
+        "theme": "light",
+        "cssVar": "--dn-border",
+        "canonical": "#ddd5ca",
+        "oklch": "oklch(87.6% 0.017 76.1)",
+        "tonalRamp": [
+          "oklch(15% 0.017 76.1)",
+          "oklch(26.4% 0.017 76.1)",
+          "oklch(37.9% 0.017 76.1)",
+          "oklch(49.3% 0.017 76.1)",
+          "oklch(60.7% 0.017 76.1)",
+          "oklch(72.1% 0.017 76.1)",
+          "oklch(83.6% 0.017 76.1)",
+          "oklch(95% 0.017 76.1)"
+        ]
+      },
+      "oat-dot": {
+        "role": "neutral",
+        "displayName": "Oat Dot",
+        "theme": "light",
+        "cssVar": "--dn-grid-dot",
+        "canonical": "#d3cabe",
+        "oklch": "oklch(84.3% 0.019 75.3)",
+        "tonalRamp": [
+          "oklch(15% 0.019 75.3)",
+          "oklch(26.4% 0.019 75.3)",
+          "oklch(37.9% 0.019 75.3)",
+          "oklch(49.3% 0.019 75.3)",
+          "oklch(60.7% 0.019 75.3)",
+          "oklch(72.1% 0.019 75.3)",
+          "oklch(83.6% 0.019 75.3)",
+          "oklch(95% 0.019 75.3)"
+        ]
+      },
+      "wet-nose-brown": {
+        "role": "neutral",
+        "displayName": "Wet Nose Brown",
+        "theme": "light",
+        "cssVar": "--dn-text",
+        "canonical": "#2a2521",
+        "oklch": "oklch(26.9% 0.01 61)",
+        "tonalRamp": [
+          "oklch(15% 0.01 61)",
+          "oklch(26.4% 0.01 61)",
+          "oklch(37.9% 0.01 61)",
+          "oklch(49.3% 0.01 61)",
+          "oklch(60.7% 0.01 61)",
+          "oklch(72.1% 0.01 61)",
+          "oklch(83.6% 0.01 61)",
+          "oklch(95% 0.01 61)"
+        ]
+      },
+      "paw-pad-brown": {
+        "role": "neutral",
+        "displayName": "Paw Pad Brown",
+        "theme": "light",
+        "cssVar": "--dn-text-muted",
+        "canonical": "#6b6158",
+        "oklch": "oklch(49.9% 0.019 64.4)",
+        "tonalRamp": [
+          "oklch(15% 0.019 64.4)",
+          "oklch(26.4% 0.019 64.4)",
+          "oklch(37.9% 0.019 64.4)",
+          "oklch(49.3% 0.019 64.4)",
+          "oklch(60.7% 0.019 64.4)",
+          "oklch(72.1% 0.019 64.4)",
+          "oklch(83.6% 0.019 64.4)",
+          "oklch(95% 0.019 64.4)"
+        ]
+      },
+      "toffee-retriever": {
+        "role": "primary",
+        "displayName": "Toffee Retriever",
+        "theme": "light",
+        "cssVar": "--dn-accent",
+        "canonical": "#9a5f0c",
+        "oklch": "oklch(53.9% 0.115 67)",
+        "tonalRamp": [
+          "oklch(15% 0.115 67)",
+          "oklch(26.4% 0.115 67)",
+          "oklch(37.9% 0.115 67)",
+          "oklch(49.3% 0.115 67)",
+          "oklch(60.7% 0.115 67)",
+          "oklch(72.1% 0.115 67)",
+          "oklch(83.6% 0.115 67)",
+          "oklch(95% 0.115 67)"
+        ]
+      },
+      "toffee-glow": {
+        "role": "primary",
+        "displayName": "Toffee Glow",
+        "theme": "light",
+        "cssVar": "--dn-selection",
+        "canonical": "#b06c10",
+        "oklch": "oklch(59.2% 0.127 66)",
+        "tonalRamp": [
+          "oklch(15% 0.127 66)",
+          "oklch(26.4% 0.127 66)",
+          "oklch(37.9% 0.127 66)",
+          "oklch(49.3% 0.127 66)",
+          "oklch(60.7% 0.127 66)",
+          "oklch(72.1% 0.127 66)",
+          "oklch(83.6% 0.127 66)",
+          "oklch(95% 0.127 66)"
+        ]
+      },
+      "scolded-red": {
+        "role": "neutral",
+        "displayName": "Scolded Red",
+        "theme": "light",
+        "cssVar": "--dn-error-text",
+        "canonical": "#a8352a",
+        "oklch": "oklch(49.8% 0.153 29.1)",
+        "tonalRamp": [
+          "oklch(15% 0.153 29.1)",
+          "oklch(26.4% 0.153 29.1)",
+          "oklch(37.9% 0.153 29.1)",
+          "oklch(49.3% 0.153 29.1)",
+          "oklch(60.7% 0.153 29.1)",
+          "oklch(72.1% 0.153 29.1)",
+          "oklch(83.6% 0.153 29.1)",
+          "oklch(95% 0.153 29.1)"
+        ]
+      },
+      "card-gold-den": {
+        "role": "tertiary",
+        "displayName": "Gold (den)",
+        "theme": "dark",
+        "cssVar": "--dn-card-gold-bg",
+        "canonical": "#dcbd62",
+        "oklch": "oklch(80.7% 0.116 90.9)",
+        "tonalRamp": [
+          "oklch(15% 0.116 90.9)",
+          "oklch(26.4% 0.116 90.9)",
+          "oklch(37.9% 0.116 90.9)",
+          "oklch(49.3% 0.116 90.9)",
+          "oklch(60.7% 0.116 90.9)",
+          "oklch(72.1% 0.116 90.9)",
+          "oklch(83.6% 0.116 90.9)",
+          "oklch(95% 0.116 90.9)"
+        ]
+      },
+      "card-collar-den": {
+        "role": "tertiary",
+        "displayName": "Collar (den)",
+        "theme": "dark",
+        "cssVar": "--dn-card-collar-bg",
+        "canonical": "#d9765f",
+        "oklch": "oklch(67.2% 0.129 34.1)",
+        "tonalRamp": [
+          "oklch(15% 0.129 34.1)",
+          "oklch(26.4% 0.129 34.1)",
+          "oklch(37.9% 0.129 34.1)",
+          "oklch(49.3% 0.129 34.1)",
+          "oklch(60.7% 0.129 34.1)",
+          "oklch(72.1% 0.129 34.1)",
+          "oklch(83.6% 0.129 34.1)",
+          "oklch(95% 0.129 34.1)"
+        ]
+      },
+      "card-ball-den": {
+        "role": "tertiary",
+        "displayName": "Ball (den)",
+        "theme": "dark",
+        "cssVar": "--dn-card-ball-bg",
+        "canonical": "#86b89f",
+        "oklch": "oklch(74% 0.064 162.6)",
+        "tonalRamp": [
+          "oklch(15% 0.064 162.6)",
+          "oklch(26.4% 0.064 162.6)",
+          "oklch(37.9% 0.064 162.6)",
+          "oklch(49.3% 0.064 162.6)",
+          "oklch(60.7% 0.064 162.6)",
+          "oklch(72.1% 0.064 162.6)",
+          "oklch(83.6% 0.064 162.6)",
+          "oklch(95% 0.064 162.6)"
+        ]
+      },
+      "card-sky-den": {
+        "role": "tertiary",
+        "displayName": "Sky (den)",
+        "theme": "dark",
+        "cssVar": "--dn-card-sky-bg",
+        "canonical": "#7fa7d1",
+        "oklch": "oklch(71.5% 0.076 250.1)",
+        "tonalRamp": [
+          "oklch(15% 0.076 250.1)",
+          "oklch(26.4% 0.076 250.1)",
+          "oklch(37.9% 0.076 250.1)",
+          "oklch(49.3% 0.076 250.1)",
+          "oklch(60.7% 0.076 250.1)",
+          "oklch(72.1% 0.076 250.1)",
+          "oklch(83.6% 0.076 250.1)",
+          "oklch(95% 0.076 250.1)"
+        ]
+      },
+      "card-lilac-den": {
+        "role": "tertiary",
+        "displayName": "Lilac (den)",
+        "theme": "dark",
+        "cssVar": "--dn-card-lilac-bg",
+        "canonical": "#a99bd6",
+        "oklch": "oklch(72.3% 0.086 295.1)",
+        "tonalRamp": [
+          "oklch(15% 0.086 295.1)",
+          "oklch(26.4% 0.086 295.1)",
+          "oklch(37.9% 0.086 295.1)",
+          "oklch(49.3% 0.086 295.1)",
+          "oklch(60.7% 0.086 295.1)",
+          "oklch(72.1% 0.086 295.1)",
+          "oklch(83.6% 0.086 295.1)",
+          "oklch(95% 0.086 295.1)"
+        ]
+      },
+      "card-peach-den": {
+        "role": "tertiary",
+        "displayName": "Peach (den)",
+        "theme": "dark",
+        "cssVar": "--dn-card-peach-bg",
+        "canonical": "#e6a87c",
+        "oklch": "oklch(78% 0.094 56.2)",
+        "tonalRamp": [
+          "oklch(15% 0.094 56.2)",
+          "oklch(26.4% 0.094 56.2)",
+          "oklch(37.9% 0.094 56.2)",
+          "oklch(49.3% 0.094 56.2)",
+          "oklch(60.7% 0.094 56.2)",
+          "oklch(72.1% 0.094 56.2)",
+          "oklch(83.6% 0.094 56.2)",
+          "oklch(95% 0.094 56.2)"
+        ]
+      },
+      "card-gold-day": {
+        "role": "tertiary",
+        "displayName": "Gold (day)",
+        "theme": "light",
+        "cssVar": "--dn-card-gold-bg",
+        "canonical": "#f4dc8f",
+        "oklch": "oklch(89.7% 0.1 92.8)",
+        "tonalRamp": [
+          "oklch(15% 0.1 92.8)",
+          "oklch(26.4% 0.1 92.8)",
+          "oklch(37.9% 0.1 92.8)",
+          "oklch(49.3% 0.1 92.8)",
+          "oklch(60.7% 0.1 92.8)",
+          "oklch(72.1% 0.1 92.8)",
+          "oklch(83.6% 0.1 92.8)",
+          "oklch(95% 0.1 92.8)"
+        ]
+      },
+      "card-collar-day": {
+        "role": "tertiary",
+        "displayName": "Collar (day)",
+        "theme": "light",
+        "cssVar": "--dn-card-collar-bg",
+        "canonical": "#f2b2a2",
+        "oklch": "oklch(81.9% 0.079 34.5)",
+        "tonalRamp": [
+          "oklch(15% 0.079 34.5)",
+          "oklch(26.4% 0.079 34.5)",
+          "oklch(37.9% 0.079 34.5)",
+          "oklch(49.3% 0.079 34.5)",
+          "oklch(60.7% 0.079 34.5)",
+          "oklch(72.1% 0.079 34.5)",
+          "oklch(83.6% 0.079 34.5)",
+          "oklch(95% 0.079 34.5)"
+        ]
+      },
+      "card-ball-day": {
+        "role": "tertiary",
+        "displayName": "Ball (day)",
+        "theme": "light",
+        "cssVar": "--dn-card-ball-bg",
+        "canonical": "#b9dcc9",
+        "oklch": "oklch(86.4% 0.045 161.6)",
+        "tonalRamp": [
+          "oklch(15% 0.045 161.6)",
+          "oklch(26.4% 0.045 161.6)",
+          "oklch(37.9% 0.045 161.6)",
+          "oklch(49.3% 0.045 161.6)",
+          "oklch(60.7% 0.045 161.6)",
+          "oklch(72.1% 0.045 161.6)",
+          "oklch(83.6% 0.045 161.6)",
+          "oklch(95% 0.045 161.6)"
+        ]
+      },
+      "card-sky-day": {
+        "role": "tertiary",
+        "displayName": "Sky (day)",
+        "theme": "light",
+        "cssVar": "--dn-card-sky-bg",
+        "canonical": "#bcd4ee",
+        "oklch": "oklch(86% 0.045 250.4)",
+        "tonalRamp": [
+          "oklch(15% 0.045 250.4)",
+          "oklch(26.4% 0.045 250.4)",
+          "oklch(37.9% 0.045 250.4)",
+          "oklch(49.3% 0.045 250.4)",
+          "oklch(60.7% 0.045 250.4)",
+          "oklch(72.1% 0.045 250.4)",
+          "oklch(83.6% 0.045 250.4)",
+          "oklch(95% 0.045 250.4)"
+        ]
+      },
+      "card-lilac-day": {
+        "role": "tertiary",
+        "displayName": "Lilac (day)",
+        "theme": "light",
+        "cssVar": "--dn-card-lilac-bg",
+        "canonical": "#d6cdf0",
+        "oklch": "oklch(86.7% 0.049 297.1)",
+        "tonalRamp": [
+          "oklch(15% 0.049 297.1)",
+          "oklch(26.4% 0.049 297.1)",
+          "oklch(37.9% 0.049 297.1)",
+          "oklch(49.3% 0.049 297.1)",
+          "oklch(60.7% 0.049 297.1)",
+          "oklch(72.1% 0.049 297.1)",
+          "oklch(83.6% 0.049 297.1)",
+          "oklch(95% 0.049 297.1)"
+        ]
+      },
+      "card-peach-day": {
+        "role": "tertiary",
+        "displayName": "Peach (day)",
+        "theme": "light",
+        "cssVar": "--dn-card-peach-bg",
+        "canonical": "#f6cfb1",
+        "oklch": "oklch(88% 0.06 59.5)",
+        "tonalRamp": [
+          "oklch(15% 0.06 59.5)",
+          "oklch(26.4% 0.06 59.5)",
+          "oklch(37.9% 0.06 59.5)",
+          "oklch(49.3% 0.06 59.5)",
+          "oklch(60.7% 0.06 59.5)",
+          "oklch(72.1% 0.06 59.5)",
+          "oklch(83.6% 0.06 59.5)",
+          "oklch(95% 0.06 59.5)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Entry screens only (login card heading)."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Dialog headings and the empty-board title."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "App default and note text; note headings scale in em (1.35 / 1.18 / 1.05)."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Menu items, form labels, panel text."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Label chips, icon-button labels, sync status, shortcut hints."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "Toolbar labels under icons, tags, sticker footer."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Code in notes (0.92em) and diagnostics."
+      }
+    },
+    "shadows": [
+      {
+        "name": "paper-edge",
+        "value": "0 1px 2px rgb(60 40 20 / 0.12), 0 0 0 1px rgb(60 40 20 / 0.06)",
+        "purpose": "Resting cards, light theme only."
+      },
+      {
+        "name": "floating",
+        "value": "0 8px 24px rgb(0 0 0 / 0.25)",
+        "purpose": "Selection bar and menus (menus use 0 8px 28px)."
+      },
+      {
+        "name": "lifted",
+        "value": "0 14px 32px rgb(0 0 0 / 0.35)",
+        "purpose": "A card while dragging."
+      },
+      {
+        "name": "modal",
+        "value": "0 24px 60px rgb(0 0 0 / 0.35)",
+        "purpose": "Fetch palette; the login card uses 0 20px 50px rgb(0 0 0 / 0.25)."
+      },
+      {
+        "name": "tray",
+        "value": "0 12px 36px color-mix(in srgb, var(--dn-text) 12%, transparent)",
+        "purpose": "Sticker tray."
+      },
+      {
+        "name": "swatch-ring",
+        "value": "0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-selection)",
+        "purpose": "Selected colour swatch: gap ring, not a shadow."
+      },
+      {
+        "name": "sticker",
+        "value": "var(--dn-sticker-shadow)",
+        "purpose": "Hard offset shadow under placed stickers."
+      }
+    ],
+    "motion": [
+      {
+        "name": "hover",
+        "value": "120ms ease",
+        "purpose": "Hover background and colour on buttons, tools, menu rows."
+      },
+      {
+        "name": "pop-in",
+        "value": "140ms ease-out",
+        "purpose": "Selection bar, fetch palette, menus appearing."
+      },
+      {
+        "name": "toast",
+        "value": "160ms ease-out",
+        "purpose": "Toast slide-in."
+      },
+      {
+        "name": "snap",
+        "value": "70ms ease-out",
+        "purpose": "Snap-to-grid glide while dragging or resizing."
+      },
+      {
+        "name": "sheet",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Phone sheets, docked selection bar and phone toast (200–240ms): fast settle, no overshoot."
+      },
+      {
+        "name": "dog-moment",
+        "value": "cubic-bezier(0.3, 1.6, 0.6, 1)",
+        "purpose": "Small overshoot reserved for playful pickups: board tile hover, phone dock add button."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "(max-width: 599px), (pointer: coarse) and (max-height: 500px)"
+      },
+      {
+        "name": "touch",
+        "value": "(pointer: coarse) / html[data-input=\"touch\"]"
+      },
+      {
+        "name": "reduced-motion",
+        "value": "(prefers-reduced-motion: reduce)"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one gold action per view: save, share, sign in.",
+      "html": "<button class=\"ds-btn-primary\">Share board</button>",
+      "css": ".ds-btn-primary { font: 600 14px/1.45 -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; padding: 9px 14px; border: 0; border-radius: 8px; background: var(--dn-accent); color: var(--dn-accent-text); cursor: pointer; transition: filter 120ms; } .ds-btn-primary:hover { filter: brightness(1.06); } .ds-btn-primary:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 2px; } .ds-btn-primary:disabled { background: var(--dn-card-hover); color: var(--dn-text-muted); box-shadow: inset 0 0 0 1px var(--dn-border); cursor: default; }"
+    },
+    {
+      "name": "Icon Button",
+      "kind": "button",
+      "refersTo": "icon-button",
+      "description": "Ghost control in the top bar and panels; muted at rest, filled on hover, gold when on.",
+      "html": "<button class=\"ds-icon-btn\" aria-label=\"Comments\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/></svg><span class=\"ds-icon-btn-label\">Comments</span></button>",
+      "css": ".ds-icon-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 32px; min-width: 32px; padding: 0 8px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--dn-text-muted); font: 14px/1.45 -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; cursor: pointer; transition: background 120ms, color 120ms; } .ds-icon-btn:hover { background: var(--dn-card-hover); color: var(--dn-text); } .ds-icon-btn:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 2px; } .ds-icon-btn-label { font-size: 12px; }"
+    },
+    {
+      "name": "Toolbar Tool",
+      "kind": "nav",
+      "refersTo": "tool",
+      "description": "A 48px tile in the left toolbar: icon over an 11px label; gold icon when active.",
+      "html": "<div class=\"ds-toolbar\"><button class=\"ds-tool ds-tool-active\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><path d=\"M14 2v6h6\"/></svg>Note</button><button class=\"ds-tool\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 11l3 3L22 4\"/><path d=\"M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11\"/></svg>To-do</button></div>",
+      "css": ".ds-toolbar { display: flex; flex-direction: column; gap: 2px; width: 76px; padding: 8px 6px; background: var(--dn-panel); border-right: 1px solid var(--dn-border); } .ds-tool { min-height: 48px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 2px 6px; border: 0; border-radius: 10px; background: transparent; color: var(--dn-text-muted); font: 11px/1.15 -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; cursor: pointer; transition: background 120ms, color 120ms, transform 120ms; } .ds-tool:hover { background: var(--dn-card-hover); color: var(--dn-text); } .ds-tool:active { transform: scale(0.95); } .ds-tool:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 2px; } .ds-tool-active { background: var(--dn-card-hover); color: var(--dn-accent); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Form field on entry screens and dialogs: floor-coloured well, selection-coloured focus.",
+      "html": "<label class=\"ds-field\">Username<input class=\"ds-input\" placeholder=\"rex\" /></label>",
+      "css": ".ds-field { display: grid; gap: 4px; font: 13px/1.45 -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; color: var(--dn-text-muted); } .ds-input { width: 100%; min-height: 44px; padding: 9px 12px; border: 1px solid var(--dn-border); border-radius: 8px; background: var(--dn-bg); color: var(--dn-text); font: 14px/1.45 -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; } .ds-input:focus { outline: 2px solid var(--dn-selection); outline-offset: 0; }"
+    },
+    {
+      "name": "Note Card",
+      "kind": "card",
+      "refersTo": "card-note",
+      "description": "A note on the canvas: flat, 6px corners, swatch-coloured when chosen, gold outline when selected.",
+      "html": "<div class=\"ds-card ds-card-selected\"><strong>Walk route</strong><p>Park loop, then the river path.</p><span class=\"ds-chip\">errands</span></div><div class=\"ds-card ds-card-gold\"><strong>Treats to buy</strong><p>Peanut butter, chews.</p></div>",
+      "css": ".ds-card { display: inline-block; vertical-align: top; width: 200px; margin: 8px; padding: 10px 12px; border-radius: 6px; background: var(--dn-card); color: var(--dn-text); font: 14px/1.45 -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; } .ds-card p { margin: 4px 0 8px; } .ds-card-selected { outline: 2px solid var(--dn-selection); outline-offset: 2px; } .ds-card-gold { background: var(--dn-card-gold-bg); color: var(--dn-card-gold-text); } .ds-chip { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--dn-card-sky-bg); color: var(--dn-card-sky-text); font-size: 12px; font-weight: 500; line-height: 18px; }"
+    },
+    {
+      "name": "Board Tile",
+      "kind": "custom",
+      "refersTo": "board-tile",
+      "description": "A nested board on the canvas; the tile tilts with a small overshoot on hover (a dog moment).",
+      "html": "<button class=\"ds-board\"><span class=\"ds-board-tile\"><svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><ellipse cx=\"12\" cy=\"15.5\" rx=\"4.4\" ry=\"3.8\"/><circle cx=\"6.3\" cy=\"10\" r=\"2.1\"/><circle cx=\"9.6\" cy=\"6.4\" r=\"2.1\"/><circle cx=\"14.4\" cy=\"6.4\" r=\"2.1\"/><circle cx=\"17.7\" cy=\"10\" r=\"2.1\"/></svg></span><span class=\"ds-board-title\">Trip ideas</span></button>",
+      "css": ".ds-board { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border: 0; border-radius: 12px; background: transparent; color: var(--dn-text); font: 600 14px/1.45 -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; cursor: pointer; } .ds-board-tile { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 14px; background: var(--dn-card-peach-bg); color: var(--dn-card-peach-text); transition: transform 140ms cubic-bezier(0.3, 1.6, 0.6, 1); } .ds-board:hover .ds-board-tile { transform: translateY(-2px) rotate(-3deg); } .ds-board:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 2px; }"
+    },
+    {
+      "name": "Menu",
+      "kind": "custom",
+      "refersTo": "menu",
+      "description": "Floating shelf menu with 36px rows and right-aligned shortcut hints.",
+      "html": "<div class=\"ds-menu\" role=\"menu\"><button class=\"ds-menu-item\" role=\"menuitem\">Zoom to fit<kbd>⇧1</kbd></button><button class=\"ds-menu-item\" role=\"menuitem\">Look here<kbd>L</kbd></button><div class=\"ds-menu-sep\"></div><button class=\"ds-menu-item\" role=\"menuitem\">Buried bones</button></div>",
+      "css": ".ds-menu { width: 200px; padding: 4px; background: var(--dn-panel); border: 1px solid var(--dn-border); border-radius: 10px; box-shadow: 0 8px 28px rgb(0 0 0 / 0.25); } .ds-menu-item { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 36px; padding: 8px 12px; border: 0; border-radius: 6px; background: transparent; color: var(--dn-text); font: 13px/20px -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; text-align: left; cursor: pointer; } .ds-menu-item:hover { background: var(--dn-card-hover); } .ds-menu-item:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: -2px; } .ds-menu-item kbd { margin-left: auto; color: var(--dn-text-muted); font: inherit; font-size: 12px; } .ds-menu-sep { height: 1px; margin: 4px 6px; background: var(--dn-border); }"
+    },
+    {
+      "name": "Selection Bar",
+      "kind": "custom",
+      "refersTo": "selection-bar",
+      "description": "Floats above the selection with colour swatches and actions; pops in over 140ms.",
+      "html": "<div class=\"ds-selbar\"><span class=\"ds-swatch\" style=\"background: var(--dn-card-none-bg)\"></span><span class=\"ds-swatch ds-swatch-on\" style=\"background: var(--dn-card-gold-bg)\"></span><span class=\"ds-swatch\" style=\"background: var(--dn-card-ball-bg)\"></span><span class=\"ds-swatch\" style=\"background: var(--dn-card-sky-bg)\"></span><span class=\"ds-selbar-sep\"></span><button class=\"ds-selbar-btn\">Labels</button><button class=\"ds-selbar-btn\">Bury</button></div>",
+      "css": ".ds-selbar { display: inline-flex; align-items: center; gap: 8px; padding: 8px; background: var(--dn-panel); border: 1px solid var(--dn-border); border-radius: 12px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.25); font: 13px/1.45 -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; } .ds-swatch { width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-border); } .ds-swatch-on { box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-selection); } .ds-selbar-sep { width: 1px; height: 20px; background: var(--dn-border); } .ds-selbar-btn { min-height: 32px; padding: 0 8px; border: 0; border-radius: 8px; background: transparent; color: var(--dn-text-muted); font: inherit; cursor: pointer; } .ds-selbar-btn:hover { background: var(--dn-card-hover); color: var(--dn-text); }"
+    },
+    {
+      "name": "Toast",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "Bottom-centre confirmation in dog copy, with an optional action.",
+      "html": "<div class=\"ds-toast\">Buried 3 cards<button class=\"ds-toast-action\">Undo</button></div>",
+      "css": ".ds-toast { display: inline-flex; align-items: center; gap: 12px; padding: 10px 16px; border: 1px solid var(--dn-border); border-radius: 10px; background: var(--dn-panel); color: var(--dn-text); font: 14px/1.45 -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; } .ds-toast-action { padding: 4px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--dn-accent); font: 600 13px/1.45 -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; cursor: pointer; } .ds-toast-action:hover { background: var(--dn-card-hover); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Warm Den",
+    "overview": "Creative North Star: \"The Warm Den\"\n\nDoggyNote is a lamp-lit room where your things are spread out on the floor. The canvas is the floor: warm, dark, dotted, and quiet. The cards are what you brought in. The chrome around them is furniture you stop noticing, set in the same warm browns as the room. One golden light, Retriever Gold, marks where your attention is: the selected card, the active tool, the one button that moves you forward.\n\nThe den is dark by default and has a daytime twin in oat and milk tones. Both are tuned together. Every colour has a value in each theme, and contrast is enforced by test, not taste. Density is calm rather than sparse. Controls are compact (13px labels, 32px icon buttons), so the board gets the space.\n\nPersonality lives in small, specific dog moments rather than decoration. A board tile tilts when you hover it. The login logo leans at an angle. A dragged tool's ghost is slightly askew. Stickers wear a white die-cut border. The pan cursor is a paw. Everything else is plain. The den rejects the cool-grey, blue-button sterility of corporate SaaS, and it rejects frosted glass, neon glows and purple-blue gradients.\n\n",
+    "keyCharacteristics": [
+      "Warm brown neutrals throughout; no cool greys anywhere.",
+      "One amber accent per theme, used sparingly for selection, focus and the primary action.",
+      "Dark-first, with a fully tuned light twin.",
+      "Flat canvas; only floating tools and lifted cards cast shadows.",
+      "System font, small sizes, firm weights (600 for emphasis).",
+      "Dog personality comes from motion, tilt and copy, never from ornament."
+    ],
+    "rules": [
+      {
+        "name": "The One Lamp Rule",
+        "body": "Retriever Gold is the only accent. It appears where attention belongs (selection, focus, the single primary action, the active tool) and nowhere decorative. If a screen has two gold buttons, one of them is wrong.",
+        "section": "colors"
+      },
+      {
+        "name": "The Twin Rule",
+        "body": "No colour exists in one theme only. Every new token gets a dark and a light value in `tokens.ts` and passes `theme.test.ts`: 4.5:1 for text, 3:1 for the selection outline.",
+        "section": "colors"
+      },
+      {
+        "name": "The No Hex Rule",
+        "body": "Components never contain a hex value. They read `var(--dn-*)`. Canvas drawing code reads `surfaces[theme()]`.",
+        "section": "colors"
+      },
+      {
+        "name": "The 600 Rule",
+        "body": "Emphasis is weight 600: the current breadcrumb, column titles, board titles, primary buttons. Reach for 700 only for the entry headline. Never use colour alone for emphasis.",
+        "section": "typography"
+      },
+      {
+        "name": "The Measured Card Rule",
+        "body": "Never change font size or padding inside a card for touch or any other mode. Card heights are measured and synced, so a size change on one device moves cards for everyone. Enlarge the targets outside the card instead.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Floor Rule",
+        "body": "Content on the canvas never casts a shadow at rest. Shadows mean \"this is floating above the board\" or \"you're holding this\".",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do take every colour from `var(--dn-*)`, and add new ones to `tokens.ts` with both a dark and a light value.",
+      "Do keep Retriever Gold for selection, focus, the active tool and a single primary action per view.",
+      "Do use weight 600 for emphasis and keep app chrome at 11–14px.",
+      "Do keep the canvas flat. Give shadows only to floating UI and the card being dragged.",
+      "Do put dog personality in copy (`COPY` in `packages/theme/src/copy.ts`), small tilts, the paw cursor and stickers.",
+      "Do gate hover styles behind `html[data-input=\"mouse\"]`, and give touch targets 44px hit areas outside the card.",
+      "Do use calm ease-out at 120–200ms for UI, and save overshoot for dog moments."
+    ],
+    "donts": [
+      "Don't hard-code hex values in components, or add a colour that exists in one theme only.",
+      "Don't introduce cool greys, blue primary buttons or other corporate SaaS sterility.",
+      "Don't use frosted glass, neon glows, or purple-blue gradients.",
+      "Don't add a second accent colour or put gold on decoration.",
+      "Don't put springy overshoot on functional transitions such as sheets, menus, toasts or the docked selection bar. Those use `cubic-bezier(0.22, 1, 0.36, 1)`.",
+      "Don't change text size or padding inside cards for any input mode. Heights are measured and synced.",
+      "Don't give cards a per-card `transform`, or shadows at rest."
+    ]
+  }
+}
