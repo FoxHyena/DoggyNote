@@ -187,12 +187,12 @@ test('a custom colour from the wheel, and a rename that clashes stays open with 
   await expect(chips(card)).toHaveText(['Mood'])
   // A light custom colour gets black text; a dark one gets white.
   expect(await background(chips(card).first())).toBe('rgb(161, 178, 195)')
-  expect(await textColor(chips(card).first())).toBe('rgb(0, 0, 0)')
+  await expect.poll(() => textColor(chips(card).first())).toBe('rgb(0, 0, 0)')
   await row(page, 'Mood').hover()
   await row(page, 'Mood').getByTestId('label-recolor').click()
   await row(page, 'Mood').getByTestId('label-custom-color').fill('#1a2b3c')
   await expect.poll(() => background(chips(card).first())).toBe('rgb(26, 43, 60)')
-  expect(await textColor(chips(card).first())).toBe('rgb(255, 255, 255)')
+  await expect.poll(() => textColor(chips(card).first())).toBe('rgb(255, 255, 255)')
 
   await page.getByTestId('labels-input').fill('Tone')
   await page.keyboard.press('Enter')
@@ -302,5 +302,6 @@ test('new labels get a random preset, a different one each time on a fresh board
   expect(colors[0]).not.toBe(colors[1])
   expect(colors).toContain(first)
   // Preset chips pick black or white text too: dark gold/peach etc. all read with one of them.
-  for (const chip of await chips(card).all()) expect(['rgb(0, 0, 0)', 'rgb(255, 255, 255)']).toContain(await textColor(chip))
+  // Polled: WebKit can read a chip mid-render and report no colour at all.
+  for (const chip of await chips(card).all()) await expect.poll(() => textColor(chip)).toMatch(/^rgb\((0, 0, 0|255, 255, 255)\)$/)
 })
