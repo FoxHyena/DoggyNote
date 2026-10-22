@@ -6,7 +6,8 @@ export const isReservedId = (id: string) => id === 'prototype' || Object.hasOwn(
 const id = z.string().regex(/^[a-zA-Z0-9_:-]{1,64}$/).refine((v) => !isReservedId(v), 'Reserved identifier')
 const stamp = z.number().int().nonnegative()
 const text = z.string().max(200_000)
-const color = z.enum(CARD_COLORS)
+// A named tint, or a custom `#RRGGBB` (stored normalised, as the picker writes it).
+const color = z.union([z.enum(CARD_COLORS), z.string().regex(/^#[\dA-Fa-f]{6}$/).transform((v) => v.toUpperCase() as `#${string}`)])
 const common = { id, createdAt: stamp, deletedAt: stamp.nullable().optional(), purged: z.boolean().optional() }
 const card = {
   ...common, kind: z.literal('card'), boardId: id,

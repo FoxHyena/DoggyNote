@@ -1,6 +1,6 @@
 import { ErrorBoundary, For, Match, Show, Switch, createSelector, onCleanup, onMount, type JSX } from 'solid-js'
 import { SIDES, type Card } from '@doggynote/core'
-import { COPY, cardColor } from '@doggynote/theme'
+import { COPY, cardColor, cardColorVars } from '@doggynote/theme'
 import { isPreviewCurrent, previewBadge, type Badge } from '../state/preview.ts'
 import { isPositionLocked } from '../state/position.ts'
 
@@ -48,8 +48,8 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
   const style = (): JSX.CSSProperties => {
     const c = props.card
     const s: JSX.CSSProperties = {
-      '--c-bg': `var(--dn-card-${cardColor(c.color)}-bg)`,
-      '--c-text': `var(--dn-card-${cardColor(c.color)}-text)`,
+      '--c-bg': cardColorVars(c.color).bg,
+      '--c-text': cardColorVars(c.color).text,
     }
     if (free()) {
       // left/top, not transform: a thousand per-card transforms make the
@@ -78,7 +78,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         editing: editing(),
         dragging: draggingIds().has(props.card.id),
         resizing: resizingId() === props.card.id,
-        colored: props.card.color !== 'none' && !!props.card.color,
+        colored: cardColor(props.card.color) !== 'none',
       }}
       tabIndex={-1}
       data-card-id={props.card.id}

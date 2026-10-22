@@ -77,7 +77,7 @@ function CaptionEditor(props: { card: Card<'image'> }) {
     input.setSelectionRange(input.value.length, input.value.length)
   })
   return (
-    <div role="group" aria-label="Image caption" data-testid="image-caption-editor">
+    <div class="image-caption-editor" role="group" aria-label="Image caption" data-testid="image-caption-editor">
       <textarea
         ref={input}
         class="image-caption image-caption-input"

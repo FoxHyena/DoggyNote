@@ -17,10 +17,11 @@ test('tap a card, open labels from the bar, create one with a colour and rename 
   const popover = page.getByTestId('labels-popover')
   await expect(popover).toBeVisible()
   const vp = page.viewportSize()!
+  // On a phone it's a bottom sheet: once it has slid up, it sits on screen.
+  await expect.poll(async () => { const b = (await popover.boundingBox())!; return b.y + b.height }).toBeLessThanOrEqual(vp.height)
   const box = (await popover.boundingBox())!
   expect(box.x).toBeGreaterThanOrEqual(0)
   expect(box.x + box.width).toBeLessThanOrEqual(vp.width)
-  expect(box.y + box.height).toBeLessThanOrEqual(vp.height)
 
   await page.getByTestId('labels-input').fill('Errand')
   const dot = popover.locator('[data-testid="label-color"][data-color="peach"]')
