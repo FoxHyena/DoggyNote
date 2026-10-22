@@ -7,7 +7,7 @@ import * as doc from '../state/doc.ts'
 import { emptyTrash, restoreCard } from '../state/actions.ts'
 import { purgeComments, restoreComment } from '../state/comments.ts'
 import { boardId, setTrashOpen, trashOpen } from '../state/ui.ts'
-import { Icon, ToolIcons } from './icons.tsx'
+import { Icon } from './icons.tsx'
 
 /** A short label; stickers name their emoji and pack, and a malformed (synced) one gets a generic label. */
 export function describeCard(c: Card | Sticker): string {
@@ -27,7 +27,7 @@ export function TrashPanel() {
         <header class="trash-head">
           <h2>{COPY.trash}</h2>
           <button class="icon-btn" title="Close" onClick={() => setTrashOpen(false)}>
-            <Icon>{ToolIcons.close()}</Icon>
+            <Icon name="close" />
           </button>
         </header>
         <Show when={items().length || comments().length} fallback={<p class="trash-empty">{COPY.buriedEmpty}</p>}>
@@ -38,7 +38,7 @@ export function TrashPanel() {
                   <span class="trash-type">{c.kind === 'sticker' ? 'sticker' : c.type}</span>
                   <span class="trash-text">{describeCard(c)}</span>
                   <button class="bar-btn" data-testid="restore" title="Restore: dig it back up" onClick={() => restoreCard(c.id)}>
-                    <Icon size={16}>{ToolIcons.restore()}</Icon>
+                    <Icon size={16} name="restore" />
                     Restore
                   </button>
                 </li>
@@ -50,7 +50,7 @@ export function TrashPanel() {
                   <span class="trash-type">comment</span>
                   <span class="trash-text">{m.text.split('\n')[0]}</span>
                   <button class="bar-btn" data-testid="restore-comment" title="Put it back in the thread" onClick={() => restoreComment(m.id)}>
-                    <Icon size={16}>{ToolIcons.restore()}</Icon>
+                    <Icon size={16} name="restore" />
                     Restore
                   </button>
                 </li>
@@ -65,7 +65,7 @@ export function TrashPanel() {
               purgeComments(comments().map((m) => m.id))
             }}
           >
-            Empty {COPY.trash.toLowerCase()}
+            <Icon name="trash" size={16} /> Empty {COPY.trash.toLowerCase()}
           </button>
         </Show>
       </aside>

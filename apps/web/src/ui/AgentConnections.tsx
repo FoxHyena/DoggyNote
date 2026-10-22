@@ -2,7 +2,7 @@ import { For, Show, createResource, createSignal, onCleanup, onMount } from 'sol
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import { api, API_BASE } from '../state/api.ts'
 import { refreshAccess } from '../state/access.ts'
-import { Icon, ToolIcons } from './icons.tsx'
+import { Icon } from './icons.tsx'
 import { agentDialogKeys } from './agentDialog.ts'
 import './agents.css'
 
@@ -40,7 +40,7 @@ export function AgentConnections(props: { onClose: () => void }) {
   }
   return <div class="dialog-backdrop" onPointerDown={(e) => e.target === e.currentTarget && props.onClose()}>
     <section class="dialog agents-dialog" role="dialog" aria-modal="true" aria-labelledby="agent-connections-title" data-testid="agent-connections" onKeyDown={agentDialogKeys}>
-      <div class="agents-heading"><h2 id="agent-connections-title">Agent connections</h2><button class="icon-btn" title="Close" onClick={props.onClose}><Icon>{ToolIcons.close()}</Icon></button></div>
+      <div class="agents-heading"><h2 id="agent-connections-title">Agent connections</h2><button class="icon-btn" title="Close" onClick={props.onClose}><Icon name="close" /></button></div>
       <p>Connect a local agent app to selected boards. Changes wait for your approval inside DoggyNote.</p>
       <Show when={error() || connections.error}><p class="form-error" role="alert">{error() ?? 'Could not load connections. Check your connection and try again.'}</p><button class="icon-btn" onClick={() => void action(async () => {})}>Retry</button></Show>
       <Show when={secret()}><div class="agents-secret" data-testid="agent-secret"><strong>Copy your connection token</strong><p>This token is shown once. Keep it in your agent app’s environment settings.</p><textarea readOnly aria-label="Agent connection token" value={secret()!} rows={2} ref={(el) => queueMicrotask(() => { el.focus(); el.select(); el.scrollIntoView({ block: 'nearest' }) })} /><button class="primary-btn" onClick={async () => { try { await navigator.clipboard.writeText(secret()!); setCopied(true) } catch { setError('Select and copy the token above.') } }}>{copied() ? 'Copied' : 'Copy token'}</button><button class="menu-item" onClick={() => setSecret(null)}>Done</button></div></Show>

@@ -1,3 +1,4 @@
+import { Icon } from '../ui/icons.tsx'
 import { For, Show, createEffect, createMemo, createSignal, on, onMount } from 'solid-js'
 import { COLUMN_HEADER, type Card } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
@@ -55,7 +56,7 @@ export function ColumnCard(props: CardProps<'column'>) {
           onPointerDown={(e) => e.stopPropagation()}
           onKeyDown={(e) => { if (!e.metaKey && !e.ctrlKey && e.key !== 'Escape') e.stopPropagation() }}
           onClick={(e) => { e.stopPropagation(); setColumnCollapsed(props.card.id, !collapsed(), props.readOnly) }}>
-          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d={collapsed() ? 'M6 3l5 5-5 5' : 'M3 6l5 5 5-5'} fill="none" stroke="currentColor" stroke-width="1.8" /></svg>
+          <Icon name={collapsed() ? 'open' : 'chevronDown'} size={16} />
         </button>
         <div class="column-heading" data-edit-title>
         <Show

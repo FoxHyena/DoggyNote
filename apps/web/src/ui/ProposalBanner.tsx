@@ -3,7 +3,7 @@ import { boardDisplayTitle } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { boardId } from '../state/ui.ts'
 import { decidePreview, exitPreview, frameChanges, preview, previewStep, setPreviewMode, showBoard, type Badge } from '../state/preview.ts'
-import { BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
+import { BoardIconSvg, Icon } from './icons.tsx'
 import './agents.css'
 import './export.css'
 
@@ -53,10 +53,10 @@ export function ProposalBanner() {
               {(s) => <span class="proposal-step proposal-step-phone" data-testid="proposal-step-phone">{s().n}/{s().of}</span>}
             </Show>
             <button class="icon-btn proposal-next-icon" data-testid="proposal-next-icon" aria-label="Next change" title="Next change" onClick={() => frameChanges(true)}>
-              <Icon>{ToolIcons.open()}</Icon>
+              <Icon name="open" />
             </button>
             <button class="icon-btn proposal-banner-exit" data-testid="proposal-exit" aria-label="Stop previewing" title="Stop previewing (Esc)" onClick={exitPreview}>
-              <Icon>{ToolIcons.close()}</Icon>
+              <Icon name="close" />
             </button>
           </div>
           <Show when={p().stale}>

@@ -5,7 +5,7 @@ import { ApiError, api } from '../state/api.ts'
 import { canManageBoard, refreshAccess, boardPermissions } from '../state/access.ts'
 import { syncNow } from '../state/sync.ts'
 import * as doc from '../state/doc.ts'
-import { Icon, ToolIcons } from './icons.tsx'
+import { Icon } from './icons.tsx'
 import { agentDialogKeys } from './agentDialog.ts'
 import './sharing.css'
 
@@ -27,7 +27,7 @@ export function ShareButton(props: { boardId: Id }) {
     onCleanup(() => window.removeEventListener('pointerdown', outside))
   })
   return <Show when={canManageBoard(props.boardId)}>
-    <div class="zoom" ref={root}><button ref={trigger} class="icon-btn" data-testid="share" aria-label="Share board" aria-haspopup="dialog" aria-expanded={open()} onClick={() => open() ? close() : setOpen(true)}><Icon>{ToolIcons.share()}</Icon><span class="icon-btn-label">Share</span></button>
+    <div class="zoom" ref={root}><button ref={trigger} class="icon-btn" data-testid="share" aria-label="Share board" aria-haspopup="dialog" aria-expanded={open()} onClick={() => open() ? close() : setOpen(true)}><Icon name="share" /><span class="icon-btn-label">Share</span></button>
       <Show when={open()}><SharePanel boardId={props.boardId} onClose={() => close()} /></Show>
     </div>
   </Show>
@@ -88,7 +88,7 @@ function SharePanel(props: { boardId: Id; onClose: () => void }) {
     catch { setError('Copy failed. Select the link and copy it.') }
   }
   return <div ref={panel} class="menu share-panel" data-testid="share-panel" role="dialog" aria-label="Board sharing" onKeyDown={agentDialogKeys}>
-    <div class="share-head"><strong>Share board</strong><button class="icon-btn" aria-label="Close sharing" onClick={props.onClose}><Icon size={16}>{ToolIcons.close()}</Icon></button></div>
+    <div class="share-head"><strong>Share board</strong><button class="icon-btn" aria-label="Close sharing" onClick={props.onClose}><Icon size={16} name="close" /></button></div>
     <p class="share-sub">{sharing()?.legacy ? 'Shared space members already have editing access. Admins manage its invitations.' : 'Private until you invite someone. Only you manage sharing.'}</p>
     <Show when={parent() && parent() !== `home:${sharing()?.ownerId}`}><p class="share-sub">People with inherited access from “{boardDisplayTitle(doc.getBoard(parent()), 'the parent board')}” keep that access. Manage it on the parent board.</p></Show>
     <label class="check"><input type="checkbox" data-testid="include-children" checked={includeChildren()} onChange={(e) => setIncludeChildren(e.currentTarget.checked)} />Include boards inside this one</label>

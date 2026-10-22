@@ -1,3 +1,4 @@
+import { Icon } from '../ui/icons.tsx'
 import './collaboration.css'
 import { For, Show, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
 import { COPY } from '@doggynote/theme'
@@ -23,7 +24,7 @@ export function Collaborators() {
   })
   return <div class="collaborators" ref={root}>
     <button ref={trigger} class="people-trigger" data-testid="collaborators" aria-label={`People on this board${people().length ? `: ${people().length}` : ''}. ${liveState() === 'live' ? 'Live' : liveState() === 'connecting' ? 'Connecting' : 'Reconnecting'}`} aria-expanded={open()} onClick={() => setOpen(!open())}>
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6m1 3a5 5 0 0 1 3 4v2"/></svg>
+      <Icon name="people" size={19} />
       <span class="people-count">{liveState() === 'live' ? people().length || 1 : '…'}</span>
       <span class="people-avatars" aria-hidden="true"><For each={people().slice(0, 2)}>{(p) => <span class="person-avatar" style={personStyle(p.userId)}>{initials(p.username)}</span>}</For></span>
     </button>
@@ -36,7 +37,7 @@ export function Collaborators() {
           <Show when={peers().some((m) => m.userId === p.userId)}><button class="person-follow" aria-label={`Follow ${p.username}`} onClick={() => { const session = peers().find((m) => m.userId === p.userId && m.editing) ?? peers().find((m) => m.userId === p.userId); if (session) follow(session.sessionId); closeAction() }}>Follow</button></Show>
         </li>}</For></ul>
       </Show>
-      <div class="nav-menu-section"><button class="menu-item" disabled={liveState() !== 'live'} onClick={() => { pingAt(); closeAction() }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>{COPY.lookHere}</button><p class="people-hint">Point out your selected card or the center of your view.</p></div>
+      <div class="nav-menu-section"><button class="menu-item" disabled={liveState() !== 'live'} onClick={() => { pingAt(); closeAction() }}><Icon name="lookHere" size={18} />{COPY.lookHere}</button><p class="people-hint">Point out your selected card or the center of your view.</p></div>
     </div></Show>
   </div>
 }

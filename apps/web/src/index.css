@@ -284,7 +284,7 @@ html[data-input="mouse"] .menu-item:hover {
 /* A paw while panning. */
 .viewport.space-held,
 .viewport.readonly {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24'%3E%3Cg fill='%23e8a849' stroke='%231c1b1a' stroke-width='1'%3E%3Cellipse cx='12' cy='15.5' rx='4.4' ry='3.8'/%3E%3Ccircle cx='6.3' cy='10' r='2.1'/%3E%3Ccircle cx='9.6' cy='6.4' r='2.1'/%3E%3Ccircle cx='14.4' cy='6.4' r='2.1'/%3E%3Ccircle cx='17.7' cy='10' r='2.1'/%3E%3C/g%3E%3C/svg%3E") 13 13, grab;
+  cursor: url("./assets/paw-cursor.svg") 13 13, grab;
 }
 
 .viewport.panning {
@@ -1422,19 +1422,11 @@ html[data-input="mouse"] .danger-btn:hover {
   color: var(--dn-text-muted);
 }
 
-.loader .tail {
-  transform-origin: 22px 32px;
-  animation: wag 0.65s ease-in-out infinite alternate;
-}
-
-@keyframes wag {
-  from {
-    transform: rotate(-22deg);
-  }
-  to {
-    transform: rotate(18deg);
-  }
-}
+.dn-icon { flex-shrink: 0; vertical-align: middle; }
+.dog-mark { display: inline-flex; align-items: center; justify-content: center; }
+.loader .dog-mark { color: var(--dn-accent); animation: dog-fetch 1.2s ease-in-out infinite alternate; }
+@keyframes dog-fetch { from { opacity: 0.65; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .loader .dog-mark { animation: none; } }
 
 @media (prefers-reduced-motion: reduce) {
   *,

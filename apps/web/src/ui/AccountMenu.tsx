@@ -1,7 +1,7 @@
 import './navigation.css'
 import { Show, createEffect, createSignal, createUniqueId, onCleanup } from 'solid-js'
 import { logout, user } from '../state/session.ts'
-import { Icon, ToolIcons } from './icons.tsx'
+import { Icon } from './icons.tsx'
 import { AdminDashboard } from './AdminDashboard.tsx'
 import { AgentConnections } from './AgentConnections.tsx'
 import { AboutDialog } from './AboutDialog.tsx'
@@ -74,7 +74,7 @@ export function AccountMenu(props: ThemeChoicesProps) {
           }
         }}
       >
-        <Icon>{ToolIcons.user()}</Icon>
+        <Icon name="user" />
       </button>
       <Show when={open()}>
         <div ref={menu} id={menuId} class="menu nav-menu account-popover" role="dialog" aria-label="Account">
