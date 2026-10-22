@@ -473,9 +473,7 @@ html[data-touch-editing] .canvas-controls { visibility: hidden; }
 }
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .share-head { top: -28px; margin-top: -28px; padding-top: 28px; }
-  /* Keep the permission label attached to its full-width touch control. */
-  .share-permission-field { flex-direction: column; align-items: stretch; gap: 4px; }
-  .share-permission-field select { width: 100%; height: 44px; }
+  .share-permission-field select { height: 44px; }
 }
 .install-help { padding-left: 12px; }
 

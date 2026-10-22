@@ -54,6 +54,9 @@
 }
 
 .share-permission-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; }
-.share-permission-field select { width: 128px; height: 36px; flex-shrink: 0; border: 1px solid var(--dn-border); border-radius: 8px; padding: 8px; background: var(--dn-bg); color: var(--dn-text); font: inherit; }
+.share-permission-select { position: relative; flex: 0 0 128px; }
+.share-permission-field select { appearance: none; width: 100%; height: 36px; border: 1px solid var(--dn-border); border-radius: 8px; padding: 0 36px 0 12px; background: var(--dn-bg); color: var(--dn-text); font: inherit; }
+/* Match the text inset inside the 1px border; the native select still owns input. */
+.share-permission-select > svg { position: absolute; right: 13px; top: 50%; margin-top: -8px; pointer-events: none; color: var(--dn-text-muted); }
 
 @media (pointer: coarse) { .share-permission-field select { height: 44px; } }

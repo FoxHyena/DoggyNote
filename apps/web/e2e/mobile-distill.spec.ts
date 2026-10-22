@@ -110,6 +110,21 @@ test('phone sharing has one permission control with a touch target', async ({ pa
   const field = (await permission.boundingBox())!, container = (await panel.boundingBox())!
   expect(field.x - container.x).toBeGreaterThanOrEqual(16)
   expect(container.x + container.width - field.x - field.width).toBeGreaterThanOrEqual(16)
+  for (const width of [page.viewportSize()!.width, 320]) {
+    await page.setViewportSize({ width, height: page.viewportSize()!.height })
+    const geometry = await permission.evaluate(el => {
+      const control = el.getBoundingClientRect(), caret = el.nextElementSibling!.getBoundingClientRect()
+      const label = el.closest('label')!.firstElementChild!.getBoundingClientRect()
+      const css = getComputedStyle(el)
+      return { width: control.width, gap: control.left - label.right,
+        centreDifference: Math.abs((control.top + control.bottom - label.top - label.bottom) / 2),
+        insetDifference: Math.abs(control.right - caret.right - parseFloat(css.paddingLeft) - parseFloat(css.borderLeftWidth)) }
+    })
+    expect(geometry.width).toBeLessThanOrEqual(128)
+    expect(geometry.gap).toBeGreaterThanOrEqual(12)
+    expect(geometry.centreDifference).toBeLessThanOrEqual(1)
+    expect(geometry.insetDifference).toBeLessThanOrEqual(1)
+  }
   await permission.selectOption('edit')
   await expect(page.getByTestId('share-allow-signup')).toBeVisible()
   expect((await panel.boundingBox())!.height).toBeLessThanOrEqual(520)

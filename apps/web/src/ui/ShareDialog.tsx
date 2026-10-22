@@ -94,8 +94,11 @@ function SharePanel(props: { boardId: Id; onClose: () => void }) {
       <Show when={sharing()?.legacy}><p class="share-sub">Shared space members already have editing access. Admins manage its invitations.</p></Show>
       <Show when={sharing() && parent() && parent() !== `home:${sharing()?.ownerId}`}><p class="share-sub">People with inherited access from “{boardDisplayTitle(doc.getBoard(parent()), 'the parent board')}” keep that access. Manage it on the parent board.</p></Show>
       <section class="share-section" aria-label="New invitation settings">
-        <label class="share-permission-field">New invitation access
-          <select aria-label="Invitation permission" data-testid="invitation-permission" value={permission()} onChange={(e) => setPermission(e.currentTarget.value as 'view' | 'edit')}><option value="view">View only</option><option value="edit">Can edit</option></select>
+        <label class="share-permission-field"><span>New invitation access</span>
+          <span class="share-permission-select">
+            <select aria-label="Invitation permission" data-testid="invitation-permission" value={permission()} onChange={(e) => setPermission(e.currentTarget.value as 'view' | 'edit')}><option value="view">View only</option><option value="edit">Can edit</option></select>
+            <Icon size={16} name="chevronDown" />
+          </span>
         </label>
         <label class="check"><input type="checkbox" data-testid="include-children" checked={includeChildren()} onChange={(e) => setIncludeChildren(e.currentTarget.checked)} />Include boards inside this one</label>
       </section>
