@@ -10,6 +10,7 @@ import { revealCard } from '../state/columns.ts'
 import { hasLabel, labelsOn } from '../state/labels.ts'
 import { inTemplate } from '../state/copies.ts'
 import { BoardIconSvg, Icon } from './icons.tsx'
+import { installModalKeys } from './agentDialog.ts'
 
 // ⌘K "Fetch": search every board title and card text, jump to the result.
 
@@ -68,9 +69,13 @@ export function FetchPalette() {
   const [active, setActive] = createSignal(0)
   const hits = createMemo(() => search(q()))
   let input!: HTMLInputElement
+  let panel!: HTMLDivElement
   const previousFocus = (document.activeElement && document.activeElement !== document.body ? document.activeElement : document.querySelector('[data-testid="open-fetch"]')) as HTMLElement | null
   let results: HTMLUListElement | undefined
-  onMount(() => input.focus())
+  onMount(() => {
+    onCleanup(installModalKeys(panel, () => setPaletteOpen(false), input))
+    input.focus()
+  })
   onCleanup(() => queueMicrotask(() => { if (previousFocus?.isConnected) previousFocus.focus() }))
   createEffect(() => {
     const index = active()
@@ -78,8 +83,7 @@ export function FetchPalette() {
   })
 
   const onKey = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setPaletteOpen(false) }
-    else if (e.key === 'ArrowDown') {
+    if (e.key === 'ArrowDown') {
       e.preventDefault()
       setActive((i) => Math.max(0, Math.min(hits().length - 1, i + 1)))
     } else if (e.key === 'ArrowUp') {
@@ -95,7 +99,7 @@ export function FetchPalette() {
 
   return (
     <div class="dialog-backdrop fetch-backdrop" onPointerDown={(e) => e.target === e.currentTarget && setPaletteOpen(false)}>
-      <div class="fetch" role="dialog" aria-modal="true" aria-label={COPY.search} data-testid="fetch" onKeyDown={(e) => { if (e.key === 'Escape') onKey(e) }}>
+      <div ref={panel} class="fetch" role="dialog" aria-modal="true" aria-label={COPY.search} data-testid="fetch">
         <div class="fetch-input-row">
           <Icon size={18} name="search" />
           <input

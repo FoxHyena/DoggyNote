@@ -192,7 +192,7 @@ test('the Boards sheet lists boards you were just on', async ({ page }) => {
 test('a comment thread closes when you leave its board', async ({ page }) => {
   const parent = page.url().split('/').at(-1)!
   const child = crypto.randomUUID()
-  expect((await page.request.post('/api/sync', { data: { changes: [{ id: child, patch: { id: child, kind: 'board', parentId: parent, title: 'Car pool', icon: 'bone', color: 'none', createdAt: Date.now() } }] } })).ok()).toBe(true)
+  expect((await postSync(page.request, { data: { changes: [{ id: child, patch: { id: child, kind: 'board', parentId: parent, title: 'Car pool', icon: 'bone', color: 'none', createdAt: Date.now() } }] } })).ok()).toBe(true)
   await page.goto(`/#/b/${child}`)
   await page.reload()
   await expect(page.getByTestId('board-name')).toHaveText('Car pool')

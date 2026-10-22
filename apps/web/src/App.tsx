@@ -47,7 +47,6 @@ import { installNativeSave } from './state/lifecycle.ts'
 import { ExitSaveDialog } from './ui/ExitSaveDialog.tsx'
 import { EditDock } from './ui/EditDock.tsx'
 import { MobileDock, MobileStickerButton } from './ui/MobileDock.tsx'
-import { installSheetDrag } from './ui/sheet.ts'
 import { phone } from './state/device.ts'
 import { installClipboard } from './state/clipboard.ts'
 import { isPreviewBoard } from './state/preview.ts'
@@ -113,8 +112,6 @@ function EditorApp() {
     if (s === 'anon') setPhase('login')
     else await boot()
   })
-
-  onMount(() => onCleanup(installSheetDrag()))
 
   onMount(() => {
     const off = installShortcuts({ get readOnly() { return !editable() } })

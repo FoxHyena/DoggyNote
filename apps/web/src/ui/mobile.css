@@ -289,13 +289,7 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
     z-index: 95;
     animation: sheet-up 240ms cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .menu::before,
-  .templates-popover::before,
-  .share-panel::before,
-  .export-panel::before,
-  .save-details::before,
-  .popover.labels-panel::before,
-  .trash::before {
+  .sheet-grip::before {
     content: '';
     position: absolute;
     top: 8px;
@@ -496,8 +490,7 @@ html[data-touch-editing] .canvas-controls { visibility: hidden; }
 }
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   /* Sticky sheet headers line up with the sheet's own padding; the grip stays on top. */
-  .share-head { top: -22px; margin: -22px -12px 0; padding: 22px 12px 4px; }
-  .menu::before, .share-panel::before, .export-panel::before, .save-details::before, .popover.labels-panel::before, .trash::before { z-index: 3; }
+  .share-head { top: -28px; margin: -28px -12px 0; padding: 28px 12px 4px; }
 }
 .install-help { padding-left: 12px; }
 
@@ -748,4 +741,28 @@ html[data-input='touch'] .share-panel .bar-btn:not(.share-tabs .bar-btn) { paddi
 /* The label sheet: titled like the other sheets, its colours spread across the row. */
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .popover.labels-panel > .label-dots { grid-template-columns: repeat(7, minmax(0, 1fr)); justify-items: center; padding: 0 0 4px; }
+}
+
+/* A separate grip owns vertical pulls without disabling sheet-body scrolling. */
+.sheet-grip { display: none; }
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  [data-phone-sheet] { padding-top: max(28px, var(--admin-padding-top, 0px), var(--agents-padding, 0px)) !important; }
+  .sheet-grip {
+    display: block;
+    position: sticky;
+    /* Counter the reserved padding, including at the sticky scroll boundary. */
+    top: -28px;
+    margin-top: -28px;
+    height: 28px;
+    flex-shrink: 0;
+    z-index: 5;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  [data-phone-sheet] > :is(.dialog-head, .agents-heading) {
+    top: -28px;
+    margin-top: -28px;
+    padding-top: 28px;
+  }
 }

@@ -35,8 +35,13 @@ async function headerCoversTop(panel: Locator, selector: string) {
     if (heading.top > top + 1) return false
     // Test the painted top strip at multiple columns, rather than only header visibility.
     return [0.15, 0.5, 0.85].every((fraction) => {
-      const hit = document.elementFromPoint(outer.left + outer.width * fraction, top + 2)
-      return !!hit && (hit === header || header.contains(hit))
+      const x = outer.left + outer.width * fraction
+      const hit = document.elementFromPoint(x, top + 2)
+      // The phone grip intentionally owns hit testing above the opaque header.
+      // It must still have header material behind it, never scrolled row text.
+      const grip = element.querySelector('.sheet-grip')
+      const onGrip = !!grip && (hit === grip || (!!hit && grip.contains(hit)))
+      return !!hit && (hit === header || header.contains(hit) || (onGrip && heading.left <= x && heading.right >= x && heading.bottom > top + 2))
     })
   }, selector)).toBe(true)
 }

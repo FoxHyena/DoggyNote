@@ -1,6 +1,7 @@
-import { createEffect, createSignal, on, onCleanup, onMount, type JSX } from 'solid-js'
+import { createEffect, createSignal, on, onCleanup, onMount, Show, type JSX } from 'solid-js'
 import { Portal } from 'solid-js/web'
 import { agentDialogKeys } from './agentDialog.ts'
+import { SheetGrip } from './SheetGrip.tsx'
 import './popover.css'
 
 /**
@@ -73,6 +74,7 @@ export function Popover(props: { anchor: () => HTMLElement; label: string; testi
         onPointerDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => agentDialogKeys(e)}
       >
+        <Show when={props.class?.split(' ').some((name) => name === 'labels-panel' || name === 'templates-popover')}><SheetGrip onDismiss={props.close} /></Show>
         {props.children}
       </div>
     </Portal>

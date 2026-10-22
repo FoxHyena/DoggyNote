@@ -1,3 +1,4 @@
+import { SheetGrip } from './SheetGrip.tsx'
 import { For, Show, createResource, createSignal, onCleanup, onMount } from 'solid-js'
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import { api, API_BASE } from '../state/api.ts'
@@ -39,7 +40,7 @@ export function AgentConnections(props: { onClose: () => void }) {
     })
   }
   return <div class="dialog-backdrop" onPointerDown={(e) => e.target === e.currentTarget && props.onClose()}>
-    <section class="dialog agents-dialog" role="dialog" aria-modal="true" aria-labelledby="agent-connections-title" data-testid="agent-connections" onKeyDown={agentDialogKeys}>
+    <section class="dialog agents-dialog" role="dialog" aria-modal="true" aria-labelledby="agent-connections-title" data-testid="agent-connections" onKeyDown={agentDialogKeys}><SheetGrip onDismiss={props.onClose} />
       <div class="agents-heading"><h2 id="agent-connections-title">Agent connections</h2><button class="icon-btn" title="Close" onClick={props.onClose}><Icon name="close" /></button></div>
       <p>Connect a local agent app to selected boards. Changes wait for your approval inside DoggyNote.</p>
       <Show when={error() || connections.error}><p class="form-error" role="alert">{error() ?? 'Could not load connections. Check your connection and try again.'}</p><button class="icon-btn" onClick={() => void action(async () => {})}>Retry</button></Show>

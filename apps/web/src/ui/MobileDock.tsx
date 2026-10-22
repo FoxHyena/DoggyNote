@@ -1,3 +1,4 @@
+import { SheetGrip } from './SheetGrip.tsx'
 import { armedSticker, suggestions, openStickers, setStickerTrayOpen, stickerTrayOpen } from '../state/stickers.ts'
 import { For, Show, createSignal } from 'solid-js'
 import { COPY } from '@doggynote/theme'
@@ -83,7 +84,7 @@ function AddButton() {
         <Icon size={26} name="plus" />
       </button>
       <Show when={open()}>
-        <div class="menu add-sheet" role="menu" aria-label="Add to this board" data-testid="add-sheet">
+        <div class="menu add-sheet" role="menu" aria-label="Add to this board" data-testid="add-sheet"><SheetGrip onDismiss={() => { setOpen(false); trigger.focus() }} />
           <div class="add-grid">
             <For each={TOOLS}>
               {(t) => (
