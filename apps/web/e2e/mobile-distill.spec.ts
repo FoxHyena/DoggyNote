@@ -2,24 +2,29 @@ import { expect, test } from '@playwright/test'
 import { cardByText, freshBoard, postSync, waitForSync } from './helpers.ts'
 import { Fingers, note, seedCards, selectionBarFits, tapOn } from './touch.ts'
 
-test('Add has three leading cards, one gold choice and quiet secondary tools', async ({ page }) => {
+test('Add uses one aligned compact button grid with three leading cards', async ({ page }) => {
   await freshBoard(page)
   await page.getByTestId('dock-add').tap()
   const sheet = page.getByTestId('add-sheet')
   await sheet.evaluate(el => Promise.all(el.getAnimations().map(a => a.finished.catch(() => undefined))))
   await expect(sheet.locator('.add-primary button')).toHaveText(['Note', 'To-do', 'Board'])
   await expect(sheet.locator('.add-primary-note')).toHaveCount(1)
-  const primary = await sheet.getByTestId('add-note').boundingBox()
-  const secondary = await sheet.getByTestId('add-link').boundingBox()
-  expect(primary!.height).toBeGreaterThan(secondary!.height)
-  expect(primary!.height).toBeLessThanOrEqual(68)
   await expect(sheet.getByRole('menuitem')).toHaveCount(12)
-  for (const button of await sheet.getByRole('menuitem').all()) {
-    const box = (await button.boundingBox())!
-    expect(box.height).toBeGreaterThanOrEqual(44)
-    expect(box.y + box.height).toBeLessThanOrEqual(page.viewportSize()!.height)
+  for (const width of [page.viewportSize()!.width, 320]) {
+    await page.setViewportSize({ width, height: page.viewportSize()!.height })
+    expect((await sheet.boundingBox())!.height).toBeLessThanOrEqual(290)
+    const boxes = []
+    for (const button of await sheet.getByRole('menuitem').all()) {
+      const box = (await button.boundingBox())!
+      boxes.push(box)
+      expect(box.height).toBeGreaterThanOrEqual(44)
+      expect(box.y + box.height).toBeLessThanOrEqual(page.viewportSize()!.height)
+      expect(await button.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+    }
+    for (let i = 3; i < boxes.length; i++) expect(boxes[i].x).toBeCloseTo(boxes[i % 3].x, 0)
+    expect(boxes[0].height).toBeCloseTo(boxes[3].height, 0)
+    expect(await sheet.getByTestId('add-note').evaluate(el => getComputedStyle(el).borderTopWidth)).toBe('0px')
   }
-  expect(await sheet.getByTestId('add-note').evaluate(el => getComputedStyle(el).borderTopWidth)).toBe('0px')
   await sheet.getByTestId('add-link').tap()
   await expect(page.getByTestId('link-input')).toBeFocused()
 })
@@ -34,8 +39,9 @@ test('note actions use a compact dock and Colour restores focus on dismissal', a
   await expect(bar.locator('.swatch')).toHaveCount(0)
   await page.getByTestId('selection-colour').tap()
   const palette = page.getByTestId('selection-style-sheet')
-  expect((await palette.boundingBox())!.height).toBeLessThanOrEqual(210)
-  expect((await palette.locator('.swatches').boundingBox())!.width).toBeLessThanOrEqual(240)
+  expect((await palette.boundingBox())!.height).toBeLessThanOrEqual(185)
+  expect((await palette.locator('.swatches').boundingBox())!.width).toBeLessThanOrEqual(220)
+  expect(await palette.evaluate(el => el.querySelector('.swatches')!.getBoundingClientRect().top - el.querySelector('.selection-sheet-head')!.getBoundingClientRect().bottom)).toBeCloseTo(12, 0)
   for (const swatch of await palette.locator('.swatch').all()) expect((await swatch.boundingBox())!.height).toBeGreaterThanOrEqual(44)
   await page.getByTestId('swatch-sky').tap()
   await expect(page.getByTestId('swatch-sky')).toHaveAttribute('aria-pressed', 'true')
@@ -65,7 +71,11 @@ test('a board leads with Open and uses its actual colour; Rename and icons live 
   await page.getByTestId('selection-icon').tap()
   await expect(page.getByTestId('selection-more-menu')).toHaveCount(0)
   const icons = page.getByTestId('selection-style-sheet')
-  expect((await icons.boundingBox())!.height).toBeLessThanOrEqual(210)
+  expect((await icons.boundingBox())!.height).toBeLessThanOrEqual(185)
+  const selected = icons.getByTestId('icon-paw')
+  expect(await icons.evaluate(el => el.querySelector('.icon-choice')!.getBoundingClientRect().top - el.querySelector('.selection-sheet-head')!.getBoundingClientRect().bottom)).toBeCloseTo(12, 0)
+  await expect(selected).toHaveAttribute('aria-pressed', 'true')
+  expect(await selected.evaluate(el => getComputedStyle(el).outlineWidth)).toBe('2px')
   await expect(icons.locator('.icon-choice')).toHaveCount(8)
   for (const choice of await icons.locator('.icon-choice').all()) expect((await choice.boundingBox())!.height).toBeGreaterThanOrEqual(44)
   await page.getByTestId('icon-bone').tap()

@@ -83,28 +83,27 @@ function AddButton() {
           <div class="add-grid add-primary" role="group" aria-label="Create">
             <For each={PRIMARY_TOOLS}>
               {(t) => (
-                <button class="add-tile" classList={{ "add-primary-note": t.id === "note" }} role="menuitem" data-testid={`add-${t.id}`} onClick={() => add(t.id)}>
-                  <span class="add-tile-icon"><Icon size={24} name={t.icon} /></span>
-                  {t.label}
+                <button class="bar-btn add-tile" classList={{ "add-primary-note": t.id === "note" }} role="menuitem" data-testid={`add-${t.id}`} onClick={() => add(t.id)}>
+                  <span class="add-tile-icon"><Icon size={20} name={t.icon} /></span>
+                  <span class="add-label">{t.label}</span>
                 </button>
               )}
             </For>
           </div>
-          <div class="add-group-label">More</div>
           <div class="add-grid add-secondary" role="group" aria-label="More things to add">
-            <For each={MORE_TOOLS}>{(t) => <button class="add-tile" role="menuitem" data-testid={`add-${t.id}`} onClick={() => add(t.id)}><span class="add-tile-icon"><Icon size={20} name={t.icon} /></span>{t.label}</button>}</For>
-            <button class="add-tile" role="menuitem" data-testid="add-stickers" onClick={() => { setOpen(false); openStickers() }}><span class="add-tile-icon"><Icon size={24} name="sticker" /></span>Stickers</button>
-            <button class="add-tile" role="menuitem" data-testid="add-photo" onClick={() => pick(photo)}>
-              <span class="add-tile-icon"><Icon size={24} name="image" /></span>
-              Photo
+            <For each={MORE_TOOLS}>{(t) => <button class="bar-btn add-tile" role="menuitem" data-testid={`add-${t.id}`} onClick={() => add(t.id)}><span class="add-tile-icon"><Icon size={20} name={t.icon} /></span><span class="add-label">{t.label}</span></button>}</For>
+            <button class="bar-btn add-tile" role="menuitem" data-testid="add-stickers" onClick={() => { setOpen(false); openStickers() }}><span class="add-tile-icon"><Icon size={20} name="sticker" /></span><span class="add-label">Stickers</span></button>
+            <button class="bar-btn add-tile" role="menuitem" data-testid="add-photo" onClick={() => pick(photo)}>
+              <span class="add-tile-icon"><Icon size={20} name="image" /></span>
+              <span class="add-label">Photo</span>
             </button>
-            <button class="add-tile" role="menuitem" data-testid="add-camera" onClick={() => pick(camInput)}>
-              <span class="add-tile-icon"><Icon size={24} name="camera" /></span>
-              Camera
+            <button class="bar-btn add-tile" role="menuitem" data-testid="add-camera" onClick={() => pick(camInput)}>
+              <span class="add-tile-icon"><Icon size={20} name="camera" /></span>
+              <span class="add-label">Camera</span>
             </button>
-            <button class="add-tile" role="menuitem" data-testid="add-file" onClick={() => pick(files)}>
-              <span class="add-tile-icon"><Icon size={24} name="upload" /></span>
-              File
+            <button class="bar-btn add-tile" role="menuitem" data-testid="add-file" onClick={() => pick(files)}>
+              <span class="add-tile-icon"><Icon size={20} name="upload" /></span>
+              <span class="add-label">File</span>
             </button>
           </div>
         </div>

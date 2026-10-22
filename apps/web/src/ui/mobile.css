@@ -380,37 +380,20 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   from { transform: translateY(40%); opacity: 0; }
 }
 
-/* The Add sheet: big friendly tiles. */
-.add-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
-  gap: 8px;
-}
-.add-tile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  min-height: 84px;
-  padding: 10px 4px;
-  border: 1px solid var(--dn-border);
-  border-radius: 14px;
-  background: var(--dn-card);
-  color: var(--dn-text);
-  font: inherit;
-  font-size: 13px;
-  transition: transform 120ms ease-out;
-}
-.add-tile:active { transform: scale(0.94); background: var(--dn-card-hover); }
-.add-tile-icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--dn-card-hover);
-  color: var(--dn-text-muted);
-}
+/* One button grammar and column grid for every creation action. */
+.add-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 8px; }
+.add-tile { min-width: 0; min-height: 44px; justify-content: flex-start; gap: 6px; padding: 4px; border-radius: 8px; line-height: 20px; text-align: left; transition: transform 120ms ease-out; }
+.add-tile:active { transform: scale(0.97); }
+.add-tile-icon { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; color: var(--dn-text-muted); }
+.add-label { min-width: 0; overflow-wrap: anywhere; }
+.add-primary .add-tile { font-weight: 600; }
+.add-primary .add-tile-icon { color: inherit; }
+.add-sheet .add-primary-note,
+html[data-input='mouse'] .add-sheet .add-primary-note:hover,
+html[data-input='touch'] .add-sheet .add-primary-note:active:not(:disabled) { background: var(--dn-accent); color: var(--dn-accent-text); }
+.add-secondary { margin-top: 4px; }
+.add-sheet .nav-menu-head { min-height: 44px; padding: 0; margin-bottom: 12px; }
+.add-sheet .nav-menu-head strong { font-size: 16px; }
 
 /* Inbox list scrolls by touch; items are placed with their buttons. */
 html[data-input='touch'] .toybox-item { touch-action: pan-y; cursor: default; }
@@ -489,6 +472,7 @@ html[data-touch-editing] .canvas-controls { visibility: hidden; }
   .selection-bar.docked .bar-actions .bar-btn { flex: 0 0 auto; min-width: 64px; }
 }
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  .share-head { top: -28px; margin-top: -28px; padding-top: 28px; }
   /* Keep the permission label attached to its full-width touch control. */
   .share-permission-field { flex-direction: column; align-items: stretch; gap: 4px; }
   .share-permission-field select { width: 100%; height: 44px; }
@@ -507,8 +491,6 @@ html[data-touch-editing] .mobile-dock { visibility: hidden; }
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .trash { box-shadow: 0 -2px 0 var(--dn-border), 0 -14px 40px rgb(0 0 0 / 0.32); }
   /* V2-15: a tidy three-column Add grid; a lone last tile takes the whole row. */
-  .add-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .add-grid > .add-tile:last-child:nth-child(3n + 1) { grid-column: 1 / -1; flex-direction: row; justify-content: center; gap: 10px; min-height: 56px; }
   /* V2-14: colours centred in their row; Done lines up with the actions. */
   .selection-bar.docked .swatches { margin-inline: auto; }
   .selection-bar.docked .bar-done { align-self: flex-start; margin-top: 5px; }
@@ -697,21 +679,6 @@ html[data-input='touch'] .share-panel .bar-btn { padding-inline: 12px; border-ra
   .popover.labels-panel > .label-dots { grid-template-columns: repeat(7, minmax(0, 1fr)); justify-items: center; padding: 0 0 4px; }
 }
 
-/* Creation: familiar cards first, then a compact list of occasional tools. */
-.add-grid.add-primary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.add-primary .add-tile { min-height: 64px; padding: 4px; border: 0; background: transparent; gap: 4px; font-weight: 600; }
-.add-primary .add-tile-icon { width: 32px; height: 32px; border-radius: 10px; background: transparent; }
-.add-primary .add-tile-icon svg { width: 20px; height: 20px; }
-.add-primary-note .add-tile-icon { background: var(--dn-accent); color: var(--dn-accent-text); }
-.add-group-label { margin: 16px 0 4px; color: var(--dn-text-muted); font-size: 12px; font-weight: 600; }
-.add-grid.add-secondary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 8px; }
-.add-secondary .add-tile { flex-direction: row; justify-content: flex-start; gap: 8px; min-height: 44px; padding: 4px 8px; border: 0; border-radius: 8px; background: transparent; }
-.add-secondary .add-tile-icon { width: 28px; height: 28px; background: transparent; }
-.add-secondary .add-tile-icon svg { width: 20px; height: 20px; }
-.add-grid.add-secondary > .add-tile:last-child { grid-column: auto; min-height: 44px; }
-.add-sheet .nav-menu-head { min-height: 44px; padding: 0; margin-bottom: 4px; }
-.add-sheet .nav-menu-head strong { font-size: 16px; }
-
 /* Phone selection keeps one row of actions. Palettes live in focused sheets. */
 .selection-phone-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--dn-text-muted); font-size: 12px; }
 .selection-phone-head .bar-btn { min-width: 64px; min-height: 44px; gap: 6px; }
@@ -719,12 +686,13 @@ html[data-input='touch'] .share-panel .bar-btn { padding-inline: 12px; border-ra
 .selection-phone-actions > .bar-btn { flex: 1 1 0; min-width: 44px; min-height: 56px; padding: 6px 2px; display: flex; flex-direction: column; justify-content: center; gap: 4px; font-size: 12px; border-radius: 10px; }
 .selection-phone-actions > .selection-primary { background: var(--dn-accent); color: var(--dn-accent-text); font-weight: 600; }
 html[data-input='touch'] .selection-phone-actions > .selection-primary:active:not(:disabled) { background: var(--dn-accent); color: var(--dn-accent-text); }
-.selection-sheet-head { display: flex; align-items: center; justify-content: space-between; min-height: 44px; margin-bottom: 4px; gap: 12px; }
+.selection-sheet-head { display: flex; align-items: center; justify-content: space-between; min-height: 44px; margin-bottom: 12px; gap: 12px; }
 .selection-sheet-head strong { font-size: 16px; font-weight: 600; }
 .selection-sheet-head .bar-btn { min-width: 64px; min-height: 44px; }
-.selection-style-sheet .swatches, .selection-style-sheet .icon-picker { display: grid; width: min(228px, 100%); margin-inline: auto; grid-template-columns: repeat(4, minmax(44px, 1fr)); gap: 8px 12px; justify-items: center; padding: 0; }
-.selection-style-sheet .swatch { width: 48px; height: 48px; --dot: 32px; }
-.selection-style-sheet .icon-choice { width: 48px; height: 48px; }
+.selection-style-sheet .swatches, .selection-style-sheet .icon-picker { display: grid; width: min(212px, 100%); margin-inline: auto; grid-template-columns: repeat(4, minmax(44px, 1fr)); gap: 4px 12px; justify-items: center; padding: 0; }
+.selection-style-sheet .swatch { width: 44px; height: 44px; --dot: 32px; }
+.selection-style-sheet .icon-choice { width: 44px; height: 44px; }
+.selection-style-sheet .icon-choice.on { outline: 2px solid var(--dn-selection); outline-offset: -2px; }
 .selection-style-sheet .icon-choice > svg { width: 24px; height: 24px; }
 .selection-sheet-align { display: flex; justify-content: space-between; gap: 4px; padding: 4px 0; }
 .selection-sheet-align .bar-icon { min-width: 44px; min-height: 44px; }
@@ -765,4 +733,11 @@ html[data-input='touch'] .selection-phone-actions > .selection-primary:active:no
     margin-top: -28px;
     padding-top: 28px;
   }
+}
+
+/* Compact sheets keep the 28px grip target centred, away from header controls.
+   Its last 12px share the noninteractive space above the heading's text. */
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  :is(.menu.add-sheet, .menu.selection-style-sheet)[data-phone-sheet] { padding-top: 16px !important; }
+  :is(.add-sheet, .selection-style-sheet) > .sheet-grip { width: 96px; margin-inline: auto; top: -16px; margin-top: -16px; margin-bottom: -12px; }
 }
