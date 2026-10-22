@@ -41,7 +41,7 @@ export function SelectionBar() {
   }
   const editable = () => {
     const c = sole()
-    return !!c && (c.type === 'note' || c.type === 'todo' || c.type === 'column' || c.type === 'image' || c.type === 'swatch') && doc.canWriteObject(c)
+    return !!c && (c.type === 'note' || c.type === 'todo' || c.type === 'column' || c.type === 'image' || c.type === 'swatch' || c.type === 'sketch') && doc.canWriteObject(c)
   }
   // Labels go on the cards of one board; a column is a container, so it has none.
   const canLabel = () => cards().length > 0 && cards().every((c) => c.type !== 'column' && c.boardId === cards()[0].boardId && doc.canWriteObject(c))
@@ -157,8 +157,8 @@ export function SelectionBar() {
           </Show>
         </Show>
         <div class="bar-group bar-style">
-        {/* A colour card is its colour: the card tints are for everything else. */}
-        <Show when={cards().some((c) => c.type !== 'swatch')}>
+        {/* A colour card is its colour, and ink on the board has no card to tint: the tints are for everything else. */}
+        <Show when={cards().some((c) => c.type !== 'swatch' && c.type !== 'ink')}>
           <div class="swatches" role="group" aria-label="Colour">
             <For each={CARD_COLORS}>
               {(c) => (

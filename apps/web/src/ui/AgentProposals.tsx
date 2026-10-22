@@ -49,7 +49,7 @@ export function AgentProposals(props: { boardId: string; renderTrigger?: (contro
 
 const VERB: Record<Badge, string> = { added: 'New', changed: 'Edited', moved: 'Moved', removed: 'Buried' }
 
-const TYPE_WORD: Record<string, string> = { note: 'Note', todo: 'To-do list', board: 'Board', image: 'Picture', link: 'Link', column: 'Column', file: 'File', movie: 'Movie', swatch: 'Colour' }
+const TYPE_WORD: Record<string, string> = { note: 'Note', todo: 'To-do list', board: 'Board', image: 'Picture', link: 'Link', column: 'Column', file: 'File', movie: 'Movie', swatch: 'Colour', sketch: 'Sketch', ink: 'Drawing' }
 
 /** One line per change, in plain words: "New · Note · Snack budget". */
 function describe(change: Detail['proposal']['changes'][number], titleOf: (id: string) => string): { badge: Badge | null; text: string } {
@@ -62,6 +62,7 @@ function describe(change: Detail['proposal']['changes'][number], titleOf: (id: s
   }
   if (after.kind === 'board') return { badge, text: `Board · ${boardDisplayTitle(after, 'Untitled board')}` }
   if (after.kind === 'connection') return { badge, text: 'Line between cards' }
+  if (after.kind === 'stroke') return { badge, text: 'Pen stroke' }
   if (after.kind === 'sticker') return { badge, text: `Sticker · ${String((after.content as { emoji?: unknown } | undefined)?.emoji || '')} ${String((after.content as { packName?: unknown } | undefined)?.packName ?? '')}`.trim() }
   return { badge, text: after.kind }
 }

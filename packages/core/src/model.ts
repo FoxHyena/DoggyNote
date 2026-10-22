@@ -4,11 +4,12 @@
 
 import type { CardColor } from '@doggynote/theme'
 import type { Side } from './geometry.ts'
+import type { InkMark } from './ink.ts'
 
 export type Id = string
 
 /** Every card type this build can draw. Anything else came from a newer app (see cardtext.ts). */
-export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie', 'swatch'] as const
+export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie', 'swatch', 'sketch', 'ink'] as const
 export type CardType = (typeof CARD_TYPES)[number]
 export const isKnownCardType = (t: unknown): t is CardType => (CARD_TYPES as readonly unknown[]).includes(t)
 
@@ -46,6 +47,14 @@ export type CardContent = {
   movie: MovieContent
   /** A colour card: `hex` is canonical `#RRGGBB` (see swatch.ts); the name is optional. */
   swatch: { hex: string; name?: string }
+  /**
+   * A drawing on paper. `width`/`height` are the paper's fixed logical size
+   * (the card scales it); `background` is the paper colour as `#RRGGBB`. The
+   * strokes are separate `stroke` objects, so drawing never overwrites a title.
+   */
+  sketch: { title: string; width: number; height: number; background: string }
+  /** One mark drawn straight on the board. Logical size of its box; the stroke is a `stroke` object. */
+  ink: { width: number; height: number }
 }
 
 /**
@@ -176,7 +185,18 @@ export type Sticker = Base & {
   content: StickerAsset
 }
 
-export type Obj = Card | Board | Connection | Comment | Sticker
+/**
+ * One mark of ink on a sketch or board ink card (`cardId`). Each stroke is its
+ * own object, so concurrent drawing merges. Points are in the card's logical
+ * space. Follows its card between boards, like comments.
+ */
+export type Stroke = Base & InkMark & {
+  kind: 'stroke'
+  boardId: Id
+  cardId: Id
+}
+
+export type Obj = Card | Board | Connection | Comment | Sticker | Stroke
 
 export const HOME_BOARD_ID = 'home'
 
@@ -190,6 +210,8 @@ export const DEFAULT_SIZE: Record<CardType, { w: number; h: number }> = {
   file: { w: 260, h: 72 },
   movie: { w: 220, h: 370 },
   swatch: { w: 200, h: 190 },
+  sketch: { w: 320, h: 240 },
+  ink: { w: 80, h: 80 },
 }
 
 export const isAlive = (o: Obj | undefined): boolean => !!o && !o.purged && !o.deletedAt

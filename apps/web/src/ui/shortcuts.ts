@@ -95,7 +95,8 @@ export function installShortcuts(opts: { readOnly: boolean }) {
     if (e.key === 'Enter' && selection().size === 1) {
       const id = [...selection()][0]
       const c = doc.getCard(id)
-      if (c) {
+      // A mark drawn on the board has nothing to edit.
+      if (c && c.type !== 'ink') {
         e.preventDefault()
         beginEdit(id)
       }

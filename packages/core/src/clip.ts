@@ -4,7 +4,7 @@
 // gives everything new ids, keeps the layout around the paste point, and is
 // ordered so every object arrives after the ones it refers to.
 
-import type { Board, Card, Connection, Id, Obj, Sticker } from './model.ts'
+import type { Board, Card, Connection, Id, Obj, Sticker, Stroke } from './model.ts'
 import type { Rect, Vec } from './geometry.ts'
 import { cardText } from './cardtext.ts'
 import { tmdbPage } from './movie.ts'
@@ -73,8 +73,8 @@ export function collectClip(ids: Id[], src: ClipSource, opts: { allowBuried?: bo
     }
     if (objects.size > limit) return 'too-big'
   }
-  // Connections whose both ends came along.
-  for (const o of all) if (o.kind === 'connection' && objects.has(o.from) && objects.has(o.to)) add(o)
+  // Connections whose both ends came along, and the ink on every sketch that did.
+  for (const o of all) if ((o.kind === 'connection' && objects.has(o.from) && objects.has(o.to)) || (o.kind === 'stroke' && objects.get(o.cardId)?.kind === 'card')) add(o)
   if (objects.size > limit) return 'too-big'
   const boardId = picked[0].boardId
   const used = new Set([...objects.values()].flatMap((o) => (o.kind === 'card' && o.boardId === boardId ? cardLabelIds(o) : [])))
@@ -108,7 +108,7 @@ export function materialise(
   // Stacking keeps its order, above everything already there.
   const zRank = new Map([...roots].sort((a, b) => a.z - b.z).map((c, i) => [c.id, i + 1]))
   // Into a column: free cards (not columns) stack in reading order.
-  const intoColumn = opts.column ? [...roots].filter((c) => c.type !== 'column').sort((a, b) => a.y - b.y || a.x - b.x) : []
+  const intoColumn = opts.column ? [...roots].filter((c) => c.type !== 'column' && c.type !== 'ink').sort((a, b) => a.y - b.y || a.x - b.x) : []
   const out: Obj[] = []
   for (const o of clip.objects) {
     const base = { ...structuredClone(o), id: ids.get(o.id)!, createdAt: opts.now, deletedAt: null, purged: false } as Obj & { hidden?: unknown }
@@ -138,9 +138,14 @@ export function materialise(
       // Stickers on a copied board go with it, never back onto the original.
       const orig = o as Sticker
       base.boardId = orig.boardId === clip.boardId ? opts.boardId : map(orig.boardId)!
+    } else if (base.kind === 'stroke') {
+      ;(base as Stroke).cardId = map((o as Stroke).cardId)!
     }
     out.push(base)
   }
+  // Ink sits on whichever board its card landed on.
+  const placed = new Map(out.filter((o): o is Card => o.kind === 'card').map((c) => [c.id, c.boardId]))
+  for (const o of out) if (o.kind === 'stroke') o.boardId = placed.get(o.cardId) ?? o.boardId
   const rank = (o: Obj) => (o.kind === 'board' ? 0 : o.kind === 'card' ? ((o as Card).type === 'column' ? 1 : 2) : 3)
   // Boards nest: a parent before its children.
   const boards = out.filter((o) => o.kind === 'board') as Board[]
@@ -158,8 +163,8 @@ export function materialise(
 const COPY_HOST = '__copy-host__'
 
 /**
- * A deep copy of board `rootId` (every card, column member, connection, sticker
- * and board inside it, but no comments) plus a board card for it on `onBoard`,
+ * A deep copy of board `rootId` (every card, column member, connection, sticker,
+ * stroke and board inside it, but no comments) plus a board card for it on `onBoard`,
  * centred on `at`. The new board's parent is `onBoard`.
  */
 export function copyBoardTree(
@@ -221,7 +226,7 @@ export function parseClip(raw: string | null | undefined): ClipPayload | null {
   try {
     const c = JSON.parse(raw)
     if (c?.app !== 'doggynote' || c.v !== 1 || !Array.isArray(c.roots) || !Array.isArray(c.objects) || typeof c.boardId !== 'string') return null
-    if (c.objects.length > CLIP_LIMIT || !c.objects.every((o: Obj) => o && typeof o.id === 'string' && ['card', 'board', 'connection'].includes(o.kind))) return null
+    if (c.objects.length > CLIP_LIMIT || !c.objects.every((o: Obj) => o && typeof o.id === 'string' && ['card', 'board', 'connection', 'stroke'].includes(o.kind))) return null
     const clip = c as ClipPayload
     if ('labels' in c) clip.labels = parseLabels(c.labels)
     return clip
