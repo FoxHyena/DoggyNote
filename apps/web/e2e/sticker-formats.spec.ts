@@ -36,14 +36,16 @@ test('TGS and WEBM previews stay transparent, keep looping, pause on request and
 
   await previewSticker(page, '🦴')
   const player = large.locator('.sticker-animation video, .sticker-animation canvas')
-  if (browserName === 'webkit' && !await decodesWebm(page)) {
-    test.info().annotations.push({ type: 'limitation', description: 'This WebKit build has no VP9 VideoDecoder; the WEBM keeps its transparent still.' })
+  // A WebKit with neither native WebM alpha nor a VP9 decoder keeps the transparent still, never a black box.
+  if (browserName === 'webkit' && !await decodesWebm(page) && !await image.evaluate((el) => new Promise((done) => setTimeout(() => done(el.classList.contains('playing')), 5000)))) {
+    test.info().annotations.push({ type: 'limitation', description: 'This WebKit build can play neither WebM alpha nor VP9 frames; the WEBM keeps its transparent still.' })
     await expect(player).toHaveCount(0); await expect(large.locator('img')).toBeVisible()
     return
   }
   await expect(image).toHaveClass(/playing/)
-  if (browserName === 'webkit') await expect(large.locator('.sticker-animation canvas')).toHaveCount(1)
-  await expect.poll(() => alpha(player.last())).toEqual([0, 255])
+  // Whichever plays: a <video> that kept its alpha (Chromium; Linux WebKit's GStreamer) or decoded frames (macOS WebKit).
+  await expect(player).toHaveCount(1)
+  await expect.poll(() => alpha(player)).toEqual([0, 255])
   await large.screenshot({ path: resolve(dir, `${browserName}-webm.png`) })
   await page.waitForTimeout(3000)
   await expect(image).toHaveClass(/playing/)
