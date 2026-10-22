@@ -41,6 +41,16 @@ test('a site that hides its tags from bots still gives a real preview', async ({
   await expect.poll(() => loaded(card.getByTestId('link-image'))).toBe(true)
 })
 
+test('a site that only shows its tags to link-preview bots (fixvx) still gives a real preview', async ({ page }) => {
+  await freshBoard(page)
+  await page.getByTestId('tool-link').click()
+  await page.getByTestId('link-input').fill(`${FIXTURES}/embed.html`)
+  await page.keyboard.press('Enter')
+  const card = page.locator('.card-link')
+  await expect(card.getByTestId('link-title')).toHaveText('Nik Raccoon (@NikRaccoon)')
+  await expect.poll(() => loaded(card.getByTestId('link-image'))).toBe(true)
+})
+
 test('tall images are shown whole; in a column the card is a row with a whole thumbnail; the card height syncs', async ({ page }) => {
   const tall = { url: `${FIXTURES}/tall.html`, title: 'Tall dog', image: `${FIXTURES}/tall.png` }
   const { ids, card } = await seedLinks(page, [tall, { ...tall, column: true }])

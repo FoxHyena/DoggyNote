@@ -55,6 +55,12 @@ const shop = (ua = '') =>
     ? `<!doctype html><html><head><title>Amazon.com</title></head></html>`
     : `<!doctype html><html><head><title>Amazon.com: Squeaky Bone</title><meta property="og:title" content="Squeaky Bone, 3 Pack"><meta property="og:image" content="/green.png"></head></html>`
 
+// Like fixvx / vxtwitter: preview tags only for chat-app link bots; a browser just gets sent on.
+const embed = (ua = '') =>
+  /twitterbot|discordbot|telegrambot|facebookexternalhit/i.test(ua)
+    ? `<!doctype html><html><head><meta property="og:title" content="Nik Raccoon (@NikRaccoon)"><meta property="og:image" content="/green.png"></head></html>`
+    : `<!doctype html><html><head><title></title><meta http-equiv="refresh" content="0;url=https://x.example/"></head></html>`
+
 // A stand-in for TMDB (the Worker's TMDB_BASE / TMDB_IMAGE_BASE point here in e2e).
 const TMDB_TOKEN = 'e2e-tmdb-token'
 const providers = (stream) => ({ results: { US: { link: 'https://www.themoviedb.org/watch/e2e', flatrate: stream.map((provider_name) => ({ provider_name })), rent: [{ provider_name: 'Apple TV' }] } } })
@@ -92,6 +98,10 @@ createServer((req, res) => {
   const poster = /^\/tmdb-img\/w\d+\/(\w+)\.png$/.exec(url.pathname)
   if (poster && POSTERS[poster[1]]) {
     res.writeHead(200, { 'content-type': 'image/png' }).end(solidPng(POSTERS[poster[1]]))
+    return
+  }
+  if (url.pathname === '/embed.html') {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(embed(req.headers['user-agent']))
     return
   }
   if (url.pathname === '/shop.html') {

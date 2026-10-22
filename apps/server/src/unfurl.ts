@@ -32,15 +32,41 @@ export function isFetchableUrl(raw: string): URL | null {
 }
 
 /**
- * Safari on a Mac. Some sites (Amazon) send a bare page with no title or
+ * How we ask first: as a link-preview bot. Sites that build previews for chat apps
+ * (fixvx, vxtwitter) only send their tags to user agents they recognise as one.
+ */
+export const PREVIEW_UA = 'Mozilla/5.0 (compatible; DoggyNoteBot/1.0; like Twitterbot; +link-preview)'
+
+/**
+ * Safari on a Mac: the second try. Some sites (Amazon) send a bare page with no
  * OpenGraph tags to anything that looks like a bot.
  */
 export const BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15'
 
+type Page = { found: Unfurled; tagged: boolean }
+
+/** Ask as a preview bot; if the page has no preview tags (or refuses), ask again as a browser. */
 export async function unfurl(target: URL, fetcher: typeof fetch = fetch): Promise<Unfurled> {
+  let first: Page | undefined
+  try {
+    first = await readPage(target, PREVIEW_UA, fetcher)
+    if (first.tagged) return first.found
+  } catch {
+    first = undefined
+  }
+  try {
+    const second = await readPage(target, BROWSER_UA, fetcher)
+    return second.tagged || !first ? second.found : first.found
+  } catch (e) {
+    if (first) return first.found
+    throw e
+  }
+}
+
+async function readPage(target: URL, ua: string, fetcher: typeof fetch): Promise<Page> {
   const res = await fetcher(target.href, {
     headers: {
-      'user-agent': BROWSER_UA,
+      'user-agent': ua,
       accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'accept-language': 'en-US,en;q=0.9',
     },
@@ -49,8 +75,8 @@ export async function unfurl(target: URL, fetcher: typeof fetch = fetch): Promis
   })
   if (!res.ok) throw new Error(`upstream ${res.status}`)
   const type = res.headers.get('content-type') ?? ''
-  if (type.startsWith('image/')) return { image: target.href, title: target.pathname.split('/').pop() || target.hostname }
-  if (!type.includes('html')) return { title: target.hostname }
+  if (type.startsWith('image/')) return { found: { image: target.href, title: target.pathname.split('/').pop() || target.hostname }, tagged: true }
+  if (!type.includes('html')) return { found: { title: target.hostname }, tagged: false }
 
   const meta: Record<string, string> = {}
   let title = ''
@@ -88,11 +114,16 @@ export async function unfurl(target: URL, fetcher: typeof fetch = fetch): Promis
     }
   }
   const dec = (s?: string) => (s ? decodeEntities(s) : undefined)
+  const tagTitle = pick('og:title', 'twitter:title')
   return {
-    title: clip(dec(pick('og:title', 'twitter:title')) ?? dec(title), MAX_LEN.title),
-    description: clip(dec(pick('og:description', 'twitter:description', 'description')), MAX_LEN.description),
-    siteName: clip(dec(pick('og:site_name')), MAX_LEN.siteName),
-    image,
+    found: {
+      title: clip(dec(tagTitle) ?? dec(title), MAX_LEN.title),
+      description: clip(dec(pick('og:description', 'twitter:description', 'description')), MAX_LEN.description),
+      siteName: clip(dec(pick('og:site_name')), MAX_LEN.siteName),
+      image,
+    },
+    // A plain <title> alone isn't a preview: Amazon gives bots one, and nothing else.
+    tagged: !!(tagTitle || image),
   }
 }
 
