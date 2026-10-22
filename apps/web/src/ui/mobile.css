@@ -685,8 +685,9 @@ html[data-input='touch'] .share-panel .bar-btn:not(.share-tabs .bar-btn) { paddi
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .selection-bar.docked .bar-actions { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; gap: 0; }
   .selection-bar.docked .bar-actions .bar-btn {
-    flex: 1 1 0;
-    min-width: 46px;
+    /* Never narrower than its label (fonts differ by platform); spare room is shared. */
+    flex: 1 0 auto;
+    min-width: 44px;
     max-width: 72px;
     min-height: 52px;
     flex-direction: column;
