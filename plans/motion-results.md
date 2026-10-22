@@ -95,6 +95,12 @@ The re-grab test now flushes and verifies the 100px synthetic pull, then pauses 
 
 The first repeated local run passed **131/132**, including every corrected re-grab and toast case. One Add setup took 376ms because it combined 150ms of fixed pauses with runner latency, missing the old guard window. The fixed pauses were removed; real touchscreen taps, the strict **less than 350ms** assertion, visible reopening and editor-focus assertions remain. The complete corrected motion matrix then passed **132/132** across both desktop and phone engines, with two repeats and no retries. [Corrected-probe log](motion-audit-evidence/ci-probes-corrected.log). Follow-up CI status is tracked in [PR #69's checks](https://github.com/FoxHyena/DoggyNote/pull/69/checks).
 
+### CI runner setup correction
+
+The next run passed typecheck/unit tests, performance and WebKit shard 2, while three browser jobs spent more than ten minutes installing system dependencies. The earlier cancelled WebKit job log identifies the same bottleneck: after 18 minutes it was still fetching part of the 117MB dependency set from `http://azure.archive.ubuntu.com`.
+
+Before browser installation, CI now removes that HTTP Azure entry from the runner's mirror list. The HTTPS Ubuntu archive and security fallbacks, already configured by the [official runner-image script](https://github.com/actions/runner-images/blob/main/images/ubuntu/scripts/build/configure-apt-sources.sh), remain. Browser versions, package selection, signature verification, test commands, retries and performance budgets are unchanged. This narrow setup correction is included to let the actual checks run before merging.
+
 ## Completion boundary
 
 All selected fixes have an explicit **Approve** verdict in [the review](motion-review.md). Integrated automated verification is complete. Native and physical-device walkthroughs remain separate, visible requirements; this report does not claim the original hardware success state has been reached. The progress run remains open for these checks.
