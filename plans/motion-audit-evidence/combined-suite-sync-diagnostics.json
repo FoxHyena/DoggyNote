@@ -1,0 +1,212 @@
+[
+  {
+    "test": "multiplayer-live-drag-prev-1eb50-es-arrive-within-one-second-chromium",
+    "lastSyncResponses": [
+      {
+        "time": "2026-10-22T18:42:53.178Z",
+        "method": "GET",
+        "status": 200,
+        "more": false,
+        "reset": false,
+        "cursor": 2895,
+        "accessRevision": "825",
+        "objectCount": 17
+      },
+      {
+        "time": "2026-10-22T18:42:53.267Z",
+        "method": "GET",
+        "status": 200,
+        "more": false,
+        "reset": false,
+        "cursor": 2895,
+        "accessRevision": "825",
+        "objectCount": 0
+      },
+      {
+        "time": "2026-10-22T18:42:53.391Z",
+        "method": "GET",
+        "status": 200,
+        "more": false,
+        "reset": false,
+        "cursor": 2895,
+        "accessRevision": "825",
+        "objectCount": 0
+      },
+      {
+        "time": "2026-10-22T18:42:53.408Z",
+        "method": "GET",
+        "status": 200,
+        "more": false,
+        "reset": false,
+        "cursor": 2895,
+        "accessRevision": "825",
+        "objectCount": 0
+      },
+      {
+        "time": "2026-10-22T18:42:54.599Z",
+        "method": "GET",
+        "status": 200,
+        "more": false,
+        "reset": true,
+        "cursor": 2897,
+        "accessRevision": "826",
+        "objectCount": 2
+      },
+      {
+        "time": "2026-10-22T18:42:54.676Z",
+        "method": "GET",
+        "status": 200,
+        "more": true,
+        "reset": false,
+        "cursor": 1451,
+        "accessRevision": "826",
+        "objectCount": 1000
+      },
+      {
+        "time": "2026-10-22T18:42:54.744Z",
+        "method": "GET",
+        "status": 200,
+        "more": true,
+        "reset": false,
+        "cursor": 2863,
+        "accessRevision": "826",
+        "objectCount": 1000
+      },
+      {
+        "time": "2026-10-22T18:42:54.772Z",
+        "method": "GET",
+        "status": 200,
+        "more": false,
+        "reset": true,
+        "cursor": 2898,
+        "accessRevision": "827",
+        "objectCount": 18
+      },
+      {
+        "time": "2026-10-22T18:42:54.845Z",
+        "method": "GET",
+        "status": 200,
+        "more": null,
+        "reset": null,
+        "cursor": null,
+        "accessRevision": null,
+        "objectCount": 0
+      },
+      {
+        "time": "2026-10-22T18:42:54.902Z",
+        "method": "GET",
+        "status": -1,
+        "more": null,
+        "reset": null,
+        "cursor": null,
+        "accessRevision": null,
+        "objectCount": 0
+      }
+    ]
+  },
+  {
+    "test": "polish-Sync-now-says-it-is-cd7fd-s-never-a-greyed-out-button-chromium",
+    "lastSyncResponses": [
+      {
+        "time": "2026-10-22T18:43:28.247Z",
+        "method": "GET",
+        "status": 200,
+        "more": false,
+        "reset": false,
+        "cursor": 3014,
+        "accessRevision": "884",
+        "objectCount": 89
+      },
+      {
+        "time": "2026-10-22T18:43:28.732Z",
+        "method": "GET",
+        "status": 200,
+        "more": false,
+        "reset": true,
+        "cursor": 3016,
+        "accessRevision": "886",
+        "objectCount": 0
+      },
+      {
+        "time": "2026-10-22T18:43:29.229Z",
+        "method": "GET",
+        "status": 200,
+        "more": true,
+        "reset": true,
+        "cursor": 1451,
+        "accessRevision": "890",
+        "objectCount": 722
+      },
+      {
+        "time": "2026-10-22T18:43:29.721Z",
+        "method": "GET",
+        "status": 200,
+        "more": true,
+        "reset": true,
+        "cursor": 1451,
+        "accessRevision": "892",
+        "objectCount": 722
+      },
+      {
+        "time": "2026-10-22T18:43:30.201Z",
+        "method": "GET",
+        "status": 200,
+        "more": true,
+        "reset": true,
+        "cursor": 1451,
+        "accessRevision": "893",
+        "objectCount": 722
+      },
+      {
+        "time": "2026-10-22T18:43:30.743Z",
+        "method": "GET",
+        "status": 200,
+        "more": true,
+        "reset": true,
+        "cursor": 1451,
+        "accessRevision": "894",
+        "objectCount": 722
+      },
+      {
+        "time": "2026-10-22T18:43:31.262Z",
+        "method": "GET",
+        "status": 200,
+        "more": true,
+        "reset": false,
+        "cursor": 1451,
+        "accessRevision": "894",
+        "objectCount": 1000
+      },
+      {
+        "time": "2026-10-22T18:43:31.697Z",
+        "method": "GET",
+        "status": 200,
+        "more": true,
+        "reset": false,
+        "cursor": 2864,
+        "accessRevision": "894",
+        "objectCount": 1000
+      },
+      {
+        "time": "2026-10-22T18:43:32.128Z",
+        "method": "GET",
+        "status": -1,
+        "more": null,
+        "reset": null,
+        "cursor": null,
+        "accessRevision": null,
+        "objectCount": 0
+      },
+      {
+        "time": "2026-10-22T18:43:18.357Z",
+        "method": "POST",
+        "status": 200,
+        "more": null,
+        "reset": null,
+        "cursor": null,
+        "accessRevision": null,
+        "objectCount": 0
+      }
+    ]
+  }
+]

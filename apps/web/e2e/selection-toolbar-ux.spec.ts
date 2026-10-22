@@ -129,7 +129,7 @@ test('tooltips appear right over the hovered button', async ({ page }) => {
   expect(t.y + t.height).toBeLessThanOrEqual(b.y)
 })
 
-test('the bar sits above the selection, below it without room, and at the bottom when a tall selection runs off', async ({ page }) => {
+test('the bar sits above the selection, below it without room, and clear of a tall selection', async ({ page }) => {
   await freshBoard(page)
   const md = (lines: number) => Array.from({ length: lines }, (_, i) => `Line ${i + 1}`).join('\n\n')
   await seedCards(page, [note('Short one', 0, 300), note('Up top', 300, 0), note(md(60), 600, 0)])
@@ -153,10 +153,16 @@ test('the bar sits above the selection, below it without room, and at the bottom
   await tall.click({ position: { x: 30, y: 20 } })
   const tallBox = (await tall.boundingBox())!
   expect(tallBox.y + tallBox.height).toBeGreaterThan(canvas.y + canvas.height)
+  // A tall card may now leave clear space beside it: use that rather than cover its text.
   await expect.poll(async () => {
     const b = (await bar.boundingBox())!
-    return canvas.y + canvas.height - (b.y + b.height)
-  }).toBeLessThan(80)
+    return b.x + b.width <= tallBox.x || b.x >= tallBox.x + tallBox.width || b.y + b.height <= tallBox.y || b.y >= tallBox.y + tallBox.height
+  }).toBe(true)
+  const b = (await bar.boundingBox())!
+  expect(b.x).toBeGreaterThanOrEqual(canvas.x)
+  expect(b.x + b.width).toBeLessThanOrEqual(canvas.x + canvas.width)
+  expect(b.y).toBeGreaterThanOrEqual(canvas.y)
+  expect(b.y + b.height).toBeLessThanOrEqual(canvas.y + canvas.height)
 })
 
 test('a column header centres its title and count, and collapse slides', async ({ page }) => {

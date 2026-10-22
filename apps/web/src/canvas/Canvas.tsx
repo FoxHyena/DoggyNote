@@ -39,7 +39,7 @@ import {
 import { COPY } from '@doggynote/theme'
 import { enterBoard } from '../state/keyboardNav.ts'
 import { CollaborationOverlay } from '../ui/Collaboration.tsx'
-import { pingAt, liveState, clearLivePreviews } from '../state/realtime.ts'
+import { peers, liveState, clearLivePreviews } from '../state/realtime.ts'
 import * as doc from '../state/doc.ts'
 import {
   beginEdit,
@@ -74,12 +74,13 @@ import { setDropTarget, dropTarget, connectPreview, setConnectPreview, draggingI
 import { snapTick, snapToGrid } from '../state/grid.ts'
 import { handleCanvasDrop, handleCanvasPaste } from './paste.ts'
 import { isClipProxy } from '../state/clipboard.ts'
-import { BoardIconSvg, Icon } from '../ui/icons.tsx'
+import { BoardIconSvg } from '../ui/icons.tsx'
 import { setToyboxOpen, toyboxOpen } from '../ui/ToyboxPanel.tsx'
 import { setThreadCardId, threadCardId } from '../state/comments.ts'
 import { haptic, phone, touch } from '../state/device.ts'
 import { resetPageScroll, visible as visibleArea } from '../state/viewport.ts'
 import { showToast } from '../state/toast.ts'
+import { CardContextMenu, type ContextPoint } from '../ui/CardContextMenu.tsx'
 
 type Gesture =
   | { kind: 'sticker'; original: Sticker; action: 'move' | 'transform'; start: Vec; client: Vec; canDrag: boolean; moved: boolean; snap: Record<Id, Partial<Obj>> }
@@ -113,7 +114,7 @@ const EDIT_DOCK = 56
 type Client = { clientX: number; clientY: number; altKey?: boolean }
 
 export function Canvas(props: { readOnly: boolean }) {
-  const [contextPoint, setContextPoint] = createSignal<{ x: number; y: number; screenX: number; screenY: number } | null>(null)
+  const [contextPoint, setContextPoint] = createSignal<ContextPoint | null>(null)
   let vp!: HTMLDivElement
   const [marquee, setMarquee] = createSignal<Rect | null>(null)
   const [spaceHeld, setSpaceHeld] = createSignal(false)
@@ -1455,10 +1456,19 @@ export function Canvas(props: { readOnly: boolean }) {
       onPointerCancel={onPointerUp}
       onDblClick={onDblClick}
       onContextMenu={(e) => {
-        // Long-press is ours on touch (lift a card), not the browser's menu.
-        if (lastPointerType !== 'touch' && (liveState() !== 'live' || (e.target as Element).closest('input,textarea,[contenteditable="true"],a,button'))) return
+        // Long-press lifts cards on touch; editing fields keep their native menu.
+        if (lastPointerType === 'touch') { e.preventDefault(); return }
+        const target = e.target as Element
+        if (target.closest('input,textarea,[contenteditable="true"],a')) return
+        const id = cardIdAt(target, e)
+        const card = id ? doc.getCard(id) : undefined
+        if (!card && target.closest('button,[data-nodrag]')) return
+        const canPing = liveState() === 'live' && peers().length > 0
+        if ((!card || props.readOnly) && !canPing) return
         e.preventDefault()
-        if (lastPointerType !== 'touch') { const p = toWorld(e); setContextPoint({ ...p, screenX: e.clientX, screenY: e.clientY }) }
+        endEdit()
+        if (card && !props.readOnly) select([card.id])
+        setContextPoint({ ...toWorld(e), screenX: e.clientX, screenY: e.clientY, cardId: props.readOnly ? null : card?.id ?? null, returnTo: (card && cardEl(card.id)) || vp })
       }}
       onDragOver={(e) => {
         if (!props.readOnly) e.preventDefault()
@@ -1471,7 +1481,7 @@ export function Canvas(props: { readOnly: boolean }) {
     >
       <Show when={!props.readOnly}><p id="canvas-keys" class="save-label-quiet">Option or Alt with the arrow keys moves between cards. The arrow keys move the selected card. Enter edits a card or opens a board.</p></Show>
       <CollaborationOverlay />
-      <Show when={contextPoint()}><div class="menu canvas-ping-menu" data-nodrag style={{ position: 'fixed', left: `${Math.min(contextPoint()!.screenX, innerWidth - 160)}px`, top: `${Math.min(contextPoint()!.screenY, innerHeight - 60)}px`, 'z-index': 50 }}><button class="menu-item" onMouseDown={(e) => e.preventDefault()} onClick={() => { pingAt(contextPoint()!); setContextPoint(null) }} onBlur={() => setContextPoint(null)} onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setContextPoint(null); document.querySelector<HTMLButtonElement>('[data-testid="collaborators"]')?.focus() } }} ref={(el) => queueMicrotask(() => el.focus())}><Icon name="lookHere" size={18} />{COPY.lookHere}</button></div></Show>
+      <Show when={contextPoint()} keyed>{(point) => <CardContextMenu point={point} close={() => setContextPoint(null)} />}</Show>
       <div class="world" data-testid="world" style={{ transform: transform() }}>
         <Show when={snapping()}>
           <GridGlow />
@@ -1701,6 +1711,7 @@ export function animateCamera(to: { x: number; y: number; zoom: number }, ms = 2
   const finish = () => {
     if (version !== cameraAnimation) return
     cancelCameraAnimation()
+    setCamera(to)
     done?.()
   }
   const land = () => {

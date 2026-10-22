@@ -1,0 +1,57 @@
+[WebServer] (node:51791) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:51874) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [plugin builtin:vite-reporter]
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[WebServer] (node:51900) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:51917) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:51935) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:51964) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:52091) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:52134) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:52185) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:51961) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:53129) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:53131) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [plugin builtin:vite-reporter]
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[WebServer] (node:53140) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:53141) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:53149) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 4 tests using 1 worker
+
+(node:53151) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+STICKER_PERF {"browserName":"chromium","overview":{"p50":10,"p95":10.899999999999864,"samples":118},"detail":{"p50":10,"p95":10.799999999999727,"samples":123},"detailNodes":70,"heapMB":10}
+  ✓  1 [chromium] › e2e/perf-stickers.spec.ts:23:1 › 500 sticker overlays share the overview atlas, cull at detail, and pause offscreen playback @perf (5.5s)
+STICKER_PACK_PERF {"browserName":"chromium","baseline":{"p50":10,"p95":10.899999999999864,"samples":131},"closed":{"p50":10,"p95":10.900000000000091,"samples":120},"open":{"p50":10,"p95":10.800000000000182,"samples":121},"mountedImages":21,"requestedImages":20}
+  ✓  2 [chromium] › e2e/perf-stickers.spec.ts:72:1 › 100 unique pack images stay bounded and two static stickers keep pan smooth with the tray open or closed @perf (5.5s)
+STICKER_ANIMATED_PERF {"browserName":"chromium","sample":{"p50":10,"p95":10.899999999999977,"samples":125},"players":10}
+  ✓  3 [chromium] › e2e/perf-stickers.spec.ts:109:1 › a board full of animated stickers plays at most twelve at once and keeps pan smooth @perf (3.4s)
+(node:58244) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PERF {"loadMs":289,"fitCards":0,"bigImages":0,"mountedAt100":35,"pan":{"frames":240,"p50":10,"p95":11,"max":11.099999999999909},"zoomOut":{"frames":160,"p50":10,"p95":10.899999999999636,"max":11.100000000000364},"panFar":{"p95":10.799999999999272,"worst":10.899999999999636},"heapMB":12,"nodes":731}
+  ✓  4 [chromium] › e2e/perf.spec.ts:132:1 › 1,000 cards + 300 images: smooth pan and zoom, culled DOM, small heap @perf (21.1s)
+
+  4 passed (1.4m)

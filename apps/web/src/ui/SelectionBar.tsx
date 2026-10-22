@@ -6,7 +6,7 @@ import * as doc from '../state/doc.ts'
 import { columnCollapsed, setColumnCollapsed } from '../state/columns.ts'
 import { burySelection, setColor } from '../state/actions.ts'
 import { alignSelection, isPositionLocked, lockSelection, selectedAlignmentUnits, unlockSelectionLayouts } from '../state/position.ts'
-import { beginEdit, camera, clearSelection, connectMode, editingId, openBoard, selectMore, selection, setConnectMode, setSelectMore, viewport } from '../state/ui.ts'
+import { beginEdit, camera, cardContextOpen, clearSelection, connectMode, editingId, openBoard, selectMore, selection, setConnectMode, setSelectMore, viewport } from '../state/ui.ts'
 import { phone, touch } from '../state/device.ts'
 import { draggingIds } from '../canvas/dnd.ts'
 import { layoutTick, rectOf } from '../canvas/layout.ts'
@@ -18,6 +18,7 @@ import { TodoOptions } from './TodoOptions.tsx'
 import { BarMenu } from './BarMenu.tsx'
 import { duplicateSelection } from '../state/clipboard.ts'
 import { LabelsButton } from './Labels.tsx'
+import { cardObstacles, placeFloating } from './floatingPlacement.ts'
 
 // Floating bar for the current selection: colour, board icon, bury (trash).
 // On touch it also offers what a mouse does with clicks and modifier keys
@@ -32,7 +33,7 @@ export function SelectionBar() {
   // While typing in a to-do list, its colour and list options stay within reach
   // above it (touch has the docked bar instead).
   const editingList = () => !docked() && doc.getCard(editingId() ?? '')?.type === 'todo'
-  const show = () => (cards().length || conns().length) && !draggingIds().size && (!editingId() || editingList()) && !connectMode()
+  const show = () => !cardContextOpen() && (cards().length || conns().length) && !draggingIds().size && (!editingId() || editingList()) && !connectMode()
   const sole = () => (cards().length === 1 && selection().size === 1 ? cards()[0] : undefined)
   const selectedColumn = () => {
     const c = sole()
@@ -83,6 +84,7 @@ export function SelectionBar() {
 
   // Float just above the selection, or below it if there's no room.
   const pos = createMemo(() => {
+    if (docked()) return { left: 0, top: 0 }
     layoutTick()
     const rects = cards()
       .map((c) => rectOf(c.id))
@@ -99,24 +101,16 @@ export function SelectionBar() {
     })
     const tl = worldToScreen(cam, { x: u.x, y: Math.min(u.y, ...parentTops) })
     const br = worldToScreen(cam, { x: u.x + u.w, y: u.y + u.h })
-    const BAR = barSize().height
-    const half = Math.min(barSize().width, v.width - 16) / 2
-    const left = Math.min(Math.max((tl.x + br.x) / 2, half + 8), Math.max(half + 8, v.width - half - 8))
+    const size = { width: Math.min(barSize().width, v.width - 16), height: barSize().height }
+    const x = (tl.x + br.x - size.width) / 2
     const controls = canvasControlsSize()
-    const controlsTop = v.height - 16 - controls.height
-    const clearOfControls = (top: number) => left - half >= 24 + controls.width || top + BAR <= controlsTop - 8
-    const above = tl.y - BAR - 14
-    const below = br.y + 14
-    if (above >= 8) return { left, top: above }
-    if (below + BAR <= v.height - 8 && clearOfControls(below)) return { left, top: below }
-    // No room on either side. If the selection runs off the bottom of the window, sit
-    // at the bottom: its header and controls stay clear and its resize corner is off
-    // screen anyway. Otherwise sit at the top, clear of its footer and resize corner.
-    if (br.y > v.height) {
-      const bottom = v.height - BAR - 8
-      return { left, top: clearOfControls(bottom) ? bottom : controlsTop - BAR - 12 }
-    }
-    return { left, top: 8 }
+    const at = placeFloating(size, { x: 8, y: 8, w: v.width - 16, h: v.height - 16 }, [
+      { x, y: tl.y - size.height - 14 },
+      { x, y: br.y + 14 },
+      { x: br.x + 14, y: tl.y },
+      { x: tl.x - size.width - 14, y: tl.y },
+    ], [...cardObstacles(cards().map((c) => c.id)), { x: 16, y: v.height - 16 - controls.height, w: controls.width, h: controls.height }])
+    return { left: at.x + size.width / 2, top: at.y }
   })
 
   return (

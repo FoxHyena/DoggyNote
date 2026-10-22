@@ -164,8 +164,9 @@ html[data-input="mouse"] .icon-btn:hover:not(:disabled) {
   z-index: 50;
 }
 
-/* The canvas right-click menu sits at the pointer: size it to its one item, not to the screen edge. */
+/* Canvas menus sit at the pointer; a solo location ping stays compact. */
 .canvas-ping-menu { right: auto; min-width: 0; }
+.card-context-menu { min-width: 190px; }
 
 .menu-item {
   display: flex;
@@ -2380,7 +2381,11 @@ html[data-input='touch'] .movie-icon-btn::after {
   color: var(--dn-text);
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
   z-index: 60;
-  animation: slide-in 160ms ease-out;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), opacity 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  @starting-style {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
 }
 
 

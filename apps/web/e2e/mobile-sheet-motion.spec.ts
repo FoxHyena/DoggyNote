@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
-import { freshBoard } from './helpers.ts'
-import { Fingers } from './touch.ts'
+import { cardByText, freshBoard } from './helpers.ts'
+import { Fingers, note, seedCards } from './touch.ts'
 
 test.beforeEach(async ({ page }) => { await freshBoard(page) })
 
@@ -238,4 +238,22 @@ test('a scrolled Share sheet keeps its grip above the sticky close control', asy
   expect(control.y).toBeGreaterThanOrEqual(grip.y + grip.height - 1)
   await close.tap()
   await expect(sheet).toHaveCount(0)
+})
+
+test('a mouse-opened card menu on a phone dismisses from its explicit grip', async ({ page }) => {
+  await seedCards(page, [note('Hybrid card menu', 20, 20)])
+  const card = cardByText(page, 'Hybrid card menu')
+  await card.click({ button: 'right', position: { x: 30, y: 20 } })
+  const sheet = page.getByTestId('canvas-context-menu')
+  await expect(sheet).toBeVisible()
+  await sheet.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished.catch(() => undefined))))
+  const grip = (await sheet.getByTestId('sheet-grip').boundingBox())!
+  const point = { x: grip.x + grip.width / 2, y: grip.y + 12 }
+  const finger = new Fingers(page)
+  await finger.press(0, point)
+  await finger.move(0, { ...point, y: point.y + 100 })
+  await page.waitForTimeout(150)
+  await finger.release(0)
+  await expect(sheet).toHaveCount(0)
+  await expect(card).toBeFocused()
 })
