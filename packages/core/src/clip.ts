@@ -12,6 +12,13 @@ import { boardLabels, cardLabelIds, parseLabels, type Label } from './labels.ts'
 
 export const CLIP_MIME = 'application/x-doggynote+json'
 export const CLIP_LIMIT = 500
+/**
+ * Strokes don't count toward CLIP_LIMIT: one detailed sketch can hold
+ * hundreds. They have caps of their own, on count and on points, so a clip
+ * stays a few megabytes at most (each stroke is capped at MAX_INK_POINTS).
+ */
+export const CLIP_STROKE_LIMIT = 10_000
+export const CLIP_INK_POINT_LIMIT = 500_000
 
 export type ClipPayload = {
   v: 1
@@ -37,7 +44,7 @@ export type ClipSource = {
 
 const alive = (o: Obj | undefined) => !!o && !o.purged && !o.deletedAt && !(o as { hidden?: boolean }).hidden
 
-/** Gather a clip for the picked card ids. Null if there's nothing to copy; 'too-big' past CLIP_LIMIT objects. */
+/** Gather a clip for the picked card ids. Null if there's nothing to copy; 'too-big' past CLIP_LIMIT objects (strokes have their own caps). */
 export function collectClip(ids: Id[], src: ClipSource, opts: { allowBuried?: boolean; limit?: number } = {}): ClipPayload | 'too-big' | null {
   const limit = opts.limit ?? CLIP_LIMIT
   const ok = (o: Obj | undefined): o is Obj => (opts.allowBuried ? !!o && !o.purged : alive(o))
@@ -45,7 +52,13 @@ export function collectClip(ids: Id[], src: ClipSource, opts: { allowBuried?: bo
   if (!picked.length) return null
   const all = [...src.all()].filter((o) => alive(o))
   const objects = new Map<Id, Obj>()
-  const add = (o: Obj) => objects.set(o.id, structuredClone(o))
+  let strokes = 0
+  let points = 0
+  const add = (o: Obj) => {
+    if (o.kind === 'stroke' && !objects.has(o.id)) { strokes++; points += Array.isArray(o.points) ? o.points.length : 0 }
+    objects.set(o.id, structuredClone(o))
+  }
+  const tooBig = () => objects.size - strokes > limit || strokes > CLIP_STROKE_LIMIT || points > CLIP_INK_POINT_LIMIT
   // Roots, flattened to world positions.
   for (const c of picked) {
     const r = src.rect(c.id)
@@ -71,11 +84,11 @@ export function collectClip(ids: Id[], src: ClipSource, opts: { allowBuried?: bo
         if (o.kind === 'card' && o.type === 'board') boardsToCopy.push((o as Card<'board'>).content.boardId)
       }
     }
-    if (objects.size > limit) return 'too-big'
+    if (tooBig()) return 'too-big'
   }
   // Connections whose both ends came along, and the ink on every sketch that did.
   for (const o of all) if ((o.kind === 'connection' && objects.has(o.from) && objects.has(o.to)) || (o.kind === 'stroke' && objects.get(o.cardId)?.kind === 'card')) add(o)
-  if (objects.size > limit) return 'too-big'
+  if (tooBig()) return 'too-big'
   const boardId = picked[0].boardId
   const used = new Set([...objects.values()].flatMap((o) => (o.kind === 'card' && o.boardId === boardId ? cardLabelIds(o) : [])))
   const labels = boardLabels(src.get(boardId) as Board | undefined).filter((l) => used.has(l.id))
@@ -226,7 +239,8 @@ export function parseClip(raw: string | null | undefined): ClipPayload | null {
   try {
     const c = JSON.parse(raw)
     if (c?.app !== 'doggynote' || c.v !== 1 || !Array.isArray(c.roots) || !Array.isArray(c.objects) || typeof c.boardId !== 'string') return null
-    if (c.objects.length > CLIP_LIMIT || !c.objects.every((o: Obj) => o && typeof o.id === 'string' && ['card', 'board', 'connection', 'stroke'].includes(o.kind))) return null
+    const strokes = c.objects.filter((o: Obj) => o?.kind === 'stroke')
+    if (c.objects.length - strokes.length > CLIP_LIMIT || strokes.length > CLIP_STROKE_LIMIT || !c.objects.every((o: Obj) => o && typeof o.id === 'string' && ['card', 'board', 'connection', 'stroke'].includes(o.kind))) return null
     const clip = c as ClipPayload
     if ('labels' in c) clip.labels = parseLabels(c.labels)
     return clip

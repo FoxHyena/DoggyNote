@@ -5,7 +5,7 @@ import { accessGuard, bumpAccess, loadAccess, newBoardAccess, type Access } from
 import { prepareNote } from './notes.ts'
 import { checkPositionLocks, dropLockedLayout, positionWriteGuards } from './position.ts'
 import { notifyRooms } from './realtime.ts'
-import { LABEL_FIELD, isBoardInkSize, isSketchContent, validLabelField, decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
+import { LABEL_FIELD, isBoardInkSize, isSketchContent, isSketchPaper, isSketchTitle, validLabelField, decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
 import * as Y from 'yjs'
 
 // Push: field patches, merged per top-level field (last write to arrive wins).
@@ -328,7 +328,9 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
       if (o.kind === 'card') {
         if (!['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie', 'swatch', 'sketch', 'ink'].includes(o.type as string)) ok = false
         // A sketch's paper colour goes straight into CSS on every device: only canonical #RRGGBB.
-        if (o.type === 'sketch' && !o.purged && !isSketchContent(o.content)) ok = false
+        if (o.type === 'sketch' && !o.purged && (!isSketchContent(o.content) || (o.sketchPaper != null && !isSketchPaper(o.sketchPaper)) || (o.sketchTitle != null && !isSketchTitle(o.sketchTitle)))) ok = false
+        // Only sketches carry a sketch title or paper.
+        if (o.type !== 'sketch' && ('sketchTitle' in patch || 'sketchPaper' in patch)) ok = false
         // Ink drawn on the board sits on the board, never in a column.
         if (o.type === 'ink' && !o.purged && (!isBoardInkSize(o.content) || o.columnId != null)) ok = false
         // A colour card's HEX goes straight into CSS on every device: only canonical #RRGGBB.

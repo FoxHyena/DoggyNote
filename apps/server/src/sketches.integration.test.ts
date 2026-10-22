@@ -97,3 +97,17 @@ it('ink in a Toy box is private to its owner', async () => {
   const seen = objects.find((o) => o.id === 'k1')
   expect(seen?.points).toBeUndefined()
 })
+
+it('title and paper are fields of their own: a rename and a recolour both survive', async () => {
+  const { push, request } = await fixture()
+  await push(sketch('s1'))
+  expect((await push({ id: 's1', sketchTitle: 'Walk route' })).status).toBe(200)
+  expect((await push({ id: 's1', sketchPaper: '#EDEDEA' })).status).toBe(200)
+  const { objects } = await (await request('/sync?since=0')).json() as { objects: { id: string; sketchTitle?: string; sketchPaper?: string }[] }
+  expect(objects.find((o) => o.id === 's1')).toMatchObject({ sketchTitle: 'Walk route', sketchPaper: '#EDEDEA' })
+  expect((await push({ id: 's1', sketchPaper: '#ededea' })).status).toBe(403)
+  expect((await push({ id: 's1', sketchPaper: 'url(x)' })).status).toBe(403)
+  const column = { id: 'c1', kind: 'card', type: 'column', boardId: 'root', x: 0, y: 0, w: 280, h: 120, z: 1, color: 'none', createdAt: 1, content: { title: '' } }
+  expect((await push(column)).status).toBe(200)
+  expect((await push({ id: 'c1', sketchTitle: 'no' })).status).toBe(403)
+})

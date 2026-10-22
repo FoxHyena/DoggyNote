@@ -1,4 +1,4 @@
-import type { CardContent } from './model.ts'
+import type { Card, CardContent } from './model.ts'
 import type { Rect, Vec } from './geometry.ts'
 import { normalizeSwatchHex } from './swatch.ts'
 
@@ -46,6 +46,23 @@ export function sketchContent(value: unknown): CardContent['sketch'] {
     background: sketchPaperColor(c.background),
   }
 }
+
+/**
+ * Everything a sketch shows: its paper size from `content`, and its title and
+ * paper colour from their own fields (`sketchTitle`, `sketchPaper`), falling
+ * back to the older `content.title`/`content.background` when those are missing.
+ */
+export function sketchOf(card: Pick<Card, 'content' | 'sketchTitle' | 'sketchPaper'>): CardContent['sketch'] {
+  const c = sketchContent(card.content)
+  return {
+    ...c,
+    title: typeof card.sketchTitle === 'string' ? card.sketchTitle.slice(0, 1000) : c.title,
+    background: isSketchPaper(card.sketchPaper) ? card.sketchPaper : c.background,
+  }
+}
+
+/** What the server and agents accept as a sketch's title field. */
+export const isSketchTitle = (value: unknown): value is string => typeof value === 'string' && value.length <= 1000
 
 /** What the server and agents accept as a sketch's content. */
 export function isSketchContent(value: unknown): value is CardContent['sketch'] {

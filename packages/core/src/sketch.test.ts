@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  DEFAULT_SKETCH, DEFAULT_SKETCH_PAPER, SKETCH_PAPERS, boardInkEnvelope, boardInkHeight, boardInkLocal, collectClip, copyBoardTree, hitInkStroke,
+  CLIP_LIMIT, CLIP_STROKE_LIMIT, DEFAULT_SKETCH, DEFAULT_SKETCH_PAPER, sketchOf, SKETCH_PAPERS, boardInkEnvelope, boardInkHeight, boardInkLocal, collectClip, copyBoardTree, hitInkStroke,
   inkBounds, inkPath, isInkMark, isSketchContent, isSketchPaper, materialise, parseClip, sketchContent, sketchPaperColor, sortedInkStrokes,
   type Board, type Card, type ClipPayload, type InkMark, type Obj, type Stroke,
 } from './index.ts'
@@ -44,6 +44,30 @@ describe('sketch content', () => {
     const card = { id: 's1', kind: 'card', type: 'sketch', boardId: 'b1', x: 0, y: 0, w: 320, h: 240, z: 1, color: 'none', createdAt: 1, content: DEFAULT_SKETCH }
     expect(agentObjectSchema.safeParse(card).success).toBe(true)
     expect(agentObjectSchema.safeParse({ ...card, content: { ...DEFAULT_SKETCH, background: 'red' } }).success).toBe(false)
+  })
+})
+
+describe('sketch title and paper fields', () => {
+  const card = { content: { ...DEFAULT_SKETCH, title: 'Old name', background: '#EDEDEA' } }
+
+  it('reads the old content fields when a sketch has no fields of its own', () => {
+    expect(sketchOf(card)).toEqual({ ...DEFAULT_SKETCH, title: 'Old name', background: '#EDEDEA' })
+    expect(sketchOf({ ...card, sketchTitle: null, sketchPaper: null }).title).toBe('Old name')
+  })
+
+  it('prefers its own title and paper, each on its own', () => {
+    expect(sketchOf({ ...card, sketchTitle: 'Walk route' })).toMatchObject({ title: 'Walk route', background: '#EDEDEA' })
+    expect(sketchOf({ ...card, sketchPaper: '#2B2E34' })).toMatchObject({ title: 'Old name', background: '#2B2E34' })
+    // A cleared title is a title: it doesn't bring the old one back.
+    expect(sketchOf({ ...card, sketchTitle: '' }).title).toBe('')
+    // Junk paper never reaches CSS.
+    expect(sketchOf({ ...card, sketchPaper: 'url(x)' }).background).toBe('#EDEDEA')
+  })
+
+  it('agents can carry the fields, but only valid paper', () => {
+    const c = { id: 's1', kind: 'card', type: 'sketch', boardId: 'b1', x: 0, y: 0, w: 320, h: 240, z: 1, color: 'none', createdAt: 1, content: DEFAULT_SKETCH }
+    expect(agentObjectSchema.safeParse({ ...c, sketchTitle: 'Plan', sketchPaper: '#FBF3DF' }).success).toBe(true)
+    expect(agentObjectSchema.safeParse({ ...c, sketchPaper: 'red' }).success).toBe(false)
   })
 })
 
@@ -104,6 +128,14 @@ describe('sketches travel with copies', () => {
     const ink = objects.find((o) => o.kind === 'stroke') as Stroke
     expect([ink.cardId, ink.boardId, copy.boardId]).toEqual([copy.id, 'T', 'T'])
     expect(ink.points).toEqual(stroke.points)
+  })
+
+  it('strokes don’t count toward the clip limit, but have caps of their own', () => {
+    const many = (n: number) => Array.from({ length: n }, (_, i) => ({ ...stroke, id: `k${i}`, order: i }) as Stroke)
+    const big = collectClip(['s'], store([sketch, ...many(CLIP_LIMIT + 100)])) as ClipPayload
+    expect(big.objects.filter((o) => o.kind === 'stroke')).toHaveLength(CLIP_LIMIT + 100)
+    expect(parseClip(JSON.stringify(big))).not.toBeNull()
+    expect(collectClip(['s'], store([sketch, ...many(CLIP_STROKE_LIMIT + 1)]))).toBe('too-big')
   })
 
   it('duplicating a board copies the strokes on its sketches', () => {

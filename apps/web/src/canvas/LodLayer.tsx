@@ -1,6 +1,6 @@
 import { cacheStickerAlpha } from '../ui/StickerImage.tsx'
 import { createEffect, createSignal, onCleanup, onMount } from 'solid-js'
-import { intersects, isBoardInkSize, sketchContent, swatchHex, stickerBounds, stickerHeight, worldToScreen, type Card, type Rect } from '@doggynote/core'
+import { intersects, isBoardInkSize, sketchOf, swatchHex, stickerBounds, stickerHeight, worldToScreen, type Card, type Rect } from '@doggynote/core'
 import { CARD_COLORS, cardColor, customText, isPresetColor, type CardColor } from '@doggynote/theme'
 import { drawInkStroke } from '../drawing/InkLayer.tsx'
 import { theme as themeSignal } from '../theme.ts'
@@ -243,7 +243,7 @@ export function LodLayer() {
       }
       if (c.type === 'sketch' || c.type === 'ink') {
         // The paper (sketches), then the ink itself, scaled from the card's logical space.
-        const sketch = c.type === 'sketch' ? sketchContent(c.content) : null
+        const sketch = c.type === 'sketch' ? sketchOf(c) : null
         const logical = sketch ?? (isBoardInkSize(c.content) ? c.content : null)
         if (!logical) return
         const ph = sketch ? Math.min(h, (w * sketch.height) / sketch.width) : h
@@ -402,7 +402,7 @@ export function LodLayer() {
     selection()
     thumbTick()
     for (const s of doc.stickersOn(boardId())) void (s.x, s.y, s.w, s.angle, s.z, s.content.assetId)
-    for (const c of doc.cardsOn(boardId())) void (c.x, c.y, c.w, c.h, c.z, c.color, c.columnId, c.order, columnCollapsed(c), c.type === 'swatch' && (c as Card<'swatch'>).content?.hex, c.type === 'sketch' && c.content, (c.type === 'sketch' || c.type === 'ink') && doc.strokesOn(c.id))
+    for (const c of doc.cardsOn(boardId())) void (c.x, c.y, c.w, c.h, c.z, c.color, c.columnId, c.order, columnCollapsed(c), c.type === 'swatch' && (c as Card<'swatch'>).content?.hex, c.type === 'sketch' && (c.content, c.sketchTitle, c.sketchPaper), (c.type === 'sketch' || c.type === 'ink') && doc.strokesOn(c.id))
     if (!frame) frame = requestAnimationFrame(draw)
   })
   onCleanup(() => {

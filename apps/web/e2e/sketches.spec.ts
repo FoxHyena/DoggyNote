@@ -165,6 +165,62 @@ test('someone else on the board sees the strokes as they are drawn', async ({ pa
   await expect(sketchCard(other).locator('[data-stroke-id]')).toHaveCount(1, { timeout: 15000 })
 })
 
+test('one person renames a sketch while another changes its paper: both changes survive', async ({ page, browser }) => {
+  await page.getByTestId('tool-sketch').click()
+  await page.getByTestId('sketch-done').click()
+  await waitForSync(page)
+  const other = await friend(browser, page)
+  await expect(sketchCard(other)).toHaveCount(1)
+
+  // Both open the same sketch at once.
+  await sketchCard(page).getByTestId('sketch-paper').dblclick()
+  await sketchCard(other).getByTestId('sketch-paper').dblclick()
+  await expect(editor(page)).toBeVisible()
+  await expect(editor(other)).toBeVisible()
+  await page.getByTestId('sketch-title').fill('Walk route')
+  await other.getByTestId('sketch-paper-button').click()
+  await other.locator('[data-testid="sketch-paper"][data-hex="#E3EEF9"]').click()
+  await other.keyboard.press('Escape')
+  // Each saves while the other's editor is still open.
+  await page.getByTestId('sketch-done').click()
+  await waitForSync(page)
+  await other.getByTestId('sketch-done').click()
+  await waitForSync(other)
+
+  for (const p of [page, other]) {
+    await p.reload()
+    await expect(sketchCard(p).getByTestId('sketch-card-title')).toHaveText('Walk route')
+    await expect.poll(() => background(sketchCard(p).getByTestId('sketch-paper'))).toBe('rgb(227, 238, 249)')
+  }
+})
+
+test('a sketch with more strokes than the clip limit still duplicates', async ({ page }) => {
+  const board = boardOf(page)
+  const sketchId = crypto.randomUUID()
+  const card = { id: sketchId, patch: { id: sketchId, kind: 'card', type: 'sketch', boardId: board, x: 0, y: 0, w: 320, h: 240, z: 1, color: 'none', columnId: null, createdAt: Date.now(), content: { title: '', width: 800, height: 600, background: '#FFFFFF' } } }
+  const strokes = Array.from({ length: 520 }, (_, i) => {
+    const id = crypto.randomUUID()
+    const x = 20 + (i % 26) * 30, y = 20 + Math.floor(i / 26) * 28
+    return { id, patch: { id, kind: 'stroke', boardId: board, cardId: sketchId, tool: 'pen', color: '#292D35', width: 3, opacity: 1, order: i + 1, points: [{ x, y }, { x: x + 20, y: y + 10 }], bounds: { x: x - 1.5, y: y - 1.5, w: 23, h: 13 }, createdAt: Date.now() } }
+  })
+  // The server takes 200 changes per push.
+  for (const changes of [[card, ...strokes.slice(0, 199)], strokes.slice(199, 399), strokes.slice(399)]) {
+    const res = await postSync(page.request, { data: { changes } })
+    expect(res.ok(), await res.text()).toBe(true)
+  }
+  await setCamera(page, { x: -40, y: -40, zoom: 1 })
+  await expect(sketchCard(page).locator('[data-stroke-id]')).toHaveCount(520)
+  await sketchCard(page).getByTestId('sketch-paper').click()
+  await page.getByTestId('duplicate-selection').click()
+  await expect(sketchCard(page)).toHaveCount(2)
+  await expect(sketchCard(page).nth(1).locator('[data-stroke-id]')).toHaveCount(520)
+  await expect(page.getByTestId('toast')).toHaveCount(0)
+  await waitForSync(page)
+  await page.reload()
+  await expect(sketchCard(page)).toHaveCount(2)
+  for (const c of await sketchCard(page).all()) await expect(c.locator('[data-stroke-id]')).toHaveCount(520)
+})
+
 test('Draw puts ink straight on the board, over other cards, and the eraser takes it away', async ({ page }) => {
   await addNote(page, 'Under the ink', 0.5, 0.4)
   // Starting to draw puts down whatever was picked up.

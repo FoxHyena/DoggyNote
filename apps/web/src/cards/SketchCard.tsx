@@ -1,5 +1,5 @@
 import { Show, Suspense, lazy } from 'solid-js'
-import { sketchContent, type Card } from '@doggynote/core'
+import { sketchOf, type Card } from '@doggynote/core'
 import type { CardProps } from '../canvas/CardView.tsx'
 import * as doc from '../state/doc.ts'
 import { exporting } from '../state/export.ts'
@@ -12,9 +12,10 @@ const StrokeEditor = lazy(() => import('../drawing/StrokeEditor.tsx').then((m) =
 
 /** A drawing on paper. Double-click opens it in the sketch editor; the card itself is a light SVG. */
 export function SketchCard(props: CardProps<'sketch'>) {
-  const content = () => sketchContent(props.card.content)
-  // Title and paper changes are live, through the card's edit session (state/ui.ts).
-  const set = (fields: Partial<Card<'sketch'>['content']>) => doc.transient(props.card.id, { content: { ...content(), ...fields } } as Partial<Card>)
+  const content = () => sketchOf(props.card)
+  // Title and paper are live, through the card's edit session (state/ui.ts). Each
+  // is its own field, so only the one that changed is ever sent.
+  const set = (fields: Pick<Card, 'sketchTitle'> | Pick<Card, 'sketchPaper'>) => doc.transient(props.card.id, fields as Partial<Card>)
   return (
     <div class="sketch-card">
       <div class="sketch-paper" data-testid="sketch-paper" style={{ background: content().background, 'aspect-ratio': `${content().width} / ${content().height}` }}>
@@ -31,8 +32,8 @@ export function SketchCard(props: CardProps<'sketch'>) {
             background={content().background}
             width={content().width}
             height={content().height}
-            setTitle={(title) => set({ title })}
-            setBackground={(background) => set({ background })}
+            setTitle={(title) => set({ sketchTitle: title })}
+            setBackground={(hex) => set({ sketchPaper: hex })}
             onDone={endEdit}
           />
         </Suspense>

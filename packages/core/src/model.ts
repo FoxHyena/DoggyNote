@@ -122,6 +122,13 @@ export type Card<T extends CardType = CardType> = Base & {
   order?: number
   /** Persistent editor layout lock. Content edits and natural height reflow remain allowed. */
   positionLocked?: boolean
+  /**
+   * A sketch's title and paper colour, each its own field so a rename and a
+   * recolour by two people both survive. Missing on sketches made before them:
+   * read through `sketchOf`, which falls back to `content.title`/`background`.
+   */
+  sketchTitle?: string | null
+  sketchPaper?: string | null
   content: CardContent[T]
 }
 
