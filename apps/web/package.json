@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "icons": "node scripts/icons.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.1",
@@ -19,6 +20,7 @@
     "@doggynote/core": "workspace:*",
     "@doggynote/theme": "workspace:*",
     "@lezer/markdown": "^1.8.0",
+    "@phosphor-icons/core": "2.1.1",
     "@tauri-apps/api": "^2.12.2",
     "@tauri-apps/plugin-process": "^2.4.0",
     "@tauri-apps/plugin-updater": "^2.13.2",

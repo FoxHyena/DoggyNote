@@ -10,7 +10,7 @@ import { armedSticker, armSticker, canvasStickerPoint, collectionLoaded, favorit
 import { StickerImage } from './StickerImage.tsx'
 import { StickerGrid } from './StickerGrid.tsx'
 import { stickerAt, stickerRingAt } from '../canvas/StickerLayer.tsx'
-import { BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
+import { BoardIconSvg, Icon } from './icons.tsx'
 
 export const [requestedStickerPack, setRequestedStickerPack] = createSignal<string | null>(null)
 export function viewStickerPack(name: string) { setRequestedStickerPack(name); openStickers() }
@@ -229,15 +229,15 @@ export function StickerTray() {
   return <Show when={stickerTrayOpen()}>
     <aside ref={root} id="sticker-tray" class="sticker-tray" classList={{ 'sticker-shelf': shelf(), 'sticker-browsing': mode() === 'collection' && !large() && !error() && !busy() }} aria-label="Stickers" data-testid="sticker-tray" onPointerDown={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key !== 'Escape') e.stopPropagation() }}>
       <header class="sticker-head">
-        <Show when={large()} fallback={<Show when={mode() !== 'collection'} fallback={<h2>Stickers</h2>}><div class="sticker-preview-heading"><button class="icon-btn" aria-label={backLabel()} onClick={() => changeMode(backMode())}><Icon class="sticker-back-icon">{ToolIcons.open()}</Icon></button><h2>{mode() === 'add' ? 'Add pack' : mode() === 'bot' ? 'Telegram' : 'Pack preview'}</h2></div></Show>}>
+        <Show when={large()} fallback={<Show when={mode() !== 'collection'} fallback={<h2>Stickers</h2>}><div class="sticker-preview-heading"><button class="icon-btn" aria-label={backLabel()} onClick={() => changeMode(backMode())}><Icon class="sticker-back-icon" name="open" /></button><h2>{mode() === 'add' ? 'Add pack' : mode() === 'bot' ? 'Telegram' : 'Pack preview'}</h2></div></Show>}>
           <div class="sticker-preview-heading">
-            <button class="icon-btn" aria-label="Back to stickers" data-testid="sticker-preview-back" onClick={() => { setLarge(null); queueMicrotask(focusPreviewOrigin) }}><Icon class="sticker-back-icon">{ToolIcons.open()}</Icon></button>
+            <button class="icon-btn" aria-label="Back to stickers" data-testid="sticker-preview-back" onClick={() => { setLarge(null); queueMicrotask(focusPreviewOrigin) }}><Icon class="sticker-back-icon" name="open" /></button>
             <h2>Preview</h2>
           </div>
         </Show>
         <div class="sticker-head-actions">
-          <Show when={!phone()}><button class="icon-btn sticker-pin" aria-label="Keep stickers open" aria-pressed={stickerTrayPinned()} title={stickerTrayPinned() ? 'Unpin: close after placing a sticker' : 'Pin: stay open while placing stickers'} onClick={() => setStickerTrayPinned(!stickerTrayPinned())}><Icon>{ToolIcons.pin()}</Icon></button></Show>
-          <button class="icon-btn" aria-label="Close stickers" onClick={close}><Icon>{ToolIcons.close()}</Icon></button>
+          <Show when={!phone()}><button class="icon-btn sticker-pin" aria-label="Keep stickers open" aria-pressed={stickerTrayPinned()} title={stickerTrayPinned() ? 'Unpin: close after placing a sticker' : 'Pin: stay open while placing stickers'} onClick={() => setStickerTrayPinned(!stickerTrayPinned())}><Icon name={stickerTrayPinned() ? 'pinFilled' : 'pin'} /></button></Show>
+          <button class="icon-btn" aria-label="Close stickers" onClick={close}><Icon name="close" /></button>
         </div>
       </header>
       <Show when={shownError()}><div class="sticker-error" role="alert">{shownError()}<button class="bar-btn" disabled={busy() || preparingPreview() || !!retrySeconds()} onClick={() => { if (mode() === 'collection') void action(refreshStickers); else if (mode() === 'pack' && preview()) { setError(''); void preparePack(preview()!.name) } else if (mode() === 'pack' && previewName()) { void resolvePack(previewName()!) } else if (mode() === 'add') void resolvePack(link()) }}>{retrySeconds() ? `Retry in ${retrySeconds()}s` : 'Retry'}</button></div></Show>
@@ -246,15 +246,15 @@ export function StickerTray() {
           <div class="sticker-large"><StickerImage sticker={large()!} animate={!playbackPaused(`preview:${large()!.assetId}`)} priority /></div>
           <button class="sticker-source" data-testid="sticker-source-pack" aria-label={`View pack ${previewPackTitle()}`} onClick={() => void resolvePack(large()!.packName)}>
             <span class="sticker-source-copy"><span>From sticker pack</span><strong>{previewPackTitle()}</strong></span>
-            <Icon>{ToolIcons.open()}</Icon>
+            <Icon name="open" />
           </button>
           <Show when={!packs().some((p) => p.name === large()!.packName)}><p class="sticker-detail-notice">Add this pack to place stickers or save favorites.</p></Show>
         </div>
         <div class="sticker-actions">
           <button class="primary-btn sticker-place-button" disabled={!large()!.available || !packs().some((p) => p.name === large()!.packName)} onClick={() => { saveScroll(); armSticker(large()!); setLarge(null) }}>Place sticker</button>
-          <button class="icon-btn sticker-favorite-button" disabled={!packs().some((p) => p.name === large()!.packName)} aria-label={favorite(large()!) ? 'Unfavorite' : 'Favorite'} title={favorite(large()!) ? 'Unfavorite' : 'Favorite'} aria-pressed={favorite(large()!)} onClick={() => doFavorite(large()!)}><BoardIconSvg icon="star" /></button>
+          <button class="icon-btn sticker-favorite-button" disabled={!packs().some((p) => p.name === large()!.packName)} aria-label={favorite(large()!) ? 'Unfavorite' : 'Favorite'} title={favorite(large()!) ? 'Unfavorite' : 'Favorite'} aria-pressed={favorite(large()!)} onClick={() => doFavorite(large()!)}><BoardIconSvg icon="star" filled={favorite(large()!)} /></button>
           <Show when={large()!.format !== 'static'}>{(_) => { const key = () => `preview:${large()!.assetId}`, paused = () => playbackPaused(key())
-            return <button class="icon-btn sticker-favorite-button" data-testid="sticker-preview-play" aria-label={paused() ? 'Play animation' : 'Pause animation'} title={paused() ? 'Play animation' : 'Pause animation'} onClick={() => togglePlayback(key())}><Icon>{paused() ? ToolIcons.play() : ToolIcons.pause()}</Icon></button> }}</Show>
+            return <button class="icon-btn sticker-favorite-button" data-testid="sticker-preview-play" aria-label={paused() ? 'Play animation' : 'Pause animation'} title={paused() ? 'Play animation' : 'Pause animation'} onClick={() => togglePlayback(key())}><Icon name={paused() ? 'play' : 'pause'} /></button> }}</Show>
         </div>
       </div>}>
         <Show when={mode() === 'collection'}>
@@ -279,7 +279,7 @@ export function StickerTray() {
           <div class="sticker-import-alternative">
             <span class="sticker-eyebrow">Have a sticker, but no link?</span>
             <button class="sticker-telegram-option" aria-label="Send a sticker in Telegram ↗" onClick={() => changeMode('bot')}>
-              <span><strong>Send a sticker in Telegram</strong><small>Connect your account to find its pack.</small></span><Icon>{ToolIcons.open()}</Icon>
+              <span><strong>Send a sticker in Telegram</strong><small>Connect your account to find its pack.</small></span><Icon name="open" />
             </button>
           </div>
         </div></Show>
@@ -288,7 +288,7 @@ export function StickerTray() {
           <div class="sticker-pack-summary">
             <h3>{preview()!.title}</h3>
             <span>{preview()!.stickers.length} stickers · {preview()!.stickers.filter((s) => s.available).length} ready</span>
-            <div class="sticker-pack-attribution"><a href={`https://t.me/addstickers/${encodeURIComponent(preview()!.name)}`} target="_blank" rel="noopener noreferrer">From Telegram ↗</a><Show when={added()}><span class="sticker-added-label"><Icon>{ToolIcons.check()}</Icon>Added</span></Show></div>
+            <div class="sticker-pack-attribution"><a href={`https://t.me/addstickers/${encodeURIComponent(preview()!.name)}`} target="_blank" rel="noopener noreferrer">From Telegram ↗</a><Show when={added()}><span class="sticker-added-label"><Icon name="check" />Added</span></Show></div>
             <Show when={preview()!.stickers.some((s) => !!s.animationError)}><p>Some animations use a transparent still. Every available sticker can be placed.</p></Show>
             <Show when={preview()!.stickers.some((s) => !s.available) && !preparingPreview()}><div class="sticker-pack-recovery"><p>Some stickers are unavailable. Your boards keep every sticker already placed.</p><button class="bar-btn" disabled={!!retrySeconds()} onClick={() => { setError(''); void preparePack(preview()!.name) }}>Retry unavailable stickers</button></div></Show>
           </div>
@@ -344,7 +344,7 @@ function BotPairing(props: { onBack: () => void; onPack: (name: string) => void 
           <Show when={status()?.challenge && !expired()}><button class="bar-btn sticker-quiet-action" disabled={busy()} onClick={() => void action(async () => { await api('/api/stickers/telegram/challenge', { method: 'DELETE' }); setUrl('') })}>Cancel connection</button></Show>
         </>}>
           <section class="sticker-connection sticker-connected">
-            <div class="sticker-connection-heading"><Icon>{ToolIcons.check()}</Icon><strong>Connected: {status()?.pair?.label}</strong>
+            <div class="sticker-connection-heading"><Icon name="check" /><strong>Connected: {status()?.pair?.label}</strong>
               <button class="bar-btn sticker-disconnect" aria-label="Disconnect Telegram" title="Your packs and placed stickers stay." aria-description="Your packs and placed stickers stay." disabled={busy()} onClick={() => void action(async () => { await api('/api/stickers/telegram', { method: 'DELETE' }); showToast('Telegram disconnected. Your packs and placed stickers stay.') })}>Disconnect</button>
             </div>
             <Show when={!suggestions.length && !status()?.pending?.notice}><p>Send the bot one sticker from the pack you want.</p></Show>
@@ -390,9 +390,9 @@ function Suggestions(props: { onPreview: (name: string) => void; onAdded?: (name
           </span>
           <span class="sticker-suggestion-copy"><strong>{s.title}</strong><small>{status()}</small></span>
           <span class="sticker-suggestion-actions">
-            <button class="icon-btn" aria-label={`Preview ${s.title}`} title="Preview" onClick={() => props.onPreview(s.name)}><Icon size={18}>{ToolIcons.eye()}</Icon></button>
-            <button class="icon-btn sticker-suggestion-add" aria-label={`Add ${s.title}`} title={ready() ? 'Add to your stickers' : 'Preparing stickers…'} disabled={!ready() || adding()} onClick={() => void add(s.name, s.title, setAdding)}><Icon size={18}>{ToolIcons.plus()}</Icon></button>
-            <button class="icon-btn sticker-suggestion-dismiss" aria-label={`Dismiss ${s.title}`} title="Dismiss" onClick={() => dismiss(s.name)}><Icon size={16}>{ToolIcons.close()}</Icon></button>
+            <button class="icon-btn" aria-label={`Preview ${s.title}`} title="Preview" onClick={() => props.onPreview(s.name)}><Icon size={18} name="eye" /></button>
+            <button class="icon-btn sticker-suggestion-add" aria-label={`Add ${s.title}`} title={ready() ? 'Add to your stickers' : 'Preparing stickers…'} disabled={!ready() || adding()} onClick={() => void add(s.name, s.title, setAdding)}><Icon size={18} name="plus" /></button>
+            <button class="icon-btn sticker-suggestion-dismiss" aria-label={`Dismiss ${s.title}`} title="Dismiss" onClick={() => dismiss(s.name)}><Icon size={16} name="close" /></button>
           </span>
         </li>
       }}</For>

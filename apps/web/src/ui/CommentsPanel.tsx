@@ -8,7 +8,7 @@ import { addComment, deleteComment, editComment, isResolved, relativeTime, setRe
 import { RichText } from '../editor/RichText.tsx'
 import { describeCard } from './TrashPanel.tsx'
 import { setToyboxOpen } from './ToyboxPanel.tsx'
-import { Icon, ToolIcons } from './icons.tsx'
+import { Icon } from './icons.tsx'
 
 /** Open the thread on a card (closing the other right-hand panels). */
 export function openThread(cardId: string) {
@@ -123,12 +123,12 @@ export function CommentsPanel(props: { readOnly?: boolean }) {
               title={isResolved(card()!.id) ? 'Open the thread again' : 'Mark the thread as done'}
               onClick={() => setResolved(card()!.id, !isResolved(card()!.id))}
             >
-              <Icon size={16}>{ToolIcons.check()}</Icon>
+              <Icon size={16} name="check" />
               {isResolved(card()!.id) ? 'Reopen' : 'Resolve'}
             </button>
           </Show>
           <button class="icon-btn" title="Close" data-testid="comments-close" onClick={() => setThreadCardId(null)}>
-            <Icon>{ToolIcons.close()}</Icon>
+            <Icon name="close" />
           </button>
         </header>
         <p class="toybox-sub comments-on">

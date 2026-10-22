@@ -427,6 +427,7 @@ test('right-clicking the canvas opens a compact Look here menu at the pointer', 
   await page.mouse.click(at.x, at.y, { button: 'right' })
   const menu = page.locator('.canvas-ping-menu')
   await expect(menu.getByRole('menuitem', { name: 'Look here', exact: true })).toBeFocused()
+  await expect(menu.locator('svg[data-icon="lookHere"]')).toHaveAttribute('viewBox', '0 0 256 256')
   const box = (await menu.boundingBox())!
   expect(Math.abs(box.x - at.x)).toBeLessThanOrEqual(1)
   expect(Math.abs(box.y - at.y)).toBeLessThanOrEqual(1)

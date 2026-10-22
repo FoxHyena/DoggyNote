@@ -9,7 +9,7 @@ import { duplicateSelection } from '../state/clipboard.ts'
 import { liveState, peers, pingAt } from '../state/realtime.ts'
 import { LabelsPopover } from './Labels.tsx'
 import { openThread } from './CommentsPanel.tsx'
-import { Icon, ToolIcons } from './icons.tsx'
+import { Icon } from './icons.tsx'
 import { installMenu } from './menu.ts'
 
 export type ContextPoint = Vec & { screenX: number; screenY: number; cardId: string | null; returnTo: HTMLElement }
@@ -44,16 +44,16 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
           style={{ position: 'fixed', left: `${at().left}px`, top: `${at().top}px` }}
           onPointerDown={(e) => e.stopPropagation()} onContextMenu={(e) => e.preventDefault()}>
           <Show when={card()}>
-            <button class="menu-item" role="menuitem" disabled={!canEdit()} onClick={() => run(() => beginEdit(card()!.id))}><Icon size={18}>{ToolIcons.edit()}</Icon>Edit</button>
-            <button class="menu-item" role="menuitem" disabled={!writable()} onClick={() => run(duplicateSelection)}><Icon size={18}>{ToolIcons.duplicate()}</Icon>Duplicate</button>
-            <button class="menu-item" role="menuitem" disabled={!writable() || card()?.type === 'column'} onClick={() => setLabels(true)}><Icon size={18}>{ToolIcons.label()}</Icon>Labels</button>
-            <button class="menu-item" role="menuitem" disabled={card()?.type === 'board'} onClick={() => run(() => openThread(card()!.id))}><Icon size={18}>{ToolIcons.comment()}</Icon>Comment</button>
+            <button class="menu-item" role="menuitem" disabled={!canEdit()} onClick={() => run(() => beginEdit(card()!.id))}><Icon name="edit" size={18} />Edit</button>
+            <button class="menu-item" role="menuitem" disabled={!writable()} onClick={() => run(duplicateSelection)}><Icon name="duplicate" size={18} />Duplicate</button>
+            <button class="menu-item" role="menuitem" disabled={!writable() || card()?.type === 'column'} onClick={() => setLabels(true)}><Icon name="label" size={18} />Labels</button>
+            <button class="menu-item" role="menuitem" disabled={card()?.type === 'board'} onClick={() => run(() => openThread(card()!.id))}><Icon name="comment" size={18} />Comment</button>
             <div class="menu-sep" role="separator" />
-            <button class="menu-item" role="menuitem" disabled={!writable()} onClick={() => run(burySelection)}><Icon size={18}>{ToolIcons.trash()}</Icon>{COPY.bury}</button>
+            <button class="menu-item" role="menuitem" disabled={!writable()} onClick={() => run(burySelection)}><Icon name="bury" size={18} />{COPY.bury}</button>
           </Show>
           <Show when={canPing()}>
             <Show when={card()}><div class="menu-sep" role="separator" /></Show>
-            <button class="menu-item" role="menuitem" onClick={() => run(() => pingAt(props.point))}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>{COPY.lookHere}</button>
+            <button class="menu-item" role="menuitem" onClick={() => run(() => pingAt(props.point))}><Icon name="lookHere" size={18} />{COPY.lookHere}</button>
           </Show>
         </div>
       </Show>

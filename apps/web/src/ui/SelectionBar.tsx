@@ -1,5 +1,5 @@
 import './canvas-entry.css'
-import { For, Show, createMemo, createSignal, onCleanup, type JSX } from 'solid-js'
+import { For, Show, createMemo, createSignal, onCleanup } from 'solid-js'
 import { ALIGNMENTS, DEFAULT_SWATCH_HEX, type Alignment, type BoardIcon, type Card } from '@doggynote/core'
 import { CARD_COLORS, COPY, cardColor, isPresetColor, normalizeHex, type CardColor } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
@@ -11,7 +11,7 @@ import { phone, touch } from '../state/device.ts'
 import { draggingIds } from '../canvas/dnd.ts'
 import { layoutTick, rectOf } from '../canvas/layout.ts'
 import { union, worldToScreen } from '@doggynote/core'
-import { BOARD_ICONS, BoardIconSvg, Icon, IconButton, ToolIcons } from './icons.tsx'
+import { BOARD_ICONS, BoardIconSvg, Icon, IconButton, type IconName } from './icons.tsx'
 import { canvasControlsSize } from './CanvasControls.tsx'
 import { openThread } from './CommentsPanel.tsx'
 import { TodoOptions } from './TodoOptions.tsx'
@@ -75,7 +75,7 @@ export function SelectionBar() {
   }
   const lockLabel = () => (allLocked() ? 'Unlock position' : 'Lock position')
   const lockButton = () => (
-    <BarAction testid="position-lock" icon={allLocked() ? ToolIcons.lock : ToolIcons.unlock} label={lockLabel()} text={allLocked() ? 'Unlock' : 'Lock'} title={allLocked() ? 'Unlock position' : 'Lock position: protect layout while keeping content editable'} pressed={allLocked()} labelled={docked()} onClick={() => lockSelection(!allLocked())} />
+    <BarAction testid="position-lock" icon={allLocked() ? 'lock' : 'unlock'} label={lockLabel()} text={allLocked() ? 'Unlock' : 'Lock'} title={allLocked() ? 'Unlock position' : 'Lock position: protect layout while keeping content editable'} pressed={allLocked()} labelled={docked()} onClick={() => lockSelection(!allLocked())} />
   )
   const partlyLocked = () => cards().some((c) => c.positionLocked === true) && !cards().every((c) => c.positionLocked === true)
   const columnLocked = () => cards().some((c) => isPositionLocked(c.id) && c.positionLocked !== true)
@@ -173,7 +173,7 @@ export function SelectionBar() {
             {/* Any other colour: the system picker. One change, one undo step. */}
             <label class="swatch swatch-custom" classList={{ on: !!customColor() }} style={customColor() ? { '--sw': customColor()! } : undefined} data-tip={customColor() ? `Custom colour ${customColor()}` : 'Custom colour'} data-testid="swatch-custom">
               <Show when={!customColor()}>
-                <Icon size={16}>{ToolIcons.plus()}</Icon>
+                <Icon size={16} name="plus" />
               </Show>
               <input
                 type="color"
@@ -213,7 +213,7 @@ export function SelectionBar() {
         <div class="bar-group bar-actions">
         <Show when={touch() && editable()}>
           <button class="bar-btn" data-testid="edit-card" onClick={() => beginEdit(sole()!.id)}>
-            <Icon size={18}>{ToolIcons.edit()}</Icon>
+            <Icon size={18} name="edit" />
             Edit
           </button>
         </Show>
@@ -226,55 +226,55 @@ export function SelectionBar() {
           <LabelsButton cards={cards()} labelled={docked()} />
         </Show>
         <Show when={canDuplicate() && !phone()}>
-          <BarAction testid="duplicate-selection" icon={ToolIcons.duplicate} label="Duplicate" title="Duplicate (⌘D)" labelled={docked()} onClick={() => duplicateSelection()} />
+          <BarAction testid="duplicate-selection" icon="duplicate" label="Duplicate" title="Duplicate (⌘D)" labelled={docked()} onClick={() => duplicateSelection()} />
         </Show>
         <Show when={cards().length === 1 && cards()[0].type !== 'board'}>
-          <BarAction testid="comment-button" icon={ToolIcons.comment} label="Comment" title="Comment on this card" labelled={docked()} onClick={() => openThread(cards()[0].id)} />
+          <BarAction testid="comment-button" icon="comment" label="Comment" title="Comment on this card" labelled={docked()} onClick={() => openThread(cards()[0].id)} />
         </Show>
         <Show when={!phone()}>
         <Show when={touch() && sole()}>
           <button class="bar-btn" data-testid="connect-card" onClick={startConnect}>
-            <Icon size={18}>{ToolIcons.line()}</Icon>
+            <Icon size={18} name="line" />
             Connect
           </button>
         </Show>
         <Show when={touch()}>
           <button class="bar-btn" data-testid="select-more" aria-pressed={selectMore()} classList={{ on: selectMore() }} onClick={() => setSelectMore(!selectMore())}>
-            <Icon size={18}>{ToolIcons.multi()}</Icon>
+            <Icon size={18} name="multi" />
             {selection().size > 1 ? `${selection().size} picked` : 'Select'}
           </button>
         </Show>
         </Show>
         {/* Phones: the less frequent actions share one sheet, so the bar fits a small screen. */}
         <Show when={phone()}>
-          <BarMenu label={selection().size > 1 ? `${selection().size} picked` : 'More'} title="More for this card" testId="selection-more" menuTestId="selection-more-menu" icon={<Icon size={18}>{ToolIcons.more()}</Icon>}>
+          <BarMenu label={selection().size > 1 ? `${selection().size} picked` : 'More'} title="More for this card" testId="selection-more" menuTestId="selection-more-menu" icon={<Icon size={18} name="more" />}>
             {(close) => (
               <>
                 <Show when={canDuplicate()}>
                   <button class="menu-item" role="menuitem" data-testid="duplicate-selection" onClick={() => { close(); duplicateSelection() }}>
-                    <Icon size={18}>{ToolIcons.duplicate()}</Icon>
+                    <Icon size={18} name="duplicate" />
                     Duplicate
                   </button>
                 </Show>
                 <Show when={sole()}>
                   <button class="menu-item" role="menuitem" data-testid="connect-card" onClick={() => { close(); startConnect() }}>
-                    <Icon size={18}>{ToolIcons.line()}</Icon>
+                    <Icon size={18} name="line" />
                     Connect to another card
                   </button>
                 </Show>
                 <button class="menu-item" role="menuitemcheckbox" aria-checked={selectMore()} data-testid="select-more" onClick={() => { close(); setSelectMore(!selectMore()) }}>
-                  <Icon size={18}>{ToolIcons.multi()}</Icon>
+                  <Icon size={18} name="multi" />
                   {selectMore() ? 'Stop picking more' : 'Pick more cards'}
                 </button>
               </>
             )}
           </BarMenu>
         </Show>
-        <BarAction testid="bury" icon={ToolIcons.trash} label={COPY.bury} title={`${COPY.bury}: move to ${COPY.trash} (Delete)`} labelled={docked()} onClick={burySelection} />
+        <BarAction testid="bury" icon="bury" label={COPY.bury} title={`${COPY.bury}: move to ${COPY.trash} (Delete)`} labelled={docked()} onClick={burySelection} />
         </Show>
         <Show when={phone()}>
           <button class="bar-btn bar-done" data-testid="selection-done" aria-label="Done" title="Done" onClick={clearSelection}>
-            <Icon size={18}>{ToolIcons.close()}</Icon>
+            <Icon size={18} name="close" />
             <span class="bar-btn-label">Done</span>
           </button>
         </Show>
@@ -285,20 +285,20 @@ export function SelectionBar() {
 }
 
 /** An icon button, or on the docked bar an icon over its label (glass has no hover tips). */
-function BarAction(props: { testid: string; icon: () => JSX.Element; label: string; text?: string; title?: string; pressed?: boolean; labelled: boolean; onClick: () => void }) {
+function BarAction(props: { testid: string; icon: IconName; label: string; text?: string; title?: string; pressed?: boolean; labelled: boolean; onClick: () => void }) {
   return (
     <Show when={props.labelled} fallback={<IconButton testid={props.testid} icon={props.icon} label={props.label} title={props.title} pressed={props.pressed} onClick={props.onClick} />}>
       <button class="bar-btn" classList={{ on: !!props.pressed }} data-testid={props.testid} aria-label={props.label} aria-pressed={props.pressed} onClick={() => props.onClick()}>
-        <Icon size={18}>{props.icon()}</Icon>
+        <Icon size={18} name={props.icon} />
         <span class="bar-btn-label">{props.text ?? props.label}</span>
       </button>
     </Show>
   )
 }
 
-const ALIGN_ICONS: Record<Alignment, () => JSX.Element> = {
-  left: ToolIcons.alignLeft, 'center-x': ToolIcons.alignCenterH, right: ToolIcons.alignRight,
-  top: ToolIcons.alignTop, 'center-y': ToolIcons.alignMiddleV, bottom: ToolIcons.alignBottom,
+const ALIGN_ICONS: Record<Alignment, IconName> = {
+  left: 'alignLeft', 'center-x': 'alignCenterH', right: 'alignRight',
+  top: 'alignTop', 'center-y': 'alignMiddleV', bottom: 'alignBottom',
 }
 
 /** Touch: what to do next while connecting cards, and a way out. */
@@ -306,7 +306,7 @@ export function ConnectBanner() {
   return (
     <Show when={touch() && connectMode()}>
       <div class="connect-banner" data-testid="connect-banner" role="status">
-        <Icon size={18}>{ToolIcons.line()}</Icon>
+        <Icon size={18} name="line" />
         <span>{connectMode()!.from ? COPY.connectHint : 'Tap two cards to tie them together.'}</span>
         <button class="bar-btn" data-testid="connect-cancel" onClick={() => setConnectMode(null)}>Cancel</button>
       </div>

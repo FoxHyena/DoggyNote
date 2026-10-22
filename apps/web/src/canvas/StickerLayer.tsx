@@ -5,7 +5,7 @@ import { boardId, camera, select, selection, viewport } from '../state/ui.ts'
 import { exporting } from '../state/export.ts'
 import { stickerCenter } from '../state/stickers.ts'
 import { playbackPaused } from '../state/stickerPlayback.ts'
-import { Icon, ToolIcons } from '../ui/icons.tsx'
+import { Icon } from '../ui/icons.tsx'
 import { StickerImage, stickerAlphaHit } from '../ui/StickerImage.tsx'
 
 export const [manipulatingSticker, setManipulatingSticker] = createSignal<string | null>(null)
@@ -114,7 +114,7 @@ export function StickerLayer(props: { readOnly: boolean }) {
         <Show when={r().single && changed(r().single!) && r().single}>{(s) =>
           <button class="sticker-ring-reset" aria-label="Reset size and rotation" title="Reset size and rotation" data-testid="sticker-reset"
             style={{ left: `${r().center.x - r().radius * Math.SQRT1_2}px`, top: `${r().center.y - r().radius * Math.SQRT1_2}px`, '--sticker-ui-scale': String(1 / camera().zoom) }}
-            onPointerDown={(e) => e.stopPropagation()} onClick={() => resetSticker(s())}><Icon size={16}>{ToolIcons.restore()}</Icon></button>
+            onPointerDown={(e) => e.stopPropagation()} onClick={() => resetSticker(s())}><Icon size={16} name="restore" /></button>
         }</Show>
         </>
       }}</Show>

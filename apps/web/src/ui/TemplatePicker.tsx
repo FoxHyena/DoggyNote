@@ -1,7 +1,7 @@
 import { For, Show } from 'solid-js'
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import { Popover } from './Popover.tsx'
-import { BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
+import { BoardIconSvg, Icon } from './icons.tsx'
 import { centrePlacement } from './Toolbar.tsx'
 import { boardFromTemplate, removeTemplate, templates } from '../state/copies.ts'
 import { boardId } from '../state/ui.ts'
@@ -35,7 +35,7 @@ export function TemplatePicker(props: { anchor: () => HTMLElement; boardId: stri
                     <span class="template-date">{saved(t.createdAt)}</span>
                   </button>
                   <button class="icon-btn template-remove" data-testid="template-remove" aria-label={`Remove template ${name()}`} data-tip="Remove template" onClick={() => removeTemplate(t.id)}>
-                    <Icon size={16}>{ToolIcons.close()}</Icon>
+                    <Icon size={16} name="close" />
                   </button>
                 </li>
               )

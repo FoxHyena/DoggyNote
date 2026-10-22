@@ -52,6 +52,15 @@ test('card context actions support arrows, Escape, editing, duplication, labels,
   await open()
   await expect(page.getByTestId('selection-bar')).toHaveCount(0)
   await expect(menu.getByRole('menuitem')).toHaveText(['Edit', 'Duplicate', 'Labels', 'Comment', 'Bury'])
+  // Menus share the migrated icon family and Bury uses Bone, distinct from permanent deletion.
+  await expect(menu.locator('svg')).toHaveCount(5)
+  for (const name of ['edit', 'duplicate', 'label', 'comment', 'bury']) {
+    const icon = menu.locator(`svg[data-icon="${name}"]`)
+    await expect(icon).toHaveAttribute('viewBox', '0 0 256 256')
+    await expect(icon).toHaveAttribute('aria-hidden', 'true')
+    await expect(icon.locator('path')).not.toHaveCount(0)
+  }
+  await expect(menu.locator('svg svg')).toHaveCount(0)
   await expect(menu.getByRole('menuitem', { name: 'Edit', exact: true })).toBeFocused()
   await page.keyboard.press('ArrowUp')
   await expect(menu.getByRole('menuitem', { name: 'Bury', exact: true })).toBeFocused()

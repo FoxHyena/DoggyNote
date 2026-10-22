@@ -1,7 +1,7 @@
 import { onCleanup, onMount } from 'solid-js'
 import { COPY } from '@doggynote/theme'
 import { APP_VERSION } from '../state/updates.ts'
-import { Icon, ToolIcons } from './icons.tsx'
+import { Icon } from './icons.tsx'
 import { agentDialogKeys } from './agentDialog.ts'
 import tmdbLogo from '../assets/tmdb.svg'
 import './agents.css'
@@ -21,7 +21,7 @@ export function AboutDialog(props: { onClose: () => void }) {
       <section class="dialog about-dialog" role="dialog" aria-modal="true" aria-labelledby="about-title" data-testid="about-dialog" onKeyDown={agentDialogKeys}>
         <div class="agents-heading">
           <h2 id="about-title">About {COPY.appName}</h2>
-          <button ref={close} class="icon-btn" aria-label="Close" title="Close" onClick={props.onClose}><Icon>{ToolIcons.close()}</Icon></button>
+          <button ref={close} class="icon-btn" aria-label="Close" title="Close" onClick={props.onClose}><Icon name="close" /></button>
         </div>
         <p class="about-version">Version {APP_VERSION}</p>
         <h3>Credits</h3>
@@ -31,6 +31,7 @@ export function AboutDialog(props: { onClose: () => void }) {
           </a>
           <p>Movie and show details and posters come from TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
         </div>
+        <p>Icons by <a href="https://phosphoricons.com" target="_blank" rel="noopener noreferrer">Phosphor</a>, used under the <a href="/licenses/phosphor-icons.txt" target="_blank" rel="noopener noreferrer">MIT license</a>.</p>
         <p>Where to watch: data from JustWatch, through TMDB.</p>
       </section>
     </div>

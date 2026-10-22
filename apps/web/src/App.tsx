@@ -38,7 +38,7 @@ import { addText } from './canvas/paste.ts'
 import { showToast } from './state/toast.ts'
 import { startUpdateChecks } from './state/updates.ts'
 import { paletteOpen, setPaletteOpen } from './state/ui.ts'
-import { Icon, ToolIcons } from './ui/icons.tsx'
+import { Icon } from './ui/icons.tsx'
 import { Signup } from './ui/Signup.tsx'
 import { EditInvite } from './ui/EditInvite.tsx'
 import { BoardNavigation } from './ui/BoardNavigation.tsx'
@@ -159,7 +159,7 @@ function EditorApp() {
             right={
               <>
                 <Show when={!phone()}>
-                  <button class="icon-btn" data-testid="open-fetch" aria-label={`${COPY.search} (⌘K)`} data-tooltip={`${COPY.search} (⌘K)`} onClick={() => setPaletteOpen(true)}><Icon>{ToolIcons.search()}</Icon></button>
+                  <button class="icon-btn" data-testid="open-fetch" aria-label={`${COPY.search} (⌘K)`} data-tooltip={`${COPY.search} (⌘K)`} onClick={() => setPaletteOpen(true)}><Icon name="search" /></button>
                   <ToyboxButton />
                 </Show>
                 <Collaborators />

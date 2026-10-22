@@ -7,7 +7,7 @@ import { showToast } from '../state/toast.ts'
 import { syncNow } from '../state/sync.ts'
 import { endEdit } from '../state/ui.ts'
 import * as doc from '../state/doc.ts'
-import { BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
+import { BoardIconSvg, Icon } from './icons.tsx'
 import { agentDialogKeys } from './agentDialog.ts'
 import './agents.css'
 
@@ -94,7 +94,7 @@ function ProposalPanel(props: { proposals: Summary[]; loading: boolean; failed: 
   }
   return <div class="dialog-backdrop" onPointerDown={(e) => e.target === e.currentTarget && !busy() && props.onClose()}>
     <section ref={panel} class="dialog agents-dialog agents-review" role="dialog" aria-modal="true" aria-labelledby="agent-proposals-title" data-testid="agent-review" onKeyDown={agentDialogKeys}>
-      <div class="agents-heading"><h2 id="agent-proposals-title">Agent proposals</h2><button class="icon-btn" title="Close" onClick={props.onClose}><Icon>{ToolIcons.close()}</Icon></button></div>
+      <div class="agents-heading"><h2 id="agent-proposals-title">Agent proposals</h2><button class="icon-btn" title="Close" onClick={props.onClose}><Icon name="close" /></button></div>
       <p>Agents can only suggest changes. Preview one on the board to see it exactly as it would look, then approve or reject it.</p>
       <Show when={props.failed}><p role="alert" class="form-error">Could not refresh the list. Showing what was last loaded.</p></Show>
       <div class="agents-review-layout"><nav aria-label="Proposals" class="agents-proposal-list" classList={{ single: props.proposals.length === 1 }}><button class="link-btn agents-refresh" onClick={() => void props.onRefresh()}>Refresh list</button><Show when={props.proposals.length} fallback={<p>{props.loading ? 'Loading…' : 'No proposals for this board yet.'}</p>}><For each={props.proposals}>{(p) => <button class="agents-proposal-choice" classList={{ on: selected() === p.id }} onClick={() => { setSelected(p.id); setError(null) }}><strong>{p.label}</strong><small>{p.status} · {p.count} {p.count === 1 ? 'change' : 'changes'}</small></button>}</For></Show></nav>

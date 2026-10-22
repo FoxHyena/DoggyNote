@@ -3,7 +3,7 @@ import { SWATCH_PRESETS, normalizeSwatchHex, swatchHex, swatchName, type Card } 
 import { COPY } from '@doggynote/theme'
 import type { CardProps } from '../canvas/CardView.tsx'
 import { Popover } from '../ui/Popover.tsx'
-import { Icon, ToolIcons } from '../ui/icons.tsx'
+import { Icon } from '../ui/icons.tsx'
 import { camera, endEdit } from '../state/ui.ts'
 import { exporting } from '../state/export.ts'
 import * as doc from '../state/doc.ts'
@@ -95,7 +95,7 @@ function SwatchPanel(props: { card: Card<'swatch'>; anchor: () => HTMLElement })
         </For>
         <label class="swatch-dot swatch-custom" classList={{ on: custom() }} style={custom() ? { background: hex() } : undefined} data-tip="Custom colour">
           <Show when={!custom()}>
-            <Icon size={14}>{ToolIcons.plus()}</Icon>
+            <Icon size={14} name="plus" />
           </Show>
           <input
             type="color"

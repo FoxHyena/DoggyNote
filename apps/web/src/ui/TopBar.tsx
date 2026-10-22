@@ -1,3 +1,4 @@
+import { Icon } from '../ui/icons.tsx'
 import './navigation.css'
 import { For, Show, createMemo, createSignal, type JSX } from 'solid-js'
 import { HOME_BOARD_ID, type Board, type Id } from '@doggynote/core'
@@ -62,7 +63,7 @@ export function TopBar(props: { readOnly: boolean; root?: Id; left?: JSX.Element
       <div class="topbar-left">{props.left}<div class="board-heading">
       <nav class="crumbs" classList={{ 'deep-crumbs': crumbs().length > 2 }} aria-label="Breadcrumbs" data-testid="breadcrumbs">
         <Show when={crumbs().length > 1}><div class="ancestor-menu zoom" ref={ancestorRoot}>
-          <button ref={ancestorTrigger} class="crumb" aria-label="Parent boards" data-testid="parent-boards" aria-expanded={ancestorsOpen()} onPointerDown={startHold} onPointerUp={endHold} onPointerLeave={endHold} onPointerCancel={endHold} onClick={onParent}><span class="parent-dots">…</span><svg class="parent-back" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
+          <button ref={ancestorTrigger} class="crumb" aria-label="Parent boards" data-testid="parent-boards" aria-expanded={ancestorsOpen()} onPointerDown={startHold} onPointerUp={endHold} onPointerLeave={endHold} onPointerCancel={endHold} onClick={onParent}><span class="parent-dots">…</span><Icon name="chevronLeft" class="parent-back" /></button>
           <Show when={ancestorsOpen()}><div class="menu nav-menu" aria-label="Parent boards"><For each={crumbs().slice(0,-1)}>{(b) => <button class="menu-item" onClick={() => { openBoard(b.id); setAncestorsOpen(false); queueMicrotask(() => (ancestorTrigger.isConnected ? ancestorTrigger : document.querySelector<HTMLButtonElement>('[data-testid=board-name]'))?.focus()) }}>{titleOf(b)}</button>}</For></div></Show>
         </div><span class="crumb-sep ancestor-menu">/</span></Show>
         <div class="ancestor-crumbs"><For each={crumbs().slice(0, -1)}>
