@@ -1140,30 +1140,8 @@ html[data-input="mouse"] .board-card:hover .board-tile {
   background: var(--dn-card-hover);
 }
 
-/* In a column: a compact row, like a movie card. The thumbnail is still the whole
-   picture, letterboxed; with no picture the text takes the full width. */
-.link-card.link-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 10px;
-}
-
-.link-row .link-image {
-  flex: 0 0 72px;
-  width: 72px;
-  height: 72px;
-  border-radius: 6px;
-}
-
-.link-row .link-body {
-  flex: 1;
-  min-width: 0;
-  padding: 0;
-}
-
-.link-row .link-desc {
-  -webkit-line-clamp: 2;
+.card.in-column .link-image {
+  max-height: 240px;
 }
 
 .link-body {

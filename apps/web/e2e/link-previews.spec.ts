@@ -51,7 +51,7 @@ test('a site that only shows its tags to link-preview bots (fixvx) still gives a
   await expect.poll(() => loaded(card.getByTestId('link-image'))).toBe(true)
 })
 
-test('tall images are shown whole; in a column the card is a row with a whole thumbnail; the card height syncs', async ({ page }) => {
+test('tall images are shown whole, capped inside a column; the card height syncs', async ({ page }) => {
   const tall = { url: `${FIXTURES}/tall.html`, title: 'Tall dog', image: `${FIXTURES}/tall.png` }
   const { ids, card } = await seedLinks(page, [tall, { ...tall, column: true }])
   const free = card(0).getByTestId('link-image')
@@ -66,15 +66,11 @@ test('tall images are shown whole; in a column the card is a row with a whole th
   expect(Math.abs(f.h - (f.w * 30) / 20)).toBeLessThan(2)
   expect(f.h).toBeGreaterThan(300)
 
-  // In a column: a compact row, like a movie card. A 72 px thumbnail, still the whole
-  // picture (contained, not covered), with the title beside it.
-  await expect(card(1).getByTestId('link-card')).toHaveClass(/link-row/)
+  // In a column: no taller than 240, still the whole picture (contained, not covered).
   const c = await inColumn.evaluate((el) => ({ w: el.offsetWidth, h: el.offsetHeight, fit: getComputedStyle(el).objectFit }))
-  expect(c).toEqual({ w: 72, h: 72, fit: 'contain' })
-  const thumb = (await inColumn.boundingBox())!, title = (await card(1).getByTestId('link-title').boundingBox())!
-  expect(title.x).toBeGreaterThan(thumb.x + thumb.width)
-  expect(title.y).toBeLessThan(thumb.y + thumb.height)
-  expect(await card(1).evaluate((el) => el.offsetHeight)).toBeLessThan(110)
+  expect(c.fit).toBe('contain')
+  expect(c.h).toBeLessThanOrEqual(240)
+  expect(c.h).toBeGreaterThan(230)
 
   // The measured card height (image included) syncs, so other devices cull it right.
   const cardH = await card(0).evaluate((el) => el.offsetHeight)
@@ -89,17 +85,12 @@ test('tall images are shown whole; in a column the card is a row with a whole th
 })
 
 test('a dead image leaves no broken box behind', async ({ page }) => {
-  const dead = { url: `${FIXTURES}/dead.html`, title: 'Gone dog', image: `${FIXTURES}/missing.png` }
-  const { card } = await seedLinks(page, [dead, { ...dead, column: true }])
+  const { card } = await seedLinks(page, [{ url: `${FIXTURES}/dead.html`, title: 'Gone dog', image: `${FIXTURES}/missing.png` }])
   await expect(card(0).getByTestId('link-title')).toHaveText('Gone dog')
   await expect(card(0).locator('img')).toHaveCount(0)
   // Just the text: the card is short, with no empty picture area.
   const h = await card(0).evaluate((el) => el.offsetHeight)
   expect(h).toBeLessThan(120)
-  // In a column the row keeps no thumbnail gap: the text starts at the card's edge.
-  await expect(card(1).locator('img')).toHaveCount(0)
-  const row = (await card(1).boundingBox())!, title = (await card(1).getByTestId('link-title').boundingBox())!
-  expect(title.x - row.x).toBeLessThan(20)
 })
 
 test('an empty preview from an earlier fetch is retried once', async ({ page }) => {
