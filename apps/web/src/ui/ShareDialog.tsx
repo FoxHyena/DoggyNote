@@ -1,3 +1,4 @@
+import { SheetGrip } from './SheetGrip.tsx'
 import { For, Show, createResource, createSignal, onCleanup, onMount } from 'solid-js'
 import type { Id } from '@doggynote/core'
 import { boardDisplayTitle } from '@doggynote/theme'
@@ -86,7 +87,7 @@ function SharePanel(props: { boardId: Id; onClose: () => void }) {
     try { await navigator.clipboard.writeText(shareUrl(s.token, s.permission)); setCopied(s.token); setTimeout(() => setCopied(null), 1500) }
     catch { setError('Copy failed. Select the link and copy it.') }
   }
-  return <div ref={panel} class="menu share-panel" data-testid="share-panel" role="dialog" aria-label="Board sharing" onKeyDown={agentDialogKeys}>
+  return <div ref={panel} class="menu share-panel" data-testid="share-panel" role="dialog" aria-label="Board sharing" onKeyDown={agentDialogKeys}><SheetGrip onDismiss={props.onClose} />
     <div class="share-head"><strong>Share board</strong><button class="icon-btn" aria-label="Close sharing" onClick={props.onClose}><Icon size={16} name="close" /></button></div>
     <p class="share-sub">{sharing()?.legacy ? 'Shared space members already have editing access. Admins manage its invitations.' : 'Private until you invite someone. Only you manage sharing.'}</p>
     <Show when={parent() && parent() !== `home:${sharing()?.ownerId}`}><p class="share-sub">People with inherited access from “{boardDisplayTitle(doc.getBoard(parent()), 'the parent board')}” keep that access. Manage it on the parent board.</p></Show>

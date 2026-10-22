@@ -1,5 +1,5 @@
 import { expect, request, test, type APIRequestContext, type Browser, type BrowserContext, type Page } from '@playwright/test'
-import { cardByText, postSync, waitForSync } from './helpers.ts'
+import { cardByText, postSync, pullAllObjects, waitForSync } from './helpers.ts'
 
 type Person = { id: string; username: string; context: BrowserContext; api: APIRequestContext; home: string }
 async function person(admin: Page, browser: Browser, prefix: string): Promise<Person> {
@@ -26,7 +26,7 @@ async function board(owner: Person, parentId = owner.home) {
 async function grant(owner: Person, boardId: string, recipient: Person, includeChildren = true) {
   expect((await owner.api.post(`/api/boards/${boardId}/members`, { data: { username: recipient.username.toUpperCase(), permission: 'edit', includeChildren } })).status()).toBe(201)
 }
-async function pull(person: Person) { return (await person.api.get('/api/sync?since=0')).json() }
+async function pull(person: Person) { return pullAllObjects(person.api) }
 
 test('private boards and bytes stay private; related references and ownership cannot bypass access', async ({ page, browser }) => {
   const alice = await person(page, browser, 'owner')

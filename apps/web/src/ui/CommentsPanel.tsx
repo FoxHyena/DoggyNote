@@ -1,3 +1,4 @@
+import { SheetGrip } from './SheetGrip.tsx'
 import { For, Show, createEffect, createMemo, createSignal } from 'solid-js'
 import { isAlive, parseMarkdown, type Comment } from '@doggynote/core'
 import { touch } from '../state/device.ts'
@@ -112,7 +113,7 @@ export function CommentsPanel(props: { readOnly?: boolean }) {
 
   return (
     <Show when={card()}>
-      <aside class="trash comments" data-testid="comments-panel" aria-label="Comments" onPointerDown={(e) => e.stopPropagation()}>
+      <aside class="trash comments" data-testid="comments-panel" aria-label="Comments" onPointerDown={(e) => e.stopPropagation()}><SheetGrip onDismiss={() => setThreadCardId(null)} />
         <header class="trash-head">
           <h2>Comments</h2>
           <Show when={!props.readOnly && messages().length}>

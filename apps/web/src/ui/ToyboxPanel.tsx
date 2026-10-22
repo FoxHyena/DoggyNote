@@ -1,3 +1,4 @@
+import { SheetGrip } from './SheetGrip.tsx'
 import { installCanvasPanel } from './canvasPanel.ts'
 import './canvas-entry.css'
 import { For, Show, createSignal } from 'solid-js'
@@ -109,7 +110,7 @@ export function ToyboxPanel() {
 
   return (
     <Show when={toyboxOpen()}>
-      <aside ref={panel} class="trash toybox" data-testid="toybox-panel" aria-label={COPY.unsorted} onPaste={onPaste} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
+      <aside ref={panel} class="trash toybox" data-testid="toybox-panel" aria-label={COPY.unsorted} onPaste={onPaste} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}><SheetGrip onDismiss={() => setToyboxOpen(false)} />
         <header class="trash-head">
           <h2>{COPY.unsorted}</h2>
           <button class="icon-btn" title="Close" onClick={() => setToyboxOpen(false)}>

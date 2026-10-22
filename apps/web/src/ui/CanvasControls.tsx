@@ -1,3 +1,4 @@
+import { SheetGrip } from './SheetGrip.tsx'
 import './navigation.css'
 import { Show, createSignal, onCleanup } from 'solid-js'
 import * as doc from '../state/doc.ts'
@@ -24,7 +25,7 @@ export function CanvasControls(props: { readOnly: boolean }) {
     </Show>
     <div class="canvas-zoom" ref={root}>
       <button ref={trigger} class="icon-btn" data-testid="zoom" aria-label={`Zoom: ${Math.round(camera().zoom * 100)}%`} aria-expanded={open()} data-tooltip="Zoom options" onClick={() => setOpen(!open())}>{Math.round(camera().zoom * 100)}% <Icon name="chevronDown" size={10} /></button>
-      <Show when={open()}><div class="menu nav-menu" aria-label="Zoom options">
+      <Show when={open()}><div class="menu nav-menu" aria-label="Zoom options"><SheetGrip onDismiss={() => { setOpen(false); trigger.focus() }} />
         <div class="nav-menu-head sheet-only"><strong>Zoom · {Math.round(camera().zoom * 100)}%</strong></div>
         {item('Zoom in', '⌘=', () => zoomBy(1.25))}{item('Zoom out', '⌘−', () => zoomBy(0.8))}{item('Zoom to 100%', '⌘0', () => zoomTo(1))}{item('Zoom to fit', '⌘1', zoomToFit)}
       </div></Show>

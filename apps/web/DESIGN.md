@@ -321,10 +321,13 @@ Image stickers with a white die-cut outline and a hard offset shadow, placed dir
 
 ### Motion
 - **Standard:** 120ms for hover colour and background; 140–160ms ease-out for pop-ins, toasts and menus; 70ms ease-out for snap-to-grid glides.
+- **Fetch:** no entrance animation. The frequent keyboard command is visible and focused immediately.
 - **Phone sheets:** 200–240ms on `cubic-bezier(0.22, 1, 0.36, 1)`, a fast settle with no overshoot.
+- **Sheet gestures:** only the explicit grip owns a pull; the body keeps native scrolling. Follow the active pointer directly; cancellation restores the sheet and re-grabbing interrupts dismissal. Release settles over 180ms ease-out, or immediately under reduced motion.
+- **Toasts:** preserve horizontal centering throughout entry. Transform/opacity transitions take 160ms on desktop and 200ms on phones; message replacement and dismissal remain immediate.
 - **Dog moment overshoot:** `cubic-bezier(0.3, 1.6, 0.6, 1)` at about 140ms, reserved for playful pickups (board tile hover, the phone dock's amber add button).
 - **Bury sink:** a buried card's copy falls into Buried bones over 380ms (`cubic-bezier(0.5, 0, 0.75, 0)`, shrinking and tilting −12°), then the icon bumps. Only the copy animates, never the canvas card.
-- Everything respects `prefers-reduced-motion`.
+- Everything respects `prefers-reduced-motion`, including JavaScript camera moves. Those apply their target immediately and retain completion/focus behavior; enabling reduced motion during a glide finishes it at its target.
 
 ## Do's and Don'ts
 

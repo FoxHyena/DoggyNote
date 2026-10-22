@@ -1,3 +1,4 @@
+import { SheetGrip } from './SheetGrip.tsx'
 import { Show, createSignal, type JSX } from 'solid-js'
 import { Portal } from 'solid-js/web'
 import { phone } from '../state/device.ts'
@@ -54,6 +55,7 @@ export function BarMenu(props: {
       <Show when={open()}>
         <Portal>
           <div ref={menu} class="menu bar-menu" role="menu" aria-label={props.title} data-testid={props.menuTestId} style={{ left: `${at().left}px`, top: `${at().top}px` }} onPointerDown={(e) => e.stopPropagation()}>
+            <SheetGrip onDismiss={() => { close(); trigger.focus() }} />
             <div class="nav-menu-head sheet-only"><strong>{props.title}</strong><Show when={phone()}><button class="bar-btn" role="menuitem" aria-label="Close card actions" onClick={() => { close(); trigger.focus() }}>Done</button></Show></div>
             {props.children(close)}
           </div>

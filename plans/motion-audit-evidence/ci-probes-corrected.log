@@ -1,0 +1,380 @@
+[WebServer] (node:30149) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:30228) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] [plugin builtin:vite-reporter]
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+[WebServer] (node:30236) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:30252) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:30258) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:30276) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:30327) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:30440) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:30483) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:30273) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:31805) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:31806) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] [plugin builtin:vite-reporter]
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+[WebServer] (node:31878) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:31886) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:31912) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 132 tests using 2 workers
+
+(node:31915) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:31916) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/132] [webkit] › e2e/motion.spec.ts:41:5 › dark, normal motion › camera zoom honors reduced motion while retaining ordinary interpolation
+[2/132] [webkit] › e2e/motion.spec.ts:7:5 › dark, normal motion › Fetch is ready on its first frame and preserves keyboard navigation and focus
+[3/132] [webkit] › e2e/motion.spec.ts:54:5 › dark, normal motion › short and long toasts remain centered, replace cleanly, and retain Undo
+[4/132] [webkit] › e2e/motion.spec.ts:7:5 › dark, reduced motion › Fetch is ready on its first frame and preserves keyboard navigation and focus
+[5/132] [webkit] › e2e/motion.spec.ts:41:5 › dark, reduced motion › camera zoom honors reduced motion while retaining ordinary interpolation
+[6/132] [webkit] › e2e/motion.spec.ts:54:5 › dark, reduced motion › short and long toasts remain centered, replace cleanly, and retain Undo
+[7/132] [webkit] › e2e/motion.spec.ts:7:5 › light, normal motion › Fetch is ready on its first frame and preserves keyboard navigation and focus
+[8/132] [webkit] › e2e/motion.spec.ts:41:5 › light, normal motion › camera zoom honors reduced motion while retaining ordinary interpolation
+[9/132] [webkit] › e2e/motion.spec.ts:54:5 › light, normal motion › short and long toasts remain centered, replace cleanly, and retain Undo
+[10/132] [webkit] › e2e/motion.spec.ts:7:5 › light, reduced motion › Fetch is ready on its first frame and preserves keyboard navigation and focus
+[11/132] [webkit] › e2e/motion.spec.ts:41:5 › light, reduced motion › camera zoom honors reduced motion while retaining ordinary interpolation
+[12/132] [webkit] › e2e/motion.spec.ts:54:5 › light, reduced motion › short and long toasts remain centered, replace cleanly, and retain Undo
+[13/132] [webkit] › e2e/motion.spec.ts:85:1 › enabling reduced motion during a camera glide finishes at its target
+(node:32167) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:32168) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[14/132] [webkit] › e2e/motion.spec.ts:7:5 › dark, normal motion › Fetch is ready on its first frame and preserves keyboard navigation and focus
+[15/132] [webkit] › e2e/motion.spec.ts:41:5 › dark, normal motion › camera zoom honors reduced motion while retaining ordinary interpolation
+[16/132] [webkit] › e2e/motion.spec.ts:54:5 › dark, normal motion › short and long toasts remain centered, replace cleanly, and retain Undo
+[17/132] [webkit] › e2e/motion.spec.ts:7:5 › dark, reduced motion › Fetch is ready on its first frame and preserves keyboard navigation and focus
+[WebServer] 12:38:06 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 12:38:06 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+
+[18/132] [webkit] › e2e/motion.spec.ts:41:5 › dark, reduced motion › camera zoom honors reduced motion while retaining ordinary interpolation
+[19/132] [webkit] › e2e/motion.spec.ts:54:5 › dark, reduced motion › short and long toasts remain centered, replace cleanly, and retain Undo
+[WebServer] 12:38:08 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 12:38:08 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[20/132] [webkit] › e2e/motion.spec.ts:7:5 › light, normal motion › Fetch is ready on its first frame and preserves keyboard navigation and focus
+[21/132] [webkit] › e2e/motion.spec.ts:41:5 › light, normal motion › camera zoom honors reduced motion while retaining ordinary interpolation
+[22/132] [webkit] › e2e/motion.spec.ts:54:5 › light, normal motion › short and long toasts remain centered, replace cleanly, and retain Undo
+[23/132] [webkit] › e2e/motion.spec.ts:7:5 › light, reduced motion › Fetch is ready on its first frame and preserves keyboard navigation and focus
+[24/132] [webkit] › e2e/motion.spec.ts:41:5 › light, reduced motion › camera zoom honors reduced motion while retaining ordinary interpolation
+[25/132] [webkit] › e2e/motion.spec.ts:54:5 › light, reduced motion › short and long toasts remain centered, replace cleanly, and retain Undo
+[26/132] [webkit] › e2e/motion.spec.ts:85:1 › enabling reduced motion during a camera glide finishes at its target
+(node:32513) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[27/132] [chromium] › e2e/motion.spec.ts:7:5 › dark, normal motion › Fetch is ready on its first frame and preserves keyboard navigation and focus
+(node:32528) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[28/132] [chromium] › e2e/motion.spec.ts:41:5 › dark, normal motion › camera zoom honors reduced motion while retaining ordinary interpolation
+[29/132] [chromium] › e2e/motion.spec.ts:54:5 › dark, normal motion › short and long toasts remain centered, replace cleanly, and retain Undo
+[30/132] [chromium] › e2e/motion.spec.ts:7:5 › dark, reduced motion › Fetch is ready on its first frame and preserves keyboard navigation and focus
+[31/132] [chromium] › e2e/motion.spec.ts:41:5 › dark, reduced motion › camera zoom honors reduced motion while retaining ordinary interpolation
+[32/132] [chromium] › e2e/motion.spec.ts:54:5 › dark, reduced motion › short and long toasts remain centered, replace cleanly, and retain Undo
+[33/132] [chromium] › e2e/motion.spec.ts:7:5 › light, normal motion › Fetch is ready on its first frame and preserves keyboard navigation and focus
+[34/132] [chromium] › e2e/motion.spec.ts:41:5 › light, normal motion › camera zoom honors reduced motion while retaining ordinary interpolation
+[35/132] [chromium] › e2e/motion.spec.ts:54:5 › light, normal motion › short and long toasts remain centered, replace cleanly, and retain Undo
+[36/132] [chromium] › e2e/motion.spec.ts:7:5 › light, reduced motion › Fetch is ready on its first frame and preserves keyboard navigation and focus
+[37/132] [chromium] › e2e/motion.spec.ts:41:5 › light, reduced motion › camera zoom honors reduced motion while retaining ordinary interpolation
+[38/132] [chromium] › e2e/motion.spec.ts:54:5 › light, reduced motion › short and long toasts remain centered, replace cleanly, and retain Undo
+[39/132] [chromium] › e2e/motion.spec.ts:85:1 › enabling reduced motion during a camera glide finishes at its target
+(node:32926) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[40/132] [chromium] › e2e/motion.spec.ts:7:5 › dark, normal motion › Fetch is ready on its first frame and preserves keyboard navigation and focus
+(node:32947) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[41/132] [chromium] › e2e/motion.spec.ts:54:5 › dark, normal motion › short and long toasts remain centered, replace cleanly, and retain Undo
+[42/132] [chromium] › e2e/motion.spec.ts:41:5 › dark, normal motion › camera zoom honors reduced motion while retaining ordinary interpolation
+[43/132] [chromium] › e2e/motion.spec.ts:7:5 › dark, reduced motion › Fetch is ready on its first frame and preserves keyboard navigation and focus
+[44/132] [chromium] › e2e/motion.spec.ts:41:5 › dark, reduced motion › camera zoom honors reduced motion while retaining ordinary interpolation
+[45/132] [chromium] › e2e/motion.spec.ts:54:5 › dark, reduced motion › short and long toasts remain centered, replace cleanly, and retain Undo
+[46/132] [chromium] › e2e/motion.spec.ts:7:5 › light, normal motion › Fetch is ready on its first frame and preserves keyboard navigation and focus
+[47/132] [chromium] › e2e/motion.spec.ts:41:5 › light, normal motion › camera zoom honors reduced motion while retaining ordinary interpolation
+[48/132] [chromium] › e2e/motion.spec.ts:54:5 › light, normal motion › short and long toasts remain centered, replace cleanly, and retain Undo
+[49/132] [chromium] › e2e/motion.spec.ts:7:5 › light, reduced motion › Fetch is ready on its first frame and preserves keyboard navigation and focus
+[50/132] [chromium] › e2e/motion.spec.ts:41:5 › light, reduced motion › camera zoom honors reduced motion while retaining ordinary interpolation
+[WebServer] 12:38:34 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:38:34 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[51/132] [chromium] › e2e/motion.spec.ts:54:5 › light, reduced motion › short and long toasts remain centered, replace cleanly, and retain Undo
+[52/132] [chromium] › e2e/motion.spec.ts:85:1 › enabling reduced motion during a camera glide finishes at its target
+(node:33070) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[53/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:27:5 › dark, normal motion › Add reopens immediately after outside dismissal and still focuses a new note
+(node:33078) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[54/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:52:5 › dark, normal motion › a cancelled sheet pull rolls back and ignores another pointer
+[55/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:68:5 › dark, normal motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[56/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:91:5 › dark, normal motion › the phone notification stays centered at the top and Undo restores its card
+[57/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:27:5 › dark, reduced motion › Add reopens immediately after outside dismissal and still focuses a new note
+[58/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:52:5 › dark, reduced motion › a cancelled sheet pull rolls back and ignores another pointer
+[59/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:68:5 › dark, reduced motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[60/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:91:5 › dark, reduced motion › the phone notification stays centered at the top and Undo restores its card
+[61/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:27:5 › light, normal motion › Add reopens immediately after outside dismissal and still focuses a new note
+[62/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:52:5 › light, normal motion › a cancelled sheet pull rolls back and ignores another pointer
+[63/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:68:5 › light, normal motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[64/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:91:5 › light, normal motion › the phone notification stays centered at the top and Undo restores its card
+[65/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:27:5 › light, reduced motion › Add reopens immediately after outside dismissal and still focuses a new note
+[66/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:52:5 › light, reduced motion › a cancelled sheet pull rolls back and ignores another pointer
+[67/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:68:5 › light, reduced motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[68/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:91:5 › light, reduced motion › the phone notification stays centered at the top and Undo restores its card
+[69/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:106:3 › a departing sheet can be re-grabbed without a stale dismissal in dark
+[70/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:106:3 › a departing sheet can be re-grabbed without a stale dismissal in light
+[71/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:142:1 › removing a departing sheet never dismisses the next sheet
+[72/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:159:1 › a deliberate reduced-motion sheet release closes synchronously
+(node:33833) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:33834) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[73/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:27:5 › dark, normal motion › Add reopens immediately after outside dismissal and still focuses a new note
+[74/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:52:5 › dark, normal motion › a cancelled sheet pull rolls back and ignores another pointer
+[75/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:68:5 › dark, normal motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[76/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:91:5 › dark, normal motion › the phone notification stays centered at the top and Undo restores its card
+[77/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:27:5 › dark, reduced motion › Add reopens immediately after outside dismissal and still focuses a new note
+[78/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:52:5 › dark, reduced motion › a cancelled sheet pull rolls back and ignores another pointer
+[79/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:68:5 › dark, reduced motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[80/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:91:5 › dark, reduced motion › the phone notification stays centered at the top and Undo restores its card
+[81/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:27:5 › light, normal motion › Add reopens immediately after outside dismissal and still focuses a new note
+[82/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:52:5 › light, normal motion › a cancelled sheet pull rolls back and ignores another pointer
+[83/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:68:5 › light, normal motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[84/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:91:5 › light, normal motion › the phone notification stays centered at the top and Undo restores its card
+[WebServer] 12:39:08 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 12:39:08 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+
+[85/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:27:5 › light, reduced motion › Add reopens immediately after outside dismissal and still focuses a new note
+[86/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:52:5 › light, reduced motion › a cancelled sheet pull rolls back and ignores another pointer
+[87/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:68:5 › light, reduced motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[WebServer] 12:39:09 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 12:39:09 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+
+[88/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:91:5 › light, reduced motion › the phone notification stays centered at the top and Undo restores its card
+[89/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:106:3 › a departing sheet can be re-grabbed without a stale dismissal in dark
+[90/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:106:3 › a departing sheet can be re-grabbed without a stale dismissal in light
+[91/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:142:1 › removing a departing sheet never dismisses the next sheet
+[92/132] [mobile-webkit] › e2e/mobile-motion.spec.ts:159:1 › a deliberate reduced-motion sheet release closes synchronously
+(node:34205) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:34206) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[93/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:27:5 › dark, normal motion › Add reopens immediately after outside dismissal and still focuses a new note
+[94/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:52:5 › dark, normal motion › a cancelled sheet pull rolls back and ignores another pointer
+[95/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:68:5 › dark, normal motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[96/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:91:5 › dark, normal motion › the phone notification stays centered at the top and Undo restores its card
+[97/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:27:5 › dark, reduced motion › Add reopens immediately after outside dismissal and still focuses a new note
+[98/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:52:5 › dark, reduced motion › a cancelled sheet pull rolls back and ignores another pointer
+[99/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:68:5 › dark, reduced motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[100/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:91:5 › dark, reduced motion › the phone notification stays centered at the top and Undo restores its card
+[101/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:27:5 › light, normal motion › Add reopens immediately after outside dismissal and still focuses a new note
+[102/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:52:5 › light, normal motion › a cancelled sheet pull rolls back and ignores another pointer
+[103/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:68:5 › light, normal motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[104/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:91:5 › light, normal motion › the phone notification stays centered at the top and Undo restores its card
+[105/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:27:5 › light, reduced motion › Add reopens immediately after outside dismissal and still focuses a new note
+[106/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:52:5 › light, reduced motion › a cancelled sheet pull rolls back and ignores another pointer
+[107/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:68:5 › light, reduced motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[108/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:91:5 › light, reduced motion › the phone notification stays centered at the top and Undo restores its card
+[WebServer] 12:39:26 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 12:39:26 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[109/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:106:3 › a departing sheet can be re-grabbed without a stale dismissal in dark
+[110/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:106:3 › a departing sheet can be re-grabbed without a stale dismissal in light
+[111/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:142:1 › removing a departing sheet never dismisses the next sheet
+[112/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:159:1 › a deliberate reduced-motion sheet release closes synchronously
+(node:34613) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:34614) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[113/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:27:5 › dark, normal motion › Add reopens immediately after outside dismissal and still focuses a new note
+[114/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:52:5 › dark, normal motion › a cancelled sheet pull rolls back and ignores another pointer
+[115/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:68:5 › dark, normal motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[116/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:91:5 › dark, normal motion › the phone notification stays centered at the top and Undo restores its card
+[117/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:27:5 › dark, reduced motion › Add reopens immediately after outside dismissal and still focuses a new note
+[118/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:52:5 › dark, reduced motion › a cancelled sheet pull rolls back and ignores another pointer
+[119/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:68:5 › dark, reduced motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[120/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:91:5 › dark, reduced motion › the phone notification stays centered at the top and Undo restores its card
+[121/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:27:5 › light, normal motion › Add reopens immediately after outside dismissal and still focuses a new note
+[122/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:52:5 › light, normal motion › a cancelled sheet pull rolls back and ignores another pointer
+[123/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:68:5 › light, normal motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[124/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:91:5 › light, normal motion › the phone notification stays centered at the top and Undo restores its card
+[125/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:27:5 › light, reduced motion › Add reopens immediately after outside dismissal and still focuses a new note
+[126/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:52:5 › light, reduced motion › a cancelled sheet pull rolls back and ignores another pointer
+[127/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:68:5 › light, reduced motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[128/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:91:5 › light, reduced motion › the phone notification stays centered at the top and Undo restores its card
+[WebServer] 12:39:38 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:39:38 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[129/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:106:3 › a departing sheet can be re-grabbed without a stale dismissal in dark
+[130/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:106:3 › a departing sheet can be re-grabbed without a stale dismissal in light
+[131/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:142:1 › removing a departing sheet never dismisses the next sheet
+[132/132] [mobile-chromium] › e2e/mobile-motion.spec.ts:159:1 › a deliberate reduced-motion sheet release closes synchronously
+  132 passed (2.4m)

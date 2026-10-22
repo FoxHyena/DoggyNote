@@ -9,9 +9,15 @@ const list = (page: Page) => page.locator('[data-type=todo]').first()
 const texts = (page: Page) => list(page).locator('.todo-item .todo-text').evaluateAll((els) => els.map((e) => e.firstChild?.textContent ?? ''))
 
 async function tapGutter(page: Page, text: string) {
-  const box = (await list(page).getByRole('checkbox', { name: text }).boundingBox())!
-  // A fingertip lands a little off the 14px box.
-  await tap(page, { x: box.x + box.width / 2 + 10, y: box.y + box.height / 2 + 4 })
+  let point!: { x: number; y: number }
+  await expect.poll(async () => {
+    const box = await list(page).getByRole('checkbox', { name: text }).boundingBox()
+    if (!box) return false // A sync render can briefly replace the row.
+    // A fingertip lands a little off the 14px box.
+    point = { x: box.x + box.width / 2 + 10, y: box.y + box.height / 2 + 4 }
+    return true
+  }).toBe(true)
+  await tap(page, point)
 }
 
 test.beforeEach(async ({ page }) => {

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { cardByText, freshBoard, postSync, waitForSync } from './helpers.ts'
-import { note, seedCards, selectionBarFits, tapOn } from './touch.ts'
+import { Fingers, note, seedCards, selectionBarFits, tapOn } from './touch.ts'
 
 test('Add has three leading cards, one gold choice and quiet secondary tools', async ({ page }) => {
   await freshBoard(page)
@@ -89,3 +89,42 @@ test('links use the same primary Edit action and More dismisses back to its trig
   await page.getByTestId('edit-card').tap()
   await expect(page.getByTestId('link-input')).toBeFocused()
 })
+
+
+for (const kind of ['colour', 'icon', 'more'] as const) {
+  test(`${kind} sheet retains grip cancellation, dismissal and selection focus after integration`, async ({ page }) => {
+    await freshBoard(page)
+    await page.getByTestId('dock-add').tap()
+    await page.getByTestId('add-board').tap()
+    const title = page.getByTestId('board-title-input')
+    await title.fill('Sheet gestures')
+    await title.press('Enter')
+    const trigger = page.getByTestId(kind === 'colour' ? 'selection-colour' : 'selection-more')
+    await trigger.tap()
+    if (kind === 'icon') await page.getByTestId('selection-icon').tap()
+    const sheet = page.getByTestId(kind === 'more' ? 'selection-more-menu' : 'selection-style-sheet')
+    await expect(sheet).toBeVisible()
+    await sheet.evaluate(el => Promise.all(el.getAnimations().map(a => a.finished.catch(() => undefined))))
+    const top = (await sheet.boundingBox())!.y
+    const point = async () => {
+      const box = (await sheet.getByTestId('sheet-grip').boundingBox())!
+      return { x: box.x + box.width / 2, y: box.y + 12 }
+    }
+    const finger = new Fingers(page)
+    let at = await point()
+    await finger.press(0, at)
+    await finger.move(0, { ...at, y: at.y + 100 })
+    await finger.cancel()
+    await expect.poll(async () => (await sheet.boundingBox())!.y).toBeCloseTo(top, 0)
+    await expect(sheet).toBeVisible()
+    at = await point()
+    await finger.press(0, at)
+    await finger.move(0, { ...at, y: at.y + 120 })
+    await page.waitForTimeout(150)
+    await finger.release(0)
+    await expect(sheet).toHaveCount(0)
+    await expect(trigger).toBeFocused()
+    await expect(page.locator('.card.selected')).toHaveCount(1)
+    await selectionBarFits(page)
+  })
+}

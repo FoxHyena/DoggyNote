@@ -11,6 +11,7 @@ import { LabelsPopover } from './Labels.tsx'
 import { openThread } from './CommentsPanel.tsx'
 import { Icon } from './icons.tsx'
 import { installMenu } from './menu.ts'
+import { SheetGrip } from './SheetGrip.tsx'
 
 export type ContextPoint = Vec & { screenX: number; screenY: number; cardId: string | null; returnTo: HTMLElement }
 
@@ -43,6 +44,7 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
         <div ref={menu} class="menu canvas-ping-menu" classList={{ 'card-context-menu': !!card() }} role="menu" aria-label={card() ? 'Card actions' : COPY.lookHere} data-testid="canvas-context-menu" data-nodrag
           style={{ position: 'fixed', left: `${at().left}px`, top: `${at().top}px` }}
           onPointerDown={(e) => e.stopPropagation()} onContextMenu={(e) => e.preventDefault()}>
+          <SheetGrip onDismiss={close} />
           <Show when={card()}>
             <button class="menu-item" role="menuitem" disabled={!canEdit()} onClick={() => run(() => beginEdit(card()!.id))}><Icon name="edit" size={18} />Edit</button>
             <button class="menu-item" role="menuitem" disabled={!writable()} onClick={() => run(duplicateSelection)}><Icon name="duplicate" size={18} />Duplicate</button>

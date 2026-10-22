@@ -1,4 +1,5 @@
 import { Icon } from '../ui/icons.tsx'
+import { SheetGrip } from './SheetGrip.tsx'
 import './collaboration.css'
 import { For, Show, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
 import { COPY } from '@doggynote/theme'
@@ -28,7 +29,7 @@ export function Collaborators() {
       <span class="people-count">{liveState() === 'live' ? people().length || 1 : '…'}</span>
       <span class="people-avatars" aria-hidden="true"><For each={people().slice(0, 2)}>{(p) => <span class="person-avatar" style={personStyle(p.userId)}>{initials(p.username)}</span>}</For></span>
     </button>
-    <Show when={open()}><div class="menu nav-menu people-menu" role="region" aria-label="People on this board">
+    <Show when={open()}><div class="menu nav-menu people-menu" role="region" aria-label="People on this board"><SheetGrip onDismiss={closeAction} />
       <div class="nav-menu-head"><strong>On this board</strong><span class="people-status" data-state={liveState()} data-testid="live-status">{liveState() === 'live' ? 'Live' : liveState() === 'connecting' ? 'Connecting…' : 'Reconnecting…'}</span></div>
       <Show when={people().length} fallback={<p class="people-hint">{liveState() === 'live' ? 'Just you for now.' : 'Live presence is unavailable. Your edits still save and sync.'}</p>}>
         <ul class="people-list"><For each={people()}>{(p) => <li class="person-row" data-testid="participant" style={personStyle(p.userId)}>

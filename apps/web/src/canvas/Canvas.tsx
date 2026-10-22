@@ -226,6 +226,8 @@ export function Canvas(props: { readOnly: boolean }) {
   // ---- camera per board ------------------------------------------------------
   createEffect(
     on(boardId, (id) => {
+      cancelCameraAnimation()
+      stopMomentum()
       // Effects can run before the ResizeObserver's first callback. Measure even when a
       // saved camera is restored: a ⌘1 or ⌘0 that lands first would otherwise fit the
       // board into the 1×1 placeholder viewport and zoom out to the minimum.
@@ -1265,6 +1267,7 @@ export function Canvas(props: { readOnly: boolean }) {
   let wheelFrame = 0
   function onWheel(e: WheelEvent) {
     e.preventDefault()
+    cancelCameraAnimation()
     stopMomentum()
     const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? vp.clientHeight : 1
     if (e.ctrlKey || e.metaKey) {
@@ -1291,10 +1294,15 @@ export function Canvas(props: { readOnly: boolean }) {
   const onGestureStart = (e: Event) => {
     e.preventDefault()
     gestureZoom = camera().zoom
+    if (fingers.size) return
+    cancelCameraAnimation()
+    stopMomentum()
   }
   const onGestureChange = (e: Event) => {
     e.preventDefault()
     if (fingers.size) return
+    cancelCameraAnimation()
+    stopMomentum()
     const ge = e as Event & { scale: number; clientX: number; clientY: number }
     setCamera(zoomAt(camera(), local(ge), gestureZoom * ge.scale))
   }
@@ -1386,6 +1394,9 @@ export function Canvas(props: { readOnly: boolean }) {
     document.addEventListener('paste', onPaste)
     document.addEventListener('copy', onCopy)
     onCleanup(() => {
+      cancelCameraAnimation()
+      stopMomentum()
+      cancelAnimationFrame(wheelFrame)
       ro.disconnect()
       vp.removeEventListener('wheel', onWheel)
       vp.removeEventListener('touchmove', onTouchMoveNative)
@@ -1664,9 +1675,14 @@ export function stopMomentum() {
 }
 
 let anim = 0
+let cameraAnimation = 0
+let removeMotionListener: (() => void) | undefined
 export function cancelCameraAnimation() {
+  cameraAnimation++
   cancelAnimationFrame(anim)
   anim = 0
+  removeMotionListener?.()
+  removeMotionListener = undefined
 }
 
 /**
@@ -1688,12 +1704,33 @@ export function revealCard(id: Id, from = 0) {
 
 /** Ease the camera to a target. Short and springy: it should feel physical, not slow. */
 export function animateCamera(to: { x: number; y: number; zoom: number }, ms = 220, done?: () => void) {
-  cancelAnimationFrame(anim)
+  cancelCameraAnimation()
   stopMomentum()
+  const version = cameraAnimation
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)')
+  const finish = () => {
+    if (version !== cameraAnimation) return
+    cancelCameraAnimation()
+    setCamera(to)
+    done?.()
+  }
+  const land = () => {
+    if (version !== cameraAnimation) return
+    cancelAnimationFrame(anim)
+    setCamera(to)
+    // Focus callbacks may need the card DOM mounted at the new camera first.
+    anim = requestAnimationFrame(finish)
+  }
+  const preference = () => { if (reduce.matches) land() }
+  reduce.addEventListener('change', preference)
+  removeMotionListener = () => reduce.removeEventListener('change', preference)
+  if (reduce.matches || ms <= 0) return land()
   const from = camera()
   const t0 = performance.now()
   const ease = (t: number) => 1 - Math.pow(1 - t, 3)
   const step = (now: number) => {
+    if (version !== cameraAnimation) return
+    if (reduce.matches) return land()
     const t = Math.min(1, (now - t0) / ms)
     const k = ease(t)
     // Read every frame: the viewport can change size mid-glide (a phone's keyboard).
@@ -1707,10 +1744,7 @@ export function animateCamera(to: { x: number; y: number; zoom: number }, ms = 2
     const cy = cf.y + (ct.y - cf.y) * k
     setCamera({ x: cx - v.width / 2 / zoom, y: cy - v.height / 2 / zoom, zoom })
     if (t < 1) anim = requestAnimationFrame(step)
-    else {
-      anim = 0
-      done?.()
-    }
+    else finish()
   }
   anim = requestAnimationFrame(step)
 }

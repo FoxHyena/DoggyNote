@@ -1,3 +1,4 @@
+import { SheetGrip } from './SheetGrip.tsx'
 import { onCleanup, onMount } from 'solid-js'
 import { COPY } from '@doggynote/theme'
 import { APP_VERSION } from '../state/updates.ts'
@@ -18,7 +19,7 @@ export function AboutDialog(props: { onClose: () => void }) {
   })
   return (
     <div class="dialog-backdrop" onPointerDown={(e) => e.target === e.currentTarget && props.onClose()}>
-      <section class="dialog about-dialog" role="dialog" aria-modal="true" aria-labelledby="about-title" data-testid="about-dialog" onKeyDown={agentDialogKeys}>
+      <section class="dialog about-dialog" role="dialog" aria-modal="true" aria-labelledby="about-title" data-testid="about-dialog" onKeyDown={agentDialogKeys}><SheetGrip onDismiss={props.onClose} />
         <div class="agents-heading">
           <h2 id="about-title">About {COPY.appName}</h2>
           <button ref={close} class="icon-btn" aria-label="Close" title="Close" onClick={props.onClose}><Icon name="close" /></button>

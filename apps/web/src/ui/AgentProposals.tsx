@@ -1,3 +1,4 @@
+import { SheetGrip } from './SheetGrip.tsx'
 import { For, Show, createEffect, createResource, createSignal, on, onCleanup, onMount, type Accessor, type JSX } from 'solid-js'
 import { cardLabel, type Card, type Obj } from '@doggynote/core'
 import { boardDisplayTitle } from '@doggynote/theme'
@@ -93,7 +94,7 @@ function ProposalPanel(props: { proposals: Summary[]; loading: boolean; failed: 
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not update this proposal') } finally { setBusy(false) }
   }
   return <div class="dialog-backdrop" onPointerDown={(e) => e.target === e.currentTarget && !busy() && props.onClose()}>
-    <section ref={panel} class="dialog agents-dialog agents-review" role="dialog" aria-modal="true" aria-labelledby="agent-proposals-title" data-testid="agent-review" onKeyDown={agentDialogKeys}>
+    <section ref={panel} class="dialog agents-dialog agents-review" role="dialog" aria-modal="true" aria-labelledby="agent-proposals-title" data-testid="agent-review" onKeyDown={agentDialogKeys}><SheetGrip onDismiss={props.onClose} disabled={busy()} />
       <div class="agents-heading"><h2 id="agent-proposals-title">Agent proposals</h2><button class="icon-btn" title="Close" onClick={props.onClose}><Icon name="close" /></button></div>
       <p>Agents can only suggest changes. Preview one on the board to see it exactly as it would look, then approve or reject it.</p>
       <Show when={props.failed}><p role="alert" class="form-error">Could not refresh the list. Showing what was last loaded.</p></Show>
