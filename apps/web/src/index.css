@@ -244,6 +244,12 @@ html[data-input="mouse"] .menu-item:hover {
   background-position: var(--dot-x, 0) var(--dot-y, 0);
 }
 
+/* Tabbing onto an empty board still shows where focus is. */
+.viewport:focus-visible {
+  outline: 2px solid var(--dn-selection);
+  outline-offset: -2px;
+}
+
 /* Snapping: the snapped card glides the last few px instead of jumping. */
 .viewport.snapping .card.dragging,
 .viewport.snapping .card.resizing {
@@ -566,22 +572,22 @@ html[data-input='mouse'] .connect-handle:hover {
   margin: 0 0 0.4em;
 }
 
-.rich h1,
-.rich h2,
-.rich h3 {
+.rich .md-h1,
+.rich .md-h2,
+.rich .md-h3 {
   margin: 0.2em 0 0.35em;
   line-height: 1.25;
 }
 
-.rich h1 {
+.rich .md-h1 {
   font-size: 1.35em;
 }
 
-.rich h2 {
+.rich .md-h2 {
   font-size: 1.18em;
 }
 
-.rich h3 {
+.rich .md-h3 {
   font-size: 1.05em;
 }
 
@@ -618,9 +624,9 @@ html[data-input='mouse'] .connect-handle:hover {
   background: color-mix(in srgb, currentColor 10%, transparent);
 }
 
-.rich h4,
-.rich h5,
-.rich h6 {
+.rich .md-h4,
+.rich .md-h5,
+.rich .md-h6 {
   margin: 0.2em 0 0.35em;
   font-size: 1em;
 }

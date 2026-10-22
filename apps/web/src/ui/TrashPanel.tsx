@@ -37,7 +37,7 @@ export function TrashPanel() {
                 <li class="trash-item" data-testid="trash-item">
                   <span class="trash-type">{c.kind === 'sticker' ? 'sticker' : c.type}</span>
                   <span class="trash-text">{describeCard(c)}</span>
-                  <button class="bar-btn" data-testid="restore" title="Dig it back up" onClick={() => restoreCard(c.id)}>
+                  <button class="bar-btn" data-testid="restore" title="Restore: dig it back up" onClick={() => restoreCard(c.id)}>
                     <Icon size={16}>{ToolIcons.restore()}</Icon>
                     Restore
                   </button>

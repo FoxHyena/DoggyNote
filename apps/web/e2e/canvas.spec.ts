@@ -192,7 +192,7 @@ test.describe('notes', () => {
     await page.keyboard.type('two')
     await page.keyboard.press('Escape')
     const note = cardByText(page, 'Title')
-    await expect(note.locator('h1')).toHaveText('Title')
+    await expect(note.locator('.md-h1')).toHaveText('Title')
     await expect(note.locator('ul li')).toHaveCount(2)
   })
 

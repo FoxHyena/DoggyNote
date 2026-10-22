@@ -14,6 +14,8 @@ export const COPY = {
   search: 'Fetch',
   loading: 'Fetching…',
   allDone: 'Good dog!',
+  /** Card colours by name, as people (and screen readers) say them. */
+  colorNames: { none: 'No colour', gold: 'Gold', collar: 'Collar red', ball: 'Ball green', sky: 'Sky blue', lilac: 'Lilac', peach: 'Peach' } as Record<string, string>,
   /** The server didn't take a sync. Lead with what matters: nothing is lost. */
   syncSafe: "Your changes are safe on this device. We'll keep fetching until the server answers.",
   /** Touch hints and moments. */

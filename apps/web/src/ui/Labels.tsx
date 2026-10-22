@@ -1,6 +1,6 @@
 import { For, Show, createEffect, createMemo, createSignal, type JSX } from 'solid-js'
 import { LABEL_PRESETS, MAX_LABEL_NAME, inkFor, normalizeLabelName, normalizeSwatchHex, pickLabelColor, type Card, type Label, type LabelColor } from '@doggynote/core'
-import { cardColors } from '@doggynote/theme'
+import { COPY, cardColors } from '@doggynote/theme'
 import { theme } from '../theme.ts'
 import * as doc from '../state/doc.ts'
 import { createLabel, findLabel, hasLabel, labelNameProblem, labelUsage, labelsFor, labelsOn, recolorLabel, removeLabel, renameLabel, restoreLabel, setLabelOn } from '../state/labels.ts'
@@ -10,7 +10,7 @@ import { Popover } from './Popover.tsx'
 import './labels.css'
 
 const isHex = (c: LabelColor): c is `#${string}` => c.startsWith('#')
-const colorName = (c: LabelColor) => (isHex(c) ? c : c[0]!.toUpperCase() + c.slice(1))
+const colorName = (c: LabelColor) => (isHex(c) ? c : COPY.colorNames[c] ?? c[0]!.toUpperCase() + c.slice(1))
 
 /**
  * A label's colours. Presets paint with the theme's card colours (light and
