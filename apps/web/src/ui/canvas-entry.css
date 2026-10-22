@@ -389,7 +389,8 @@ html[data-input="mouse"] .trash-item:hover {
   border-radius: 14px;
   box-shadow: 0 24px 60px rgb(0 0 0 / 0.35);
   overflow: hidden;
-  animation: pop-fetch 140ms ease-out;
+  /* A frequently used command surface should be ready on the first frame. */
+  animation: none;
 }
 
 @keyframes pop-fetch {

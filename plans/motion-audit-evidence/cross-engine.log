@@ -1,0 +1,1303 @@
+[WebServer] (node:41945) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:42069) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] [plugin builtin:vite-reporter]
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+[WebServer] (node:42076) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:42093) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:42102) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:42120) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:42219) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:42244) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:42255) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:42117) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:42850) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:42852) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] [plugin builtin:vite-reporter]
+[WebServer] (!) Some chunks are larger than 500 kB after minification. Consider:
+[WebServer] - Using dynamic import() to code-split the application
+[WebServer] - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+[WebServer] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+[WebServer] (node:42860) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:42861) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] (node:42902) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 277 tests using 2 workers
+
+(node:42906) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:42907) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/277] [webkit] › e2e/access.spec.ts:70:1 › username sharing is visible in the app, inherits to children, and revokes queued writes
+[2/277] [webkit] › e2e/access.spec.ts:31:1 › private boards and bytes stay private; related references and ownership cannot bypass access
+[3/277] [webkit] › e2e/access.spec.ts:105:1 › edit links require accounts, respect board-only scope, and preserve independent username access after revocation
+[4/277] [webkit] › e2e/access.spec.ts:142:1 › owner-enabled board signup creates only scoped access, and turning off its link removes that access
+[5/277] [webkit] › e2e/access.spec.ts:168:1 › new public links follow canonical children and never publish a referenced private root
+[6/277] [webkit] › e2e/access.spec.ts:195:1 › old clients receive an update requirement before sync can read or mutate private boards
+[7/277] [webkit] › e2e/access.spec.ts:212:1 › image credentials stop working when their issuing session is signed out or revoked
+[8/277] [webkit] › e2e/access.spec.ts:234:1 › view-only collaborators can capture privately while board placement stays disabled
+[9/277] [webkit] › e2e/access.spec.ts:263:1 › admins manage accounts, not other people’s private boards
+[10/277] [webkit] › e2e/labels.spec.ts:52:1 › create, filter, toggle and rename labels in place; they persist and reach a friend; Fetch finds them
+[11/277] [webkit] › e2e/labels.spec.ts:150:1 › labels on two cards edited at once by two people both survive
+[12/277] [webkit] › e2e/labels.spec.ts:180:1 › a custom colour from the wheel, and a rename that clashes stays open with a reason
+[13/277] [webkit] › e2e/labels.spec.ts:220:1 › Enter picks the highlighted match, arrows move it, and Create only wins when nothing matches
+[14/277] [webkit] › e2e/labels.spec.ts:257:1 › Remove takes a label off the board, and Undo in the toast brings it back on its cards
+[15/277] [webkit] › e2e/labels.spec.ts:285:1 › new labels get a random preset, a different one each time on a fresh board
+[WebServer] 11:59:18 AM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 11:59:18 AM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+(node:43075) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:43076) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[16/277] [mobile-webkit] › e2e/mobile-agents.spec.ts:6:1 › preview a proposal on a phone and approve it
+[17/277] [mobile-webkit] › e2e/mobile-agents.spec.ts:30:1 › changes far apart: the phone frames one as a real card, and › steps to the next
+[18/277] [mobile-webkit] › e2e/mobile-agents.spec.ts:55:1 › on a phone on its side, Preview on the board is in reach without scrolling
+[19/277] [mobile-webkit] › e2e/mobile-alignment-lock.spec.ts:7:1 › touch alignment has immediate Undo and position locks survive a new session
+[20/277] [mobile-webkit] › e2e/mobile-bury-sink.spec.ts:5:1 › on a phone, a buried card sinks into Bones in the dock
+[21/277] [mobile-webkit] › e2e/mobile-clipboard.spec.ts:7:1 › Duplicate from the selection bar copies the card beside it
+[22/277] [mobile-webkit] › e2e/mobile-collapsible-columns.spec.ts:5:1 › touch disclosure is usable without dragging the column or losing members
+[23/277] [mobile-webkit] › e2e/mobile-colour-cards.spec.ts:12:1 › double-tap a colour card, tap a preset; Edit in the selection bar opens it again
+[24/277] [mobile-webkit] › e2e/mobile-copies.spec.ts:8:1 › board menu copy actions and the template picker are reachable by touch
+[25/277] [mobile-webkit] › e2e/mobile-editing.spec.ts:15:1 › tap, tap, type, tap the board: the note glides into view and back
+[WebServer] 11:59:27 AM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 11:59:27 AM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[26/277] [mobile-webkit] › e2e/mobile-editing.spec.ts:50:1 › the keyboard’s own ✓ (a blur) finishes a note
+[27/277] [mobile-webkit] › e2e/mobile-editing.spec.ts:77:1 › tapping another card while typing finishes the note and selects that card
+[28/277] [mobile-webkit] › e2e/mobile-editing.spec.ts:89:1 › closing the keyboard finishes the edit, even when focus stays (Android back)
+[29/277] [mobile-webkit] › e2e/mobile-editing.spec.ts:115:1 › double-tap, type, close the keyboard makes a note
+[30/277] [mobile-webkit] › e2e/mobile-editing.spec.ts:122:1 › zoomed right out, a double-tap still opens a note to type in
+[31/277] [mobile-webkit] › e2e/mobile-editing.spec.ts:136:1 › a to-do edits with two taps, without a dock, and finishes when the keyboard closes
+[32/277] [mobile-webkit] › e2e/mobile-editing.spec.ts:150:1 › the Edit button in the selection bar opens the editor
+[WebServer] 11:59:32 AM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 11:59:32 AM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+
+[33/277] [mobile-webkit] › e2e/mobile-editing.spec.ts:157:1 › task boxes tick from the rendered note and inside the editor
+[34/277] [mobile-webkit] › e2e/mobile-editing.spec.ts:175:1 › fields outside cards are 16px on touch, so iOS does not zoom into them
+[35/277] [mobile-webkit] › e2e/mobile-editing.spec.ts:183:1 › the caret lands on the word you tapped, even as the card glides in
+[36/277] [mobile-webkit] › e2e/mobile-editing.spec.ts:216:1 › bolding a whole heading line keeps it a heading
+[37/277] [mobile-webkit] › e2e/mobile-editing.spec.ts:230:1 › the edit dock nests and un-nests list items (phones have no Tab key)
+[38/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:15:1 › one finger on empty canvas pans, it does not draw a selection box
+[39/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:26:1 › dragging across a card that is not selected pans instead of moving it
+[40/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:36:1 › tap selects without opening the keyboard; tap again edits
+[41/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:47:1 › a tap on a column title selects it for colour; a second tap renames it
+[42/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:59:1 › a selected card follows the finger, and the move is saved
+[WebServer] 11:59:36 AM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 11:59:36 AM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[43/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:73:1 › a move on touch offers Undo
+[44/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:85:1 › long-press lifts a card that was not selected
+[45/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:98:1 › pinch zooms around the fingers
+[46/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:112:1 › a second finger turns a card drag into a pinch and puts the card back
+[47/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:130:1 › double-tap empty canvas makes a note
+[48/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:140:1 › double-tap, hold and slide up zooms in; slide down zooms out; no note is made
+[49/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:152:1 › the slide-zoom keeps the double-tapped point under the finger
+[50/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:167:1 › tapping a selected board opens it
+[51/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:178:1 › a tap near a to-do checkbox ticks it, without editing
+[52/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:188:1 › a tap on the to-do title selects it, it does not tick the first item
+[53/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:206:1 › long-press on empty canvas, then drag, selects with a box
+[54/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:214:1 › a quick flick keeps the board gliding
+[55/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:225:1 › zoomed out, a tap on a card inside a column picks that card
+[56/277] [mobile-webkit] › e2e/mobile-gestures.spec.ts:248:1 › long-press does not open the browser menu or select text
+[57/277] [mobile-webkit] › e2e/mobile-image-captions.spec.ts:13:1 › double-tap an image to caption it; Edit in the selection bar opens it again
+[58/277] [mobile-webkit] › e2e/mobile-image-captions.spec.ts:109:3 › double-tapping a fresh image focuses the caption in the tap, and a late mousedown can't take it
+[59/277] [mobile-webkit] › e2e/mobile-image-captions.spec.ts:109:3 › double-tapping an image already selected focuses the caption in the tap, and a late mousedown can't take it
+[60/277] [mobile-webkit] › e2e/mobile-image-captions.spec.ts:147:1 › a caption gets no edit dock, and the keyboard’s own ✓ finishes it
+[61/277] [mobile-webkit] › e2e/mobile-image-captions.spec.ts:165:1 › captioning never scrolls the page, and a tap on the picture keeps typing
+[62/277] [mobile-webkit] › e2e/mobile-image-captions.spec.ts:177:1 › when the keyboard opens, the caption glides above it in one move
+[63/277] [mobile-webkit] › e2e/mobile-image-captions.spec.ts:213:1 › the keyboard closing finishes the caption, even when focus stays
+[64/277] [mobile-webkit] › e2e/mobile-image-colours.spec.ts:32:1 › tap a colour in the sheet and the picture is framed in it
+[65/277] [mobile-webkit] › e2e/mobile-image-colours.spec.ts:52:3 › the sheet fits: one row of colours, labelled actions, no scrolling
+[66/277] [mobile-webkit] › e2e/mobile-image-colours.spec.ts:52:3 › the sheet fits a 360px phone: one row of colours, labelled actions, no scrolling
+[WebServer] 11:59:51 AM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 11:59:51 AM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[67/277] [mobile-webkit] › e2e/mobile-image-colours.spec.ts:95:1 › a tapped image or link keeps its fingertip handles unclipped at the card edge
+[68/277] [mobile-webkit] › e2e/mobile-inbox.spec.ts:10:1 › jot into the Inbox with Add, then Place it on the board
+[69/277] [mobile-webkit] › e2e/mobile-inbox.spec.ts:26:1 › the Inbox list scrolls with a finger instead of dragging items
+[70/277] [mobile-webkit] › e2e/mobile-inbox.spec.ts:41:1 › a link shared from another app lands in the Inbox
+[71/277] [mobile-webkit] › e2e/mobile-inbox.spec.ts:52:1 › a shared page keeps its title while the preview is missing
+[72/277] [mobile-webkit] › e2e/mobile-inbox.spec.ts:60:1 › the home-screen shortcut opens the Inbox
+[73/277] [mobile-webkit] › e2e/mobile-inbox.spec.ts:67:1 › quick capture has a Save button on the web
+[74/277] [mobile-webkit] › e2e/mobile-labels.spec.ts:8:1 › tap a card, open labels from the bar, create one with a colour and rename it in place
+[75/277] [mobile-webkit] › e2e/mobile-link-previews.spec.ts:9:1 › phone: guarded, tall and dead preview images
+[76/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:27:5 › dark, normal motion › Add reopens immediately after outside dismissal and still focuses a new note
+[77/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:54:5 › dark, normal motion › a cancelled sheet pull rolls back and ignores another pointer
+[78/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:70:5 › dark, normal motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[79/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:93:5 › dark, normal motion › the phone notification stays centered at the top and Undo restores its card
+[80/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:27:5 › dark, reduced motion › Add reopens immediately after outside dismissal and still focuses a new note
+[81/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:54:5 › dark, reduced motion › a cancelled sheet pull rolls back and ignores another pointer
+[82/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:70:5 › dark, reduced motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[83/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:93:5 › dark, reduced motion › the phone notification stays centered at the top and Undo restores its card
+[84/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:27:5 › light, normal motion › Add reopens immediately after outside dismissal and still focuses a new note
+[85/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:54:5 › light, normal motion › a cancelled sheet pull rolls back and ignores another pointer
+[86/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:70:5 › light, normal motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[87/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:93:5 › light, normal motion › the phone notification stays centered at the top and Undo restores its card
+[88/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:27:5 › light, reduced motion › Add reopens immediately after outside dismissal and still focuses a new note
+[89/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:54:5 › light, reduced motion › a cancelled sheet pull rolls back and ignores another pointer
+[90/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:70:5 › light, reduced motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[91/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:93:5 › light, reduced motion › the phone notification stays centered at the top and Undo restores its card
+[92/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:108:3 › a departing sheet can be re-grabbed without a stale dismissal in dark
+[93/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:108:3 › a departing sheet can be re-grabbed without a stale dismissal in light
+[94/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:137:1 › removing a departing sheet never dismisses the next sheet
+[95/277] [mobile-webkit] › e2e/mobile-motion.spec.ts:154:1 › a deliberate reduced-motion sheet release closes synchronously
+[96/277] [mobile-webkit] › e2e/mobile-movies.spec.ts:11:1 › add a show from the dock, pick it, and mark it watched
+[97/277] [mobile-webkit] › e2e/mobile-movies.spec.ts:25:1 › the Watched button takes a fingertip, a little outside its outline
+[98/277] [mobile-webkit] › e2e/mobile-movies.spec.ts:35:1 › the Add sheet keeps a tidy grid with the Movie tile
+[99/277] [mobile-webkit] › e2e/mobile-movies.spec.ts:45:1 › opening the details of a tall card brings the details into view, above the bars
+[100/277] [mobile-webkit] › e2e/mobile-multiplayer.spec.ts:4:1 › people and pings are reachable by touch without crowding the phone header
+[101/277] [mobile-webkit] › e2e/mobile-pwa.spec.ts:6:1 › the app can be installed on a phone home screen
+[102/277] [mobile-webkit] › e2e/mobile-pwa.spec.ts:25:1 › the status bar colour follows the app theme
+[103/277] [mobile-webkit] › e2e/mobile-pwa.spec.ts:37:1 › installed iOS follows the host layout height, separately from the keyboard
+[104/277] [mobile-webkit] › e2e/mobile-pwa.spec.ts:70:1 › an installed Android app keeps the regular CSS viewport layout
+[105/277] [mobile-webkit] › e2e/mobile-pwa.spec.ts:125:1 › the phone shell fills the browser viewport
+[WebServer] 12:00:15 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:00:15 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[106/277] [mobile-webkit] › e2e/mobile-pwa.spec.ts:143:3 › header clearance is correct for iOS 27 with a native status bar
+[107/277] [mobile-webkit] › e2e/mobile-pwa.spec.ts:143:3 › header clearance is correct for iOS 27 with an edge-to-edge installation
+[108/277] [mobile-webkit] › e2e/mobile-pwa.spec.ts:143:3 › header clearance is correct for iOS 26
+[109/277] [mobile-webkit] › e2e/mobile-pwa.spec.ts:143:3 › header clearance is correct for an unverified future Safari release
+[110/277] [mobile-webkit] › e2e/mobile-pwa.spec.ts:143:3 › header clearance is correct for Safari 27 in a browser tab
+[111/277] [mobile-webkit] › e2e/mobile-pwa.spec.ts:143:3 › header clearance is correct for iOS 27 in landscape
+[112/277] [mobile-webkit] › e2e/mobile-pwa.spec.ts:171:5 › safe areas are counted once in browser, portrait
+[113/277] [mobile-webkit] › e2e/mobile-pwa.spec.ts:171:5 › safe areas are counted once in browser, landscape
+[114/277] [mobile-webkit] › e2e/mobile-pwa.spec.ts:171:5 › safe areas are counted once in installed iOS, portrait
+[WebServer] 12:00:17 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 12:00:17 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[115/277] [mobile-webkit] › e2e/mobile-pwa.spec.ts:171:5 › safe areas are counted once in installed iOS, landscape
+[116/277] [mobile-webkit] › e2e/mobile-sheet-keyboard.spec.ts:31:1 › the label menu sits on the keyboard: the field and Create stay in view
+[WebServer] 12:00:17 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+
+[WebServer] 12:00:17 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+
+[117/277] [mobile-webkit] › e2e/mobile-sheet-keyboard.spec.ts:49:1 › the share sheet sits on the keyboard: the username field and Invite stay in view
+[118/277] [mobile-webkit] › e2e/mobile-shell.spec.ts:25:1 › the dock replaces the tool rail and everything fits across the screen
+[119/277] [mobile-webkit] › e2e/mobile-shell.spec.ts:38:1 › the Add sheet makes each kind of card
+[120/277] [mobile-webkit] › e2e/mobile-shell.spec.ts:63:1 › photos come from the Add sheet
+[121/277] [mobile-webkit] › e2e/mobile-shell.spec.ts:76:1 › menus and panels open as sheets that stay on screen
+[122/277] [mobile-webkit] › e2e/mobile-shell.spec.ts:97:1 › a sheet pulled down by its grip closes
+[123/277] [mobile-webkit] › e2e/mobile-shell.spec.ts:110:1 › selecting a card docks the actions along the bottom
+[124/277] [mobile-webkit] › e2e/mobile-shell.spec.ts:123:1 › Connect in the bar ties two cards together
+[125/277] [mobile-webkit] › e2e/mobile-shell.spec.ts:136:1 › Select more picks several cards for one action
+[126/277] [mobile-webkit] › e2e/mobile-shell.spec.ts:149:1 › the back chevron goes up a level
+[127/277] [mobile-webkit] › e2e/mobile-shell.spec.ts:166:1 › burying shows what happened, with Undo
+[128/277] [mobile-webkit] › e2e/mobile-shell.spec.ts:175:1 › touching the board with the Inbox open puts the sheet away first
+[129/277] [mobile-webkit] › e2e/mobile-shell.spec.ts:184:1 › the Boards sheet lists boards you were just on
+[130/277] [mobile-webkit] › e2e/mobile-shell.spec.ts:192:1 › a comment thread closes when you leave its board
+[131/277] [mobile-webkit] › e2e/mobile-sticker-import.spec.ts:7:1 › phone landscape pack preview keeps details and Add beside the artwork
+[132/277] [mobile-webkit] › e2e/mobile-sticker-import.spec.ts:30:1 › a pack sent to the bot badges the phone sticker button and opens in one tap
+[133/277] [mobile-webkit] › e2e/mobile-sticker-import.spec.ts:62:1 › a selected sticker on a phone gets a bottom sheet with labelled icon actions
+[134/277] [mobile-webkit] › e2e/mobile-sticker-loading.spec.ts:5:1 › on a phone, slow artwork shows a blank sticker with its emoji on the board and in the shelf
+[135/277] [mobile-webkit] › e2e/mobile-sticker-windowing.spec.ts:7:1 › a 100-sticker shelf windows columns, restores its preview, and drags one real sticker
+[136/277] [mobile-webkit] › e2e/mobile-todos.spec.ts:28:1 › quick taps down a list tick the rows under the finger, then they settle
+[137/277] [mobile-webkit] › e2e/mobile-todos.spec.ts:43:1 › a tap just after the rows swap is ignored, so it cannot hit the row that slid under the finger
+[WebServer] 12:00:36 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:00:36 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[138/277] [mobile-webkit] › e2e/mobile-todos.spec.ts:59:1 › list options open as a sheet from the selection bar
+[139/277] [mobile-webkit] › e2e/mobile-viewer.spec.ts:8:1 › a share link pans, pinches and opens inner boards by touch
+(node:43977) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[140/277] [mobile-webkit] › e2e/mobile-stickers.spec.ts:36:1 › phone scroll and preview never place; tap, cancel, move, resize, rotate and pinch remain distinct
+(node:43990) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[141/277] [mobile-webkit] › e2e/mobile-stickers.spec.ts:106:1 › bottom-right sticker shelf browses sideways and lifts one sticker onto the board
+[142/277] [mobile-webkit] › e2e/mobile-stickers.spec.ts:165:1 › moving a sticker over a note being edited never selects text; a double-tap-hold slide on it zooms instead
+[WebServer] 12:00:44 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+
+[WebServer] 12:00:44 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+
+[143/277] [mobile-webkit] › e2e/mobile-stickers.spec.ts:195:1 › an animated sticker plays on a phone without being selected; Pause and Play take a real tap
+(node:44053) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[144/277] [mobile-chromium] › e2e/mobile-agents.spec.ts:6:1 › preview a proposal on a phone and approve it
+(node:44061) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[145/277] [mobile-chromium] › e2e/mobile-agents.spec.ts:30:1 › changes far apart: the phone frames one as a real card, and › steps to the next
+[146/277] [mobile-chromium] › e2e/mobile-agents.spec.ts:55:1 › on a phone on its side, Preview on the board is in reach without scrolling
+[147/277] [mobile-chromium] › e2e/mobile-alignment-lock.spec.ts:7:1 › touch alignment has immediate Undo and position locks survive a new session
+[148/277] [mobile-chromium] › e2e/mobile-bury-sink.spec.ts:5:1 › on a phone, a buried card sinks into Bones in the dock
+[149/277] [mobile-chromium] › e2e/mobile-clipboard.spec.ts:7:1 › Duplicate from the selection bar copies the card beside it
+[WebServer] 12:00:51 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:00:51 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[150/277] [mobile-chromium] › e2e/mobile-collapsible-columns.spec.ts:5:1 › touch disclosure is usable without dragging the column or losing members
+[151/277] [mobile-chromium] › e2e/mobile-colour-cards.spec.ts:12:1 › double-tap a colour card, tap a preset; Edit in the selection bar opens it again
+[152/277] [mobile-chromium] › e2e/mobile-copies.spec.ts:8:1 › board menu copy actions and the template picker are reachable by touch
+[WebServer] 12:00:53 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 12:00:53 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+
+[153/277] [mobile-chromium] › e2e/mobile-editing.spec.ts:15:1 › tap, tap, type, tap the board: the note glides into view and back
+[WebServer] 12:00:54 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:00:54 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[154/277] [mobile-chromium] › e2e/mobile-editing.spec.ts:50:1 › the keyboard’s own ✓ (a blur) finishes a note
+[155/277] [mobile-chromium] › e2e/mobile-editing.spec.ts:77:1 › tapping another card while typing finishes the note and selects that card
+[156/277] [mobile-chromium] › e2e/mobile-editing.spec.ts:89:1 › closing the keyboard finishes the edit, even when focus stays (Android back)
+[WebServer] 12:00:56 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:00:56 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[157/277] [mobile-chromium] › e2e/mobile-editing.spec.ts:115:1 › double-tap, type, close the keyboard makes a note
+[158/277] [mobile-chromium] › e2e/mobile-editing.spec.ts:122:1 › zoomed right out, a double-tap still opens a note to type in
+[159/277] [mobile-chromium] › e2e/mobile-editing.spec.ts:136:1 › a to-do edits with two taps, without a dock, and finishes when the keyboard closes
+[160/277] [mobile-chromium] › e2e/mobile-editing.spec.ts:150:1 › the Edit button in the selection bar opens the editor
+[161/277] [mobile-chromium] › e2e/mobile-editing.spec.ts:157:1 › task boxes tick from the rendered note and inside the editor
+[162/277] [mobile-chromium] › e2e/mobile-editing.spec.ts:175:1 › fields outside cards are 16px on touch, so iOS does not zoom into them
+[163/277] [mobile-chromium] › e2e/mobile-editing.spec.ts:183:1 › the caret lands on the word you tapped, even as the card glides in
+[164/277] [mobile-chromium] › e2e/mobile-editing.spec.ts:216:1 › bolding a whole heading line keeps it a heading
+[165/277] [mobile-chromium] › e2e/mobile-editing.spec.ts:230:1 › the edit dock nests and un-nests list items (phones have no Tab key)
+[166/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:15:1 › one finger on empty canvas pans, it does not draw a selection box
+[WebServer] 12:01:01 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:01 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[167/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:26:1 › dragging across a card that is not selected pans instead of moving it
+[168/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:36:1 › tap selects without opening the keyboard; tap again edits
+[169/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:47:1 › a tap on a column title selects it for colour; a second tap renames it
+[170/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:59:1 › a selected card follows the finger, and the move is saved
+[171/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:73:1 › a move on touch offers Undo
+[WebServer] 12:01:03 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:03 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[172/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:85:1 › long-press lifts a card that was not selected
+[173/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:98:1 › pinch zooms around the fingers
+[WebServer] 12:01:04 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:04 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[174/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:112:1 › a second finger turns a card drag into a pinch and puts the card back
+[175/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:130:1 › double-tap empty canvas makes a note
+[WebServer] 12:01:05 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:05 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[176/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:140:1 › double-tap, hold and slide up zooms in; slide down zooms out; no note is made
+[177/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:152:1 › the slide-zoom keeps the double-tapped point under the finger
+[WebServer] 12:01:06 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:06 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[178/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:167:1 › tapping a selected board opens it
+[179/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:178:1 › a tap near a to-do checkbox ticks it, without editing
+[180/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:188:1 › a tap on the to-do title selects it, it does not tick the first item
+[181/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:206:1 › long-press on empty canvas, then drag, selects with a box
+[WebServer] 12:01:08 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:08 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[182/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:214:1 › a quick flick keeps the board gliding
+[WebServer] 12:01:09 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:09 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[183/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:225:1 › zoomed out, a tap on a card inside a column picks that card
+[184/277] [mobile-chromium] › e2e/mobile-gestures.spec.ts:248:1 › long-press does not open the browser menu or select text
+[WebServer] 12:01:09 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:09 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[185/277] [mobile-chromium] › e2e/mobile-image-captions.spec.ts:13:1 › double-tap an image to caption it; Edit in the selection bar opens it again
+[186/277] [mobile-chromium] › e2e/mobile-image-captions.spec.ts:109:3 › double-tapping a fresh image focuses the caption in the tap, and a late mousedown can't take it
+[187/277] [mobile-chromium] › e2e/mobile-image-captions.spec.ts:109:3 › double-tapping an image already selected focuses the caption in the tap, and a late mousedown can't take it
+[WebServer] 12:01:12 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:12 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[188/277] [mobile-chromium] › e2e/mobile-image-captions.spec.ts:147:1 › a caption gets no edit dock, and the keyboard’s own ✓ finishes it
+[189/277] [mobile-chromium] › e2e/mobile-image-captions.spec.ts:165:1 › captioning never scrolls the page, and a tap on the picture keeps typing
+[190/277] [mobile-chromium] › e2e/mobile-image-captions.spec.ts:177:1 › when the keyboard opens, the caption glides above it in one move
+[191/277] [mobile-chromium] › e2e/mobile-image-captions.spec.ts:213:1 › the keyboard closing finishes the caption, even when focus stays
+[192/277] [mobile-chromium] › e2e/mobile-image-colours.spec.ts:32:1 › tap a colour in the sheet and the picture is framed in it
+[193/277] [mobile-chromium] › e2e/mobile-image-colours.spec.ts:52:3 › the sheet fits: one row of colours, labelled actions, no scrolling
+[194/277] [mobile-chromium] › e2e/mobile-image-colours.spec.ts:52:3 › the sheet fits a 360px phone: one row of colours, labelled actions, no scrolling
+[195/277] [mobile-chromium] › e2e/mobile-image-colours.spec.ts:95:1 › a tapped image or link keeps its fingertip handles unclipped at the card edge
+[196/277] [mobile-chromium] › e2e/mobile-inbox.spec.ts:10:1 › jot into the Inbox with Add, then Place it on the board
+[197/277] [mobile-chromium] › e2e/mobile-inbox.spec.ts:26:1 › the Inbox list scrolls with a finger instead of dragging items
+[198/277] [mobile-chromium] › e2e/mobile-inbox.spec.ts:41:1 › a link shared from another app lands in the Inbox
+[199/277] [mobile-chromium] › e2e/mobile-inbox.spec.ts:52:1 › a shared page keeps its title while the preview is missing
+[WebServer] 12:01:19 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:19 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[200/277] [mobile-chromium] › e2e/mobile-inbox.spec.ts:60:1 › the home-screen shortcut opens the Inbox
+[201/277] [mobile-chromium] › e2e/mobile-inbox.spec.ts:67:1 › quick capture has a Save button on the web
+[WebServer] 12:01:20 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 12:01:20 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[202/277] [mobile-chromium] › e2e/mobile-labels.spec.ts:8:1 › tap a card, open labels from the bar, create one with a colour and rename it in place
+[203/277] [mobile-chromium] › e2e/mobile-link-previews.spec.ts:9:1 › phone: guarded, tall and dead preview images
+[WebServer] 12:01:20 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:20 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[204/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:27:5 › dark, normal motion › Add reopens immediately after outside dismissal and still focuses a new note
+[205/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:54:5 › dark, normal motion › a cancelled sheet pull rolls back and ignores another pointer
+[206/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:70:5 › dark, normal motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[207/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:93:5 › dark, normal motion › the phone notification stays centered at the top and Undo restores its card
+[208/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:27:5 › dark, reduced motion › Add reopens immediately after outside dismissal and still focuses a new note
+[209/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:54:5 › dark, reduced motion › a cancelled sheet pull rolls back and ignores another pointer
+[210/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:70:5 › dark, reduced motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[211/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:93:5 › dark, reduced motion › the phone notification stays centered at the top and Undo restores its card
+[WebServer] 12:01:25 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:25 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:25 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 12:01:25 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[212/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:27:5 › light, normal motion › Add reopens immediately after outside dismissal and still focuses a new note
+[213/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:54:5 › light, normal motion › a cancelled sheet pull rolls back and ignores another pointer
+[214/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:70:5 › light, normal motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[215/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:93:5 › light, normal motion › the phone notification stays centered at the top and Undo restores its card
+[WebServer] 12:01:27 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:27 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[216/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:27:5 › light, reduced motion › Add reopens immediately after outside dismissal and still focuses a new note
+[217/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:54:5 › light, reduced motion › a cancelled sheet pull rolls back and ignores another pointer
+[218/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:70:5 › light, reduced motion › camera zoom and edit framing respect motion preferences and preserve editor focus
+[219/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:93:5 › light, reduced motion › the phone notification stays centered at the top and Undo restores its card
+[220/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:108:3 › a departing sheet can be re-grabbed without a stale dismissal in dark
+[221/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:108:3 › a departing sheet can be re-grabbed without a stale dismissal in light
+[222/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:137:1 › removing a departing sheet never dismisses the next sheet
+[223/277] [mobile-chromium] › e2e/mobile-motion.spec.ts:154:1 › a deliberate reduced-motion sheet release closes synchronously
+[WebServer] 12:01:31 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:31 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[224/277] [mobile-chromium] › e2e/mobile-movies.spec.ts:11:1 › add a show from the dock, pick it, and mark it watched
+[225/277] [mobile-chromium] › e2e/mobile-movies.spec.ts:25:1 › the Watched button takes a fingertip, a little outside its outline
+[WebServer] 12:01:32 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 12:01:32 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[226/277] [mobile-chromium] › e2e/mobile-movies.spec.ts:35:1 › the Add sheet keeps a tidy grid with the Movie tile
+[227/277] [mobile-chromium] › e2e/mobile-movies.spec.ts:45:1 › opening the details of a tall card brings the details into view, above the bars
+[228/277] [mobile-chromium] › e2e/mobile-multiplayer.spec.ts:4:1 › people and pings are reachable by touch without crowding the phone header
+[229/277] [mobile-chromium] › e2e/mobile-pwa.spec.ts:6:1 › the app can be installed on a phone home screen
+[230/277] [mobile-chromium] › e2e/mobile-pwa.spec.ts:25:1 › the status bar colour follows the app theme
+[231/277] [mobile-chromium] › e2e/mobile-pwa.spec.ts:37:1 › installed iOS follows the host layout height, separately from the keyboard
+[232/277] [mobile-chromium] › e2e/mobile-pwa.spec.ts:70:1 › an installed Android app keeps the regular CSS viewport layout
+[233/277] [mobile-chromium] › e2e/mobile-pwa.spec.ts:125:1 › the phone shell fills the browser viewport
+[WebServer] 12:01:35 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+
+[WebServer] 12:01:35 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+
+[234/277] [mobile-chromium] › e2e/mobile-pwa.spec.ts:143:3 › header clearance is correct for iOS 27 with a native status bar
+[235/277] [mobile-chromium] › e2e/mobile-pwa.spec.ts:143:3 › header clearance is correct for iOS 27 with an edge-to-edge installation
+[236/277] [mobile-chromium] › e2e/mobile-pwa.spec.ts:143:3 › header clearance is correct for iOS 26
+[237/277] [mobile-chromium] › e2e/mobile-pwa.spec.ts:143:3 › header clearance is correct for an unverified future Safari release
+[238/277] [mobile-chromium] › e2e/mobile-pwa.spec.ts:143:3 › header clearance is correct for Safari 27 in a browser tab
+[WebServer] 12:01:36 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:36 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[239/277] [mobile-chromium] › e2e/mobile-pwa.spec.ts:143:3 › header clearance is correct for iOS 27 in landscape
+[240/277] [mobile-chromium] › e2e/mobile-pwa.spec.ts:171:5 › safe areas are counted once in browser, portrait
+[241/277] [mobile-chromium] › e2e/mobile-pwa.spec.ts:171:5 › safe areas are counted once in browser, landscape
+[242/277] [mobile-chromium] › e2e/mobile-pwa.spec.ts:171:5 › safe areas are counted once in installed iOS, portrait
+[WebServer] 12:01:37 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:37 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[243/277] [mobile-chromium] › e2e/mobile-pwa.spec.ts:171:5 › safe areas are counted once in installed iOS, landscape
+[244/277] [mobile-chromium] › e2e/mobile-sheet-keyboard.spec.ts:31:1 › the label menu sits on the keyboard: the field and Create stay in view
+[245/277] [mobile-chromium] › e2e/mobile-sheet-keyboard.spec.ts:49:1 › the share sheet sits on the keyboard: the username field and Invite stay in view
+[246/277] [mobile-chromium] › e2e/mobile-shell.spec.ts:25:1 › the dock replaces the tool rail and everything fits across the screen
+[247/277] [mobile-chromium] › e2e/mobile-shell.spec.ts:38:1 › the Add sheet makes each kind of card
+[248/277] [mobile-chromium] › e2e/mobile-shell.spec.ts:63:1 › photos come from the Add sheet
+[249/277] [mobile-chromium] › e2e/mobile-shell.spec.ts:76:1 › menus and panels open as sheets that stay on screen
+[250/277] [mobile-chromium] › e2e/mobile-shell.spec.ts:97:1 › a sheet pulled down by its grip closes
+[251/277] [mobile-chromium] › e2e/mobile-shell.spec.ts:110:1 › selecting a card docks the actions along the bottom
+[252/277] [mobile-chromium] › e2e/mobile-shell.spec.ts:123:1 › Connect in the bar ties two cards together
+[WebServer] 12:01:43 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:43 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[253/277] [mobile-chromium] › e2e/mobile-shell.spec.ts:136:1 › Select more picks several cards for one action
+[WebServer] 12:01:44 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:44 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[254/277] [mobile-chromium] › e2e/mobile-shell.spec.ts:149:1 › the back chevron goes up a level
+[255/277] [mobile-chromium] › e2e/mobile-shell.spec.ts:166:1 › burying shows what happened, with Undo
+[WebServer] 12:01:45 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:45 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[256/277] [mobile-chromium] › e2e/mobile-shell.spec.ts:175:1 › touching the board with the Inbox open puts the sheet away first
+[257/277] [mobile-chromium] › e2e/mobile-shell.spec.ts:184:1 › the Boards sheet lists boards you were just on
+[258/277] [mobile-chromium] › e2e/mobile-shell.spec.ts:192:1 › a comment thread closes when you leave its board
+[259/277] [mobile-chromium] › e2e/mobile-sticker-import.spec.ts:7:1 › phone landscape pack preview keeps details and Add beside the artwork
+[260/277] [mobile-chromium] › e2e/mobile-sticker-import.spec.ts:30:1 › a pack sent to the bot badges the phone sticker button and opens in one tap
+[261/277] [mobile-chromium] › e2e/mobile-sticker-import.spec.ts:62:1 › a selected sticker on a phone gets a bottom sheet with labelled icon actions
+[262/277] [mobile-chromium] › e2e/mobile-sticker-loading.spec.ts:5:1 › on a phone, slow artwork shows a blank sticker with its emoji on the board and in the shelf
+[263/277] [mobile-chromium] › e2e/mobile-sticker-windowing.spec.ts:7:1 › a 100-sticker shelf windows columns, restores its preview, and drags one real sticker
+[WebServer] 12:01:49 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[WebServer] 12:01:49 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[264/277] [mobile-chromium] › e2e/mobile-todos.spec.ts:28:1 › quick taps down a list tick the rows under the finger, then they settle
+[265/277] [mobile-chromium] › e2e/mobile-todos.spec.ts:43:1 › a tap just after the rows swap is ignored, so it cannot hit the row that slid under the finger
+[WebServer] 12:01:51 PM [vite] ws proxy error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+[WebServer] 12:01:51 PM [vite] ws proxy socket error:
+[WebServer] Error: write EPIPE
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:572:12)
+[WebServer]     at _write (node:internal/streams/writable:501:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:510:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1009:22)
+[WebServer]     at Socket.emit (node:events:519:28)
+[WebServer]     at addChunk (node:internal/streams/readable:561:12)
+
+[266/277] [mobile-chromium] › e2e/mobile-todos.spec.ts:59:1 › list options open as a sheet from the selection bar
+[267/277] [mobile-chromium] › e2e/mobile-viewer.spec.ts:8:1 › a share link pans, pinches and opens inner boards by touch
+(node:49532) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[268/277] [mobile-chromium] › e2e/mobile-stickers.spec.ts:36:1 › phone scroll and preview never place; tap, cancel, move, resize, rotate and pinch remain distinct
+(node:49537) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[269/277] [mobile-chromium] › e2e/mobile-stickers.spec.ts:106:1 › bottom-right sticker shelf browses sideways and lifts one sticker onto the board
+[270/277] [mobile-chromium] › e2e/mobile-stickers.spec.ts:165:1 › moving a sticker over a note being edited never selects text; a double-tap-hold slide on it zooms instead
+[271/277] [mobile-chromium] › e2e/mobile-stickers.spec.ts:195:1 › an animated sticker plays on a phone without being selected; Pause and Play take a real tap
+(node:49589) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[272/277] [tablet-webkit] › e2e/tablet-gestures.spec.ts:12:1 › tablets keep the rail and use touch gestures
+(node:49601) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[273/277] [tablet-webkit] › e2e/tablet-gestures.spec.ts:24:1 › a selected card shows fingertip handles and a bottom bar
+[274/277] [tablet-webkit] › e2e/tablet-gestures.spec.ts:46:1 › a tapped tool keeps the new card focused, so the keyboard stays up
+[275/277] [tablet-webkit] › e2e/tablet-multiplayer.spec.ts:4:1 › tablet users can open people and point to the current viewport with a fingertip
+[276/277] [tablet-webkit] › e2e/tablet-stickers.spec.ts:6:1 › tablet tray arms one placement and touch handles preserve appearance through pinch and reload
+[277/277] [tablet-webkit] › e2e/tablet-stickers.spec.ts:26:1 › on a tablet, a long-press box selects several stickers; one finger moves them all and their shared ring turns them together
+  277 passed (3.8m)

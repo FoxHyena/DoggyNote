@@ -1,0 +1,24 @@
+
+> doggynote@ test /Users/oreo/.paseo/worktrees/2pf6ay6i/mundane-bulldog
+> vitest run
+
+
+ RUN  v4.1.11 /Users/oreo/.paseo/worktrees/2pf6ay6i/mundane-bulldog
+
+(node:82166) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82165) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82168) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82167) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82196) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82198) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  36 passed (36)
+      Tests  312 passed (312)
+   Start at  11:31:03
+   Duration  2.08s (transform 3.36s, setup 0ms, import 8.77s, tests 3.38s, environment 2ms)

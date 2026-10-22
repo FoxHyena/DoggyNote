@@ -618,11 +618,19 @@ html[data-input='touch'] .card > .connect-handle { border-color: var(--dn-select
     width: max-content;
     max-width: calc(100% - 24px);
     box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
-    animation: toast-down 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition-duration: 200ms;
+    @starting-style {
+      opacity: 0;
+      transform: translate(-50%, -10px);
+    }
   }
   .toast-action { min-height: 40px; }
 }
-@keyframes toast-down { from { opacity: 0; transform: translate(-50%, -10px); } }
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    @starting-style { transform: translateX(-50%); }
+  }
+}
 /* UX1-04: the connect hint never swallows the tap meant for a card. */
 .connect-banner { pointer-events: none; }
 .connect-banner button { pointer-events: auto; }

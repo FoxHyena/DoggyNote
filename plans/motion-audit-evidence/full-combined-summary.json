@@ -1,0 +1,15 @@
+{
+  "cases": 942,
+  "passed": 926,
+  "skipped": 7,
+  "failed": 9,
+  "retries": 0,
+  "projects": {
+    "webkit": 340,
+    "chromium": 340,
+    "mobile-webkit": 128,
+    "mobile-chromium": 128,
+    "tablet-webkit": 6
+  },
+  "note": "One shared backend across all projects; CI isolates desktop backends. See full-combined.log and subsequent verification logs."
+}

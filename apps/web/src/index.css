@@ -2380,7 +2380,11 @@ html[data-input='touch'] .movie-icon-btn::after {
   color: var(--dn-text);
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
   z-index: 60;
-  animation: slide-in 160ms ease-out;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), opacity 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  @starting-style {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
 }
 
 

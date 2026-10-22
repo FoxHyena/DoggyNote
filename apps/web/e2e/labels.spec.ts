@@ -71,7 +71,7 @@ test('create, filter, toggle and rename labels in place; they persist and reach 
   await expect(row(page, 'Lighting').getByTestId('label-toggle')).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByTestId('labels-input')).toHaveValue('')
   // Gold chip, from the theme.
-  expect(await background(chips(card).first())).toBe(await token(page, '--dn-card-gold-bg'))
+  await expect(chips(card).first()).toHaveCSS('background-color', await token(page, '--dn-card-gold-bg'))
 
   // A second one through the Create button.
   await page.getByTestId('labels-input').fill('Question')
