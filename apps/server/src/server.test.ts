@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { app } from './app.ts'
 import { hashPassword, sha256Hex, signAssetToken, verifyAssetToken, verifyPassword } from './crypto.ts'
 import { deletedCommentOwner, ownerFor, parseChanges, stampComment, upsertSql } from './sync.ts'
-import { decodeEntities, isFetchableUrl, proxyImage } from './unfurl.ts'
+import { BROWSER_UA, PREVIEW_UA, decodeEntities, isFetchableUrl, proxyImage, unfurl } from './unfurl.ts'
 import { cleanFileName, contentDisposition } from './assets.ts'
 
 it('health check responds', async () => {
@@ -77,6 +77,30 @@ describe('unfurl helpers', () => {
     expect(isFetchableUrl('https://a.dog/')).not.toBeNull()
     expect(isFetchableUrl('file:///etc/passwd')).toBeNull()
     expect(isFetchableUrl('not a url')).toBeNull()
+  })
+  it('asks for pages as a preview bot first, and images as Safari', async () => {
+    const seen: string[] = []
+    const fetcher = (async (_url: string, init?: RequestInit) => {
+      seen.push(new Headers(init?.headers).get('user-agent') ?? '')
+      return new Response(new Uint8Array([1, 2, 3]), { headers: { 'content-type': 'image/png' } })
+    }) as typeof fetch
+    await unfurl(new URL('https://shop.example/item.png'), fetcher)
+    await proxyImage(new URL('https://shop.example/item.png'), fetcher)
+    expect(seen).toEqual([PREVIEW_UA, BROWSER_UA])
+    // Preview-friendly sites look for one of these tokens; nothing pretends to be another product.
+    expect(PREVIEW_UA).toMatch(/DoggyNoteBot.*Twitterbot/)
+    expect(BROWSER_UA).toMatch(/Macintosh.*Version\/\d+.*Safari\//)
+    expect(BROWSER_UA).not.toMatch(/bot/i)
+  })
+  it('asks again as Safari when the site turns the preview bot away', async () => {
+    const seen: string[] = []
+    const fetcher = (async (_url: string, init?: RequestInit) => {
+      const ua = new Headers(init?.headers).get('user-agent') ?? ''
+      seen.push(ua)
+      return ua === PREVIEW_UA ? new Response('no', { status: 503 }) : new Response(new Uint8Array([1]), { headers: { 'content-type': 'image/png' } })
+    }) as typeof fetch
+    expect((await unfurl(new URL('https://shop.example/item.png'), fetcher)).image).toBe('https://shop.example/item.png')
+    expect(seen).toEqual([PREVIEW_UA, BROWSER_UA])
   })
 })
 
