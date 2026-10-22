@@ -1,4 +1,4 @@
-import { Show, createEffect, createSignal, onCleanup, onMount } from 'solid-js'
+import { Show, createEffect, createSignal, on, onCleanup, onMount } from 'solid-js'
 import { Portal } from 'solid-js/web'
 import { HIGHLIGHTER, MAX_INK_POINTS, hitInkStroke, inkBounds, newId, roundInk, type Card, type InkMark, type InkPoint, type Stroke } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
@@ -36,6 +36,13 @@ export function StrokeEditor(props: {
   let surface!: HTMLDivElement
   let pointer: number | null = null
   let last: InkPoint | undefined
+  /**
+   * Where a shift-click's straight line starts: the end of the last stroke (or
+   * eraser pass). Forgotten when the tool changes or that stroke is undone.
+   */
+  let anchor: { point: InkPoint; stroke: string | null } | null = null
+  /** This press began with shift held from an anchor: if it doesn't move, it's a straight line. */
+  let lineFrom: InkPoint | null = null
   const [draft, setDraft] = createSignal<InkMark | null>(null)
   const [erasing, setErasing] = createSignal<ReadonlySet<string>>(new Set())
   const [full, setFull] = createSignal(false)
@@ -53,6 +60,9 @@ export function StrokeEditor(props: {
     setDraft(null)
     setErasing(new Set<string>())
   }
+  createEffect(on(inkTool, () => { anchor = null }, { defer: true }))
+  /** The anchor, unless the stroke it came from was undone or erased. */
+  const anchorPoint = () => (anchor && (!anchor.stroke || doc.strokesOn(props.card.id).some((s) => s.id === anchor!.stroke)) ? anchor.point : null)
   const undo = () => { cancel(); if (doc.canUndoDrawing(props.card.id)) doc.undo() }
   const redo = () => { cancel(); if (doc.canRedoDrawing(props.card.id)) doc.redo() }
   const done = () => { cancel(); props.onDone() }
@@ -83,7 +93,12 @@ export function StrokeEditor(props: {
     }
     const p = point(e)
     const tool = inkTool()
-    if (tool === 'eraser') return erase(p)
+    lineFrom = e.shiftKey ? anchorPoint() : null
+    if (tool === 'eraser') {
+      // Shift-click: erase along the straight segment from the anchor.
+      if (lineFrom) last = lineFrom
+      return erase(p)
+    }
     const width = inkWidth() * (tool === 'highlighter' ? HIGHLIGHTER.scale : 1)
     const order = Math.max(Date.now(), ...doc.strokesOn(props.card.id).map((s) => s.order + 1))
     setDraft({ id: newId(), tool, color: inkColor(), width, opacity: tool === 'highlighter' ? HIGHLIGHTER.opacity : 1, points: [p], order, bounds: inkBounds([p], width) })
@@ -105,14 +120,24 @@ export function StrokeEditor(props: {
       setDraft({ ...d, points: [...kept, p] })
     }
   }
+  /**
+   * The pen lifts: keep the line. Also on lost capture, which WebKit can send
+   * before pointerup on a quick release; its coordinates aren't trustworthy,
+   * so only a real pointerup adds a final point.
+   */
   function up(e: PointerEvent) {
     if (pointer !== e.pointerId) return
-    move(e)
-    const d = draft()
+    if (e.type === 'pointerup') move(e)
+    let d = draft()
     const erased = [...erasing()]
+    const end = d ? d.points[d.points.length - 1] : last
     const card = doc.getCard(props.card.id)
+    // A shift-click that didn't move: a straight line from the anchor.
+    if (d && lineFrom && d.points.length === 1) d = { ...d, points: [lineFrom, d.points[0]] }
+    lineFrom = null
     cancel()
     if (!card || !writable()) return
+    anchor = end ? { point: end, stroke: d?.id ?? null } : null
     if (d) {
       const stroke: Stroke = { ...d, bounds: inkBounds(d.points, d.width), kind: 'stroke', boardId: card.boardId, cardId: card.id, createdAt: Date.now() }
       doc.commit([doc.createChange(stroke)])
@@ -233,7 +258,7 @@ export function StrokeEditor(props: {
                 onPointerDown={down}
                 onPointerMove={move}
                 onPointerUp={up}
-                onPointerCancel={cancel}
+                onPointerCancel={up}
                 onLostPointerCapture={(e) => { if (e.pointerId === pointer) up(e) }}
               >
                 <InkLayer strokes={strokes()} width={props.width} height={props.height} draft={draft()} />

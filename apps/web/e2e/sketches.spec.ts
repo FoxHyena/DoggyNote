@@ -364,3 +364,130 @@ test('zoomed out, a sketch is drawn on the overview with its paper and ink', asy
   await expect.poll(() => pixel(50, 50)).toEqual([251, 243, 223])
   await expect.poll(() => pixel(125, 100)).toEqual([36, 95, 229])
 })
+
+/** Quick strokes, as a hand makes them: no waits, a single move, or a pause right before letting go. */
+async function quickStrokes(page: Page, box: { x: number; y: number; width: number; height: number }) {
+  const p = (fx: number, fy: number) => ({ x: box.x + box.width * fx, y: box.y + box.height * fy })
+  // A few fast moves, released at once.
+  let a = p(0.15, 0.2), b = p(0.6, 0.3)
+  await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y, { steps: 3 }); await page.mouse.up()
+  // One move, released at once.
+  a = p(0.2, 0.5); b = p(0.7, 0.55)
+  await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y); await page.mouse.up()
+  // Stop, then let go 50 ms later.
+  a = p(0.2, 0.8); b = p(0.75, 0.85)
+  await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y, { steps: 4 }); await page.waitForTimeout(50); await page.mouse.up()
+}
+
+test('fast strokes in the sketch editor are all kept, through a reload', async ({ page }) => {
+  await page.getByTestId('tool-sketch').click()
+  await expect(editor(page)).toBeVisible()
+  await quickStrokes(page, (await page.getByTestId('sketch-surface').boundingBox())!)
+  await expect(editorStrokes(page)).toHaveCount(3)
+  await page.getByTestId('sketch-done').click()
+  await expect(sketchCard(page).locator('[data-stroke-id]')).toHaveCount(3)
+  await waitForSync(page)
+  await page.reload()
+  await expect(sketchCard(page).locator('[data-stroke-id]')).toHaveCount(3)
+})
+
+test('fast strokes drawn on the board are all kept, through a reload', async ({ page }) => {
+  await page.getByTestId('tool-draw').click()
+  await expect(page.getByTestId('board-ink-bar')).toBeVisible()
+  const c = (await page.getByTestId('canvas').boundingBox())!
+  await quickStrokes(page, { x: c.x + 40, y: c.y + 140, width: c.width - 80, height: c.height - 220 })
+  await expect(inkCards(page)).toHaveCount(3)
+  await waitForSync(page)
+  await page.reload()
+  await expect(inkCards(page)).toHaveCount(3)
+  await expect(inkCards(page).locator('[data-stroke-id]')).toHaveCount(3)
+})
+
+/** A path's points, from its `d` ("M x y L x y …"). */
+const pathPoints = async (path: Locator) => {
+  const nums = ((await path.getAttribute('d')) ?? '').match(/-?[\d.]+/g)!.map(Number)
+  return Array.from({ length: nums.length / 2 }, (_, i) => ({ x: nums[i * 2], y: nums[i * 2 + 1] }))
+}
+async function shiftClick(page: Page, p: { x: number; y: number }) {
+  await page.keyboard.down('Shift')
+  await page.mouse.click(p.x, p.y)
+  await page.keyboard.up('Shift')
+}
+
+test('click, then shift-click: a straight line in the current colour and width, chained by more shift-clicks', async ({ page }) => {
+  await page.getByTestId('tool-sketch').click()
+  const surface = page.getByTestId('sketch-surface')
+  const r = (await surface.boundingBox())!
+  const at = (fx: number, fy: number) => ({ x: r.x + r.width * fx, y: r.y + r.height * fy })
+  await page.locator('[data-testid="ink-colour"][data-hex="#245FE5"]').click()
+  await page.getByTestId('ink-width-12').click()
+  await expect(page.getByTestId('ink-pen')).toHaveAttribute('data-tip', /Shift-click/)
+
+  // A click leaves a dot; a shift-click joins it to the new spot with a straight line.
+  await page.mouse.click(at(0.2, 0.3).x, at(0.2, 0.3).y)
+  await expect(editorStrokes(page)).toHaveCount(1)
+  await shiftClick(page, at(0.7, 0.6))
+  await expect(editorStrokes(page)).toHaveCount(2)
+  const line = editorStrokes(page).nth(1)
+  await expect(line).toHaveAttribute('stroke', '#245FE5')
+  await expect(line).toHaveAttribute('stroke-width', '12')
+  const [a, b] = await pathPoints(line)
+  expect(await pathPoints(line)).toHaveLength(2)
+  for (const [p, q] of [[a, { x: 160, y: 180 }], [b, { x: 560, y: 360 }]]) {
+    expect(Math.abs(p.x - q.x)).toBeLessThan(3)
+    expect(Math.abs(p.y - q.y)).toBeLessThan(3)
+  }
+
+  // Another shift-click chains on from there; Undo takes that one line away.
+  await shiftClick(page, at(0.8, 0.2))
+  await expect(editorStrokes(page)).toHaveCount(3)
+  expect((await pathPoints(editorStrokes(page).nth(2)))[0]).toEqual(b)
+  await page.keyboard.press(`${MOD}+z`)
+  await expect(editorStrokes(page)).toHaveCount(2)
+  // Holding shift while dragging is still freehand.
+  await page.keyboard.down('Shift')
+  await scribble(page, surface, [0.1, 0.9], [0.5, 0.92])
+  await page.keyboard.up('Shift')
+  await expect(editorStrokes(page)).toHaveCount(3)
+  expect((await pathPoints(editorStrokes(page).nth(2))).length).toBeGreaterThan(2)
+
+  await page.getByTestId('sketch-done').click()
+  await waitForSync(page)
+  await page.reload()
+  await expect(sketchCard(page).locator('[data-stroke-id]')).toHaveCount(3)
+  expect(await pathPoints(sketchCard(page).locator('[data-stroke-id]').nth(1))).toEqual([a, b])
+})
+
+test('the eraser’s shift-click erases along a straight line', async ({ page }) => {
+  await page.getByTestId('tool-sketch').click()
+  const surface = page.getByTestId('sketch-surface')
+  const r = (await surface.boundingBox())!
+  // Two upright lines; the eraser's straight pass crosses both without touching them in between.
+  await scribble(page, surface, [0.4, 0.2], [0.4, 0.8])
+  await scribble(page, surface, [0.6, 0.2], [0.6, 0.8])
+  await expect(editorStrokes(page)).toHaveCount(2)
+  await page.getByTestId('ink-eraser').click()
+  await page.mouse.click(r.x + r.width * 0.2, r.y + r.height * 0.5)
+  await expect(editorStrokes(page)).toHaveCount(2)
+  await shiftClick(page, { x: r.x + r.width * 0.8, y: r.y + r.height * 0.5 })
+  await expect(editorStrokes(page)).toHaveCount(0)
+})
+
+test('on the board, click then shift-click draws a straight line, kept after a reload', async ({ page }) => {
+  await page.getByTestId('tool-draw').click()
+  const a = await at(page, 0.3, 0.5)
+  const b = await at(page, 0.7, 0.6)
+  await page.mouse.click(a.x, a.y)
+  await expect(inkCards(page)).toHaveCount(1)
+  await shiftClick(page, b)
+  await expect(inkCards(page)).toHaveCount(2)
+  const line = inkCards(page).nth(1)
+  const box = (await line.boundingBox())!
+  // The line's card spans from the first click to the second.
+  expect(box.width).toBeGreaterThan(b.x - a.x - 4)
+  expect(box.height).toBeGreaterThan(b.y - a.y - 4)
+  expect(await pathPoints(line.locator('[data-stroke-id]'))).toHaveLength(2)
+  await waitForSync(page)
+  await page.reload()
+  await expect(inkCards(page)).toHaveCount(2)
+})

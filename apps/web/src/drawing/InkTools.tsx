@@ -2,15 +2,16 @@ import { For, Show, createSignal } from 'solid-js'
 import { INK_PALETTE, INK_WIDTHS, SKETCH_PAPERS, normalizeSwatchHex } from '@doggynote/core'
 import { IconButton, ToolIcons } from '../ui/icons.tsx'
 import { Popover } from '../ui/Popover.tsx'
+import { touch } from '../state/device.ts'
 import { inkColor, inkTool, inkWidth, setInkColor, setInkTool, setInkWidth, type DrawingTool } from '../state/drawing.ts'
 import './ink.css'
 
 /** The width dots grow by eye, not to scale: the finest line still needs a visible dot. */
 const DOT_SIZES = [4, 8, 14]
-const TOOLS: { id: DrawingTool; label: string; icon: keyof typeof ToolIcons }[] = [
-  { id: 'pen', label: 'Pen', icon: 'pen' },
-  { id: 'highlighter', label: 'Highlighter', icon: 'highlighter' },
-  { id: 'eraser', label: 'Eraser', icon: 'eraser' },
+const TOOLS: { id: DrawingTool; label: string; icon: keyof typeof ToolIcons; tip: string }[] = [
+  { id: 'pen', label: 'Pen', icon: 'pen', tip: 'Pen · Shift-click for a straight line' },
+  { id: 'highlighter', label: 'Highlighter', icon: 'highlighter', tip: 'Highlighter · Shift-click for a straight line' },
+  { id: 'eraser', label: 'Eraser', icon: 'eraser', tip: 'Eraser · Shift-click to erase in a straight line' },
 ]
 
 /**
@@ -28,7 +29,7 @@ export function InkTools(props: { onTool?: () => void; paper?: { value: string; 
   return (
     <div class="ink-tools" role="toolbar" aria-label="Drawing tools">
       <div class="ink-group" role="group" aria-label="Tool">
-        <For each={TOOLS}>{(t) => <IconButton testid={`ink-${t.id}`} icon={ToolIcons[t.icon]} label={t.label} pressed={inkTool() === t.id} onClick={() => pick(t.id)} />}</For>
+        <For each={TOOLS}>{(t) => <IconButton testid={`ink-${t.id}`} icon={ToolIcons[t.icon]} label={t.label} title={touch() ? t.label : t.tip} pressed={inkTool() === t.id} onClick={() => pick(t.id)} />}</For>
       </div>
       <Show when={inking()}>
         <div class="ink-group ink-colours" role="group" aria-label="Ink colour">

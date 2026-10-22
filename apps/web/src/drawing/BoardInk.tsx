@@ -35,6 +35,14 @@ type Draft = {
  */
 export function createBoardInk(readOnly: () => boolean, toWorld: (e: { clientX: number; clientY: number }) => Vec) {
   let draft: Draft | null = null
+  /**
+   * Where a shift-click's straight line starts: the end of the last mark (or
+   * eraser pass) this Draw session. Forgotten with a new tool, when drawing
+   * ends, or when that mark is undone or erased.
+   */
+  let anchor: { point: Vec; card: Id | null } | null = null
+  let lineFrom: Vec | null = null
+  const anchorPoint = () => (anchor && (!anchor.card || doc.cardsOn(boardId()).some((c) => c.id === anchor!.card)) ? anchor.point : null)
   const [preview, setPreview] = createSignal<Pick<InkMark, 'points' | 'color' | 'width' | 'opacity'> | null>(null)
 
   function cancel(): boolean {
@@ -66,6 +74,7 @@ export function createBoardInk(readOnly: () => boolean, toWorld: (e: { clientX: 
     if (draft) { cancel(); return true }
     const p = toWorld(e)
     const tool = inkTool()
+    lineFrom = e.shiftKey ? anchorPoint() : null
     const width = inkWidth() * (tool === 'highlighter' ? HIGHLIGHTER.scale : 1)
     const board = boardId()
     draft = {
@@ -74,7 +83,8 @@ export function createBoardInk(readOnly: () => boolean, toWorld: (e: { clientX: 
         ? doc.cardsOn(board).filter((c): c is Card<'ink'> => c.type === 'ink' && isBoardInkSize(c.content) && doc.canWriteObject(c)).map((card) => ({ card, strokes: [...doc.strokesOn(card.id)] }))
         : [],
     }
-    if (tool === 'eraser') erase(p, p)
+    // Shift-click with the eraser: erase along the straight segment from the anchor.
+    if (tool === 'eraser') erase(p, lineFrom ?? p)
     else setPreview({ points: [p], width, color: draft.color, opacity: draft.opacity })
     return true
   }
@@ -100,14 +110,23 @@ export function createBoardInk(readOnly: () => boolean, toWorld: (e: { clientX: 
     return true
   }
 
+  /**
+   * The pen lifts: keep the mark. Lost capture (WebKit can send it before
+   * pointerup on a quick release) and a cancel keep what was drawn too; only
+   * a real pointerup's position is trusted as a final point.
+   */
   function up(e: PointerEvent): boolean {
     const d = draft
     if (!d || d.pointer !== e.pointerId) return false
-    if (e.type === 'pointercancel') { cancel(); return true }
-    move(e)
+    if (e.type === 'pointerup') move(e)
     const erased = new Set(boardErasing())
+    const from = lineFrom
+    lineFrom = null
     cancel()
     if (d.board !== boardId() || readOnly()) return true
+    // A shift-click that didn't move: a straight line from the anchor.
+    if (from && d.tool !== 'eraser' && d.points.length === 1) d.points = [from, d.points[0]]
+    const end = d.points[d.points.length - 1]
     if (d.tool === 'eraser') {
       const now = Date.now()
       const patches: Record<Id, Partial<Obj>> = {}
@@ -119,6 +138,7 @@ export function createBoardInk(readOnly: () => boolean, toWorld: (e: { clientX: 
         if (doc.strokesOn(card.id).every((s) => erased.has(s.id))) patches[card.id] = { purged: true }
       }
       if (Object.keys(patches).length) doc.update(patches)
+      anchor = { point: end, card: null }
       return true
     }
     const box = boardInkEnvelope(d.points, d.width)
@@ -134,11 +154,13 @@ export function createBoardInk(readOnly: () => boolean, toWorld: (e: { clientX: 
       tool: d.tool, color: d.color, width: d.width, opacity: d.opacity, order: now, points: box.points, bounds: inkBounds(box.points, d.width),
     }
     doc.commit([doc.createChange(card), doc.createChange(stroke)])
+    anchor = { point: end, card: card.id }
     return true
   }
 
   createEffect(on(boardId, () => { cancel(); endBoardDrawing() }, { defer: true }))
-  createEffect(() => { if (!boardDrawing() || readOnly()) cancel() })
+  createEffect(() => { if (!boardDrawing() || readOnly()) { cancel(); anchor = null } })
+  createEffect(on(inkTool, () => { anchor = null }, { defer: true }))
   onMount(() => {
     // Escape drops the line in progress, or (with none) finishes drawing.
     const key = (e: KeyboardEvent) => {

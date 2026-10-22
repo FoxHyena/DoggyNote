@@ -1441,7 +1441,7 @@ export function Canvas(props: { readOnly: boolean }) {
       onPointerLeave={(e) => { if (e.pointerType !== 'touch') { lastPointer = null; nearAt = null; setNearHandle('') } }}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
-      onLostPointerCapture={() => { if (ink.active()) ink.cancel() }}
+      onLostPointerCapture={(e) => { if (ink.active()) ink.up(e) }}
       onDblClick={onDblClick}
       onContextMenu={(e) => {
         // Long-press is ours on touch (lift a card), not the browser's menu.
