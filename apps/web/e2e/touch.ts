@@ -121,6 +121,17 @@ export async function longPress(page: Page, p: Pt, ms = 600) {
   await f.release(0)
 }
 
+/** Double-tap, keep the second tap down, and slide `dy` px (up is negative). */
+export async function tapHoldSlide(page: Page, p: Pt, dy: number) {
+  await tap(page, p)
+  await page.waitForTimeout(80)
+  const f = new Fingers(page)
+  await f.press(0, p)
+  await steps(f, 0, p, { x: p.x, y: p.y + dy }, 8)
+  await page.waitForTimeout(150)
+  await f.release(0)
+}
+
 /** Two fingers spread (scale > 1) or pinched (scale < 1) around a centre. */
 export async function pinch(page: Page, c: Pt, scale: number, opts: { spread?: number; pan?: Pt } = {}) {
   const r0 = opts.spread ?? 60

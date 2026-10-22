@@ -9,16 +9,19 @@ export function Login(props: { onLogin: (u: User) => void; introduction?: JSX.El
   const [username, setUsername] = createSignal('')
   const [password, setPassword] = createSignal('')
   const [error, setError] = createSignal<string | null>(null)
+  const [wrongPassword, setWrongPassword] = createSignal(false)
   const [busy, setBusy] = createSignal(false)
 
   async function submit(e: SubmitEvent) {
     e.preventDefault()
     setBusy(true)
     setError(null)
+    setWrongPassword(false)
     try {
       props.onLogin(await login(username().trim(), password()))
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Can't reach the server. Check your connection.")
+      setWrongPassword(err instanceof ApiError && err.status === 401)
     } finally {
       setBusy(false)
     }
@@ -45,6 +48,7 @@ export function Login(props: { onLogin: (u: User) => void; introduction?: JSX.El
           <p class="form-error" role="alert" data-testid="login-error">
             {error()}
           </p>
+          <Show when={wrongPassword()}><p class="login-hint">Forgotten it? Ask whoever invited you to reset it.</p></Show>
         </Show>
         <button class="primary-btn" type="submit" disabled={busy()}>
           {busy() ? COPY.loading : 'Sign in'}

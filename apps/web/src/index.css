@@ -364,6 +364,14 @@ html[data-input="mouse"] .menu-item:hover {
   color: var(--c-text);
 }
 
+/* A buried card's copy sinking into Buried bones (canvas/buryMotion.ts). */
+.bury-ghost {
+  z-index: 55;
+  margin: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
 .card-unreadable {
   margin: 0;
   padding: 10px 12px;
@@ -1169,12 +1177,18 @@ html[data-input="mouse"] .board-card:hover .board-tile {
   padding: 12px 14px;
 }
 
+/* The whole picture, never cropped: tall ones are capped and letterboxed. */
 .link-image {
   display: block;
   width: 100%;
-  max-height: 150px;
-  object-fit: cover;
+  height: auto;
+  max-height: 480px;
+  object-fit: contain;
   background: var(--dn-card-hover);
+}
+
+.card.in-column .link-image {
+  max-height: 240px;
 }
 
 .link-body {

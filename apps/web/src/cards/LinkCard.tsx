@@ -1,9 +1,9 @@
-import { Show, onMount } from 'solid-js'
+import { Show, createSignal, onMount } from 'solid-js'
 import { safeHref, type Card } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { editIsNewCard, endEdit, onEndEdit } from '../state/ui.ts'
-import { unfurl } from '../state/unfurl.ts'
+import { proxiedImage, retryEmptyPreview, unfurl } from '../state/unfurl.ts'
 import type { CardProps } from '../canvas/CardView.tsx'
 
 onEndEdit((id) => {
@@ -29,10 +29,45 @@ const host = (url: string) => {
   }
 }
 
+/**
+ * The preview image, whole. Hot-linked first; if the site won't serve it to us,
+ * fetched through the Worker. If that fails too, there's no image at all
+ * (never a broken-image box).
+ */
+function LinkImage(props: { url: string }) {
+  const [src, setSrc] = createSignal<string | null>(props.url)
+  const [via, setVia] = createSignal<'direct' | 'proxy'>('direct')
+  const onError = async () => {
+    setSrc(null)
+    if (via() === 'proxy') return
+    setVia('proxy')
+    setSrc(await proxiedImage(props.url))
+  }
+  return (
+    <Show when={src()}>
+      {(s) => (
+        <img
+          class="link-image"
+          data-testid="link-image"
+          data-via={via()}
+          src={s()}
+          alt=""
+          draggable={false}
+          loading="lazy"
+          referrerpolicy="no-referrer"
+          onError={() => void onError()}
+        />
+      )}
+    </Show>
+  )
+}
+
 export function LinkCard(props: CardProps<'link'>) {
   const c = () => props.card.content
   onMount(() => {
-    if (!props.readOnly && c().url && c().status === 'pending') void unfurl(props.card.id)
+    if (props.readOnly || !c().url) return
+    if (c().status === 'pending') void unfurl(props.card.id)
+    else if (c().status === 'ok' && !c().title && !c().image) retryEmptyPreview(props.card.id)
   })
 
   return (
@@ -57,8 +92,8 @@ export function LinkCard(props: CardProps<'link'>) {
         }
       >
         <div class="link-card" data-status={c().status}>
-          <Show when={c().image && safeHref(c().image)}>
-            <img class="link-image" src={safeHref(c().image)!} alt="" draggable={false} loading="lazy" referrerpolicy="no-referrer" />
+          <Show when={c().image && safeHref(c().image)} keyed>
+            {(url) => <LinkImage url={url} />}
           </Show>
           <div class="link-body">
             <a class="link-title" href={safeHref(c().url) ?? '#'} target="_blank" rel="noopener noreferrer" data-nodrag data-testid="link-title">

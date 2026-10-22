@@ -18,6 +18,17 @@ export class ApiError extends Error {
   }
 }
 
+/** Plain words for a failure the server didn't explain. "Bad Gateway" means nothing to anyone. */
+export function statusMessage(status: number): string {
+  if (status === 401) return 'Signed out. Sign in again to carry on.'
+  if (status === 403) return "You don't have access to that."
+  if (status === 404) return "That couldn't be found. It may have moved."
+  if (status === 413) return 'That is too big to send.'
+  if (status === 429) return 'Too many tries at once. Wait a moment, then try again.'
+  if (status >= 500) return "The server isn't answering properly right now."
+  return `Something went wrong (code ${status}). Try again.`
+}
+
 /** A checked request: throws ApiError with the server's message, else returns the response. */
 export async function apiRaw(path: string, init: RequestInit & { json?: unknown } = {}): Promise<Response> {
   const headers = new Headers(init.headers)
@@ -36,7 +47,7 @@ export async function apiRaw(path: string, init: RequestInit & { json?: unknown 
     credentials: API_BASE ? 'omit' : 'same-origin',
   })
   if (!res.ok) {
-    let msg = res.statusText
+    let msg = statusMessage(res.status)
     let details: Record<string, unknown> = {}
     try {
       details = await res.json() as Record<string, unknown>
@@ -63,6 +74,8 @@ export async function api<T>(path: string, init: RequestInit & { json?: unknown 
 
 let shareToken: string | null = null
 export const setShareToken = (t: string | null) => (shareToken = t)
+/** True in the share viewer, which has no session for signed-in-only endpoints. */
+export const isShareViewer = () => !!shareToken
 
 let assetToken: { token: string; expiresAt: number } | null = null
 let assetTokenReq: Promise<string | null> | null = null

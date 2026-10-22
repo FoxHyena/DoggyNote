@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { at, camera, cardByText, freshBoard, waitForSync } from './helpers.ts'
-import { Fingers, center, longPress, note, pinch, seedCards, setCamera, tap, tapOn, touchDrag } from './touch.ts'
+import { Fingers, center, longPress, note, pinch, seedCards, setCamera, tap, tapHoldSlide, tapOn, touchDrag } from './touch.ts'
 
 // Phones: one finger pans (even across cards), a selected card drags, long-press
 // lifts, two fingers pinch. Tap selects; tapping the selected card again edits.
@@ -135,6 +135,33 @@ test('double-tap empty canvas makes a note', async ({ page }) => {
   await expect(page.getByTestId('note-editor')).toBeVisible()
   await page.keyboard.type('Good boy')
   await expect(page.getByTestId('note-editor')).toContainText('Good boy')
+})
+
+test('double-tap, hold and slide up zooms in; slide down zooms out; no note is made', async ({ page }) => {
+  const p = await at(page, 0.5, 0.5)
+  const z0 = (await camera(page)).zoom
+  await tapHoldSlide(page, p, -120)
+  const z1 = (await camera(page)).zoom
+  expect(z1).toBeGreaterThan(z0 * 1.5)
+  await tapHoldSlide(page, p, 120)
+  expect((await camera(page)).zoom).toBeLessThan(z1 / 1.5)
+  await expect(page.locator('.card')).toHaveCount(0)
+  await expect(page.getByTestId('note-editor')).toHaveCount(0)
+})
+
+test('the slide-zoom keeps the double-tapped point under the finger', async ({ page }) => {
+  await seedCards(page, [note('Anchor', 0, 0)])
+  const card = cardByText(page, 'Anchor')
+  const b0 = (await card.boundingBox())!
+  const p = { x: b0.x + 100, y: b0.y + 10 }
+  await tapHoldSlide(page, p, -100)
+  const cam = await camera(page)
+  expect(cam.zoom).toBeGreaterThan(1.5)
+  const b1 = (await card.boundingBox())!
+  expect(b1.x).toBeCloseTo(p.x - 100 * cam.zoom, -1)
+  expect(b1.y).toBeCloseTo(p.y - 10 * cam.zoom, -1)
+  // The card under the finger didn't move or open.
+  await expect(page.getByTestId('note-editor')).toHaveCount(0)
 })
 
 test('tapping a selected board opens it', async ({ page }) => {
