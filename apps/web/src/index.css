@@ -164,8 +164,9 @@ html[data-input="mouse"] .icon-btn:hover:not(:disabled) {
   z-index: 50;
 }
 
-/* The canvas right-click menu sits at the pointer: size it to its one item, not to the screen edge. */
+/* Canvas menus sit at the pointer; a solo location ping stays compact. */
 .canvas-ping-menu { right: auto; min-width: 0; }
+.card-context-menu { min-width: 190px; }
 
 .menu-item {
   display: flex;

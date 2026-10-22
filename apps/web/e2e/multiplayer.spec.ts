@@ -417,15 +417,17 @@ test('an inactive offline draft is retained when another editor moves its note i
   expect(await readFile((await (await downloaded).path())!, 'utf8')).toContain('unsent private-move recovery')
 })
 
-test('right-clicking the canvas opens a compact Look here menu at the pointer', async ({ page }) => {
+test('right-clicking the canvas opens a compact Look here menu at the pointer', async ({ page, browser }) => {
   await freshBoard(page)
-  // The menu only offers Look here once the board's live room is connected.
-  await live(page)
+  // A location ping needs a live collaborator to receive it.
+  const other = await friend(browser, page)
+  await live(page); await live(other)
   const canvas = (await page.getByTestId('canvas').boundingBox())!
   const at = { x: canvas.x + canvas.width / 3, y: canvas.y + canvas.height / 3 }
   await page.mouse.click(at.x, at.y, { button: 'right' })
   const menu = page.locator('.canvas-ping-menu')
-  await expect(menu.getByRole('button', { name: 'Look here', exact: true })).toBeFocused()
+  await expect(menu.getByRole('menuitem', { name: 'Look here', exact: true })).toBeFocused()
+  await expect(menu.locator('svg[data-icon="lookHere"]')).toHaveAttribute('viewBox', '0 0 256 256')
   const box = (await menu.boundingBox())!
   expect(Math.abs(box.x - at.x)).toBeLessThanOrEqual(1)
   expect(Math.abs(box.y - at.y)).toBeLessThanOrEqual(1)
@@ -442,7 +444,24 @@ test('clicking Look here in the canvas menu pings everyone at the pointer', asyn
   await other.bringToFront()
   await other.mouse.click(canvas.x + canvas.width / 3, canvas.y + canvas.height / 3, { button: 'right' })
   // WebKit doesn't focus a clicked button; the press must not blur the menu away first.
-  await other.locator('.canvas-ping-menu').getByRole('button', { name: 'Look here', exact: true }).click()
+  await other.locator('.canvas-ping-menu').getByRole('menuitem', { name: 'Look here', exact: true }).click()
   await expect(other.locator('.canvas-ping-menu')).toHaveCount(0)
+  await expect(page.getByTestId('remote-ping')).toBeVisible()
+})
+
+
+test('a shared card offers its actions and a location ping for the other participant', async ({ page, browser }) => {
+  await freshBoard(page)
+  await addNote(page, 'Point to this card'); await waitForSync(page)
+  const other = await friend(browser, page)
+  await live(page); await live(other)
+  await other.bringToFront()
+  await cardByText(other, 'Point to this card').click({ button: 'right', position: { x: 30, y: 20 } })
+  const menu = other.getByTestId('canvas-context-menu')
+  await expect(menu.getByRole('menuitem')).toHaveText(['Edit', 'Duplicate', 'Labels', 'Comment', 'Bury', 'Look here'])
+  await other.keyboard.press('End')
+  await expect(menu.getByRole('menuitem', { name: 'Look here', exact: true })).toBeFocused()
+  await other.keyboard.press('Enter')
+  await expect(menu).toHaveCount(0)
   await expect(page.getByTestId('remote-ping')).toBeVisible()
 })

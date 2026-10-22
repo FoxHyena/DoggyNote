@@ -8,6 +8,10 @@ import { showToast } from '../state/toast.ts'
 import { Icon, IconButton } from './icons.tsx'
 import { Popover } from './Popover.tsx'
 import './labels.css'
+import { cardObstacles } from './floatingPlacement.ts'
+import { phone, touch } from '../state/device.ts'
+import { camera } from '../state/ui.ts'
+import { layoutTick } from '../canvas/layout.ts'
 
 const isHex = (c: LabelColor): c is `#${string}` => c.startsWith('#')
 const colorName = (c: LabelColor) => (isHex(c) ? c : COPY.colorNames[c] ?? c[0]!.toUpperCase() + c.slice(1))
@@ -108,7 +112,7 @@ function ColorDots(props: { label: string; value: LabelColor; onPick: (c: LabelC
  * when Create is highlighted (only when nothing matches, or arrowed to). Each
  * row renames in place; Remove offers Undo in a toast.
  */
-function LabelsPopover(props: { cards: Card[]; anchor: () => HTMLElement; close: () => void }) {
+export function LabelsPopover(props: { cards: Card[]; anchor: () => HTMLElement; close: () => void }) {
   const boardId = props.cards[0]?.boardId ?? ''
   const [query, setQuery] = createSignal('')
   // Each new label starts on a random preset the board isn't using; rolled when typing starts, so it doesn't flicker per key.
@@ -220,7 +224,14 @@ function LabelsPopover(props: { cards: Card[]; anchor: () => HTMLElement; close:
   }
 
   return (
-    <Popover anchor={props.anchor} label="Labels" testid="labels-popover" class="labels-panel" align="start" close={props.close}>
+    <Popover anchor={props.anchor} label="Labels" testid="labels-popover" class="labels-panel" align="start" close={props.close}
+      follow={() => [camera(), layoutTick()]}
+      avoid={phone() || touch() ? undefined : () => {
+        const obstacles = cardObstacles(props.cards.map((c) => c.id), true)
+        const bar = document.querySelector('[data-testid="selection-bar"]')?.getBoundingClientRect()
+        if (bar) obstacles.push({ x: bar.x, y: bar.y, w: bar.width, h: bar.height })
+        return obstacles
+      }}>
       <div class="nav-menu-head sheet-only" aria-hidden="true"><strong>Labels</strong></div>
       <input
         class="labels-input"
