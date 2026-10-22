@@ -149,6 +149,34 @@ export function materialise(
   return { objects: out, roots: roots.map((c) => ids.get(c.id)!) }
 }
 
+/**
+ * The board a whole-board copy's stand-in card sits on while it's collected.
+ * Never a real board: if it were the board being copied (say, your home saved
+ * as a template), that board's cards would count as the picked cards' board
+ * and land back on it instead of in the copy.
+ */
+const COPY_HOST = '__copy-host__'
+
+/**
+ * A deep copy of board `rootId` (every card, column member, connection, sticker
+ * and board inside it, but no comments) plus a board card for it on `onBoard`,
+ * centred on `at`. The new board's parent is `onBoard`.
+ */
+export function copyBoardTree(
+  rootId: Id,
+  src: ClipSource,
+  opts: { onBoard: Id; at: Vec; maxZ: number; now: number; newId: () => Id; limit?: number; card?: Partial<Pick<Card, 'w' | 'h' | 'color'>> },
+): { objects: Obj[]; card: Card<'board'>; board: Board } | 'too-big' | null {
+  if (src.get(rootId)?.kind !== 'board') return null
+  const host = { id: `${COPY_HOST}card`, kind: 'card', type: 'board', boardId: COPY_HOST, x: 0, y: 0, w: opts.card?.w ?? 160, h: opts.card?.h ?? 120, z: 0, color: opts.card?.color ?? 'none', content: { boardId: rootId }, createdAt: 0 } as Card<'board'>
+  const clip = collectClip([host.id], { get: (id) => (id === host.id ? host : src.get(id)), all: () => src.all(), rect: () => null }, { limit: opts.limit })
+  if (!clip || clip === 'too-big') return clip
+  const { objects, roots } = materialise(clip, { at: opts.at, boardId: opts.onBoard, maxZ: opts.maxZ, now: opts.now, newId: opts.newId })
+  const card = objects.find((o) => o.id === roots[0]) as Card<'board'>
+  const board = objects.find((o) => o.id === card.content.boardId) as Board
+  return { objects, card, board }
+}
+
 /** The clip as readable markdown, in reading order: what other apps get. */
 export function clipText(clip: ClipPayload, boardTitle: (id: Id) => string = () => 'Board'): string {
   const byId = new Map(clip.objects.map((o) => [o.id, o]))

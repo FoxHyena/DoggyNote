@@ -1,6 +1,6 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
 import { MOD, at, cardByText, clickEmpty, freshBoard, postSync, pullAllObjects, waitForSync } from './helpers.ts'
-import { boardOf } from './touch.ts'
+import { boardOf, setCamera } from './touch.ts'
 
 // Whole-board copies from the board "…" menu (Duplicate board, Save as template,
 // New from template) and labels that survive copying cards between boards.
@@ -93,6 +93,118 @@ test('save a board as a template, then make a new board from it with its cards a
   await row.getByTestId('template-remove').click()
   await expect(row).toHaveCount(0)
   await expect(page.getByTestId('toast')).toContainText('Template removed')
+})
+
+/**
+ * What people really build: notes, a column holding two cards, a nested board
+ * card with a note inside, and a card far off screen. Returns the texts to find.
+ */
+async function seedTree(api: APIRequestContext, board: string, tag: string) {
+  const id = () => crypto.randomUUID()
+  const [col, inner, innerCard] = [id(), id(), id()]
+  const note = (md: string, x: number, y: number, extra = {}) => ({ id: id(), kind: 'card', type: 'note', boardId: board, x, y, w: 240, h: 80, z: 1, color: 'none', content: { md }, columnId: null, createdAt: Date.now(), ...extra })
+  const changes = [
+    { id: inner, kind: 'board', parentId: board, title: `Inner ${tag}`, icon: 'paw', color: 'gold', createdAt: Date.now() },
+    note(`Loose ${tag}`, 0, 0),
+    note(`Far away ${tag}`, 6000, 4000),
+    { id: col, kind: 'card', type: 'column', boardId: board, x: 320, y: 0, w: 280, h: 80, z: 2, color: 'none', content: { title: `Column ${tag}` }, columnId: null, createdAt: Date.now() },
+    note(`First in column ${tag}`, 0, 0, { columnId: col, order: 1 }),
+    note(`Second in column ${tag}`, 0, 0, { columnId: col, order: 2 }),
+    { id: innerCard, kind: 'card', type: 'board', boardId: board, x: 0, y: 200, w: 160, h: 120, z: 3, color: 'none', content: { boardId: inner }, columnId: null, createdAt: Date.now() },
+    { ...note(`Deep inside ${tag}`, 0, 0), boardId: inner },
+  ].map((o) => ({ id: o.id, patch: o }))
+  const res = await postSync(api, { data: { changes } })
+  expect(res.ok(), await res.text()).toBe(true)
+}
+
+/** Everything that arrived on a board made from the tree, checked through the server. */
+async function expectTree(api: APIRequestContext, board: string, tag: string) {
+  const { objects } = await pullAllObjects(api)
+  const live = (o: Obj) => !o.purged && !o.deletedAt && !o.hidden
+  const on = (id: string) => objects.filter((o: Obj) => o.boardId === id && live(o)) as Obj[]
+  const text = (o: Obj) => (o.content as { md?: string; title?: string })?.md ?? (o.content as { title?: string })?.title
+  const cards = on(board)
+  expect(cards.map(text).filter(Boolean).sort()).toEqual([`Column ${tag}`, `Far away ${tag}`, `First in column ${tag}`, `Loose ${tag}`, `Second in column ${tag}`].sort())
+  const col = cards.find((o) => o.type === 'column')!
+  expect(cards.filter((o) => o.columnId === col.id).map(text).sort()).toEqual([`First in column ${tag}`, `Second in column ${tag}`])
+  const boardCard = cards.find((o) => o.type === 'board')!
+  const inner = (boardCard.content as { boardId: string }).boardId
+  expect(objects.find((o: Obj) => o.id === inner)).toMatchObject({ kind: 'board', parentId: board, title: `Inner ${tag}` })
+  expect(on(inner).map(text)).toEqual([`Deep inside ${tag}`])
+}
+
+for (const reload of [true, false]) {
+  test(`a template keeps notes, columns, nested boards and far-off cards${reload ? ', across a reload' : ''}`, async ({ page }) => {
+    const tag = Math.random().toString(36).slice(2, 7)
+    const name = await freshBoard(page, `Full ${tag}`)
+    await seedTree(page.request, boardOf(page), tag)
+    // The far-off card would otherwise open the board zoomed out past card detail.
+    await setCamera(page, { x: 0, y: 0, zoom: 1 })
+    await expect(cardByText(page, `Loose ${tag}`)).toBeVisible()
+    await menu(page, 'save-template')
+    await expect(page.getByTestId('toast')).toContainText('template')
+    if (reload) {
+      await waitForSync(page)
+      await page.reload()
+      await expect(page.getByTestId('canvas')).toBeVisible()
+    }
+    await menu(page, 'open-templates')
+    await page.getByTestId('templates-popover').locator(`[data-testid="template-row"][data-name="${name}"]`).getByTestId('template-use').click()
+    await expect(page.getByTestId('board-name')).toHaveText(name)
+    await waitForSync(page)
+    await expectTree(page.request, boardOf(page), tag)
+  })
+}
+
+test('duplicate board keeps notes, columns, nested boards and far-off cards', async ({ page }) => {
+  const tag = Math.random().toString(36).slice(2, 7)
+  const name = await freshBoard(page, `Dup ${tag}`)
+  await seedTree(page.request, boardOf(page), tag)
+  await setCamera(page, { x: 0, y: 0, zoom: 1 })
+  await expect(cardByText(page, `Loose ${tag}`)).toBeVisible()
+  await menu(page, 'duplicate-board')
+  await expect(page.getByTestId('board-name')).toHaveText(`${name} copy`)
+  await waitForSync(page)
+  await expectTree(page.request, boardOf(page), tag)
+})
+
+test('your home board saved as a template copies everything, and nothing lands back on home', async ({ page, browser }) => {
+  // A brand-new account, so its home is this test's alone.
+  const username = `tpl${Math.random().toString(36).slice(2, 8)}`
+  const created = await page.request.post('/api/users', { data: { username, password: 'template-pass-1' } })
+  expect(created.ok(), await created.text()).toBe(true)
+  const context = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '3' } })
+  try {
+    const login = await context.request.post('/api/auth/login', { data: { username, password: 'template-pass-1' } })
+    expect(login.ok()).toBe(true)
+    const home = `home:${(await login.json()).user.id}`
+    const me = await context.newPage()
+    await me.goto('/')
+    await expect(me.getByTestId('canvas')).toBeVisible()
+    const tag = Math.random().toString(36).slice(2, 7)
+    await seedTree(context.request, home, tag)
+    await me.goto(`/#/b/${encodeURIComponent(home)}`)
+    await setCamera(me, { x: 0, y: 0, zoom: 1 })
+    await expect(cardByText(me, `Loose ${tag}`)).toBeVisible()
+    const before = (await pullAllObjects(context.request)).objects.filter((o: Obj) => o.boardId === home && !o.purged).length
+
+    await menu(me, 'save-template')
+    await expect(me.getByTestId('toast')).toContainText('template')
+    await waitForSync(me)
+    expect((await pullAllObjects(context.request)).objects.filter((o: Obj) => o.boardId === home && !o.purged)).toHaveLength(before)
+    const template = (await pullAllObjects(context.request)).objects.find((o: Obj) => o.kind === 'board' && o.template === true) as Obj
+    await expectTree(context.request, template.id, tag)
+
+    await me.reload()
+    await menu(me, 'open-templates')
+    const home0 = boardOf(me)
+    await me.getByTestId('template-use').first().click()
+    await expect.poll(() => boardOf(me)).not.toBe(home0)
+    await waitForSync(me)
+    await expectTree(context.request, boardOf(me), tag)
+  } finally {
+    await context.close()
+  }
 })
 
 test('duplicate a board: the copy opens beside the original with its labels; Undo goes back', async ({ page }) => {

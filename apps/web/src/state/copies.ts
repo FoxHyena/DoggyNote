@@ -1,4 +1,4 @@
-import { DEFAULT_SIZE, collectClip, findFreeSpot, materialise, newId, withoutLabelTombstones, type Board, type Card, type Id, type Obj, type Vec } from '@doggynote/core'
+import { DEFAULT_SIZE, copyBoardTree, findFreeSpot, newId, withoutLabelTombstones, type Board, type Card, type Id, type Obj, type Vec } from '@doggynote/core'
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import { unwrap } from 'solid-js/store'
 import * as doc from './doc.ts'
@@ -45,22 +45,20 @@ export function templates(): Template[] {
 
 /** Copy board `rootId` and everything inside it, with a board card for it on `onBoard` centred at `at`. */
 function copyTree(rootId: Id, onBoard: Id, at: Vec, like?: Card) {
-  const root = doc.getBoard(rootId)
-  if (!root) return null
-  const size = like ? { w: like.w, h: like.h } : DEFAULT_SIZE.board
-  const fake = { id: '__board-copy__', kind: 'card', type: 'board', boardId: onBoard, x: 0, y: 0, ...size, z: 0, color: like?.color ?? 'none', content: { boardId: rootId }, createdAt: 0 } as Card<'board'>
   const all = () => Object.values(unwrap(doc.objs))
-  const clip = collectClip([fake.id], { get: (id) => (id === fake.id ? fake : unwrap(doc.get(id))), all, rect: () => null }, { limit: BOARD_COPY_LIMIT })
-  if (!clip) return null
-  if (clip === 'too-big') {
+  const copy = copyBoardTree(rootId, { get: (id) => unwrap(doc.get(id)), all, rect: () => null }, {
+    onBoard, at, maxZ: doc.maxZ(onBoard), now: Date.now(), newId, limit: BOARD_COPY_LIMIT,
+    card: like ? { w: like.w, h: like.h, color: like.color } : DEFAULT_SIZE.board,
+  })
+  if (!copy) return null
+  if (copy === 'too-big') {
     showToast(TOO_BIG)
     return null
   }
-  const made = materialise(clip, { at, boardId: onBoard, maxZ: doc.maxZ(onBoard), now: Date.now(), newId })
-  const objects = made.objects.map((o) => withoutLabelTombstones(o) as Obj)
-  const card = objects.find((o) => o.id === made.roots[0]) as Card<'board'>
-  // The caller names and places the new board through this same object.
-  const board = objects.find((o) => o.id === card.content.boardId) as Template
+  // The caller names and places the new board through these same objects.
+  const objects = copy.objects.map((o) => (o.kind === 'board' || o.kind === 'card' ? (withoutLabelTombstones(o) as Obj) : o))
+  const card = objects.find((o) => o.id === copy.card.id) as Card<'board'>
+  const board = objects.find((o) => o.id === copy.board.id) as Template
   delete board.template
   return { objects, card, board }
 }
