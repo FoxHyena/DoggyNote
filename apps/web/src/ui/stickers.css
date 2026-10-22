@@ -172,9 +172,11 @@ html[data-input='touch'] .sticker-ring-reset { width: 40px; height: 40px; margin
 /* Phones: a sheet along the bottom of the board, fields on top and labelled actions below. */
 .sticker-controls-sheet { position: absolute; z-index: 35; left: 8px; right: 8px; bottom: 8px; display: grid; gap: 8px; padding: 10px; border: 1px solid var(--dn-border); border-radius: 16px; background: var(--dn-panel); box-shadow: 0 4px 16px color-mix(in srgb, var(--dn-text) 10%, transparent); }
 .sticker-controls-sheet > .bar-sep, .sticker-controls-sheet .sticker-bar-actions .bar-sep { display: none; }
-.sticker-controls-sheet .sticker-bar-actions { gap: 4px; }
-.sticker-controls-sheet .sticker-bar-btn { flex: 1 1 0; width: auto; min-width: 0; min-height: 54px; flex-direction: column; gap: 3px; padding: 4px 2px; font-size: 11px; border-radius: 12px; }
-.sticker-controls-sheet .sticker-bar-label { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+/* Wraps to a second row on narrow phones rather than clipping a label. */
+.sticker-controls-sheet .sticker-bar-actions { gap: 4px; flex-wrap: wrap; }
+/* Never narrower than its label (fonts differ by platform); spare room is shared. */
+.sticker-controls-sheet .sticker-bar-btn { flex: 1 0 auto; width: auto; min-width: 44px; min-height: 54px; flex-direction: column; gap: 3px; padding: 4px 2px; font-size: 11px; border-radius: 12px; }
+.sticker-controls-sheet .sticker-bar-label { display: block; white-space: nowrap; font-size: 11px; }
 html[data-input='touch'] .sticker-tray button, html[data-input='touch'] .sticker-placement button { min-height: 44px; }
 html[data-input='touch'] .sticker-ring-hit { stroke-width: calc(28px * var(--sticker-ui-scale)); }
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
@@ -235,6 +237,8 @@ html[data-input='touch'] .sticker-ring-hit { stroke-width: calc(28px * var(--sti
 @keyframes sticker-blank-breathe { to { opacity: .55; } }
 @media (prefers-reduced-motion: reduce) { .sticker-blank-face { animation: none; } }
 .sticker-animation { position: absolute; inset: 0; pointer-events: none; }
+/* Hidden until a transparent frame is ready: WebKit's first video frames can be opaque. */
+.sticker-image:not(.playing) > .sticker-animation { opacity: 0; }
 .sticker-animation canvas, .sticker-animation video { width: 100% !important; height: 100% !important; object-fit: contain; }
 .sticker-placement .sticker-image { width: 36px; height: 36px; }
 .sticker-pack-strip .sticker-image { width: 32px; height: 32px; }

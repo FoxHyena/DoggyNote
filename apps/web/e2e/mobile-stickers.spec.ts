@@ -191,3 +191,21 @@ test('moving a sticker over a note being edited never selects text; a double-tap
   expect(await page.evaluate(() => String(getSelection()))).toBe('')
   await waitForSync(page)
 })
+
+test('an animated sticker plays on a phone without being selected; Pause and Play take a real tap', async ({ page, request }) => {
+  const { id } = await stickerBoard(page, request); await importFixturePack(page)
+  // The fixture pack's first two are a still and a TGS animation.
+  const [, tgs] = await seedStickers(page, id, [{ x: -150, y: 0 }, { x: 0, y: 0 }])
+  const placed = page.locator(`[data-sticker-id="${tgs}"]`), image = placed.locator('.sticker-image')
+  await expect(image).toHaveClass(/playing/)
+  // The sheet covers the board on a phone.
+  await page.getByTestId('sticker-tray').getByRole('button', { name: 'Close stickers' }).tap()
+  await expect(page.getByTestId('sticker-tray')).toHaveCount(0)
+  await tap(page, await center(placed))
+  const sheet = page.getByTestId('sticker-controls')
+  await sheet.getByRole('button', { name: 'Pause animation' }).tap()
+  await expect(image).not.toHaveClass(/playing/)
+  await expect(placed.locator('.sticker-animation canvas')).toHaveCount(0)
+  await sheet.getByRole('button', { name: 'Play animation' }).tap()
+  await expect(image).toHaveClass(/playing/)
+})

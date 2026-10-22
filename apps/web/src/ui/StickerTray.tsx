@@ -5,6 +5,7 @@ import { ApiError, api } from '../state/api.ts'
 import { phone } from '../state/device.ts'
 import { showToast } from '../state/toast.ts'
 import { openPack, packLoad, preparePack, readyCount } from '../state/packLoading.ts'
+import { playbackPaused, togglePlayback } from '../state/stickerPlayback.ts'
 import { armedSticker, armSticker, canvasStickerPoint, collectionLoaded, favoriteSticker, openStickers, packs, placeSticker, preferences, refreshStickers, refreshTelegram, selectedPack, setSelectedPack, setStickerGhost, setStickerTrayOpen, setStickerTrayPinned, stickerTrayOpen, stickerTrayPinned, STICKER_TOUCH_OFFSET, suggestions, trayScroll, trayHorizontalScroll, telegramStatus, type PackSticker, type TelegramStatus } from '../state/stickers.ts'
 import { StickerImage } from './StickerImage.tsx'
 import { StickerGrid } from './StickerGrid.tsx'
@@ -242,7 +243,7 @@ export function StickerTray() {
       <Show when={shownError()}><div class="sticker-error" role="alert">{shownError()}<button class="bar-btn" disabled={busy() || preparingPreview() || !!retrySeconds()} onClick={() => { if (mode() === 'collection') void action(refreshStickers); else if (mode() === 'pack' && preview()) { setError(''); void preparePack(preview()!.name) } else if (mode() === 'pack' && previewName()) { void resolvePack(previewName()!) } else if (mode() === 'add') void resolvePack(link()) }}>{retrySeconds() ? `Retry in ${retrySeconds()}s` : 'Retry'}</button></div></Show>
       <Show when={!large()} fallback={<div class="sticker-detail">
         <div class="sticker-detail-content">
-          <div class="sticker-large"><StickerImage sticker={large()!} animate={true} /></div>
+          <div class="sticker-large"><StickerImage sticker={large()!} animate={!playbackPaused(`preview:${large()!.assetId}`)} priority /></div>
           <button class="sticker-source" data-testid="sticker-source-pack" aria-label={`View pack ${previewPackTitle()}`} onClick={() => void resolvePack(large()!.packName)}>
             <span class="sticker-source-copy"><span>From sticker pack</span><strong>{previewPackTitle()}</strong></span>
             <Icon>{ToolIcons.open()}</Icon>
@@ -252,6 +253,8 @@ export function StickerTray() {
         <div class="sticker-actions">
           <button class="primary-btn sticker-place-button" disabled={!large()!.available || !packs().some((p) => p.name === large()!.packName)} onClick={() => { saveScroll(); armSticker(large()!); setLarge(null) }}>Place sticker</button>
           <button class="icon-btn sticker-favorite-button" disabled={!packs().some((p) => p.name === large()!.packName)} aria-label={favorite(large()!) ? 'Unfavorite' : 'Favorite'} title={favorite(large()!) ? 'Unfavorite' : 'Favorite'} aria-pressed={favorite(large()!)} onClick={() => doFavorite(large()!)}><BoardIconSvg icon="star" /></button>
+          <Show when={large()!.format !== 'static'}>{(_) => { const key = () => `preview:${large()!.assetId}`, paused = () => playbackPaused(key())
+            return <button class="icon-btn sticker-favorite-button" data-testid="sticker-preview-play" aria-label={paused() ? 'Play animation' : 'Pause animation'} title={paused() ? 'Play animation' : 'Pause animation'} onClick={() => togglePlayback(key())}><Icon>{paused() ? ToolIcons.play() : ToolIcons.pause()}</Icon></button> }}</Show>
         </div>
       </div>}>
         <Show when={mode() === 'collection'}>

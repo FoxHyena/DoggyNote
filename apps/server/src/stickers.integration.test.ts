@@ -71,6 +71,14 @@ async function fixture() {
 }
 afterEach(() => vi.unstubAllGlobals())
 
+/** Shaped like a real Telegram TGS: dozens of layers of keyframed paths, well over 30k JSON values. */
+function heavyAnimation() {
+  const keyframes = (n: number) => Array.from({ length: n }, (_, t) => ({ t: t * 3, i: { x: [0.4], y: [1] }, o: { x: [0.6], y: [0] }, s: [{ c: true, i: [[0, 0], [-10, 4], [3, 9], [0, 0]], o: [[0, 0], [10, -4], [-3, -9], [0, 0]], v: [[t, 0], [40, t], [t, 80], [0, 40]] }] }))
+  const layers = Array.from({ length: 40 }, (_, l) => ({ ty: 4, ind: l + 1, ip: 0, op: 90, st: 0, ks: { o: { a: 0, k: 100 }, p: { a: 0, k: [256, 256, 0] } },
+    shapes: [{ ty: 'gr', it: [{ ty: 'gr', it: [{ ty: 'sh', ks: { a: 1, k: keyframes(30) } }, { ty: 'fl', c: { a: 0, k: [0.9, 0.6, 0.3, 1] }, o: { a: 0, k: 100 } }, { ty: 'tr', p: { a: 0, k: [0, 0] } }] }] }] }))
+  return { v: '5.5.2', w: 512, h: 512, fr: 30, ip: 0, op: 90, assets: [], layers }
+}
+
 it('previews without membership, prepares controlled assets, adds idempotently, and retains placed bytes after removal', async () => {
   const f = await fixture()
   try {
@@ -294,9 +302,11 @@ it('rejects redirects without following them, and bounds shape-only animation pl
     const animation = { w: 512, h: 512, fr: 30, ip: 0, op: 60, assets: [], layers: [{ ty: 4, shapes: [{ ty: 'el', p: { k: [256, 256] } }] }] }
     expect(validStickerAnimation(animation)).toBe(true)
     for (const bad of [{ ...animation, fr: 300 }, { ...animation, op: 1000 }, { ...animation, fonts: {} }, { ...animation, assets: [{ p: 'https://evil.example/p.png' }] }, { ...animation, layers: [{ ty: 5 }] }, { ...animation, layers: [{ x: 'expression' }] }]) expect(validStickerAnimation(bad)).toBe(false)
-    let nested: unknown = {}; for (let i = 0; i < 40; i++) nested = { child: nested }
+    let nested: unknown = {}; for (let i = 0; i < 80; i++) nested = { child: nested }
     expect(validStickerAnimation({ ...animation, extra: nested })).toBe(false)
-    expect(validStickerAnimation({ ...animation, extra: Array(30_001).fill(0) })).toBe(false)
+    expect(validStickerAnimation({ ...animation, extra: Array(500_001).fill(0) })).toBe(false)
+    for (const bad of [{ ...animation, layers: [{ ty: 2 }] }, { ...animation, layers: [{ ks: { p: { x: 'thisComp.layer(1)' } } }] }, JSON.parse('{"w":512,"h":512,"fr":30,"ip":0,"op":60,"layers":[{"__proto__":{}}]}')]) expect(validStickerAnimation(bad)).toBe(false)
+    expect(validStickerAnimation(heavyAnimation())).toBe(true)
     const bomb = new Uint8Array(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==', 'base64'))
     new DataView(bomb.buffer).setUint32(16, 100_000)
     expect(stillType(bomb)).toBeNull()
@@ -366,5 +376,36 @@ it('prepares two assets per range concurrently and simultaneous ranges retain ev
     const manifest = JSON.parse((f.sql.prepare("SELECT manifest FROM sticker_packs WHERE name='dogs'").get() as { manifest: string }).manifest)
     expect(manifest.stickers.filter((s: { available: boolean }) => s.available)).toHaveLength(12)
     expect((await f.request('/stickers/packs/Dogs', {})).status).toBe(200)
+  } finally { f.sql.close() }
+})
+
+it('stores a real-sized TGS animation, and a later load retries an animation that failed before', async () => {
+  const f = await fixture()
+  try {
+    const png = readFileSync(new URL('../../web/e2e/fixtures/stickers/0.png', import.meta.url))
+    const tgs = new Uint8Array(await new Response(new Blob([JSON.stringify(heavyAnimation())]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer())
+    expect(tgs.length).toBeLessThan(64 * 1024)
+    let broken = true
+    vi.stubGlobal('fetch', async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input)
+      if (url.endsWith('/getStickerSet')) return Response.json({ ok: true, result: { name: 'Dogs', title: 'The dogs', stickers: [{ file_id: 'anim', file_unique_id: 'unique_anim', width: 512, height: 512, is_animated: true, thumbnail: { file_id: 'still' } }] } })
+      if (url.endsWith('/getFile')) { const id = JSON.parse(String(init?.body)).file_id; return Response.json({ ok: true, result: { file_path: `stickers/${id}.${id === 'still' ? 'png' : 'tgs'}`, file_size: 10 } }) }
+      if (url.endsWith('.png')) return new Response(png)
+      return new Response(broken ? new Uint8Array([1, 2, 3]) : tgs)
+    })
+    const manifest = () => JSON.parse((f.sql.prepare("SELECT manifest FROM sticker_packs WHERE name='dogs'").get() as { manifest: string }).manifest).stickers[0]
+    expect((await f.request('/stickers/preview', { link: 'Dogs' })).status).toBe(200)
+    expect((await f.request('/stickers/packs/Dogs/load', { offset: 0 })).status).toBe(200)
+    expect(manifest()).toMatchObject({ available: true, animationError: expect.any(String) })
+    expect((await f.request('/stickers/packs/Dogs', {})).status).toBe(200)
+    const id = manifest().assetId
+    expect((await f.request(`/assets/${id}/full`)).status).toBe(404)
+    broken = false
+    expect((await f.request('/stickers/packs/Dogs/load', { offset: 0 })).status).toBe(200)
+    expect(manifest().available).toBe(true)
+    expect(manifest().animationError).toBeUndefined()
+    const full = await f.request(`/assets/${id}/full`)
+    expect(full.status).toBe(200)
+    expect((await full.json() as { layers: unknown[] }).layers).toHaveLength(40)
   } finally { f.sql.close() }
 })
