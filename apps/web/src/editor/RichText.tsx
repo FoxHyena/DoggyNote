@@ -49,8 +49,12 @@ function build(n: RichNode, onToggleTask?: (line: number) => void): Node {
     for (const c of n.content ?? []) cell.append(build(c, onToggleTask))
     return cell
   }
-  const tag = n.type === 'heading' ? `h${n.attrs?.level ?? 1}` : (BLOCK_TAG[n.type] ?? 'div')
+  // A note's "# Heading" sits under the board and the card, so it's announced two levels down.
+  // The md-h class keeps its look: card heights are measured and synced.
+  const level = Math.min(6, Math.max(1, Number(n.attrs?.level ?? 1) || 1))
+  const tag = n.type === 'heading' ? `h${Math.min(6, level + 2)}` : (BLOCK_TAG[n.type] ?? 'div')
   const el = document.createElement(tag)
+  if (n.type === 'heading') el.className = `md-h${level}`
   if (n.type === 'ordered_list' && Number(n.attrs?.start) > 1) (el as HTMLOListElement).start = Number(n.attrs!.start)
   if (n.type === 'task_item') {
     el.className = 'task'

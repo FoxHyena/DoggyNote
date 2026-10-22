@@ -1,6 +1,6 @@
 import { ErrorBoundary, For, Match, Show, Switch, createSelector, onCleanup, onMount, type JSX } from 'solid-js'
-import { SIDES, type Card } from '@doggynote/core'
-import { COPY, cardColor, cardColorVars } from '@doggynote/theme'
+import { SIDES, cardSpokenName, type Card } from '@doggynote/core'
+import { COPY, boardDisplayTitle, cardColor, cardColorVars } from '@doggynote/theme'
 import { isPreviewCurrent, previewBadge, type Badge } from '../state/preview.ts'
 import { isPositionLocked } from '../state/position.ts'
 
@@ -81,6 +81,8 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         colored: cardColor(props.card.color) !== 'none',
       }}
       tabIndex={-1}
+      role="group"
+      aria-label={props.lod ? undefined : cardSpokenName(props.card, (id) => boardDisplayTitle(doc.getBoard(id), 'Board'))}
       data-card-id={props.card.id}
       data-testid="card"
       data-type={props.card.type}

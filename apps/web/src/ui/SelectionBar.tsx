@@ -125,6 +125,8 @@ export function SelectionBar() {
         ref={(element) => { const observer = new ResizeObserver(() => setBarSize({ width: element.offsetWidth, height: element.offsetHeight })); observer.observe(element); onCleanup(() => observer.disconnect()) }}
         class="selection-bar"
         data-testid="selection-bar"
+        role="toolbar"
+        aria-label="Card actions"
         onKeyDown={(e) => { if (!e.metaKey && !e.ctrlKey && ['Enter', ' ', 'Delete', 'Backspace'].includes(e.key)) { e.stopPropagation(); if (e.key === 'Backspace') e.preventDefault() } }}
         classList={{ docked: docked() }}
         style={docked() ? undefined : { left: `${pos().left}px`, top: `${pos().top}px` }}
@@ -168,8 +170,8 @@ export function SelectionBar() {
                   classList={{ on: currentColor() === c, 'swatch-none': c === 'none' }}
                   style={{ '--sw': `var(--dn-card-${c}-bg)` }}
                   data-testid={`swatch-${c}`}
-                  data-tip={c === 'none' ? 'No colour' : c[0]!.toUpperCase() + c.slice(1)}
-                  aria-label={c === 'none' ? 'No colour' : c}
+                  data-tip={COPY.colorNames[c]}
+                  aria-label={COPY.colorNames[c]}
                   onClick={() => setColor(selection(), c)}
                 />
               )}

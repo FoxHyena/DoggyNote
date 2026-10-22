@@ -37,6 +37,7 @@ import {
   type Vec,
 } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
+import { enterBoard } from '../state/keyboardNav.ts'
 import { CollaborationOverlay } from '../ui/Collaboration.tsx'
 import { pingAt, liveState, clearLivePreviews } from '../state/realtime.ts'
 import * as doc from '../state/doc.ts'
@@ -1379,6 +1380,8 @@ export function Canvas(props: { readOnly: boolean }) {
     window.addEventListener('keydown', onGestureEscape, true)
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
+    window.addEventListener('keydown', noteTab, true)
+    window.addEventListener('pointerdown', forgetTab, true)
     document.addEventListener('paste', onPaste)
     document.addEventListener('copy', onCopy)
     onCleanup(() => {
@@ -1392,6 +1395,8 @@ export function Canvas(props: { readOnly: boolean }) {
       window.removeEventListener('keydown', onGestureEscape, true)
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
+      window.removeEventListener('keydown', noteTab, true)
+      window.removeEventListener('pointerdown', forgetTab, true)
       document.removeEventListener('paste', onPaste)
       document.removeEventListener('copy', onCopy)
     })
@@ -1416,11 +1421,20 @@ export function Canvas(props: { readOnly: boolean }) {
     }
   }
 
+  // Tab onto the board goes straight to a card; a click on empty canvas doesn't pick one.
+  let tabbed = false
+  const noteTab = (e: KeyboardEvent) => { tabbed = e.key === 'Tab' }
+  const forgetTab = () => { tabbed = false }
+
   return (
     <div
       ref={vp}
       class="viewport"
       data-testid="canvas"
+      tabIndex={0}
+      aria-label={props.readOnly ? 'Board' : 'Board. Tab goes to the cards.'}
+      aria-describedby={props.readOnly ? undefined : 'canvas-keys'}
+      onFocus={(e) => { if (e.target === vp && tabbed && !props.readOnly && !vp.contains(e.relatedTarget as Node | null)) enterBoard() }}
       style={dots()}
       classList={{ panning: panning(), moving: moving(), snapping: snapping(), 'snap-on': snapToGrid(), connecting: !!connectPreview(), 'space-held': spaceHeld(), lod: lod(), 'connect-mode': !!connectMode(), readonly: props.readOnly }}
       onPointerDown={onPointerDown}
@@ -1444,6 +1458,7 @@ export function Canvas(props: { readOnly: boolean }) {
         handleCanvasDrop(e, toWorld(e))
       }}
     >
+      <Show when={!props.readOnly}><p id="canvas-keys" class="save-label-quiet">Option or Alt with the arrow keys moves between cards. The arrow keys move the selected card. Enter edits a card or opens a board.</p></Show>
       <CollaborationOverlay />
       <Show when={contextPoint()}><div class="menu canvas-ping-menu" data-nodrag style={{ position: 'fixed', left: `${Math.min(contextPoint()!.screenX, innerWidth - 160)}px`, top: `${Math.min(contextPoint()!.screenY, innerHeight - 60)}px`, 'z-index': 50 }}><button class="menu-item" onMouseDown={(e) => e.preventDefault()} onClick={() => { pingAt(contextPoint()!); setContextPoint(null) }} onBlur={() => setContextPoint(null)} onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setContextPoint(null); document.querySelector<HTMLButtonElement>('[data-testid="collaborators"]')?.focus() } }} ref={(el) => queueMicrotask(() => el.focus())}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>{COPY.lookHere}</button></div></Show>
       <div class="world" data-testid="world" style={{ transform: transform() }}>

@@ -40,7 +40,7 @@ test('tap, tap, type, tap the board: the note glides into view and back', async 
   await expect(editor.locator('.cm-md-h2')).toHaveText('Shopping list')
   await tapEmpty(page)
   await expect(editor).toHaveCount(0)
-  await expect(cardByText(page, 'Shopping list').locator('h2')).toBeVisible()
+  await expect(cardByText(page, 'Shopping list').locator('.md-h2')).toBeVisible()
   await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(before.zoom, 2)
   await waitForSync(page)
   await page.reload()
@@ -224,7 +224,7 @@ test('bolding a whole heading line keeps it a heading', async ({ page }) => {
   await page.keyboard.press('Shift+End')
   await page.getByTestId('dock-fmt-bold').tap()
   await closeKeyboard(page)
-  await expect(cardByText(page, 'Hike plan').locator('h1 strong')).toHaveText('Hike plan')
+  await expect(cardByText(page, 'Hike plan').locator('.md-h1 strong')).toHaveText('Hike plan')
 })
 
 test('the edit dock nests and un-nests list items (phones have no Tab key)', async ({ page }) => {
