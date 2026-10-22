@@ -272,7 +272,8 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   .templates-popover,
   .share-panel,
   .export-panel,
-  .save-details {
+  .save-details,
+  .popover.labels-panel {
     position: fixed !important;
     inset: auto 0 var(--vv-bottom, 0px) 0 !important;
     width: auto !important;
@@ -293,6 +294,7 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   .share-panel::before,
   .export-panel::before,
   .save-details::before,
+  .popover.labels-panel::before,
   .trash::before {
     content: '';
     position: absolute;
@@ -376,7 +378,7 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   .mobile-dock > .icon-btn,
   .mobile-dock .board-navigation > .icon-btn { min-height: 44px; flex-direction: row; gap: 6px; }
   .dock-add { width: 48px; height: 48px; margin-top: 0; }
-  .menu, .nav-menu, .share-panel, .export-panel, .save-details { max-height: calc(var(--vv-height, 100dvh) - 16px) !important; }
+  .menu, .nav-menu, .share-panel, .export-panel, .save-details, .popover.labels-panel { max-height: calc(var(--vv-height, 100dvh) - 16px) !important; }
   .trash { max-height: calc(var(--vv-height, 100dvh) - 56px); left: auto; width: min(420px, 60vw); border-left: 1px solid var(--dn-border); }
 }
 
@@ -420,10 +422,10 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
 html[data-input='touch'] .toybox-item { touch-action: pan-y; cursor: default; }
 
 /* Chrome reacts to taps at once (no double-tap-to-zoom wait). */
-.topbar, .mobile-dock, .selection-bar, .canvas-controls, .trash, .menu, .dialog, .edit-dock { touch-action: manipulation; }
+.topbar, .mobile-dock, .selection-bar, .canvas-controls, .trash, .menu, .popover, .dialog, .edit-dock { touch-action: manipulation; }
 
 @media (prefers-reduced-motion: reduce) {
-  .menu, .nav-menu, .share-panel, .export-panel, .save-details, .trash, .dialog, .selection-bar.docked { animation: none !important; }
+  .menu, .nav-menu, .share-panel, .export-panel, .save-details, .popover.labels-panel, .trash, .dialog, .selection-bar.docked { animation: none !important; }
 }
 
 /* ---- round 1 visual fixes ---------------------------------------------------- */
@@ -495,7 +497,7 @@ html[data-touch-editing] .canvas-controls { visibility: hidden; }
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   /* Sticky sheet headers line up with the sheet's own padding; the grip stays on top. */
   .share-head { top: -22px; margin: -22px -12px 0; padding: 22px 12px 4px; }
-  .menu::before, .share-panel::before, .export-panel::before, .save-details::before, .trash::before { z-index: 3; }
+  .menu::before, .share-panel::before, .export-panel::before, .save-details::before, .popover.labels-panel::before, .trash::before { z-index: 3; }
 }
 .install-help { padding-left: 12px; }
 
@@ -734,4 +736,15 @@ html[data-input='touch'] .share-panel .bar-btn:not(.share-tabs .bar-btn) { paddi
   .theme-choice { border-radius: 9px; }
   .share-tabs { gap: 0; padding: 3px; border: 1px solid var(--dn-border); border-radius: 12px; }
   .share-tabs button { border-radius: 9px; }
+}
+
+/* A field in a phone sheet scrolls into view inside the sheet (state/viewport.ts),
+   with a little room so its confirm button on the same row clears the keyboard too. */
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  :is(.menu, .nav-menu, .share-panel, .export-panel, .save-details, .popover, .trash, .dialog) :is(input, textarea, select, form) { scroll-margin-block: 12px; }
+}
+
+/* The label sheet: titled like the other sheets, its colours spread across the row. */
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  .popover.labels-panel > .label-dots { grid-template-columns: repeat(7, minmax(0, 1fr)); justify-items: center; padding: 0 0 4px; }
 }

@@ -20,7 +20,12 @@ export function Popover(props: { anchor: () => HTMLElement; label: string; testi
     const p = panel.getBoundingClientRect()
     const want = props.align === 'start' ? a.left : a.left + a.width / 2 - p.width / 2
     const left = Math.min(Math.max(8, want), innerWidth - p.width - 8)
-    const top = a.bottom + 8 + p.height <= innerHeight - 8 ? a.bottom + 8 : Math.max(8, a.top - 8 - p.height)
+    // The part of the screen above the keyboard, if one is up.
+    const vv = window.visualViewport
+    const viewTop = vv?.offsetTop ?? 0
+    const viewBottom = viewTop + (vv?.height ?? innerHeight)
+    const below = a.bottom + 8 + p.height <= viewBottom - 8
+    const top = below ? a.bottom + 8 : Math.max(viewTop + 8, Math.min(a.top - 8 - p.height, viewBottom - 8 - p.height))
     setPos({ left, top })
   }
   createEffect(on(() => props.follow?.(), () => requestAnimationFrame(place), { defer: true }))
@@ -42,11 +47,13 @@ export function Popover(props: { anchor: () => HTMLElement; label: string; testi
     document.addEventListener('pointerdown', outside, true)
     window.addEventListener('keydown', escape, true)
     window.addEventListener('resize', place)
+    window.visualViewport?.addEventListener('resize', place)
     onCleanup(() => {
       ro.disconnect()
       document.removeEventListener('pointerdown', outside, true)
       window.removeEventListener('keydown', escape, true)
       window.removeEventListener('resize', place)
+      window.visualViewport?.removeEventListener('resize', place)
       // Back to the anchor, unless the click that closed it focused something else.
       queueMicrotask(() => {
         const active = document.activeElement

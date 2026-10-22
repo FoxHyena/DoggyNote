@@ -177,8 +177,9 @@ function LabelsPopover(props: { cards: Card[]; anchor: () => HTMLElement; close:
   }
 
   const onToggleClick = (id: string, e: MouseEvent) => {
-    // The second click of a double-click belongs to rename.
-    if (e.detail > 1) return
+    // The second click of a mouse double-click belongs to rename. Fingers rename with
+    // the row's Rename button, so a quick second tap is just another toggle.
+    if (e.detail > 1 && (e as PointerEvent).pointerType !== 'touch') return
     toggle(id)
     lastToggle = { id, at: performance.now() }
   }
@@ -220,6 +221,7 @@ function LabelsPopover(props: { cards: Card[]; anchor: () => HTMLElement; close:
 
   return (
     <Popover anchor={props.anchor} label="Labels" testid="labels-popover" class="labels-panel" align="start" close={props.close}>
+      <div class="nav-menu-head sheet-only" aria-hidden="true"><strong>Labels</strong></div>
       <input
         class="labels-input"
         data-testid="labels-input"
