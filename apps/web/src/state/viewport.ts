@@ -27,12 +27,31 @@ function update() {
   }
   document.documentElement.style.setProperty('--vv-bottom', `${Math.round(v.bottom)}px`)
   document.documentElement.style.setProperty('--vv-height', `${Math.round(v.height)}px`)
+  keepFieldInView()
+}
+
+// Phone sheets sit on the keyboard (mobile.css, --vv-bottom) and scroll inside
+// themselves. The field being typed in, with its form's confirm button, scrolls
+// into view within its sheet; the page itself never scrolls. Focus stays
+// wherever the tap put it, so iOS still raises the keyboard.
+const SHEETS = '.menu, .nav-menu, .share-panel, .export-panel, .save-details, .popover, .trash, .dialog'
+const sheetField = () => {
+  const el = document.activeElement
+  return (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) && el.closest(SHEETS) ? el : null
+}
+function keepFieldInView() {
+  const field = sheetField()
+  if (!field) return
+  ;(field.closest('form') ?? field).scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  resetPageScroll()
 }
 const schedule = () => (frame ||= requestAnimationFrame(update))
 vv?.addEventListener('resize', schedule)
 vv?.addEventListener('scroll', schedule)
 window.addEventListener('resize', schedule)
 window.addEventListener('pageshow', schedule)
+document.addEventListener('focusin', () => { if (sheetField()) requestAnimationFrame(keepFieldInView) })
+window.addEventListener('scroll', () => { if (sheetField()) resetPageScroll() })
 update()
 
 /** iOS sometimes scrolls the page to show a focused field; the app never scrolls, so undo it. */

@@ -72,11 +72,12 @@ function CaptionEditor(props: { card: Card<'image'> }) {
   }
   onMount(() => {
     grow()
-    input.focus()
+    // No page scroll: the canvas moves the card into view itself.
+    input.focus({ preventScroll: true })
     input.setSelectionRange(input.value.length, input.value.length)
   })
   return (
-    <div role="group" aria-label="Image caption" data-testid="image-caption-editor">
+    <div class="image-caption-editor" role="group" aria-label="Image caption" data-testid="image-caption-editor">
       <textarea
         ref={input}
         class="image-caption image-caption-input"

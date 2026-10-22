@@ -116,7 +116,7 @@ html[data-input='touch'] .card > .resize-handle::before {
 }
 .connect-banner > span { flex: 1; min-width: 0; }
 
-/* ---- editing on touch: formatting + Done, riding on the keyboard ---------------- */
+/* ---- editing a note on touch: formatting, riding on the keyboard ----------------- */
 
 .edit-dock {
   position: fixed;
@@ -153,21 +153,6 @@ html[data-input='touch'] .card > .resize-handle::before {
   font-size: 17px;
 }
 .edit-dock .fmt:active { background: var(--dn-card-hover); }
-.edit-done {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: 0 0 auto;
-  min-height: 44px;
-  margin-left: auto;
-  padding: 0 16px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--dn-accent);
-  color: var(--dn-accent-text);
-  font: inherit;
-  font-weight: 650;
-}
 
 /* iOS zooms into fields under 16px. Card text keeps its size (heights sync). */
 html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type='range']), textarea, select):not(.card *) {
@@ -284,9 +269,11 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   /* ---- sheets: menus, popovers and dialogs rise from the bottom ---- */
   .menu,
   .nav-menu,
+  .templates-popover,
   .share-panel,
   .export-panel,
-  .save-details {
+  .save-details,
+  .popover.labels-panel {
     position: fixed !important;
     inset: auto 0 var(--vv-bottom, 0px) 0 !important;
     width: auto !important;
@@ -303,9 +290,11 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
     animation: sheet-up 240ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   .menu::before,
+  .templates-popover::before,
   .share-panel::before,
   .export-panel::before,
   .save-details::before,
+  .popover.labels-panel::before,
   .trash::before {
     content: '';
     position: absolute;
@@ -389,7 +378,7 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   .mobile-dock > .icon-btn,
   .mobile-dock .board-navigation > .icon-btn { min-height: 44px; flex-direction: row; gap: 6px; }
   .dock-add { width: 48px; height: 48px; margin-top: 0; }
-  .menu, .nav-menu, .share-panel, .export-panel, .save-details { max-height: calc(var(--vv-height, 100dvh) - 16px) !important; }
+  .menu, .nav-menu, .share-panel, .export-panel, .save-details, .popover.labels-panel { max-height: calc(var(--vv-height, 100dvh) - 16px) !important; }
   .trash { max-height: calc(var(--vv-height, 100dvh) - 56px); left: auto; width: min(420px, 60vw); border-left: 1px solid var(--dn-border); }
 }
 
@@ -433,10 +422,10 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
 html[data-input='touch'] .toybox-item { touch-action: pan-y; cursor: default; }
 
 /* Chrome reacts to taps at once (no double-tap-to-zoom wait). */
-.topbar, .mobile-dock, .selection-bar, .canvas-controls, .trash, .menu, .dialog, .edit-dock { touch-action: manipulation; }
+.topbar, .mobile-dock, .selection-bar, .canvas-controls, .trash, .menu, .popover, .dialog, .edit-dock { touch-action: manipulation; }
 
 @media (prefers-reduced-motion: reduce) {
-  .menu, .nav-menu, .share-panel, .export-panel, .save-details, .trash, .dialog, .selection-bar.docked { animation: none !important; }
+  .menu, .nav-menu, .share-panel, .export-panel, .save-details, .popover.labels-panel, .trash, .dialog, .selection-bar.docked { animation: none !important; }
 }
 
 /* ---- round 1 visual fixes ---------------------------------------------------- */
@@ -451,7 +440,7 @@ html[data-input='touch'] .toybox-item { touch-action: pan-y; cursor: default; }
 html[data-input='touch'] .nav-menu kbd.nav-menu-meta { display: none; }
 html[data-input='touch'] .fetch-close { min-width: 64px; padding: 0 12px; color: var(--dn-accent); font: inherit; font-weight: 600; }
 /* While typing, only the card and the edit dock. */
-body:has(.edit-dock) .canvas-controls { visibility: hidden; }
+html[data-touch-editing] .canvas-controls { visibility: hidden; }
 .edit-dock .fmt { min-width: 40px; }
 .edit-dock-tools { mask-image: linear-gradient(to right, black calc(100% - 28px), transparent); }
 .connect-banner { left: 12px; right: 12px; width: fit-content; margin-inline: auto; transform: none; }
@@ -508,14 +497,14 @@ body:has(.edit-dock) .canvas-controls { visibility: hidden; }
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   /* Sticky sheet headers line up with the sheet's own padding; the grip stays on top. */
   .share-head { top: -22px; margin: -22px -12px 0; padding: 22px 12px 4px; }
-  .menu::before, .share-panel::before, .export-panel::before, .save-details::before, .trash::before { z-index: 3; }
+  .menu::before, .share-panel::before, .export-panel::before, .save-details::before, .popover.labels-panel::before, .trash::before { z-index: 3; }
 }
 .install-help { padding-left: 12px; }
 
 /* ---- round 2 visual fixes ------------------------------------------------------ */
 
 /* V2-03: while typing, the edit dock owns the bottom; the main dock (and its raised +) steps away. */
-body:has(.edit-dock) .mobile-dock { visibility: hidden; }
+html[data-touch-editing] .mobile-dock { visibility: hidden; }
 
 /* V2-05: the connect hint sits low, out of the way of the card you picked. */
 .connect-banner { top: auto; bottom: 14px; }
@@ -643,16 +632,9 @@ html[data-input='touch'] :is(.icon-btn, .bar-btn, .menu-item, .tool, .toast-acti
 
 /* ---- round 3 visual fixes ------------------------------------------------------ */
 
-/* V3-05: on phones Done is a tick, so the list controls always fit beside it. */
-@media (max-width: 599px) {
-  .edit-done { width: 44px; height: 44px; padding: 0; justify-content: center; }
-  .edit-done-label { display: none; }
-  .edit-dock-tools { mask-image: none; }
-}
-
 /* V3-01: on tablets the bar fits the canvas: smaller swatches, compact actions. */
 @media (min-width: 600px) and (min-height: 501px) {
-  .selection-bar.docked .swatch { width: 34px; height: 34px; }
+  .selection-bar.docked .swatch { width: 44px; height: 44px; --dot: 32px; }
   .selection-bar.docked .bar-actions .bar-btn { min-width: 56px; padding-inline: 6px; flex-direction: column; gap: 2px; font-size: 11px; }
 }
 
@@ -695,31 +677,75 @@ html[data-input='touch'] .share-panel .bar-btn:not(.share-tabs .bar-btn) { paddi
 /* Mixed lock actions must not push the alignment picker off a phone screen. */
 .selection-bar.docked .bar-position { flex-wrap: wrap; overflow: visible; }
 
-/* Phones: icon actions are compact 44px targets on one row that scrolls sideways if it
-   must, so a few icons never stretch into rows of oversized cells. Labelled buttons
-   (Edit, More, …) keep their stacked icon-over-label shape. */
+/* Phones: three calm rows (position tools only when there are any, colours,
+   actions), on the same 12px inset as the other sheets. Every action is an icon
+   over its label in equal cells, so nothing hides behind a sideways scroll on a
+   360px screen; Done closes the row. Colours are 32px dots in full-row 44px
+   targets: seven tints and the custom slot fit edge to edge. */
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
-  .selection-bar.docked .bar-actions { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; gap: 4px; }
-  .selection-bar.docked .bar-actions .bar-btn { flex: 0 0 auto; }
-  .selection-bar.docked .bar-actions .bar-btn:not(.bar-icon) { min-width: 56px; white-space: nowrap; }
-  .selection-bar.docked :is(.bar-actions, .bar-position) .bar-btn.bar-icon {
-    flex: 0 0 44px;
-    width: 44px;
+  .selection-bar.docked .bar-actions { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; gap: 0; }
+  .selection-bar.docked .bar-actions .bar-btn {
+    /* Never narrower than its label (fonts differ by platform); spare room is shared. */
+    flex: 1 0 auto;
     min-width: 44px;
-    height: 44px;
-    min-height: 44px;
-    padding: 0;
+    max-width: 72px;
+    min-height: 52px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 4px 2px;
+    font-size: 11px;
+    line-height: 1.1;
+    white-space: nowrap;
     border-radius: 12px;
   }
-  /* Done stays in reach at the end of the row while the actions scroll beneath it. */
+  .selection-bar.docked .bar-actions .bar-btn > svg { flex: 0 0 auto; }
+  /* Done ends the row (sticky, in case a long row still has to scroll on a tiny screen). */
   .selection-bar.docked .bar-actions .bar-done {
     position: sticky;
     right: 0;
     z-index: 1;
-    margin-left: auto;
-    margin-top: 0;
-    align-self: center;
+    margin: 0 0 0 auto;
+    align-self: stretch;
+    color: var(--dn-text-muted);
     background: var(--dn-panel);
-    box-shadow: -8px 0 8px -4px var(--dn-panel);
   }
+  .selection-bar.docked .bar-position .bar-btn.bar-icon {
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 12px;
+  }
+}
+@media (max-width: 599px) {
+  .selection-bar.docked { gap: 8px; padding-top: 12px; }
+  .selection-bar.docked .bar-style { flex-wrap: wrap; gap: 8px; padding-bottom: 0; overflow: visible; }
+  .selection-bar.docked .swatches { flex: 1 0 100%; justify-content: space-between; gap: 0; margin-inline: 0; }
+  .selection-bar.docked .swatch { flex: 1 1 0; width: auto; min-width: 0; max-width: 48px; height: 44px; --dot: 32px; }
+  .selection-bar.docked .icon-picker { flex: 1 0 100%; justify-content: space-between; gap: 0; }
+  .selection-bar.docked .icon-picker .icon-choice { flex: 1 1 0; min-width: 0; max-width: 48px; }
+  .selection-bar.docked .bar-actions { border-top: 1px solid var(--dn-border); padding-top: 6px; }
+}
+
+/* Two- and three-way choices in phone sheets (Appearance, link permission) sit in one
+   shared track, so the unpicked options read as options rather than loose text. */
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  .theme-choices { gap: 0; margin: 0 12px 12px; padding: 3px; border: 1px solid var(--dn-border); border-radius: 12px; }
+  .viewer-menu .theme-choices { padding-bottom: 3px; border-bottom: 1px solid var(--dn-border); }
+  .theme-choice { border-radius: 9px; }
+  .share-tabs { gap: 0; padding: 3px; border: 1px solid var(--dn-border); border-radius: 12px; }
+  .share-tabs button { border-radius: 9px; }
+}
+
+/* A field in a phone sheet scrolls into view inside the sheet (state/viewport.ts),
+   with a little room so its confirm button on the same row clears the keyboard too. */
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  :is(.menu, .nav-menu, .share-panel, .export-panel, .save-details, .popover, .trash, .dialog) :is(input, textarea, select, form) { scroll-margin-block: 12px; }
+}
+
+/* The label sheet: titled like the other sheets, its colours spread across the row. */
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  .popover.labels-panel > .label-dots { grid-template-columns: repeat(7, minmax(0, 1fr)); justify-items: center; padding: 0 0 4px; }
 }

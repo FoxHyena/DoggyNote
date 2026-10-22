@@ -128,8 +128,14 @@ test('selection controls retain their dimensions and stay clear of floating canv
   const box = await bar.boundingBox()
   expect(box!.x).toBeGreaterThanOrEqual(canvas!.x)
   expect(box!.x + box!.width).toBeLessThanOrEqual(canvas!.x + canvas!.width)
-  expect((await bar.locator('.swatch').first().boundingBox())!.width).toBe(22)
-  if (await bar.evaluate((el) => el.classList.contains('docked'))) {
+  const docked = await bar.evaluate((el) => el.classList.contains('docked'))
+  // A 24px dot with a mouse; docked, a 32px dot in a target at least 40 wide and 44 tall.
+  const swatch = (await bar.locator('.swatch').first().boundingBox())!
+  if (docked) {
+    expect(swatch.width).toBeGreaterThanOrEqual(40)
+    expect(swatch.height).toBe(44)
+  } else expect(swatch.width).toBe(24)
+  if (docked) {
     // Phone width: the bar docks along the bottom and the canvas controls step aside.
     await expect(page.getByTestId('canvas-controls')).toBeHidden()
   } else {

@@ -4,7 +4,8 @@
   z-index: 900;
   width: max-content;
   max-width: min(340px, calc(100vw - 16px));
-  max-height: calc(100dvh - 16px);
+  /* Never under the on-screen keyboard (--vv-height from state/viewport.ts). */
+  max-height: calc(var(--vv-height, 100dvh) - 16px);
   overflow: auto;
   padding: 10px;
   border: 1px solid var(--dn-border);

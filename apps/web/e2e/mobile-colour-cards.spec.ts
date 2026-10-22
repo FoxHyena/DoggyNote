@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test'
 import { freshBoard, waitForSync } from './helpers.ts'
-import { seedCards, tap, tapOn } from './touch.ts'
+import { seedCards, tap, tapEmpty, tapOn } from './touch.ts'
 
 // On a phone: tap to select, tap again to open the colour panel beside the
-// card, tap a dot. The selection bar's Edit opens it too; Done closes it.
+// card, tap a dot. The selection bar's Edit opens it too; tapping the board closes it.
 
 test.beforeEach(async ({ page }) => {
   await freshBoard(page)
@@ -31,7 +31,7 @@ test('double-tap a colour card, tap a preset; Edit in the selection bar opens it
 
   await dot.tap()
   await expect(card.getByTestId('colour-hex')).toHaveText('#FFC53D')
-  await page.getByTestId('edit-done').tap()
+  await tapEmpty(page)
   await expect(panel).toHaveCount(0)
 
   await tapOn(page, card.getByTestId('colour-paint'))

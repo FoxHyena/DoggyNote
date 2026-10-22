@@ -18,6 +18,7 @@ import {
 import { COPY, type CardColor } from '@doggynote/theme'
 import * as doc from './doc.ts'
 import { snapToGrid } from './grid.ts'
+import { labelsOn, moveLabels } from './labels.ts'
 import { showToast } from './toast.ts'
 import { beginEdit, boardId, clearSelection, editingId, endEdit, select, selection } from './ui.ts'
 
@@ -216,5 +217,7 @@ export function moveCardTo(id: Id, toBoard: Id, place: Placement) {
   for (const conn of doc.connectionsOn(c.boardId)) if (conn.from === id || conn.to === id) patches[conn.id] = { purged: true }
   // Its comments go with it, so the new board's sharing (or Toy box privacy) covers them.
   for (const m of doc.commentsOn(id)) patches[m.id] = { boardId: toBoard }
+  // Its labels map by name onto the new board's.
+  if (toBoard !== c.boardId) for (const [key, p] of Object.entries(moveLabels([c], labelsOn(c.boardId), toBoard))) patches[key] = { ...patches[key], ...p } as Partial<Obj>
   doc.update(patches)
 }

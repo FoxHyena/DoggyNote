@@ -1,5 +1,6 @@
 // Every colour in the app comes from here. Components read CSS variables
 // (`var(--dn-bg)`), never hex values, so the two themes can't drift apart.
+import { contrast } from './contrast.ts'
 
 export type ThemeName = 'light' | 'dark'
 
@@ -24,6 +25,7 @@ export const SURFACE_TOKENS = [
   'diffRemoved', // …buries
   'diffInk', // text on the diff colours (badge chips)
   'personSky', 'personBall', 'personLilac', 'personCollar', 'personGold', 'personPeach', 'personInk',
+  'customInkDark', 'customInkLight', // text on a custom card colour, whichever reads (customText)
 ] as const
 
 export type SurfaceToken = (typeof SURFACE_TOKENS)[number]
@@ -50,6 +52,7 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     diffRemoved: '#ee7f6f',
     diffInk: '#1c1b1a',
     personSky: '#74a9e6', personBall: '#62c48c', personLilac: '#b29be0', personCollar: '#ee7f6f', personGold: '#e8a849', personPeach: '#e6a87c', personInk: '#1c1b1a',
+    customInkDark: '#000000', customInkLight: '#ffffff',
   },
   light: {
     bg: '#f3efe9',
@@ -72,18 +75,51 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     diffRemoved: '#b0392b',
     diffInk: '#ffffff',
     personSky: '#2c66a8', personBall: '#2d7a4c', personLilac: '#7951a3', personCollar: '#b0392b', personGold: '#9a5f0c', personPeach: '#98521d', personInk: '#ffffff',
+    customInkDark: '#000000', customInkLight: '#ffffff',
   },
 }
 
 // Card colours (column headers, coloured notes). Each has a background and the
 // text colour drawn on it, tuned separately per theme.
 export const CARD_COLORS = ['none', 'gold', 'collar', 'ball', 'sky', 'lilac', 'peach'] as const
-export type CardColor = (typeof CARD_COLORS)[number]
-/** A synced colour if it's one of ours, else the fallback: it goes straight into CSS. */
-export const cardColor = (c: unknown, fallback: CardColor = 'none'): CardColor =>
-  (CARD_COLORS as readonly unknown[]).includes(c) ? (c as CardColor) : fallback
+export type PresetColor = (typeof CARD_COLORS)[number]
+/** A colour someone picked themselves, `#RRGGBB`. It is document data: the same in both themes. */
+export type CustomColor = `#${string}`
+export type CardColor = PresetColor | CustomColor
 
-export const cardColors: Record<ThemeName, Record<CardColor, { bg: string; text: string }>> = {
+export const isPresetColor = (c: unknown): c is PresetColor => (CARD_COLORS as readonly unknown[]).includes(c)
+
+/** `#abc`, `ABCDEF`, ` #aabbcc ` → `#AABBCC`. Anything else is null. */
+export function normalizeHex(value: unknown): CustomColor | null {
+  if (typeof value !== 'string') return null
+  const hex = value.trim().replace(/^#/, '')
+  if (/^[\da-f]{6}$/i.test(hex)) return `#${hex.toUpperCase()}`
+  if (/^[\da-f]{3}$/i.test(hex)) return `#${[...hex].map((c) => c + c).join('').toUpperCase()}`
+  return null
+}
+
+/** A synced colour if it's one of ours or a valid hex, else the fallback: it goes straight into CSS. */
+export const cardColor = (c: unknown, fallback: CardColor = 'none'): CardColor =>
+  isPresetColor(c) ? c : normalizeHex(c) ?? fallback
+
+/**
+ * The text token for a custom colour: black or white ink, whichever contrasts
+ * more. Only pure black and white clear 4.5:1 on every possible background.
+ */
+export function customText(hex: string): 'customInkDark' | 'customInkLight' {
+  const bg = normalizeHex(hex) ?? '#000000'
+  const s = surfaces.dark
+  return contrast(s.customInkDark, bg) >= contrast(s.customInkLight, bg) ? 'customInkDark' : 'customInkLight'
+}
+
+/** CSS values for a card tint (`--c-bg`, `--c-text`), from unchecked synced data. */
+export function cardColorVars(c: unknown, fallback: CardColor = 'none'): { bg: string; text: string } {
+  const color = cardColor(c, fallback)
+  if (isPresetColor(color)) return { bg: `var(--dn-card-${color}-bg)`, text: `var(--dn-card-${color}-text)` }
+  return { bg: color, text: `var(--dn-${kebab(customText(color))})` }
+}
+
+export const cardColors: Record<ThemeName, Record<PresetColor, { bg: string; text: string }>> = {
   dark: {
     none: { bg: surfaces.dark.card, text: surfaces.dark.text },
     gold: { bg: '#dcbd62', text: '#2a2208' },

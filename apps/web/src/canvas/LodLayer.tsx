@@ -1,6 +1,7 @@
 import { cacheStickerAlpha } from '../ui/StickerImage.tsx'
 import { createEffect, createSignal, onCleanup, onMount } from 'solid-js'
 import { intersects, swatchHex, stickerBounds, stickerHeight, worldToScreen, type Card, type Rect } from '@doggynote/core'
+import { CARD_COLORS, cardColor, customText, isPresetColor, type CardColor } from '@doggynote/theme'
 import { theme as themeSignal } from '../theme.ts'
 import * as doc from '../state/doc.ts'
 import { boardId, camera, selection, viewport } from '../state/ui.ts'
@@ -29,12 +30,24 @@ function readPalette(): Palette {
     muted: get('--dn-text-muted'),
     selection: get('--dn-selection'),
   }
-  for (const c of ['none', 'gold', 'collar', 'ball', 'sky', 'lilac', 'peach']) {
+  for (const c of CARD_COLORS) {
     p[`${c}-bg`] = get(`--dn-card-${c}-bg`)
     p[`${c}-text`] = get(`--dn-card-${c}-text`)
   }
+  p.customInkDark = get('--dn-custom-ink-dark')
+  p.customInkLight = get('--dn-custom-ink-light')
   return p
 }
+
+/** A card's tint as canvas colours, or null for none. Synced data: anything unknown is none. */
+function tintOf(pal: Palette, color: unknown, fallback: CardColor = 'none'): { bg: string; text: string } | null {
+  const c = cardColor(color, fallback)
+  if (c === 'none') return null
+  return isPresetColor(c) ? { bg: pal[`${c}-bg`], text: pal[`${c}-text`] } : { bg: c, text: pal[customText(c)] }
+}
+
+/** Image cards draw a frame this wide (world px) in their tint, as `.card-image.colored` does. */
+const IMAGE_FRAME = 3
 
 // Overview thumbnails live in ONE atlas canvas (112×84 cells). Each image is
 // loaded, copied into its cell, and released at once. 300 images
@@ -183,12 +196,13 @@ export function LodLayer() {
       .sort((a, b) => (a.z ?? 0) - (b.z ?? 0))
 
     const drawCard = (c: Card, x: number, y: number, w: number, h: number) => {
-      const bg = c.color && c.color !== 'none' ? pal[`${c.color}-bg`] : pal.card
+      const tint = tintOf(pal, c.color)
+      const bg = tint?.bg ?? pal.card
       if (c.type === 'board') {
         // Synced data: tolerate a card whose content is missing.
         const b = doc.getBoard((c as Card<'board'>).content?.boardId)
         const s = Math.min(w, h) * 0.55
-        ctx.fillStyle = pal[`${b?.color ?? 'gold'}-bg`]
+        ctx.fillStyle = tintOf(pal, b?.color, 'gold')?.bg ?? pal['none-bg']
         roundRect(ctx, x + (w - s) / 2, y + h * 0.1, s, s, s * 0.22)
         ctx.fill()
         ctx.fillStyle = pal.muted
@@ -206,11 +220,23 @@ export function LodLayer() {
           ctx.fillStyle = pal.border
           ctx.fillRect(x, y, w, ph)
         }
+        if (tint) {
+          // The frame, inside the picture's edge (no size change), as on the card.
+          // At least a couple of screen pixels, so the tint still reads zoomed far out.
+          const f = Math.min(Math.max(2, IMAGE_FRAME * z), w / 2, ph / 2)
+          ctx.fillStyle = tint.bg
+          ctx.fillRect(x, y, w, f)
+          ctx.fillRect(x, y + ph - f, w, f)
+          ctx.fillRect(x, y, f, ph)
+          ctx.fillRect(x + w - f, y, f, ph)
+        }
         if (h - ph >= 1) {
-          ctx.fillStyle = pal.card
+          ctx.fillStyle = bg
           ctx.fillRect(x, y + ph, w, h - ph)
-          ctx.fillStyle = pal.muted
+          ctx.fillStyle = tint?.text ?? pal.muted
+          if (tint) ctx.globalAlpha = 0.35
           ctx.fillRect(x + w * 0.08, y + ph + (h - ph) * 0.4, w * 0.6, Math.max(1, Math.min(h - ph, 8 * z) * 0.4))
+          ctx.globalAlpha = 1
         }
         return
       }
@@ -280,7 +306,7 @@ export function LodLayer() {
         ctx.lineWidth = 1
         ctx.stroke()
         // Header strip, then children stacked like the real column.
-        if (c.color && c.color !== 'none') {
+        if (tint) {
           ctx.fillStyle = bg
           ctx.fillRect(x, y, w, Math.min(h, 50 * z))
         }
@@ -301,7 +327,7 @@ export function LodLayer() {
         return
       }
       // Text-ish cards: a few bars where the lines would be.
-      ctx.fillStyle = c.color && c.color !== 'none' ? pal[`${c.color}-text`] : pal.muted
+      ctx.fillStyle = tint?.text ?? pal.muted
       ctx.globalAlpha = 0.35
       const pad = 14 * z
       const lineH = 16 * z

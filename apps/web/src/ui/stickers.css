@@ -250,7 +250,7 @@ html[data-input='touch'] .sticker-ring-hit { stroke-width: calc(28px * var(--sti
   .mobile-sticker-launcher:hover { background: var(--dn-panel); }
   .mobile-sticker-launcher[aria-expanded='true'] { color: var(--dn-accent); border-color: var(--dn-selection); background: color-mix(in srgb, var(--dn-accent) 8%, var(--dn-panel)); }
   .mobile-sticker-launcher:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 3px; }
-  body:has(.edit-dock) .mobile-sticker-launcher { visibility: hidden; }
+  html[data-touch-editing] .mobile-sticker-launcher { visibility: hidden; }
   .stage:has(.sticker-tray:not(.sticker-shelf)) .mobile-sticker-launcher { visibility: hidden; }
   .stage:has(.sticker-controls-sheet):not(:has(.sticker-tray)) .mobile-sticker-launcher { bottom: calc(var(--dn-sticker-sheet, 140px) + 20px); }
   .sticker-shelf { bottom: 76px; max-height: min(48dvh, calc(100% - 90px)); padding-bottom: 0; }
