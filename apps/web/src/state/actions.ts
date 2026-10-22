@@ -17,6 +17,7 @@ import {
 } from '@doggynote/core'
 import { COPY, type CardColor } from '@doggynote/theme'
 import * as doc from './doc.ts'
+import { prepareBuryMotion } from '../canvas/buryMotion.ts'
 import { snapToGrid } from './grid.ts'
 import { labelsOn, moveLabels } from './labels.ts'
 import { showToast } from './toast.ts'
@@ -135,12 +136,14 @@ export function trashSelection(now = Date.now()) {
 
 /** Bury the selection and say so, with Undo. Every way of burying (bar, Delete key, sheet) goes through here. */
 export function burySelection() {
+  const sink = prepareBuryMotion(selection())
   let n = 0
   for (const id of selection()) {
     const kind = doc.get(id)?.kind
     if (kind === 'card' || kind === 'sticker') n++
   }
   trashSelection()
+  sink()
   if (n) showToast(`${COPY.buried} ${n} ${n === 1 ? 'card' : 'cards'}`, 5000, { label: 'Undo', run: () => doc.undo() })
 }
 
