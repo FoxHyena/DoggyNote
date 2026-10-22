@@ -54,8 +54,8 @@ test('double-tap an image to caption it; Edit in the selection bar opens it agai
   await expect(page.locator('[data-testid="card"][data-type="image"]').getByTestId('image-caption')).toHaveText('Zoomies!')
 })
 
-/** Upload a plain image and open its caption with two taps. */
-async function captionAnImage(page: Page, size = { w: 200, h: 150 }) {
+/** Upload a plain image; returns its card and a point to tap on the picture. */
+async function addImage(page: Page, size = { w: 200, h: 150 }) {
   const png = Buffer.from(await page.evaluate(async ({ w, h }) => {
     const c = new OffscreenCanvas(w, h)
     const ctx = c.getContext('2d')!
@@ -69,16 +69,64 @@ async function captionAnImage(page: Page, size = { w: 200, h: 150 }) {
   await page.getByTestId('image-input').setInputFiles({ name: 'rex.png', mimeType: 'image/png', buffer: png })
   const card = page.locator('[data-testid="card"][data-type="image"]')
   await expect(card).toHaveCount(1)
-  const before = await camera(page)
   const box = (await card.getByTestId('card-image').boundingBox())!
   // Near the top: a tall picture runs under the bottom bar.
   const p = { x: box.x + box.width / 2, y: box.y + Math.min(60, box.height / 2) }
+  return { card, p }
+}
+
+/** Upload a plain image and open its caption with two taps. */
+async function captionAnImage(page: Page, size = { w: 200, h: 150 }) {
+  const { card, p } = await addImage(page, size)
+  const before = await camera(page)
   await tap(page, p)
   await expect(card).toHaveClass(/selected/)
   await tap(page, p)
   const input = page.getByTestId('image-caption-input')
   await expect(input).toBeFocused()
   return { card, input, before }
+}
+
+/** The caption field has focus right after the tap, and still has it ~300ms later (every frame). */
+async function captionKeepsFocus(page: Page) {
+  const lost = await page.evaluate(
+    () =>
+      new Promise<string | null>((resolve) => {
+        const t0 = performance.now()
+        const check = () => {
+          const a = document.activeElement as HTMLElement | null
+          if (a?.dataset.testid !== 'image-caption-input') return resolve(a ? `${a.tagName}.${a.className}` : 'nothing')
+          if (performance.now() - t0 > 300) return resolve(null)
+          requestAnimationFrame(check)
+        }
+        check()
+      }),
+  )
+  expect(lost, 'focus moved away from the caption').toBeNull()
+}
+
+for (const path of ['a fresh image', 'an image already selected'] as const) {
+  test(`double-tapping ${path} focuses the caption in the tap, and a late mousedown can't take it`, async ({ page }) => {
+    const { card, p } = await addImage(page)
+    if (path === 'an image already selected') {
+      await tap(page, p)
+      await expect(card).toHaveClass(/selected/)
+      // Well past the double-tap window, so the next two taps are their own double-tap.
+      await page.waitForTimeout(450)
+      await tap(page, p)
+      await page.waitForTimeout(60)
+    } else {
+      await tap(page, p)
+    }
+    await tap(page, p)
+    // Focused within the tap itself, not a moment later.
+    expect(await page.evaluate(() => (document.activeElement as HTMLElement | null)?.dataset.testid)).toBe('image-caption-input')
+    // iOS answers a double-tap with a mousedown on the picture under the finger, right after it.
+    await page.mouse.move(p.x, p.y)
+    await page.mouse.down()
+    await page.mouse.up()
+    await captionKeepsFocus(page)
+  })
 }
 
 /** Wait until the camera stops moving. */

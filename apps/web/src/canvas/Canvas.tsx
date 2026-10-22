@@ -1445,6 +1445,35 @@ export function touchEdit(id: Id, caret?: Vec) {
   // Queue the caret first: the editor mounts (and reads it) inside beginEdit.
   if (caret) queueEditCaret(caret)
   beginEdit(id)
+  const el = cardEl(id)
+  // iOS only raises the keyboard for focus inside the touch, so focus the field
+  // here rather than relying on when the editor's onMount runs.
+  const field = el?.querySelector<HTMLTextAreaElement>('textarea.image-caption-input')
+  if (field && document.activeElement !== field) field.focus({ preventScroll: true })
+  if (el) keepEditFocus(el)
+}
+
+/**
+ * For a moment after a tap starts an edit, the browser's own mouse events for
+ * that tap must not take focus away. iOS answers a double-tap with a mousedown
+ * and dblclick on what's under the finger (the picture, for a caption), and a
+ * mousedown on something that can't take focus blurs the field and drops the
+ * keyboard. Fields and the note editor keep their mousedown (caret placement).
+ */
+function keepEditFocus(card: HTMLElement, ms = 600) {
+  const until = performance.now() + ms
+  const stop = (e: MouseEvent) => {
+    if (performance.now() > until) return off()
+    const t = e.target as Element | null
+    if (!e.isTrusted || !t || t.closest('textarea, input, select, [contenteditable], .cm-editor')) return
+    if (card.contains(t) || !t.closest('[data-nodrag], button, a, label')) e.preventDefault()
+  }
+  const off = () => {
+    window.removeEventListener('mousedown', stop, true)
+    clearTimeout(timer)
+  }
+  window.addEventListener('mousedown', stop, true)
+  const timer = setTimeout(off, ms)
 }
 
 function caretRect(within: HTMLElement): DOMRect | null {
