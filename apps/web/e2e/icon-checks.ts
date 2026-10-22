@@ -3,6 +3,7 @@ import { cardByText, freshBoard, postSync, pullAllObjects, waitForSync } from '.
 
 export function iconChecks() {
   test('board icon choices keep their saved IDs and unknown icons fall back safely', async ({ page }, info) => {
+    test.setTimeout(60_000) // Eight persisted choices, each reopened through More on phones.
     await freshBoard(page)
     const parentId = new URL(page.url()).hash.slice(4)
     const boardId = crypto.randomUUID(), cardId = crypto.randomUUID()
@@ -17,6 +18,7 @@ export function iconChecks() {
     const ids = ['paw', 'bone', 'ball', 'collar', 'kennel', 'bowl', 'star', 'heart']
     for (const icon of ids) {
       await press(tile)
+      if (info.project.name.startsWith('mobile-')) { await press(page.getByTestId('selection-more')); await press(page.getByTestId('selection-icon')) }
       await expect(page.locator('.icon-picker button')).toHaveCount(8)
       await press(page.getByTestId(`icon-${icon}`))
       await expect(page.getByTestId(`icon-${icon}`)).toHaveAttribute('aria-pressed', 'true')

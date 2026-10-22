@@ -60,6 +60,17 @@ html[data-input="mouse"] .tool:hover {
   color: var(--dn-accent);
 }
 
+/* Three everyday tools lead; occasional tools occupy a quieter second tier. */
+.toolbar-primary, .toolbar-secondary { display: flex; flex-direction: column; gap: 2px; }
+.toolbar-primary .tool { min-height: 56px; color: var(--dn-text); font-weight: 600; }
+.toolbar .tool-primary { background: var(--dn-card-hover); color: var(--dn-accent); }
+.toolbar-group-label { margin: 16px 0 6px; color: var(--dn-text-muted); font-size: 11px; text-align: center; }
+.toolbar-secondary .tool { min-height: 40px; padding-block: 4px; gap: 2px; }
+.toolbar-secondary .tool > svg { width: 18px; height: 18px; }
+.toolbar-media { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--dn-border); }
+.toolbar .tool.active:not(.tool-primary) { color: var(--dn-text); box-shadow: inset 0 0 0 1px var(--dn-border); }
+@media (pointer: coarse) { .toolbar-secondary .tool { min-height: 44px; } }
+
 .tool-ghost {
   position: fixed;
   z-index: 100;

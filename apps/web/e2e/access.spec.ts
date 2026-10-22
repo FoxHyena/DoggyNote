@@ -77,6 +77,7 @@ test('username sharing is visible in the app, inherits to children, and revokes 
     await ownerPage.goto(`/#/b/${root.id}`)
     await expect(ownerPage.getByTestId('board-name')).toHaveText(root.title)
     await ownerPage.getByTestId('share').click()
+    await ownerPage.getByLabel('Invitation permission').selectOption('edit')
     await ownerPage.getByRole('textbox', { name: 'Username to invite' }).fill(bob.username)
     await ownerPage.getByRole('button', { name: 'Invite', exact: true }).click()
     const recipient = ownerPage.getByTestId('share-member').filter({ hasText: bob.username })

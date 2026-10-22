@@ -299,8 +299,14 @@ Shelf background, 1px border, 10px radius, floating shadow, 4px inner padding. R
 ### Dialogs and sheets
 Shelf background, 14px radius, at most 460px wide, over a 45% black backdrop. Headings are 16px. On phones, dialogs and panels become bottom sheets over the scrim token.
 
+### Creation tools
+Note, To-do and Board lead the desktop rail and phone Add sheet. Note is the single accented choice. Occasional tools sit in a quieter More tier; desktop tools keep click and drag creation. Phone secondary tools use compact icon-and-label rows instead of equal-weight tiles.
+
+### Sharing
+One labelled Invitation permission control applies to new username invitations and links. Existing access and links retain their own permissions. View only is the default; Can edit exposes the account-creation option for links.
+
 ### Selection bar
-A floating shelf pill (12px radius, floating shadow) centred above the selection, popping in over 140ms. If it would cover a visible card, it flips below or slides into the nearest clear space. Labels popovers also avoid card content and the bar; crowded boards use the position covering the least content. It holds the swatches, icon picker, labels and actions. It wraps rather than scrolls on narrow windows, and docks to the bottom edge on phones.
+A floating shelf pill (12px radius, floating shadow) centred above the selection, popping in over 140ms. If it would cover a visible card, it flips below or slides into the nearest clear space. Labels popovers also avoid card content and the bar; crowded boards use the position covering the least content. It holds the swatches, icon picker, labels and actions. It wraps rather than scrolls on narrow windows. On phones, a compact dock shows Open (boards) or Edit, Colour, Labels, Bury and More. Only Open/Edit gets the accent fill; Done closes the selection separately. Colour and board icons open focused sheets with 44px minimum targets. More holds Rename, board icons, locks, alignment, duplication, comments, connectors and list options when applicable. The selected colour always reflects the displayed card or board.
 
 ### Stickers
 Image stickers with a white die-cut outline and a hard offset shadow, placed directly on the canvas. They are browsed in a rounded 18px tray with a 4-column grid of 12px-radius tiles.

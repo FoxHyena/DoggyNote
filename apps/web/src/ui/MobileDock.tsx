@@ -7,7 +7,7 @@ import { camera, connectMode, setCamera, setConnectMode, setPaletteOpen, setTras
 import { addAnyFiles, addImages } from '../canvas/paste.ts'
 import { BoardNavigation } from './BoardNavigation.tsx'
 import { ToyboxButton } from './ToyboxPanel.tsx'
-import { TOOLS, centrePlacement } from './Toolbar.tsx'
+import { PRIMARY_TOOLS, MORE_TOOLS, centrePlacement } from './Toolbar.tsx'
 import { Icon } from './icons.tsx'
 import { installMenu } from './menu.ts'
 
@@ -84,15 +84,20 @@ function AddButton() {
       </button>
       <Show when={open()}>
         <div class="menu add-sheet" role="menu" aria-label="Add to this board" data-testid="add-sheet">
-          <div class="add-grid">
-            <For each={TOOLS}>
+          <div class="nav-menu-head"><strong>Add to this board</strong></div>
+          <div class="add-grid add-primary" role="group" aria-label="Create">
+            <For each={PRIMARY_TOOLS}>
               {(t) => (
-                <button class="add-tile" role="menuitem" data-testid={`add-${t.id}`} onClick={() => add(t.id)}>
+                <button class="add-tile" classList={{ "add-primary-note": t.id === "note" }} role="menuitem" data-testid={`add-${t.id}`} onClick={() => add(t.id)}>
                   <span class="add-tile-icon"><Icon size={24} name={t.icon} /></span>
                   {t.label}
                 </button>
               )}
             </For>
+          </div>
+          <div class="add-group-label">More</div>
+          <div class="add-grid add-secondary" role="group" aria-label="More things to add">
+            <For each={MORE_TOOLS}>{(t) => <button class="add-tile" role="menuitem" data-testid={`add-${t.id}`} onClick={() => add(t.id)}><span class="add-tile-icon"><Icon size={20} name={t.icon} /></span>{t.label}</button>}</For>
             <button class="add-tile" role="menuitem" data-testid="add-stickers" onClick={() => { setOpen(false); openStickers() }}><span class="add-tile-icon"><Icon size={24} name="sticker" /></span>Stickers</button>
             <button class="add-tile" role="menuitem" data-testid="add-photo" onClick={() => pick(photo)}>
               <span class="add-tile-icon"><Icon size={24} name="image" /></span>

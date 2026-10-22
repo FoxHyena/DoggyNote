@@ -42,7 +42,6 @@ function SharePanel(props: { boardId: Id; onClose: () => void }) {
   const [includeChildren, setIncludeChildren] = createSignal(true)
   const [allowSignup, setAllowSignup] = createSignal(false)
   const [username, setUsername] = createSignal('')
-  const [memberPermission, setMemberPermission] = createSignal<'view' | 'edit'>('edit')
   const [error, setError] = createSignal<string | null>(null)
   const [copied, setCopied] = createSignal<string | null>(null)
   const [busy, setBusy] = createSignal(false)
@@ -81,7 +80,7 @@ function SharePanel(props: { boardId: Id; onClose: () => void }) {
   }
   async function addMember(e: SubmitEvent) {
     e.preventDefault()
-    await action(async () => { await api(`/api/boards/${encodeURIComponent(props.boardId)}/members`, { method: 'POST', json: { username: username().trim(), permission: memberPermission(), includeChildren: includeChildren() } }); setUsername('') })
+    await action(async () => { await api(`/api/boards/${encodeURIComponent(props.boardId)}/members`, { method: 'POST', json: { username: username().trim(), permission: permission(), includeChildren: includeChildren() } }); setUsername('') })
   }
   async function copy(s: Share) {
     try { await navigator.clipboard.writeText(shareUrl(s.token, s.permission)); setCopied(s.token); setTimeout(() => setCopied(null), 1500) }
@@ -92,15 +91,16 @@ function SharePanel(props: { boardId: Id; onClose: () => void }) {
     <p class="share-sub">{sharing()?.legacy ? 'Shared space members already have editing access. Admins manage its invitations.' : 'Private until you invite someone. Only you manage sharing.'}</p>
     <Show when={parent() && parent() !== `home:${sharing()?.ownerId}`}><p class="share-sub">People with inherited access from “{boardDisplayTitle(doc.getBoard(parent()), 'the parent board')}” keep that access. Manage it on the parent board.</p></Show>
     <label class="check"><input type="checkbox" data-testid="include-children" checked={includeChildren()} onChange={(e) => setIncludeChildren(e.currentTarget.checked)} />Include boards inside this one</label>
+    <label class="share-permission-field">Invitation permission
+      <select aria-label="Invitation permission" data-testid="invitation-permission" value={permission()} onChange={(e) => setPermission(e.currentTarget.value as 'view' | 'edit')}><option value="view">View only</option><option value="edit">Can edit</option></select>
+    </label>
     <strong>Invite by username</strong>
     <form class="share-user-form" onSubmit={addMember} data-testid="share-member-form">
       <input aria-label="Username to invite" placeholder="Username" value={username()} required minLength={2} maxLength={32} onInput={(e) => setUsername(e.currentTarget.value)} />
-      <select aria-label="Member permission" value={memberPermission()} onChange={(e) => setMemberPermission(e.currentTarget.value as 'view' | 'edit')}><option value="edit">Can edit</option><option value="view">View only</option></select>
       <button class="bar-btn" type="submit" disabled={busy()}>Invite</button>
     </form>
     <ul class="share-members"><For each={sharing()?.members ?? []}>{(m) => <li data-testid="share-member"><span>{m.username}<br /><small>{m.permission === 'edit' ? 'Can edit' : 'View only'}{m.viaLink ? ' · via invitation link' : ''}</small></span><button class="bar-btn" disabled={busy()} aria-label={`Remove access for ${m.username}`} onClick={() => void action(() => api(`/api/boards/${encodeURIComponent(props.boardId)}/members/${encodeURIComponent(m.id)}`, { method: 'DELETE' }))}>Remove</button></li>}</For></ul>
     <strong>Invite by link</strong>
-    <div class="share-tabs" aria-label="Link permission"><button class="bar-btn" type="button" aria-pressed={permission() === 'view'} onClick={() => setPermission('view')}>View only</button><button class="bar-btn" type="button" data-testid="edit-link-option" aria-pressed={permission() === 'edit'} onClick={() => setPermission('edit')}>Can edit</button></div>
     <p class="share-sub">{permission() === 'view' ? 'Anyone with this link can look without signing in.' : 'Sign-in required. This invitation can be accepted for 7 days; access continues until removed.'}</p>
     <Show when={permission() === 'edit'}><label class="check"><input type="checkbox" data-testid="share-allow-signup" checked={allowSignup()} onChange={(e) => setAllowSignup(e.currentTarget.checked)} />Allow new accounts through this link</label><p class="share-sub">Leave this off to invite existing accounts only.</p></Show>
     <button class="primary-btn" data-testid="create-share" disabled={busy()} onClick={() => void create()}>{busy() ? 'Saving…' : sharing()?.shares.length ? 'New link' : 'Create link'}</button>

@@ -25,9 +25,6 @@
 .share-head .icon-btn { flex: 0 0 auto; }
 .share-sub { margin: 0; color: var(--dn-text-muted); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
 .share-panel > strong { font-size: 13px; }
-.share-tabs { display: flex; gap: 8px; margin: 0; }
-.share-tabs button { flex: 1; justify-content: center; }
-.share-tabs button[aria-pressed='true'] { background: var(--dn-card-hover); color: var(--dn-text); }
 .share-members { padding: 0; margin: 0 0 4px; list-style: none; }
 .share-members li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--dn-border); }
 .share-members li > span { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 13px; }
@@ -35,7 +32,6 @@
 .share-members small, .share-expiry { color: var(--dn-text-muted); font-size: 12px; line-height: 1.5; }
 .share-user-form { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
 .share-user-form input { flex: 1 1 120px; min-width: 0; border: 1px solid var(--dn-border); border-radius: 8px; padding: 8px; background: var(--dn-bg); color: var(--dn-text); }
-.share-user-form select { min-width: 0; border: 1px solid var(--dn-border); border-radius: 8px; padding: 8px; background: var(--dn-panel); color: var(--dn-text); }
 .share-panel :is(button, input:not([type='checkbox']), select) { min-height: 36px; }
 .share-panel .check { min-height: 36px; margin: 0; line-height: 1.5; }
 .share-panel .check input { flex-shrink: 0; }
@@ -52,3 +48,8 @@
 @media (pointer: coarse) {
   .share-panel :is(button, input:not([type='checkbox']), select), .share-panel .check { min-height: 44px; }
 }
+
+.share-permission-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; }
+.share-permission-field select { border: 1px solid var(--dn-border); border-radius: 8px; padding: 8px; background: var(--dn-bg); color: var(--dn-text); font: inherit; }
+
+@media (pointer: coarse) { .share-permission-field select { height: 44px; } }

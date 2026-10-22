@@ -1,5 +1,5 @@
 import './canvas-entry.css'
-import { For, Show, createMemo, createSignal, onCleanup } from 'solid-js'
+import { For, Show, createEffect, createMemo, createSignal, onCleanup } from 'solid-js'
 import { ALIGNMENTS, DEFAULT_SWATCH_HEX, type Alignment, type BoardIcon, type Card } from '@doggynote/core'
 import { CARD_COLORS, COPY, cardColor, isPresetColor, normalizeHex, type CardColor } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
@@ -14,9 +14,10 @@ import { union, worldToScreen } from '@doggynote/core'
 import { BOARD_ICONS, BoardIconSvg, Icon, IconButton, type IconName } from './icons.tsx'
 import { canvasControlsSize } from './CanvasControls.tsx'
 import { openThread } from './CommentsPanel.tsx'
-import { TodoOptions } from './TodoOptions.tsx'
+import { TodoOptions, TodoMenuItems } from './TodoOptions.tsx'
 import { BarMenu } from './BarMenu.tsx'
 import { duplicateSelection } from '../state/clipboard.ts'
+import { Popover } from './Popover.tsx'
 import { LabelsButton } from './Labels.tsx'
 import { cardObstacles, placeFloating } from './floatingPlacement.ts'
 
@@ -25,6 +26,9 @@ import { cardObstacles, placeFloating } from './floatingPlacement.ts'
 // (edit, connect, add to the selection). On phones it docks to the bottom.
 
 export function SelectionBar() {
+  const [panel, setPanel] = createSignal<'colour' | 'icon' | null>(null)
+  let colourTrigger!: HTMLButtonElement, moreTrigger!: HTMLButtonElement, panelAnchor!: HTMLElement
+  const openPanel = (kind: 'colour' | 'icon') => { panelAnchor = kind === 'colour' ? colourTrigger : moreTrigger; setPanel(kind) }
   const [barSize, setBarSize] = createSignal({ width: 400, height: 46 })
   const cards = createMemo(() => [...selection()].map((id) => doc.getCard(id)).filter((c): c is Card => !!c))
   const conns = createMemo(() => [...selection()].filter((id) => doc.get(id)?.kind === 'connection'))
@@ -34,6 +38,7 @@ export function SelectionBar() {
   // above it (touch has the docked bar instead).
   const editingList = () => !docked() && doc.getCard(editingId() ?? '')?.type === 'todo'
   const show = () => !cardContextOpen() && (cards().length || conns().length) && !draggingIds().size && (!editingId() || editingList()) && !connectMode()
+  createEffect(() => { if (!show() || !phone()) setPanel(null) })
   const sole = () => (cards().length === 1 && selection().size === 1 ? cards()[0] : undefined)
   const selectedColumn = () => {
     const c = sole()
@@ -42,7 +47,7 @@ export function SelectionBar() {
   }
   const editable = () => {
     const c = sole()
-    return !!c && (c.type === 'note' || c.type === 'todo' || c.type === 'column' || c.type === 'image' || c.type === 'swatch') && doc.canWriteObject(c)
+    return !!c && (c.type === 'note' || c.type === 'todo' || c.type === 'column' || c.type === 'image' || c.type === 'swatch' || c.type === 'link' || c.type === 'movie') && doc.canWriteObject(c)
   }
   // Labels go on the cards of one board; a column is a container, so it has none.
   const canLabel = () => cards().length > 0 && cards().every((c) => c.type !== 'column' && c.boardId === cards()[0].boardId && doc.canWriteObject(c))
@@ -62,7 +67,7 @@ export function SelectionBar() {
   }
   /** The selection's shared colour (synced data, so checked), or null when they differ. */
   const currentColor = (): CardColor | null => {
-    const c = cards().map((x) => cardColor(x.color))
+    const c = cards().map((x) => cardColor(x.type === 'board' ? doc.getBoard((x as Card<'board'>).content.boardId)?.color : x.color))
     return c.length && c.every((x) => x === c[0]) ? c[0] : null
   }
   const customColor = () => {
@@ -113,6 +118,58 @@ export function SelectionBar() {
     return { left: at.x + size.width / 2, top: at.y }
   })
 
+  const colours = () => (
+    <div class="swatches" role="group" aria-label="Colour">
+      <For each={CARD_COLORS}>
+        {(c) => (
+          <button
+            class="swatch"
+            aria-pressed={currentColor() === c}
+            classList={{ on: currentColor() === c, 'swatch-none': c === 'none' }}
+            style={{ '--sw': `var(--dn-card-${c}-bg)` }}
+            data-testid={`swatch-${c}`}
+            data-tip={COPY.colorNames[c]}
+            aria-label={COPY.colorNames[c]}
+            onClick={() => setColor(selection(), c)}
+          />
+        )}
+      </For>
+      {/* Any other colour: the system picker. One change, one undo step. */}
+      <label class="swatch swatch-custom" classList={{ on: !!customColor() }} style={customColor() ? { '--sw': customColor()! } : undefined} data-tip={customColor() ? `Custom colour ${customColor()}` : 'Custom colour'} data-testid="swatch-custom">
+        <Show when={!customColor()}>
+          <Icon size={16} name="plus" />
+        </Show>
+        <input
+          type="color"
+          data-testid="swatch-custom-input"
+          aria-label="Custom colour"
+          value={(customColor() ?? DEFAULT_SWATCH_HEX).toLowerCase()}
+          onChange={(e) => pickCustom(e.currentTarget.value)}
+        />
+      </label>
+    </div>
+  )
+  const boardIcons = () => (
+    <div class="icon-picker" aria-label="Board icon">
+      <For each={BOARD_ICONS}>
+        {(i: BoardIcon) => (
+          <button
+            class="icon-choice"
+            classList={{ on: soleBoard()!.icon === i }}
+            data-testid={`icon-${i}`}
+            data-tip={i}
+            aria-label={`Board icon: ${i}`}
+            aria-pressed={soleBoard()!.icon === i}
+            disabled={!doc.canWriteObject(soleBoard())}
+            onClick={() => doc.update({ [soleBoard()!.id]: { icon: i } })}
+          >
+            <BoardIconSvg icon={i} size={18} />
+          </button>
+        )}
+      </For>
+    </div>
+  )
+
   return (
     <Show when={show()}>
       <div
@@ -126,6 +183,7 @@ export function SelectionBar() {
         style={docked() ? undefined : { left: `${pos().left}px`, top: `${pos().top}px` }}
         onPointerDown={(e) => e.stopPropagation()}
       >
+        <Show when={phone()} fallback={<>
         <Show when={cards().length && !editingList()}>
           <Show when={selectedColumn()}>
             <button class="bar-btn" data-testid="selection-column-toggle" aria-expanded={!columnCollapsed(selectedColumn())} onClick={() => setColumnCollapsed(selectedColumn()!.id, !columnCollapsed(selectedColumn()))}>
@@ -155,58 +213,13 @@ export function SelectionBar() {
         <div class="bar-group bar-style">
         {/* A colour card is its colour: the card tints are for everything else. */}
         <Show when={cards().some((c) => c.type !== 'swatch')}>
-          <div class="swatches" role="group" aria-label="Colour">
-            <For each={CARD_COLORS}>
-              {(c) => (
-                <button
-                  class="swatch"
-                  aria-pressed={currentColor() === c}
-                  classList={{ on: currentColor() === c, 'swatch-none': c === 'none' }}
-                  style={{ '--sw': `var(--dn-card-${c}-bg)` }}
-                  data-testid={`swatch-${c}`}
-                  data-tip={COPY.colorNames[c]}
-                  aria-label={COPY.colorNames[c]}
-                  onClick={() => setColor(selection(), c)}
-                />
-              )}
-            </For>
-            {/* Any other colour: the system picker. One change, one undo step. */}
-            <label class="swatch swatch-custom" classList={{ on: !!customColor() }} style={customColor() ? { '--sw': customColor()! } : undefined} data-tip={customColor() ? `Custom colour ${customColor()}` : 'Custom colour'} data-testid="swatch-custom">
-              <Show when={!customColor()}>
-                <Icon size={16} name="plus" />
-              </Show>
-              <input
-                type="color"
-                data-testid="swatch-custom-input"
-                aria-label="Custom colour"
-                value={(customColor() ?? DEFAULT_SWATCH_HEX).toLowerCase()}
-                onChange={(e) => pickCustom(e.currentTarget.value)}
-              />
-            </label>
-          </div>
+          {colours()}
         </Show>
         <Show when={soleBoard()}>
           <button class="bar-btn" data-testid="open-board" onClick={() => openBoard(soleBoard()!.id)}>Open</button>
           <button class="bar-btn" data-testid="rename-board" disabled={!doc.canWriteObject(soleBoard())} onClick={() => beginEdit(cards()[0].id)}>Rename</button>
           <div class="bar-sep" />
-          <div class="icon-picker" aria-label="Board icon">
-            <For each={BOARD_ICONS}>
-              {(i: BoardIcon) => (
-                <button
-                  class="icon-choice"
-                  classList={{ on: soleBoard()!.icon === i }}
-                  data-testid={`icon-${i}`}
-                  data-tip={i}
-                  aria-label={`Board icon: ${i}`}
-                  aria-pressed={soleBoard()!.icon === i}
-                  disabled={!doc.canWriteObject(soleBoard())}
-                  onClick={() => doc.update({ [soleBoard()!.id]: { icon: i } })}
-                >
-                  <BoardIconSvg icon={i} size={18} />
-                </button>
-              )}
-            </For>
-          </div>
+          {boardIcons()}
         </Show>
         </div>
         <div class="bar-sep" />
@@ -225,13 +238,12 @@ export function SelectionBar() {
         <Show when={canLabel()}>
           <LabelsButton cards={cards()} labelled={docked()} />
         </Show>
-        <Show when={canDuplicate() && !phone()}>
+        <Show when={canDuplicate()}>
           <BarAction testid="duplicate-selection" icon="duplicate" label="Duplicate" title="Duplicate (⌘D)" labelled={docked()} onClick={() => duplicateSelection()} />
         </Show>
         <Show when={cards().length === 1 && cards()[0].type !== 'board'}>
           <BarAction testid="comment-button" icon="comment" label="Comment" title="Comment on this card" labelled={docked()} onClick={() => openThread(cards()[0].id)} />
         </Show>
-        <Show when={!phone()}>
         <Show when={touch() && sole()}>
           <button class="bar-btn" data-testid="connect-card" onClick={startConnect}>
             <Icon size={18} name="line" />
@@ -244,41 +256,51 @@ export function SelectionBar() {
             {selection().size > 1 ? `${selection().size} picked` : 'Select'}
           </button>
         </Show>
-        </Show>
-        {/* Phones: the less frequent actions share one sheet, so the bar fits a small screen. */}
-        <Show when={phone()}>
-          <BarMenu label={selection().size > 1 ? `${selection().size} picked` : 'More'} title="More for this card" testId="selection-more" menuTestId="selection-more-menu" icon={<Icon size={18} name="more" />}>
-            {(close) => (
-              <>
-                <Show when={canDuplicate()}>
-                  <button class="menu-item" role="menuitem" data-testid="duplicate-selection" onClick={() => { close(); duplicateSelection() }}>
-                    <Icon size={18} name="duplicate" />
-                    Duplicate
-                  </button>
-                </Show>
-                <Show when={sole()}>
-                  <button class="menu-item" role="menuitem" data-testid="connect-card" onClick={() => { close(); startConnect() }}>
-                    <Icon size={18} name="line" />
-                    Connect to another card
-                  </button>
-                </Show>
-                <button class="menu-item" role="menuitemcheckbox" aria-checked={selectMore()} data-testid="select-more" onClick={() => { close(); setSelectMore(!selectMore()) }}>
-                  <Icon size={18} name="multi" />
-                  {selectMore() ? 'Stop picking more' : 'Pick more cards'}
-                </button>
-              </>
-            )}
-          </BarMenu>
-        </Show>
         <BarAction testid="bury" icon="bury" label={COPY.bury} title={`${COPY.bury}: move to ${COPY.trash} (Delete)`} labelled={docked()} onClick={burySelection} />
         </Show>
-        <Show when={phone()}>
-          <button class="bar-btn bar-done" data-testid="selection-done" aria-label="Done" title="Done" onClick={clearSelection}>
-            <Icon size={18} name="close" />
-            <span class="bar-btn-label">Done</span>
-          </button>
-        </Show>
+
         </div>
+        </>}>
+          <div class="selection-phone-head">
+            <span role="status">{`${selection().size} ${conns().length ? 'item' : 'card'}${selection().size === 1 ? '' : 's'} picked`}<Show when={cards().some((c) => isPositionLocked(c.id))}> · {cards().filter((c) => isPositionLocked(c.id)).length} locked</Show></span>
+            <button class="bar-btn" data-testid="selection-done" onClick={clearSelection}>Done<Icon name="close" size={18} /></button>
+          </div>
+          <div class="selection-phone-actions">
+            <Show when={soleBoard()} fallback={<Show when={editable()}><button class="bar-btn selection-primary" data-testid="edit-card" onClick={() => beginEdit(sole()!.id)}><Icon name="edit" size={20} /><span>Edit</span></button></Show>}>
+              <button class="bar-btn selection-primary" data-testid="open-board" onClick={() => openBoard(soleBoard()!.id)}><Icon name="open" size={20} /><span>Open</span></button>
+            </Show>
+            <Show when={cards().some((c) => c.type !== 'swatch')}>
+              <button ref={colourTrigger} class="bar-btn" data-testid="selection-colour" aria-haspopup="dialog" aria-expanded={panel() === 'colour'} onClick={() => openPanel('colour')}><Icon name="droplet" size={20} /><span>Colour</span></button>
+            </Show>
+            <Show when={canLabel()}><LabelsButton cards={cards()} labelled /></Show>
+            <BarAction testid="bury" icon="bury" label={COPY.bury} labelled onClick={burySelection} />
+            <BarMenu triggerRef={(el) => { moreTrigger = el }} label="More" title="More card actions" testId="selection-more" menuTestId="selection-more-menu" icon={<Icon name="more" size={20} />}>
+              {(close) => <>
+                <Show when={soleBoard()}>
+                  <button class="menu-item" role="menuitem" data-testid="rename-board" disabled={!doc.canWriteObject(soleBoard())} onClick={() => { close(); beginEdit(sole()!.id) }}><Icon name="edit" />Rename</button>
+                  <button class="menu-item" role="menuitem" data-testid="selection-icon" disabled={!doc.canWriteObject(soleBoard())} onClick={() => { close(); openPanel('icon') }}><Icon name="board" />Board icon</button>
+                </Show>
+                <Show when={writable() && cards().length}>
+                  <button class="menu-item" role="menuitemcheckbox" aria-checked={allLocked()} aria-label={lockLabel()} data-testid="position-lock" onClick={() => lockSelection(!allLocked())}><Icon name={allLocked() ? 'lock' : 'unlock'} />{allLocked() ? 'Unlock position' : 'Lock position'}</button>
+                </Show>
+                <Show when={columnLocked()}><button class="menu-item" role="menuitem" data-testid="unlock-column-layout" onClick={() => { close(); unlockSelectionLayouts() }}>Unlock column layout</button></Show>
+                <Show when={canAlign()}><div class="selection-sheet-align" role="group" aria-label="Align selection" data-testid="align-selection"><For each={ALIGNMENTS}>{(a) => <IconButton testid={`align-${a.value}`} icon={ALIGN_ICONS[a.value]} label={a.label} onClick={() => { close(); alignSelection(a.value) }} />}</For></div></Show>
+                <Show when={selectedColumn()}><button class="menu-item" role="menuitem" data-testid="selection-column-toggle" onClick={() => { close(); setColumnCollapsed(selectedColumn()!.id, !columnCollapsed(selectedColumn())) }}>{columnCollapsed(selectedColumn()) ? 'Expand column' : 'Collapse column'}</button></Show>
+                <Show when={sole()?.type === 'todo' && writable()}><TodoMenuItems card={sole() as Card<'todo'>} close={close} /></Show>
+                <Show when={canDuplicate()}><button class="menu-item" role="menuitem" data-testid="duplicate-selection" onClick={() => { close(); duplicateSelection() }}><Icon name="duplicate" />Duplicate</button></Show>
+                <Show when={sole() && sole()!.type !== 'board'}><button class="menu-item" role="menuitem" data-testid="comment-button" onClick={() => { close(); openThread(sole()!.id) }}><Icon name="comment" />Comment</button></Show>
+                <Show when={sole()}><button class="menu-item" role="menuitem" data-testid="connect-card" onClick={() => { close(); startConnect() }}><Icon name="line" />Connect to another card</button></Show>
+                <button class="menu-item" role="menuitemcheckbox" aria-checked={selectMore()} data-testid="select-more" onClick={() => { close(); setSelectMore(!selectMore()) }}><Icon name="multi" />{selectMore() ? 'Stop picking more' : 'Pick more cards'}</button>
+              </>}
+            </BarMenu>
+          </div>
+          <Show when={panel()}>
+            <Popover anchor={() => panelAnchor} label={panel() === 'colour' ? 'Card colour' : 'Board icon'} testid="selection-style-sheet" class="menu selection-style-sheet" close={() => setPanel(null)}>
+              <div class="selection-sheet-head"><strong>{panel() === 'colour' ? 'Colour' : 'Board icon'}</strong><button class="bar-btn" data-testid="selection-style-done" onClick={() => setPanel(null)}>Done</button></div>
+              <Show when={panel() === 'colour'} fallback={boardIcons()}>{colours()}</Show>
+            </Popover>
+          </Show>
+        </Show>
       </div>
     </Show>
   )

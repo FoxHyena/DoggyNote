@@ -1,11 +1,13 @@
 import { Show, createSignal, type JSX } from 'solid-js'
 import { Portal } from 'solid-js/web'
+import { phone } from '../state/device.ts'
 import { installMenu } from './menu.ts'
 
 // A selection-bar button with a menu. The bar clips its contents, so the menu
 // lives in a portal under the button (a bottom sheet on phones, via mobile.css).
 
 export function BarMenu(props: {
+  triggerRef?: (element: HTMLButtonElement) => void
   label: string
   title: string
   icon: JSX.Element
@@ -36,7 +38,7 @@ export function BarMenu(props: {
   return (
     <>
       <button
-        ref={trigger}
+        ref={(element) => { trigger = element; props.triggerRef?.(element) }}
         class="bar-btn"
         data-testid={props.testId}
         aria-haspopup="menu"
@@ -52,7 +54,7 @@ export function BarMenu(props: {
       <Show when={open()}>
         <Portal>
           <div ref={menu} class="menu bar-menu" role="menu" aria-label={props.title} data-testid={props.menuTestId} style={{ left: `${at().left}px`, top: `${at().top}px` }} onPointerDown={(e) => e.stopPropagation()}>
-            <div class="nav-menu-head sheet-only" aria-hidden="true"><strong>{props.title}</strong></div>
+            <div class="nav-menu-head sheet-only"><strong>{props.title}</strong><Show when={phone()}><button class="bar-btn" role="menuitem" aria-label="Close card actions" onClick={() => { close(); trigger.focus() }}>Done</button></Show></div>
             {props.children(close)}
           </div>
         </Portal>

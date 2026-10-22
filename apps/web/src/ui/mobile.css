@@ -415,7 +415,7 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   height: 40px;
   border-radius: 12px;
   background: var(--dn-card-hover);
-  color: var(--dn-accent);
+  color: var(--dn-text-muted);
 }
 
 /* Inbox list scrolls by touch; items are placed with their buttons. */
@@ -655,8 +655,7 @@ html[data-input='touch'] :is(.icon-btn, .bar-btn, .menu-item, .tool, .toast-acti
 }
 
 /* V3-07: the share sheet's choices read as choices. */
-.share-tabs button[aria-pressed='true'] { box-shadow: inset 0 0 0 1.5px var(--dn-selection); color: var(--dn-text); font-weight: 600; }
-html[data-input='touch'] .share-panel .bar-btn:not(.share-tabs .bar-btn) { padding-inline: 12px; border-radius: 10px; background: var(--dn-card-hover); color: var(--dn-text); }
+html[data-input='touch'] .share-panel .bar-btn { padding-inline: 12px; border-radius: 10px; background: var(--dn-card-hover); color: var(--dn-text); }
 
 /* V3-13: a paw on the empty states. */
 .trash-empty::before,
@@ -677,66 +676,12 @@ html[data-input='touch'] .share-panel .bar-btn:not(.share-tabs .bar-btn) { paddi
 /* Mixed lock actions must not push the alignment picker off a phone screen. */
 .selection-bar.docked .bar-position { flex-wrap: wrap; overflow: visible; }
 
-/* Phones: three calm rows (position tools only when there are any, colours,
-   actions), on the same 12px inset as the other sheets. Every action is an icon
-   over its label in equal cells, so nothing hides behind a sideways scroll on a
-   360px screen; Done closes the row. Colours are 32px dots in full-row 44px
-   targets: seven tints and the custom slot fit edge to edge. */
-@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
-  .selection-bar.docked .bar-actions { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; gap: 0; }
-  .selection-bar.docked .bar-actions .bar-btn {
-    /* Never narrower than its label (fonts differ by platform); spare room is shared. */
-    flex: 1 0 auto;
-    min-width: 44px;
-    max-width: 72px;
-    min-height: 52px;
-    flex-direction: column;
-    justify-content: center;
-    gap: 3px;
-    padding: 4px 2px;
-    font-size: 11px;
-    line-height: 1.1;
-    white-space: nowrap;
-    border-radius: 12px;
-  }
-  .selection-bar.docked .bar-actions .bar-btn > svg { flex: 0 0 auto; }
-  /* Done ends the row (sticky, in case a long row still has to scroll on a tiny screen). */
-  .selection-bar.docked .bar-actions .bar-done {
-    position: sticky;
-    right: 0;
-    z-index: 1;
-    margin: 0 0 0 auto;
-    align-self: stretch;
-    color: var(--dn-text-muted);
-    background: var(--dn-panel);
-  }
-  .selection-bar.docked .bar-position .bar-btn.bar-icon {
-    flex: 0 0 44px;
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
-    padding: 0;
-    border-radius: 12px;
-  }
-}
-@media (max-width: 599px) {
-  .selection-bar.docked { gap: 8px; padding-top: 12px; }
-  .selection-bar.docked .bar-style { flex-wrap: wrap; gap: 8px; padding-bottom: 0; overflow: visible; }
-  .selection-bar.docked .swatches { flex: 1 0 100%; justify-content: space-between; gap: 0; margin-inline: 0; }
-  .selection-bar.docked .swatch { flex: 1 1 0; width: auto; min-width: 0; max-width: 48px; height: 44px; --dot: 32px; }
-  .selection-bar.docked .icon-picker { flex: 1 0 100%; justify-content: space-between; gap: 0; }
-  .selection-bar.docked .icon-picker .icon-choice { flex: 1 1 0; min-width: 0; max-width: 48px; }
-  .selection-bar.docked .bar-actions { border-top: 1px solid var(--dn-border); padding-top: 6px; }
-}
-
-/* Two- and three-way choices in phone sheets (Appearance, link permission) sit in one
+/* Appearance choices in phone sheets sit in one
    shared track, so the unpicked options read as options rather than loose text. */
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .theme-choices { gap: 0; margin: 0 12px 12px; padding: 3px; border: 1px solid var(--dn-border); border-radius: 12px; }
   .viewer-menu .theme-choices { padding-bottom: 3px; border-bottom: 1px solid var(--dn-border); }
   .theme-choice { border-radius: 9px; }
-  .share-tabs { gap: 0; padding: 3px; border: 1px solid var(--dn-border); border-radius: 12px; }
-  .share-tabs button { border-radius: 9px; }
 }
 
 /* A field in a phone sheet scrolls into view inside the sheet (state/viewport.ts),
@@ -749,3 +694,44 @@ html[data-input='touch'] .share-panel .bar-btn:not(.share-tabs .bar-btn) { paddi
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .popover.labels-panel > .label-dots { grid-template-columns: repeat(7, minmax(0, 1fr)); justify-items: center; padding: 0 0 4px; }
 }
+
+/* Creation: familiar cards first, then a compact list of occasional tools. */
+.add-grid.add-primary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.add-primary .add-tile { font-weight: 600; }
+.add-primary-note .add-tile-icon { background: var(--dn-accent); color: var(--dn-accent-text); }
+.add-group-label { margin: 20px 0 8px; color: var(--dn-text-muted); font-size: 12px; font-weight: 600; }
+.add-grid.add-secondary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 8px; }
+.add-secondary .add-tile { flex-direction: row; justify-content: flex-start; gap: 8px; min-height: 48px; padding: 4px 8px; border: 0; border-radius: 8px; background: transparent; }
+.add-secondary .add-tile-icon { width: 28px; height: 28px; background: transparent; }
+.add-secondary .add-tile-icon svg { width: 20px; height: 20px; }
+.add-grid.add-secondary > .add-tile:last-child { grid-column: auto; min-height: 48px; }
+.add-sheet .nav-menu-head { margin-bottom: 12px; }
+.add-sheet .nav-menu-head strong { font-size: 16px; }
+
+/* Phone selection keeps one row of actions. Palettes live in focused sheets. */
+.selection-phone-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--dn-text-muted); font-size: 12px; }
+.selection-phone-head .bar-btn { min-width: 64px; min-height: 44px; gap: 6px; }
+.selection-phone-actions { display: flex; align-items: stretch; gap: 4px; }
+.selection-phone-actions > .bar-btn { flex: 1 1 0; min-width: 44px; min-height: 56px; padding: 6px 2px; display: flex; flex-direction: column; justify-content: center; gap: 4px; font-size: 12px; border-radius: 10px; }
+.selection-phone-actions > .selection-primary { background: var(--dn-accent); color: var(--dn-accent-text); font-weight: 600; }
+html[data-input='touch'] .selection-phone-actions > .selection-primary:active:not(:disabled) { background: var(--dn-accent); color: var(--dn-accent-text); }
+.selection-sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 12px; }
+.selection-sheet-head strong { font-size: 16px; font-weight: 600; }
+.selection-sheet-head .bar-btn { min-width: 64px; min-height: 44px; }
+.selection-style-sheet .swatches, .selection-style-sheet .icon-picker { display: grid; grid-template-columns: repeat(4, minmax(44px, 1fr)); gap: 12px 8px; justify-items: center; padding: 8px 0; }
+.selection-style-sheet .swatch { width: 56px; height: 56px; --dot: 32px; }
+.selection-style-sheet .icon-choice { width: 56px; height: 56px; }
+.selection-style-sheet .icon-choice > svg { width: 24px; height: 24px; }
+.selection-sheet-align { display: flex; justify-content: space-between; gap: 4px; padding: 4px 0; }
+.selection-sheet-align .bar-icon { min-width: 44px; min-height: 44px; }
+@media (max-width: 599px), (max-height: 500px) and (pointer: coarse) {
+  .menu.selection-style-sheet, .menu.add-sheet { border-radius: 18px 18px 0 0; }
+  .selection-bar.docked:has(.selection-phone-actions) { flex-direction: column; align-items: stretch; gap: 4px; padding-top: 0; }
+}
+
+.bar-menu .nav-menu-head strong { font-size: 16px; }
+
+.app:has(.selection-phone-actions) .mobile-sticker-launcher { visibility: hidden; }
+.bar-menu .nav-menu-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.bar-menu .nav-menu-head .bar-btn { min-height: 44px; min-width: 64px; }
+@media (max-width: 599px), (max-height: 500px) and (pointer: coarse) { .menu.bar-menu { border-radius: 18px 18px 0 0; } }
