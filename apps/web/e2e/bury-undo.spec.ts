@@ -26,3 +26,37 @@ test('Bury in the selection bar shows the same toast', async ({ page }) => {
   await page.getByTestId('toast-action').click()
   await expect(cardByText(page, 'Old bone')).toBeVisible()
 })
+
+/** Count sinking copies as they're added, however quickly they finish. */
+async function watchGhosts(page: import('@playwright/test').Page) {
+  await page.evaluate(() => {
+    const w = window as unknown as { ghosts: number }
+    w.ghosts = 0
+    new MutationObserver((list) => {
+      for (const m of list) for (const n of m.addedNodes) if (n instanceof HTMLElement && n.classList.contains('bury-ghost')) w.ghosts++
+    }).observe(document.body, { childList: true })
+  })
+  return () => page.evaluate(() => (window as unknown as { ghosts: number }).ghosts)
+}
+
+test('a buried card sinks into Buried bones, and the copy cleans itself up', async ({ page }) => {
+  await freshBoard(page)
+  await addNote(page, 'Sinking bone')
+  const ghosts = await watchGhosts(page)
+  await page.getByTestId('bury').click()
+  expect(await ghosts()).toBe(1)
+  // The copy is decoration: not a card, not announced, gone once it lands.
+  await expect(page.locator('.bury-ghost')).toHaveCount(0)
+  await expect(page.getByTestId('card')).toHaveCount(0)
+  await expect(page.getByTestId('toast')).toContainText('Buried 1 card')
+})
+
+test('with reduced motion, burying just says so', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await freshBoard(page)
+  await addNote(page, 'Still bone')
+  const ghosts = await watchGhosts(page)
+  await page.keyboard.press('Delete')
+  await expect(page.getByTestId('toast')).toContainText('Buried 1 card')
+  expect(await ghosts()).toBe(0)
+})

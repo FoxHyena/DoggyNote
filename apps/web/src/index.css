@@ -364,6 +364,14 @@ html[data-input="mouse"] .menu-item:hover {
   color: var(--c-text);
 }
 
+/* A buried card's copy sinking into Buried bones (canvas/buryMotion.ts). */
+.bury-ghost {
+  z-index: 55;
+  margin: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
 .card-unreadable {
   margin: 0;
   padding: 10px 12px;
