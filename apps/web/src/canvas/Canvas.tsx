@@ -1514,30 +1514,34 @@ export function touchEdit(id: Id, caret?: Vec) {
   // here rather than relying on when the editor's onMount runs.
   const field = el?.querySelector<HTMLTextAreaElement>('textarea.image-caption-input')
   if (field && document.activeElement !== field) field.focus({ preventScroll: true })
-  if (el) keepEditFocus(el)
+  if (el) keepEditFocus(id, el)
 }
 
 /**
- * For a moment after a tap starts an edit, the browser's own mouse events for
- * that tap must not take focus away. iOS answers a double-tap with a mousedown
- * and dblclick on what's under the finger (the picture, for a caption), and a
- * mousedown on something that can't take focus blurs the field and drops the
- * keyboard. Fields and the note editor keep their mousedown (caret placement).
+ * The browser's own mouse events for a tap must not take focus from the field it
+ * just opened. iOS answers a double-tap with a mousedown and dblclick on what's
+ * under the finger (the picture, for a caption), and a mousedown on something
+ * that can't take focus blurs the field and drops the keyboard.
+ * - On the card being edited, for the whole edit: nothing else there should take
+ *   focus, however late the mousedown comes (a slow phone, a later tap on the picture).
+ * - Anywhere else, only for a moment after the tap: the camera glides the card
+ *   away, so the tap's own mousedown can land on the board.
+ * Fields and the note editor keep their mousedown (caret placement).
  */
-function keepEditFocus(card: HTMLElement, ms = 600) {
+let stopKeepingEditFocus = () => {}
+function keepEditFocus(id: Id, card: HTMLElement, ms = 600) {
+  stopKeepingEditFocus()
   const until = performance.now() + ms
   const stop = (e: MouseEvent) => {
-    if (performance.now() > until) return off()
+    if (editingId() !== id) return off()
     const t = e.target as Element | null
     if (!e.isTrusted || !t || t.closest('textarea, input, select, [contenteditable], .cm-editor')) return
-    if (card.contains(t) || !t.closest('[data-nodrag], button, a, label')) e.preventDefault()
+    if (card.contains(t) || (performance.now() <= until && !t.closest('[data-nodrag], button, a, label'))) e.preventDefault()
   }
-  const off = () => {
-    window.removeEventListener('mousedown', stop, true)
-    clearTimeout(timer)
-  }
+  // Ends with the edit (at the next mousedown after it), or when another edit starts.
+  const off = () => window.removeEventListener('mousedown', stop, true)
   window.addEventListener('mousedown', stop, true)
-  const timer = setTimeout(off, ms)
+  stopKeepingEditFocus = off
 }
 
 function caretRect(within: HTMLElement): DOMRect | null {

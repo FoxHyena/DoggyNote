@@ -121,8 +121,12 @@ for (const path of ['a fresh image', 'an image already selected'] as const) {
     await tap(page, p)
     // Focused within the tap itself, not a moment later.
     expect(await page.evaluate(() => (document.activeElement as HTMLElement | null)?.dataset.testid)).toBe('image-caption-input')
-    // iOS answers a double-tap with a mousedown on the picture under the finger, right after it.
-    await page.mouse.move(p.x, p.y)
+    // iOS answers a double-tap with a mousedown on the picture under the finger, right after it,
+    // and on a slow phone it can come late. Playwright's mouse also sends a pointerdown, which iOS
+    // doesn't, so press where the picture is once the edit glide lands: a press on the board ends the edit.
+    await settled(page)
+    const now = (await card.getByTestId('card-image').boundingBox())!
+    await page.mouse.move(now.x + now.width / 2, now.y + Math.min(40, now.height / 2))
     await page.mouse.down()
     await page.mouse.up()
     await captionKeepsFocus(page)
