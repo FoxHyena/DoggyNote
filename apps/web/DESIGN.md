@@ -173,7 +173,7 @@ DoggyNote is a lamp-lit room where your things are spread out on the floor. The 
 
 The den is dark by default and has a daytime twin in oat and milk tones. Both are tuned together. Every colour has a value in each theme, and contrast is enforced by test, not taste. Density is calm rather than sparse. Controls are compact (13px labels, 32px icon buttons), so the board gets the space.
 
-Personality lives in small, specific dog moments rather than decoration. A board tile tilts when you hover it. The login logo leans at an angle. A dragged tool's ghost is slightly askew. Stickers wear a white die-cut border. The pan cursor is a paw. Everything else is plain. The den rejects the cool-grey, blue-button sterility of corporate SaaS, and it rejects frosted glass, neon glows and purple-blue gradients.
+Personality lives in small, specific dog moments rather than decoration. A board tile tilts when you hover it. The Phosphor paw login logo leans at an angle. A dragged tool's ghost is slightly askew. Stickers wear a white die-cut border. The pan cursor is a paw. Everything else is plain. The den rejects the cool-grey, blue-button sterility of corporate SaaS, and it rejects frosted glass, neon glows and purple-blue gradients.
 
 **Key Characteristics:**
 - Warm brown neutrals throughout; no cool greys anywhere.
@@ -304,6 +304,14 @@ A floating shelf pill (12px radius, floating shadow) centred above the selection
 
 ### Stickers
 Image stickers with a white die-cut outline and a hard offset shadow, placed directly on the canvas. They are browsed in a rounded 18px tray with a 4-column grid of 12px-radius tiles.
+
+### Icons
+- All interface icons and dog artwork come from the official MIT-licensed `@phosphor-icons/core` SVG pack, pinned in the web package. `ui/iconAssets.ts` statically imports the curated set; `Icon` owns their native 256×256 viewBox, `currentColor`, and decorative semantics. Never redraw paths, override strokes, or put a complete SVG inside another SVG.
+- Regular is the control weight. Fill is reserved for the brand paw and filled favorite/pinned states. Existing sizes, labels, hit areas, and theme colors remain authoritative.
+- Account uses UserCircle. Bury/Bones uses Bone with its label; permanent deletion uses Trash. Dog replaces the former custom illustration; loading pulses the whole glyph and stays static with reduced motion.
+- Stored board-icon IDs remain `paw`, `bone`, `ball`, `collar`, `kennel`, `bowl`, `star`, `heart`. Their pack equivalents are PawPrint, Bone, TennisBall, Tag (a collar tag), HouseLine, BowlFood, Star, Heart. Unknown IDs render PawPrint.
+- The favicon, installed app icons, paw cursor, and empty-state paw all derive from the same upstream filled PawPrint. Regenerate with `pnpm --filter web icons`; the script also regenerates desktop icon formats.
+- Canvas connections, transform rings, progress graphics, collaborator pointer/ping geometry, third-party marks, and user stickers retain their own geometry. The upstream notice ships at `/licenses/phosphor-icons.txt`.
 
 ### Motion
 - **Standard:** 120ms for hover colour and background; 140–160ms ease-out for pop-ins, toasts and menus; 70ms ease-out for snap-to-grid glides.

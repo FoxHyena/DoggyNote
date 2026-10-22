@@ -1,4 +1,4 @@
-import { Show, createMemo, createSignal, onCleanup, type JSX } from 'solid-js'
+import { Show, createMemo, createSignal, onCleanup } from 'solid-js'
 import { stickerRingRadius, usableSticker, worldToScreen, type Sticker } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
@@ -10,7 +10,7 @@ import { contains } from '@doggynote/core'
 import { rectOf } from '../canvas/layout.ts'
 import { viewStickerPack } from './StickerTray.tsx'
 import { StickerImage } from './StickerImage.tsx'
-import { Icon, ToolIcons } from './icons.tsx'
+import { Icon, type IconName } from './icons.tsx'
 import { manipulatingSticker } from '../canvas/StickerLayer.tsx'
 import { playbackPaused, togglePlayback } from '../state/stickerPlayback.ts'
 
@@ -40,8 +40,8 @@ export function StickerControls() {
     return { left: Math.min(Math.max(x, half + 8), Math.max(half + 8, v.width - half - 8)), top: Math.max(8, Math.min(y, v.height - bar.height - 8)) }
   })
   // Icons on the floating bar; the phone sheet adds a short label, always part of the accessible name.
-  const action = (label: string, short: string, icon: JSX.Element, run: () => void, title = label) =>
-    <button class="bar-btn sticker-bar-btn" aria-label={label} title={title} onClick={run}><Icon size={18}>{icon}</Icon><span class="sticker-bar-label" aria-hidden="true">{short}</span></button>
+  const action = (label: string, short: string, icon: IconName, run: () => void, title = label) =>
+    <button class="bar-btn sticker-bar-btn" aria-label={label} title={title} onClick={run}><Icon size={18} name={icon} /><span class="sticker-bar-label" aria-hidden="true">{short}</span></button>
   return <>
     <Show when={armedSticker()}><div class="sticker-placement" role="status" data-testid="sticker-placement"><StickerImage sticker={armedSticker()!} /><span>Tap your board to place</span><button class="bar-btn" onClick={() => { placeSticker(armedSticker()!); queueMicrotask(() => document.querySelector<HTMLElement>('[data-testid="sticker-controls"]')?.focus({ preventScroll: true })) }}>Place at center</button><button class="bar-btn" onClick={cancelStickerPlacement}>Cancel</button></div></Show>
     <Show when={stickerGhost()}><div class="sticker-ghost" data-testid="sticker-ghost" style={{ left: `${stickerGhost()!.at.x}px`, top: `${stickerGhost()!.at.y - (stickerGhost()!.touch ? STICKER_TOUCH_OFFSET : 0)}px` }}><StickerImage sticker={stickerGhost()!.sticker} /></div></Show>
@@ -56,16 +56,16 @@ export function StickerControls() {
         data-testid="sticker-controls" role="group" tabindex="-1" aria-label="Sticker controls"
         onPointerDown={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key !== 'Escape') e.stopPropagation() }}>
         <div class="sticker-bar-actions">
-          {action('Forward', 'Forward', ToolIcons.forward(), () => reorderSticker(selected()!, 1), 'Bring forward')}
-          {action('Backward', 'Back', ToolIcons.backward(), () => reorderSticker(selected()!, -1), 'Send backward')}
-          {action('Select underneath', 'Under', ToolIcons.layers(), () => underneath(selected()!), 'Select the card underneath')}
+          {action('Forward', 'Forward', 'forward', () => reorderSticker(selected()!, 1), 'Bring forward')}
+          {action('Backward', 'Back', 'backward', () => reorderSticker(selected()!, -1), 'Send backward')}
+          {action('Select underneath', 'Under', 'layers', () => underneath(selected()!), 'Select the card underneath')}
           <div class="bar-sep" />
           <Show when={selected()!.content.format !== 'static'}>
-            {playbackPaused(selected()!.id) ? action('Play animation', 'Play', ToolIcons.play(), () => togglePlayback(selected()!.id)) : action('Pause animation', 'Pause', ToolIcons.pause(), () => togglePlayback(selected()!.id))}
+            {playbackPaused(selected()!.id) ? action('Play animation', 'Play', 'play', () => togglePlayback(selected()!.id)) : action('Pause animation', 'Pause', 'pause', () => togglePlayback(selected()!.id))}
           </Show>
-          {action('View pack', 'Pack', ToolIcons.sticker(), () => viewStickerPack(selected()!.content.packName))}
-          {action('Duplicate', 'Duplicate', ToolIcons.duplicate(), () => duplicateSticker(selected()!))}
-          {action('Bury', 'Bury', ToolIcons.trash(), burySelection, `Move to ${COPY.trash} (Delete)`)}
+          {action('View pack', 'Pack', 'sticker', () => viewStickerPack(selected()!.content.packName))}
+          {action('Duplicate', 'Duplicate', 'duplicate', () => duplicateSticker(selected()!))}
+          {action('Bury', 'Bury', 'bury', burySelection, `Move to ${COPY.trash} (Delete)`)}
         </div>
       </div>
     </Show>

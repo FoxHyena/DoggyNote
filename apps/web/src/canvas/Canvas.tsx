@@ -74,7 +74,7 @@ import { setDropTarget, dropTarget, connectPreview, setConnectPreview, draggingI
 import { snapTick, snapToGrid } from '../state/grid.ts'
 import { handleCanvasDrop, handleCanvasPaste } from './paste.ts'
 import { isClipProxy } from '../state/clipboard.ts'
-import { BoardIconSvg } from '../ui/icons.tsx'
+import { BoardIconSvg, Icon } from '../ui/icons.tsx'
 import { setToyboxOpen, toyboxOpen } from '../ui/ToyboxPanel.tsx'
 import { setThreadCardId, threadCardId } from '../state/comments.ts'
 import { haptic, phone, touch } from '../state/device.ts'
@@ -1460,7 +1460,7 @@ export function Canvas(props: { readOnly: boolean }) {
     >
       <Show when={!props.readOnly}><p id="canvas-keys" class="save-label-quiet">Option or Alt with the arrow keys moves between cards. The arrow keys move the selected card. Enter edits a card or opens a board.</p></Show>
       <CollaborationOverlay />
-      <Show when={contextPoint()}><div class="menu canvas-ping-menu" data-nodrag style={{ position: 'fixed', left: `${Math.min(contextPoint()!.screenX, innerWidth - 160)}px`, top: `${Math.min(contextPoint()!.screenY, innerHeight - 60)}px`, 'z-index': 50 }}><button class="menu-item" onMouseDown={(e) => e.preventDefault()} onClick={() => { pingAt(contextPoint()!); setContextPoint(null) }} onBlur={() => setContextPoint(null)} onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setContextPoint(null); document.querySelector<HTMLButtonElement>('[data-testid="collaborators"]')?.focus() } }} ref={(el) => queueMicrotask(() => el.focus())}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>{COPY.lookHere}</button></div></Show>
+      <Show when={contextPoint()}><div class="menu canvas-ping-menu" data-nodrag style={{ position: 'fixed', left: `${Math.min(contextPoint()!.screenX, innerWidth - 160)}px`, top: `${Math.min(contextPoint()!.screenY, innerHeight - 60)}px`, 'z-index': 50 }}><button class="menu-item" onMouseDown={(e) => e.preventDefault()} onClick={() => { pingAt(contextPoint()!); setContextPoint(null) }} onBlur={() => setContextPoint(null)} onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setContextPoint(null); document.querySelector<HTMLButtonElement>('[data-testid="collaborators"]')?.focus() } }} ref={(el) => queueMicrotask(() => el.focus())}><Icon name="lookHere" size={18} />{COPY.lookHere}</button></div></Show>
       <div class="world" data-testid="world" style={{ transform: transform() }}>
         <Show when={snapping()}>
           <GridGlow />

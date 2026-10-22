@@ -1,7 +1,7 @@
 import { For, Show, createSignal, onCleanup, onMount, type Accessor, type JSX } from 'solid-js'
 import { exportPng, type ExportOptions } from '../state/export.ts'
 import { selection } from '../state/ui.ts'
-import { Icon, ToolIcons } from './icons.tsx'
+import { Icon } from './icons.tsx'
 import { agentDialogKeys } from './agentDialog.ts'
 import './export.css'
 
@@ -88,7 +88,7 @@ export function ExportButton(props: { renderTrigger?: (controls: ExportTrigger) 
   return (
     <div class="zoom" ref={root}>
       {props.renderTrigger ? props.renderTrigger({ open: show, close, isOpen: open }) : <button class="icon-btn" data-testid="export" title="Export as PNG" aria-haspopup="dialog" aria-expanded={open()} onClick={(e) => open() ? close() : show(e.currentTarget)}>
-        <Icon>{ToolIcons.download()}</Icon>
+        <Icon name="download" />
         <span class="icon-btn-label">Export</span>
       </button>}
       <Show when={open()}>
@@ -96,7 +96,7 @@ export function ExportButton(props: { renderTrigger?: (controls: ExportTrigger) 
           <div class="export-head">
             <strong>Export as PNG</strong>
             <button class="icon-btn" title="Close" onClick={() => close()}>
-              <Icon size={16}>{ToolIcons.close()}</Icon>
+              <Icon size={16} name="close" />
             </button>
           </div>
           <Segmented

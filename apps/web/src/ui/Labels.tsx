@@ -5,7 +5,7 @@ import { theme } from '../theme.ts'
 import * as doc from '../state/doc.ts'
 import { createLabel, findLabel, hasLabel, labelNameProblem, labelUsage, labelsFor, labelsOn, recolorLabel, removeLabel, renameLabel, restoreLabel, setLabelOn } from '../state/labels.ts'
 import { showToast } from '../state/toast.ts'
-import { Icon, IconButton, ToolIcons } from './icons.tsx'
+import { Icon, IconButton } from './icons.tsx'
 import { Popover } from './Popover.tsx'
 import './labels.css'
 
@@ -46,9 +46,9 @@ export function LabelsButton(props: { cards: Card[]; labelled?: boolean }) {
   return (
     <>
       {/* Docked on touch, an icon over its label like the other actions (glass has no hover tips). */}
-      <Show when={props.labelled} fallback={<IconButton ref={(el) => (trigger = el)} testid="labels-button" icon={ToolIcons.label} label="Labels" popup expanded={open()} onClick={() => setOpen(!open())} />}>
+      <Show when={props.labelled} fallback={<IconButton ref={(el) => (trigger = el)} testid="labels-button" icon="label" label="Labels" popup expanded={open()} onClick={() => setOpen(!open())} />}>
         <button ref={(el) => (trigger = el)} class="bar-btn" data-testid="labels-button" aria-haspopup="dialog" aria-expanded={open()} onClick={() => setOpen(!open())}>
-          <Icon size={18}>{ToolIcons.label()}</Icon>
+          <Icon size={18} name="label" />
           <span class="bar-btn-label">Labels</span>
         </button>
       </Show>
@@ -86,7 +86,7 @@ function ColorDots(props: { label: string; value: LabelColor; onPick: (c: LabelC
       </For>
       <label class="label-dot label-custom" classList={{ on: custom() }} style={custom() ? labelStyle(props.value) : undefined} data-tip="Custom colour">
         <Show when={!custom()}>
-          <Icon size={14}>{ToolIcons.plus()}</Icon>
+          <Icon size={14} name="plus" />
         </Show>
         <input
           type="color"
@@ -282,13 +282,13 @@ function LabelsPopover(props: { cards: Card[]; anchor: () => HTMLElement; close:
                             <Show when={writable()}>
                               <span class="label-actions">
                                 <button type="button" class="label-action" data-testid="label-recolor" aria-label={`Colour of ${l().name}`} data-tip="Colour" data-tip-place="below" aria-expanded={recoloring() === id} onClick={() => setRecoloring(recoloring() === id ? null : id)}>
-                                  <Icon size={16}>{ToolIcons.droplet()}</Icon>
+                                  <Icon size={16} name="droplet" />
                                 </button>
                                 <button type="button" class="label-action" data-testid="label-rename" aria-label={`Rename ${l().name}`} data-tip="Rename" data-tip-place="below" onClick={() => startRename(id)}>
-                                  <Icon size={16}>{ToolIcons.edit()}</Icon>
+                                  <Icon size={16} name="edit" />
                                 </button>
                                 <button type="button" class="label-action label-remove" data-testid="label-remove" aria-label={`Remove ${l().name} from this board (on ${labelUsage(boardId, id)} ${labelUsage(boardId, id) === 1 ? 'card' : 'cards'})`} data-tip="Remove label" data-tip-place="below" onClick={() => remove(id)}>
-                                  <Icon size={16}>{ToolIcons.labelOff()}</Icon>
+                                  <Icon size={16} name="labelOff" />
                                 </button>
                               </span>
                             </Show>
@@ -329,7 +329,7 @@ function LabelsPopover(props: { cards: Card[]; anchor: () => HTMLElement; close:
           <Show when={canCreate()}>
             <li id={optionId(CREATE)} role="option" aria-selected={false} class="label-row label-create-row" classList={{ active: active() === CREATE }}>
               <button type="button" tabIndex={-1} class="label-toggle label-create" data-testid="label-create" onClick={create}>
-                <span class="label-check label-plus" aria-hidden="true"><Icon size={16}>{ToolIcons.plus()}</Icon></span>
+                <span class="label-check label-plus" aria-hidden="true"><Icon size={16} name="plus" /></span>
                 <span class="label-create-text">Create</span>
                 <span class="label-chip" style={labelStyle(newColor())}>{query().trim()}</span>
               </button>
@@ -355,8 +355,8 @@ const CREATE = 'create'
 function Check(props: { state: boolean | 'mixed' }) {
   return (
     <span class="label-check" aria-hidden="true">
-      <Show when={props.state === true}><Icon size={14}>{ToolIcons.check()}</Icon></Show>
-      <Show when={props.state === 'mixed'}><Icon size={14}>{ToolIcons.minus()}</Icon></Show>
+      <Show when={props.state === true}><Icon size={14} name="check" /></Show>
+      <Show when={props.state === 'mixed'}><Icon size={14} name="minus" /></Show>
     </span>
   )
 }

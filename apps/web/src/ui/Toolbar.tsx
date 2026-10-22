@@ -1,6 +1,6 @@
 import { suggestions, openStickers, stickerTrayOpen } from '../state/stickers.ts'
 import './canvas-entry.css'
-import { For, Show, createSignal, type JSX } from 'solid-js'
+import { For, Show, createSignal } from 'solid-js'
 import { DEFAULT_SIZE, findFreeSpot, screenToWorld, type CardType, type Vec } from '@doggynote/core'
 import { cardHeight } from '../canvas/layout.ts'
 import { COPY } from '@doggynote/theme'
@@ -8,19 +8,19 @@ import * as doc from '../state/doc.ts'
 import { appendOrder, createCard, type Placement } from '../state/actions.ts'
 import { boardId, camera, connectMode, setConnectMode, setTrashOpen, trashOpen, viewport } from '../state/ui.ts'
 import { addAnyFiles, addImages } from '../canvas/paste.ts'
-import { Icon, ToolIcons } from './icons.tsx'
+import { Icon, type IconName } from './icons.tsx'
 
-export type Tool = { id: CardType | 'line'; label: string; icon: () => JSX.Element }
+export type Tool = { id: CardType | 'line'; label: string; icon: IconName }
 
 export const TOOLS: Tool[] = [
-  { id: 'note', label: 'Note', icon: ToolIcons.note },
-  { id: 'link', label: 'Link', icon: ToolIcons.link },
-  { id: 'todo', label: 'To-do', icon: ToolIcons.todo },
-  { id: 'line', label: 'Line', icon: ToolIcons.line },
-  { id: 'board', label: 'Board', icon: ToolIcons.board },
-  { id: 'column', label: 'Column', icon: ToolIcons.column },
-  { id: 'movie', label: 'Movie', icon: ToolIcons.film },
-  { id: 'swatch', label: 'Colour', icon: ToolIcons.swatch },
+  { id: 'note', label: 'Note', icon: 'note' },
+  { id: 'link', label: 'Link', icon: 'link' },
+  { id: 'todo', label: 'To-do', icon: 'todo' },
+  { id: 'line', label: 'Line', icon: 'line' },
+  { id: 'board', label: 'Board', icon: 'board' },
+  { id: 'column', label: 'Column', icon: 'column' },
+  { id: 'movie', label: 'Movie', icon: 'film' },
+  { id: 'swatch', label: 'Colour', icon: 'swatch' },
 ]
 
 /** A click on a tool drops the card near the viewport centre, in free space. */
@@ -95,19 +95,19 @@ export function Toolbar() {
             // The new card takes focus on pointerup; a tap's late mousedown would take it back.
             onMouseDown={(e) => e.preventDefault()}
           >
-            <Icon size={22}>{t.icon()}</Icon>
+            <Icon size={22} name={t.icon} />
             <span>{t.label}</span>
           </button>
         )}
       </For>
-      <button class="tool" data-testid="tool-stickers" aria-label="Stickers" aria-expanded={stickerTrayOpen()} aria-description={suggestions.length ? suggestions.length === 1 ? 'Pack found in Telegram' : `${suggestions.length} packs found in Telegram` : undefined} title={suggestions.length ? suggestions.length === 1 ? 'Pack found in Telegram' : `${suggestions.length} packs found in Telegram` : undefined} onClick={openStickers}><Icon size={22}><path d="M4 4h16v10l-6 6H4Z M14 20v-6h6 M8 9h.01 M15 9h.01 M8 12q4 5 8 0" /></Icon><span>Stickers</span><Show when={suggestions.length}><span class="sticker-found-dot" data-testid="sticker-found-badge" aria-hidden="true" /></Show></button>
+      <button class="tool" data-testid="tool-stickers" aria-label="Stickers" aria-expanded={stickerTrayOpen()} aria-description={suggestions.length ? suggestions.length === 1 ? 'Pack found in Telegram' : `${suggestions.length} packs found in Telegram` : undefined} title={suggestions.length ? suggestions.length === 1 ? 'Pack found in Telegram' : `${suggestions.length} packs found in Telegram` : undefined} onClick={openStickers}><Icon size={22} name="sticker" /><span>Stickers</span><Show when={suggestions.length}><span class="sticker-found-dot" data-testid="sticker-found-badge" aria-hidden="true" /></Show></button>
       <div class="toolbar-sep" />
       <button class="tool" data-testid="tool-image" title="Add image" onClick={() => fileInput.click()}>
-        <Icon size={22}>{ToolIcons.image()}</Icon>
+        <Icon size={22} name="image" />
         <span>Image</span>
       </button>
       <button class="tool" data-testid="tool-upload" title="Upload files (PDFs, docs, anything up to 50 MB)" onClick={() => uploadInput.click()}>
-        <Icon size={22}>{ToolIcons.upload()}</Icon>
+        <Icon size={22} name="upload" />
         <span>Upload</span>
       </button>
       <input
@@ -139,12 +139,12 @@ export function Toolbar() {
       />
       <div class="toolbar-spacer" />
       <button class="tool" classList={{ active: trashOpen() }} data-testid="tool-trash" title={COPY.trash} onClick={() => setTrashOpen(!trashOpen())}>
-        <Icon size={22}>{ToolIcons.trash()}</Icon>
+        <Icon size={22} name="bury" />
         <span>{COPY.trash}</span>
       </button>
       <Show when={ghost()}>
         <div class="tool-ghost" style={{ left: `${ghost()!.at.x}px`, top: `${ghost()!.at.y}px` }}>
-          <Icon size={22}>{ghost()!.tool.icon()}</Icon>
+          <Icon size={22} name={ghost()!.tool.icon} />
           {ghost()!.tool.label}
         </div>
       </Show>

@@ -4,7 +4,7 @@ import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { editIsNewCard, endEdit, onEndEdit } from '../state/ui.ts'
 import { takeEditCaret } from '../canvas/Canvas.tsx'
-import { BoardIconSvg } from '../ui/icons.tsx'
+import { BoardIconSvg, Icon } from '../ui/icons.tsx'
 import type { CardProps } from '../canvas/CardView.tsx'
 import { clock, noteTick, postponeSettle, recentlyTicked, scheduleSettle, sortsDone } from '../state/todos.ts'
 
@@ -136,9 +136,9 @@ export function TodoCard(props: CardProps<'todo'>) {
                 <Show when={content().hideDone && done() > 0}>
                   <li class="todo-done-row">
                     <button class="todo-done-toggle" data-nodrag data-testid="todo-done-toggle" aria-expanded={!folded()} onClick={() => toggleExpanded(id)}>
-                      <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                      <Icon name="check" size={12} />
                       {done()} done
-                      <svg class="todo-done-chevron" viewBox="0 0 16 16" width="10" height="10" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                      <Icon name="chevronDown" class="todo-done-chevron" size={10} />
                     </button>
                   </li>
                 </Show>

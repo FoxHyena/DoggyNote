@@ -9,7 +9,6 @@
 .sticker-tray .sticker-pin { color: var(--dn-text-muted); }
 /* Pinned reads at once, hovered or not: accent, tinted and a filled pin. */
 html .sticker-tray .sticker-pin[aria-pressed='true'], html[data-input='mouse'] .sticker-tray .sticker-pin[aria-pressed='true']:hover:not(:disabled) { color: var(--dn-accent); border-color: var(--dn-selection); background: color-mix(in srgb, var(--dn-accent) 14%, transparent); }
-.sticker-tray .sticker-pin[aria-pressed='true'] svg path { fill: currentColor; }
 .sticker-preview-heading { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
 .sticker-back-icon { rotate: 180deg; }
 .sticker-tray button, .sticker-tray input, .sticker-controls button, .sticker-controls input { font: inherit; }
@@ -85,7 +84,6 @@ html .sticker-tray .sticker-pin[aria-pressed='true'], html[data-input='mouse'] .
 .sticker-place-button { flex: 1; min-height: 44px !important; }
 .sticker-detail .sticker-favorite-button { flex: 0 0 44px; min-width: 44px; min-height: 44px; border: 1px solid var(--dn-border); border-radius: 10px; }
 .sticker-detail .sticker-favorite-button[aria-pressed='true'] { color: var(--dn-accent); }
-.sticker-favorite-button[aria-pressed='true'] svg { fill: currentColor; }
 .sticker-detail-notice { margin: 0 16px 8px; }
 .sticker-error { margin: 0 12px 8px; padding: 10px; background: var(--dn-card); border: 1px solid var(--dn-border); border-radius: 8px; color: var(--dn-text); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
 .sticker-error button { margin-left: 6px; }

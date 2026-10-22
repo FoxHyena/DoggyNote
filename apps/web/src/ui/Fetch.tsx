@@ -9,7 +9,7 @@ import { openBoard, setPaletteOpen } from '../state/ui.ts'
 import { revealCard } from '../state/columns.ts'
 import { hasLabel, labelsOn } from '../state/labels.ts'
 import { inTemplate } from '../state/copies.ts'
-import { BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
+import { BoardIconSvg, Icon } from './icons.tsx'
 
 // ⌘K "Fetch": search every board title and card text, jump to the result.
 
@@ -97,7 +97,7 @@ export function FetchPalette() {
     <div class="dialog-backdrop fetch-backdrop" onPointerDown={(e) => e.target === e.currentTarget && setPaletteOpen(false)}>
       <div class="fetch" role="dialog" aria-modal="true" aria-label={COPY.search} data-testid="fetch" onKeyDown={(e) => { if (e.key === 'Escape') onKey(e) }}>
         <div class="fetch-input-row">
-          <Icon size={18}>{ToolIcons.search()}</Icon>
+          <Icon size={18} name="search" />
           <input
             ref={input}
             class="fetch-input"
@@ -137,7 +137,7 @@ export function FetchPalette() {
                   on:click={() => jumpTo(h)}
                 >
                   <span class="fetch-icon">
-                    <Show when={h.kind === 'board'} fallback={<Icon size={16}>{ToolIcons.note()}</Icon>}>
+                    <Show when={h.kind === 'board'} fallback={<Icon size={16} name="note" />}>
                       <BoardIconSvg icon={doc.getBoard(h.id)?.icon ?? 'paw'} size={16} />
                     </Show>
                   </span>

@@ -3,7 +3,7 @@ import * as doc from '../state/doc.ts'
 import { editingId } from '../state/ui.ts'
 import { touch } from '../state/device.ts'
 import { FORMAT, activeNoteEditor } from '../cards/NoteCard.tsx'
-import { Icon, ToolIcons } from './icons.tsx'
+import { Icon } from './icons.tsx'
 
 // Touch editing a note: formatting on top of the keyboard (--vv-bottom,
 // state/viewport.ts) instead of floating over the card. Buttons act on
@@ -34,7 +34,7 @@ export function EditDock() {
           <For each={DOCK_ORDER.map((cmd) => FORMAT.find((f) => f.cmd === cmd)!)}>
             {(f) => (
               <button class={`fmt fmt-${f.cmd}`} aria-label={f.title.split(':')[0]} data-testid={`dock-fmt-${f.cmd}`} onPointerDown={(e) => { keep(e); activeNoteEditor()?.run(f.cmd) }}>
-                {f.cmd === 'task' ? <Icon size={20}>{ToolIcons.todo()}</Icon> : f.label}
+                {f.cmd === 'task' ? <Icon size={20} name="todo" /> : f.label}
               </button>
             )}
           </For>

@@ -1,7 +1,7 @@
 import { For, Show, createResource, createSignal, onCleanup, onMount } from 'solid-js'
 import { api, ApiError, API_BASE } from '../state/api.ts'
 import { user, type User } from '../state/session.ts'
-import { Icon, ToolIcons } from './icons.tsx'
+import { Icon } from './icons.tsx'
 import './admin.css'
 
 type Person = User & { createdAt: number }
@@ -61,7 +61,7 @@ export function AdminDashboard(props: { onClose: () => void }) {
 
   return <div class="dialog-backdrop" onPointerDown={(e) => e.target === e.currentTarget && props.onClose()}>
     <div ref={panel} class="dialog admin-dashboard" role="dialog" aria-modal="true" aria-labelledby="admin-title" data-testid="people-dialog">
-      <header class="dialog-head"><h2 id="admin-title">Admin dashboard</h2><button class="icon-btn" title="Close" onClick={props.onClose}><Icon>{ToolIcons.close()}</Icon></button></header>
+      <header class="dialog-head"><h2 id="admin-title">Admin dashboard</h2><button class="icon-btn" title="Close" onClick={props.onClose}><Icon name="close" /></button></header>
       <div class="admin-tabs" role="tablist" aria-label="Administration" onKeyDown={(e) => {
         if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return
         e.preventDefault()
