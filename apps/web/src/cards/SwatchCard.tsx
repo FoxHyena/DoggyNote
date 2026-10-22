@@ -1,9 +1,9 @@
-import { For, Show, createSignal } from 'solid-js'
+import { Show, createSignal } from 'solid-js'
 import { SWATCH_PRESETS, normalizeSwatchHex, swatchHex, swatchName, type Card } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
 import type { CardProps } from '../canvas/CardView.tsx'
 import { Popover } from '../ui/Popover.tsx'
-import { Icon, ToolIcons } from '../ui/icons.tsx'
+import { ColorDots } from '../ui/ColorDots.tsx'
 import { camera, endEdit } from '../state/ui.ts'
 import { exporting } from '../state/export.ts'
 import * as doc from '../state/doc.ts'
@@ -34,7 +34,7 @@ export function SwatchCard(props: CardProps<'swatch'>) {
 function moveAmongDots(e: KeyboardEvent & { currentTarget: HTMLElement }) {
   const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key]
   if (!step) return
-  const dots = [...e.currentTarget.querySelectorAll<HTMLElement>('button.swatch-dot, .swatch-custom input')]
+  const dots = [...e.currentTarget.querySelectorAll<HTMLElement>('button.color-dot, .color-custom input')]
   const at = dots.findIndex((d) => d === document.activeElement)
   const next = dots[at + step]
   if (at < 0 || !next) return
@@ -42,8 +42,6 @@ function moveAmongDots(e: KeyboardEvent & { currentTarget: HTMLElement }) {
   next.focus()
 }
 
-/** `<input type=color>` only takes lowercase #rrggbb. */
-const pickerValue = (hex: string) => hex.toLowerCase()
 
 /**
  * Edits the colour right beside the card: preset dots, the system colour
@@ -73,45 +71,20 @@ function SwatchPanel(props: { card: Card<'swatch'>; anchor: () => HTMLElement })
       follow={() => (camera(), props.card.x, props.card.y, props.card.w, props.card.h)}
     >
       {/* Seven columns: thirteen presets, then the custom picker in the last slot. */}
-      <div class="swatch-presets" role="group" aria-label="Colours" onKeyDown={moveAmongDots}>
-        <For each={SWATCH_PRESETS}>
-          {(p) => (
-            <button
-              type="button"
-              class="swatch-dot"
-              classList={{ on: hex() === p }}
-              style={{ background: p }}
-              data-testid="colour-preset"
-              data-hex={p}
-              data-autofocus={hex() === p || undefined}
-              aria-label={p}
-              aria-pressed={hex() === p}
-              onClick={() => {
-                setDraft(null)
-                set({ hex: p })
-              }}
-            />
-          )}
-        </For>
-        <label class="swatch-dot swatch-custom" classList={{ on: custom() }} style={custom() ? { background: hex() } : undefined} data-tip="Custom colour">
-          <Show when={!custom()}>
-            <Icon size={14}>{ToolIcons.plus()}</Icon>
-          </Show>
-          <input
-            type="color"
-            data-testid="colour-picker"
-            data-autofocus={custom() || undefined}
-            aria-label="Custom colour"
-            value={pickerValue(hex())}
-            onInput={(e) => {
-              const v = normalizeSwatchHex(e.currentTarget.value)
-              if (!v) return
-              setDraft(null)
-              set({ hex: v })
-            }}
-          />
-        </label>
-      </div>
+      <ColorDots
+        class="swatch-presets"
+        label="Colours"
+        onKeyDown={moveAmongDots}
+        dots={SWATCH_PRESETS.map((p) => ({ value: p, name: p, paint: p, data: { 'data-hex': p } }))}
+        value={hex()}
+        autofocus
+        onPick={(p) => {
+          setDraft(null)
+          set({ hex: p })
+        }}
+        dotTestId="colour-preset"
+        custom={{ value: custom() ? hex() : null, fallback: hex(), testid: 'colour-picker', autofocus: custom(), onPick: (v) => { setDraft(null); set({ hex: v }) } }}
+      />
       <div class="swatch-fields">
         <input
           class="swatch-input swatch-hex-input"

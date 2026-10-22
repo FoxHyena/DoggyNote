@@ -20,30 +20,7 @@
   padding: 12px;
 }
 .swatch-panel *, .swatch-panel *::before, .swatch-panel *::after { box-sizing: border-box; }
-.swatch-presets { display: grid; grid-template-columns: repeat(7, var(--sw-dot)); gap: var(--sw-gap); }
-.swatch-dot {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: var(--sw-dot);
-  height: var(--sw-dot);
-  padding: 0;
-  border: 1px solid var(--dn-border);
-  border-radius: 50%;
-  color: var(--dn-text-muted);
-  background: transparent;
-  cursor: pointer;
-}
-/* A thin ring, set off from the dot by the panel colour. */
-.swatch-dot.on { box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-selection); }
-.swatch-dot:focus-visible, .swatch-custom:has(input:focus-visible) { outline: none; box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-text); }
-/* Focus on the current colour: the same ring, a touch heavier. */
-.swatch-dot.on:focus-visible, .swatch-custom.on:has(input:focus-visible) { box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 4.5px var(--dn-selection); }
-html[data-input='mouse'] .swatch-dot:not(.on):hover { box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-border); }
-.swatch-custom { border-style: dashed; }
-.swatch-custom.on { border-style: solid; }
-/* The real picker covers the dot, so a click or tap opens the system colour wheel. */
-.swatch-custom input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+.color-dots.swatch-presets { --cd-dot: var(--sw-dot); --cd-gap: var(--sw-gap); display: grid; grid-template-columns: repeat(7, var(--sw-dot)); }
 
 .swatch-fields { display: grid; grid-template-columns: 5rem 1fr; gap: var(--sw-gap); width: calc(var(--sw-dot) * 7 + var(--sw-gap) * 6); }
 .swatch-input {
@@ -66,7 +43,6 @@ html[data-input='mouse'] .swatch-dot:not(.on):hover { box-shadow: 0 0 0 2px var(
 /* Fingers: bigger dots, a 44px hit area around each, and 16px text so iOS doesn't zoom. */
 @media (pointer: coarse) {
   .swatch-panel { --sw-dot: 32px; --sw-gap: 10px; --sw-field: 40px; }
-  .swatch-dot::after { content: ''; position: absolute; inset: -6px; }
   .swatch-input { font-size: 16px; }
   .swatch-fields { grid-template-columns: 7rem 1fr; }
 }

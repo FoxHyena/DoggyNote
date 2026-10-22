@@ -1,18 +1,21 @@
-import { Show, createEffect, createSignal, on, onCleanup, onMount } from 'solid-js'
+import { Show, createEffect, createMemo, createSignal, on, onCleanup, onMount, untrack } from 'solid-js'
 import { Portal } from 'solid-js/web'
-import { HIGHLIGHTER, MAX_INK_POINTS, hitInkStroke, inkBounds, newId, roundInk, type Card, type InkMark, type InkPoint, type Stroke } from '@doggynote/core'
+import { HIGHLIGHTER, MAX_INK_POINTS, hitInkStroke, inkBounds, newId, readableInk, roundInk, type Card, type InkMark, type InkPoint, type Stroke } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
-import { inkColor, inkTool, inkWidth } from '../state/drawing.ts'
+import { inkColor, inkTool, inkWidth, setInkColor } from '../state/drawing.ts'
 import { phone } from '../state/device.ts'
 import { IconButton, ToolIcons } from '../ui/icons.tsx'
+import { installMenu } from '../ui/menu.ts'
 import { agentDialogKeys } from '../ui/agentDialog.ts'
 import { InkLayer } from './InkLayer.tsx'
-import { InkTools } from './InkTools.tsx'
+import { InkTools, PaperPicker } from './InkTools.tsx'
 import './ink.css'
 
 const MIN_ZOOM = 0.5
 const MAX_ZOOM = 4
+/** Room around the paper inside the editor. */
+const GUTTER = 12
 
 /**
  * The sketch editor: the sketch's paper at a comfortable size, with the ink
@@ -31,7 +34,9 @@ export function StrokeEditor(props: {
   setBackground: (hex: string) => void
   onDone: () => void
 }) {
+  let backdrop!: HTMLDivElement
   let dialog!: HTMLElement
+  let head!: HTMLElement
   let viewport!: HTMLDivElement
   let surface!: HTMLDivElement
   let pointer: number | null = null
@@ -51,6 +56,15 @@ export function StrokeEditor(props: {
   const strokes = () => doc.strokesOn(props.card.id).filter((s) => !erasing().has(s.id))
   const writable = () => doc.canWriteObject(props.card)
   const scale = () => fit() * zoom()
+  /** Full screen, or a phone (always full screen): the paper fits the room left under the header. */
+  const filled = () => full() || phone()
+
+  // The pen never vanishes on the paper: an ink too faint for this paper (a
+  // charcoal pen on charcoal paper) becomes white or charcoal when the editor
+  // opens or the paper changes. A pick that reads stays.
+  // A memo, so only a real change of paper counts (the card re-renders for many other reasons).
+  const paper = createMemo(() => props.background)
+  createEffect(on(paper, (hex) => setInkColor(readableInk(untrack(inkColor), hex))))
 
   function cancel() {
     const p = pointer
@@ -152,9 +166,25 @@ export function StrokeEditor(props: {
   onMount(() => {
     const back = document.activeElement as HTMLElement | null
     dialog.focus({ preventScroll: true })
-    // The paper fills the room it has (less a margin), keeping its shape.
-    const ro = new ResizeObserver(() => setFit(Math.max(0.05, Math.min((viewport.clientWidth - 24) / props.width, (viewport.clientHeight - 24) / props.height))))
+    // The paper fills the room it has (less a gutter), keeping its shape, and
+    // the window is sized to the paper: no empty frame around a small sketch.
+    const measure = () => {
+      let w: number, h: number
+      if (filled()) {
+        w = viewport.clientWidth
+        h = viewport.clientHeight
+      } else {
+        const cs = getComputedStyle(backdrop)
+        w = backdrop.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 2
+        h = backdrop.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - head.offsetHeight - 2
+      }
+      setFit(Math.max(0.05, Math.min((w - GUTTER * 2) / props.width, (h - GUTTER * 2) / props.height)))
+    }
+    const ro = new ResizeObserver(measure)
+    ro.observe(backdrop)
+    ro.observe(head)
     ro.observe(viewport)
+    createEffect(on(filled, () => requestAnimationFrame(measure), { defer: true }))
     const blur = () => cancel()
     window.addEventListener('blur', blur)
     window.addEventListener('keydown', windowKeys, true)
@@ -177,10 +207,10 @@ export function StrokeEditor(props: {
   /**
    * Escape, Undo and Redo work wherever focus is, even after a button that
    * just disabled itself (Redo with nothing left) dropped focus to the page.
-   * A popover open over the editor (the paper picker) handles its own Escape.
+   * A popover or menu open over the editor (paper, zoom) handles its own Escape.
    */
   function windowKeys(e: KeyboardEvent) {
-    if (e.defaultPrevented || document.querySelector('.popover')) return
+    if (e.defaultPrevented || document.querySelector('.popover, .ink-zoom-menu')) return
     const typing = !!(e.target as Element | null)?.closest?.('input')
     const mod = e.metaKey || e.ctrlKey
     const key = e.key.toLowerCase()
@@ -198,10 +228,17 @@ export function StrokeEditor(props: {
     }
   }
   const stop = (e: Event) => e.stopPropagation()
+  const history = (
+    <>
+      <IconButton testid="sketch-undo" icon={ToolIcons.undo} label="Undo" title="Undo (⌘Z)" disabled={!writable() || !doc.canUndoDrawing(props.card.id)} onClick={undo} />
+      <IconButton testid="sketch-redo" icon={ToolIcons.redo} label="Redo" title="Redo (⇧⌘Z)" disabled={!writable() || !doc.canRedoDrawing(props.card.id)} onClick={redo} />
+    </>
+  )
   return (
     <Portal>
       {/* A press on the backdrop finishes, like clicking away from a note. Events stop here: the board underneath never sees them. */}
       <div
+        ref={backdrop}
         class="ink-backdrop"
         classList={{ full: full() }}
         data-testid="sketch-backdrop"
@@ -212,38 +249,49 @@ export function StrokeEditor(props: {
         onContextMenu={stop}
         onWheel={stop}
       >
-        <section ref={dialog} class="ink-editor" role="dialog" aria-modal="true" aria-label={props.title || 'Sketch'} data-testid="sketch-editor" tabIndex={-1} onKeyDown={keys}>
-          <header class="ink-head">
-            <Show when={writable()} fallback={<h2 class="ink-title-text">{props.title || 'Sketch'}</h2>}>
-              <input
-                class="ink-title"
-                data-testid="sketch-title"
-                aria-label="Sketch title"
-                placeholder={COPY.sketchTitlePlaceholder}
-                maxLength={1000}
-                value={props.title}
-                onInput={(e) => props.setTitle(e.currentTarget.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); surface.focus({ preventScroll: true }) } }}
-              />
+        <section
+          ref={dialog}
+          class="ink-editor"
+          classList={{ readonly: !writable() }}
+          style={filled() ? undefined : { '--ink-fit-w': `${Math.ceil(props.width * fit()) + GUTTER * 2 + 2}px`, '--ink-fit-h': `${Math.ceil(props.height * fit()) + GUTTER * 2}px` }}
+          role="dialog"
+          aria-modal="true"
+          aria-label={props.title || 'Sketch'}
+          data-testid="sketch-editor"
+          tabIndex={-1}
+          onKeyDown={keys}
+        >
+          {/* One row when there's room: the sketch (title, paper) on the left, the tools in the middle, view and Done on the right. */}
+          <header ref={head} class="ink-head">
+            <div class="ink-doc">
+              {/* The paper leads, like a document's icon: it belongs to the sketch, not the pen. */}
+              <Show when={writable()}>
+                <PaperPicker value={props.background} onChange={props.setBackground} />
+              </Show>
+              <Show when={writable()} fallback={<h2 class="ink-title-text">{props.title || 'Sketch'}</h2>}>
+                <input
+                  class="ink-title"
+                  data-testid="sketch-title"
+                  aria-label="Sketch title"
+                  placeholder={COPY.sketchTitlePlaceholder}
+                  maxLength={1000}
+                  value={props.title}
+                  onInput={(e) => props.setTitle(e.currentTarget.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); surface.focus({ preventScroll: true }) } }}
+                />
+              </Show>
+            </div>
+            <Show when={writable()}>
+              <div class="ink-toolbar"><InkTools onTool={cancel} lead={history} /></div>
             </Show>
             <div class="ink-actions" role="group" aria-label="Sketch actions">
-              <IconButton testid="sketch-undo" icon={ToolIcons.undo} label="Undo" title="Undo (⌘Z)" disabled={!writable() || !doc.canUndoDrawing(props.card.id)} onClick={undo} />
-              <IconButton testid="sketch-redo" icon={ToolIcons.redo} label="Redo" title="Redo (⇧⌘Z)" disabled={!writable() || !doc.canRedoDrawing(props.card.id)} onClick={redo} />
               {/* A phone's editor is the whole screen already, with the paper as wide as it goes. */}
               <Show when={!phone()}>
-                <span class="ink-sep" aria-hidden="true" />
-                <IconButton testid="sketch-zoom-out" icon={ToolIcons.zoomOut} label="Zoom out" disabled={zoom() <= MIN_ZOOM} onClick={() => setZoom(Math.max(MIN_ZOOM, zoom() / 1.5))} />
-                <IconButton testid="sketch-fit" icon={ToolIcons.fit} label="Fit to window" disabled={zoom() === 1} onClick={() => setZoom(1)} />
-                <IconButton testid="sketch-zoom-in" icon={ToolIcons.zoomIn} label="Zoom in" disabled={zoom() >= MAX_ZOOM} onClick={() => setZoom(Math.min(MAX_ZOOM, zoom() * 1.5))} />
-                <IconButton testid="sketch-full" icon={full() ? ToolIcons.shrink : ToolIcons.expand} label={full() ? 'Exit full screen' : 'Full screen'} pressed={full()} onClick={() => setFull(!full())} />
+                <ZoomMenu zoom={zoom()} scale={scale()} setZoom={setZoom} full={full()} setFull={setFull} />
               </Show>
-              <span class="ink-sep" aria-hidden="true" />
               <IconButton testid="sketch-done" icon={ToolIcons.check} label="Done" title="Done (Esc)" onClick={done} />
             </div>
           </header>
-          <Show when={writable()}>
-            <div class="ink-toolbar"><InkTools onTool={cancel} paper={{ value: props.background, onChange: props.setBackground }} /></div>
-          </Show>
           <div ref={viewport} class="ink-viewport" data-testid="sketch-viewport">
             <div class="ink-pad">
               <div
@@ -268,5 +316,36 @@ export function StrokeEditor(props: {
         </section>
       </div>
     </Portal>
+  )
+}
+
+/** The view: the board's zoom pill ("100% ▾"), its menu holding zoom, fit and full screen. */
+function ZoomMenu(props: { zoom: number; scale: number; setZoom: (z: number) => void; full: boolean; setFull: (on: boolean) => void }) {
+  const [open, setOpen] = createSignal(false)
+  let root!: HTMLDivElement, trigger!: HTMLButtonElement
+  installMenu(open, () => setOpen(false), () => root, () => trigger)
+  const item = (testid: string, label: string, action: () => void, disabled = false, pressed?: boolean) => (
+    // Mouse down keeps focus in the menu: WebKit would otherwise hand it to the dialog, which closes the menu before the click lands.
+    <button class="menu-item" data-testid={testid} disabled={disabled} aria-pressed={pressed} onMouseDown={(e) => e.preventDefault()} onClick={() => { action(); setOpen(false); trigger.focus({ preventScroll: true }) }}>
+      <span class="nav-menu-label">{label}</span>
+    </button>
+  )
+  // The paper's real size on screen, like the board's own zoom.
+  const percent = () => `${Math.round(props.scale * 100)}%`
+  return (
+    <div class="ink-zoom" ref={root}>
+      <button ref={trigger} type="button" class="bar-btn ink-zoom-pill" data-testid="sketch-zoom" aria-label={`Zoom: ${percent()}`} aria-haspopup="menu" aria-expanded={open()} data-tip="Zoom and full screen" onClick={() => setOpen(!open())}>
+        {percent()}
+        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="m2 4 3 3 3-3" fill="none" stroke="currentColor" /></svg>
+      </button>
+      <Show when={open()}>
+        <div class="menu nav-menu ink-zoom-menu" role="menu" aria-label="Zoom">
+          {item('sketch-zoom-in', 'Zoom in', () => props.setZoom(Math.min(MAX_ZOOM, props.zoom * 1.5)), props.zoom >= MAX_ZOOM)}
+          {item('sketch-zoom-out', 'Zoom out', () => props.setZoom(Math.max(MIN_ZOOM, props.zoom / 1.5)), props.zoom <= MIN_ZOOM)}
+          {item('sketch-fit', 'Fit to window', () => props.setZoom(1), props.zoom === 1)}
+          {item('sketch-full', props.full ? 'Exit full screen' : 'Full screen', () => props.setFull(!props.full), false, props.full)}
+        </div>
+      </Show>
+    </div>
   )
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   CLIP_LIMIT, CLIP_STROKE_LIMIT, DEFAULT_SKETCH, DEFAULT_SKETCH_PAPER, sketchOf, SKETCH_PAPERS, boardInkEnvelope, boardInkHeight, boardInkLocal, collectClip, copyBoardTree, hitInkStroke,
-  inkBounds, inkPath, isInkMark, isSketchContent, isSketchPaper, materialise, parseClip, sketchContent, sketchPaperColor, sortedInkStrokes,
+  inkBounds, inkPath, readableInk, INK_PALETTE, isInkMark, isSketchContent, isSketchPaper, materialise, parseClip, sketchContent, sketchPaperColor, sortedInkStrokes,
   type Board, type Card, type ClipPayload, type InkMark, type Obj, type Stroke,
 } from './index.ts'
 import { agentObjectSchema, strokeObjectSchema } from './agent.ts'
@@ -147,5 +147,20 @@ describe('sketches travel with copies', () => {
     const ink = out.objects.find((o) => o.kind === 'stroke') as Stroke
     expect(copied.boardId).toBe(out.board.id)
     expect([ink.cardId, ink.boardId]).toEqual([copied.id, out.board.id])
+  })
+})
+
+describe('readable ink', () => {
+  it('keeps a pick that reads on the paper', () => {
+    expect(readableInk('#D7263D', '#FFFFFF')).toBe('#D7263D')
+    expect(readableInk('#F2C94C', '#2B2E34')).toBe('#F2C94C')
+  })
+  it('swaps an ink that would vanish: white on dark paper, charcoal on light', () => {
+    expect(readableInk(INK_PALETTE[0].hex, '#2B2E34')).toBe('#FFFFFF')
+    expect(readableInk('#FFFFFF', '#FFFFFF')).toBe('#292D35')
+    expect(readableInk('#FFFFFF', '#FBF3DF')).toBe('#292D35')
+    // The board's own floors, dark and light.
+    expect(readableInk('#292D35', '#1c1b1a')).toBe('#FFFFFF')
+    expect(readableInk('#FFFFFF', '#f3efe9')).toBe('#292D35')
   })
 })

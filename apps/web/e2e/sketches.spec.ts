@@ -1,6 +1,6 @@
 import { expect, test, type Browser, type BrowserContext, type Locator, type Page } from '@playwright/test'
 import { MOD, addNote, at, clickEmpty, freshBoard, postSync, waitForSync } from './helpers.ts'
-import { boardOf, setCamera } from './touch.ts'
+import { boardOf, seedCards, setCamera } from './touch.ts'
 
 // Sketch cards and drawing on the board, with real mouse input. A sketch opens
 // in place with a double-click; its editor has the ink tools (pen, highlighter,
@@ -91,16 +91,26 @@ test('make a sketch, draw with pen, highlighter and eraser, name it and pick pap
   await page.getByTestId('sketch-paper-button').click()
   await page.locator('[data-testid="sketch-paper"][data-hex="#EDEDEA"]').click()
   expect(await background(surface)).toBe('rgb(237, 237, 234)')
+  // The shared colour picker: a "+" slot that wears the custom colour once picked.
+  const paperPanel = page.getByTestId('sketch-paper-panel')
+  const customSlot = paperPanel.locator('.color-custom')
+  await expect(customSlot.locator('svg')).toHaveCount(1)
+  await expect(customSlot).not.toHaveClass(/\bon\b/)
   await page.getByTestId('sketch-paper-custom').fill('#e3d5c1')
   expect(await background(surface)).toBe('rgb(227, 213, 193)')
+  await expect(customSlot).toHaveClass(/\bon\b/)
+  await expect(customSlot.locator('svg')).toHaveCount(0)
+  expect(await background(customSlot)).toBe('rgb(227, 213, 193)')
   await page.keyboard.press('Escape')
   await expect(page.getByTestId('sketch-paper-panel')).toHaveCount(0)
   await expect(editor(page)).toBeVisible()
 
-  // Full screen fills the window, and back.
+  // Full screen, from the zoom menu, fills the window, and back.
+  await page.getByTestId('sketch-zoom').click()
   await page.getByTestId('sketch-full').click()
   const vp = page.viewportSize()!
   await expect.poll(async () => (await editor(page).boundingBox())!.width).toBe(vp.width)
+  await page.getByTestId('sketch-zoom').click()
   await expect(page.getByTestId('sketch-full')).toHaveAttribute('aria-pressed', 'true')
   await page.getByTestId('sketch-full').click()
   await expect.poll(async () => (await editor(page).boundingBox())!.width).toBeLessThan(vp.width)
@@ -286,19 +296,22 @@ test('Draw puts ink straight on the board, over other cards, and the eraser take
 /** Every button in the editor is fully on screen and inside the editor. */
 async function controlsVisible(page: Page) {
   const vp = page.viewportSize()!
-  const box = (await editor(page).boundingBox())!
-  expect(box.x).toBeGreaterThanOrEqual(0)
-  expect(box.x + box.width).toBeLessThanOrEqual(vp.width + 0.5)
-  for (const control of await editor(page).locator('button:visible, input:visible').all()) {
-    const r = (await control.boundingBox())!
-    expect(r.x, await control.getAttribute('data-testid') ?? '').toBeGreaterThanOrEqual(box.x - 0.5)
-    expect(r.x + r.width).toBeLessThanOrEqual(box.x + box.width + 0.5)
-    expect(r.y).toBeGreaterThanOrEqual(box.y - 0.5)
-    expect(r.y + r.height).toBeLessThanOrEqual(box.y + box.height + 0.5)
-  }
-  // The paper keeps real room to draw in.
-  const paper = (await page.getByTestId('sketch-surface').boundingBox())!
-  expect(paper.height).toBeGreaterThan(120)
+  // The window resizes to fit the paper after the tools change: check once it has settled.
+  await expect(async () => {
+    const box = (await editor(page).boundingBox())!
+    expect(box.x).toBeGreaterThanOrEqual(0)
+    expect(box.x + box.width).toBeLessThanOrEqual(vp.width + 0.5)
+    for (const control of await editor(page).locator('button:visible, input:visible').all()) {
+      const r = (await control.boundingBox())!
+      expect(r.x, await control.getAttribute('data-testid') ?? '').toBeGreaterThanOrEqual(box.x - 0.5)
+      expect(r.x + r.width).toBeLessThanOrEqual(box.x + box.width + 0.5)
+      expect(r.y).toBeGreaterThanOrEqual(box.y - 0.5)
+      expect(r.y + r.height).toBeLessThanOrEqual(box.y + box.height + 0.5)
+    }
+    // The paper keeps real room to draw in.
+    const paper = (await page.getByTestId('sketch-surface').boundingBox())!
+    expect(paper.height).toBeGreaterThan(120)
+  }).toPass({ timeout: 5000 })
 }
 
 test('the editor’s controls all fit in a narrow window', async ({ page }) => {
@@ -490,4 +503,75 @@ test('on the board, click then shift-click draws a straight line, kept after a r
   await waitForSync(page)
   await page.reload()
   await expect(inkCards(page)).toHaveCount(2)
+})
+
+test('a custom ink colour from the shared picker draws, and stays after a reload', async ({ page }) => {
+  await page.getByTestId('tool-sketch').click()
+  const surface = page.getByTestId('sketch-surface')
+  await page.getByTestId('ink-custom-colour').fill('#7a4fd6')
+  await expect(editor(page).locator('.color-custom')).toHaveClass(/\bon\b/)
+  await scribble(page, surface, [0.2, 0.3], [0.8, 0.6])
+  await expect(editorStrokes(page).first()).toHaveAttribute('stroke', '#7A4FD6')
+  await page.getByTestId('sketch-done').click()
+  await waitForSync(page)
+  await page.reload()
+  await expect(sketchCard(page).locator('[data-stroke-id]').first()).toHaveAttribute('stroke', '#7A4FD6')
+  // Board Draw has the same picker.
+  await page.keyboard.press('Escape')
+  await page.getByTestId('tool-draw').click()
+  const bar = page.getByTestId('board-ink-bar')
+  await bar.getByTestId('ink-custom-colour').fill('#1b8a7a')
+  await expect(bar.locator('.color-custom')).toHaveClass(/\bon\b/)
+  const a = await at(page, 0.2, 0.75)
+  const b = await at(page, 0.6, 0.8)
+  await page.mouse.move(a.x, a.y)
+  await page.mouse.down()
+  await page.mouse.move(b.x, b.y, { steps: 6 })
+  await page.mouse.up()
+  await expect(inkCards(page).locator('[data-stroke-id]')).toHaveAttribute('stroke', '#1B8A7A')
+  await waitForSync(page)
+  await page.reload()
+  await expect(inkCards(page).locator('[data-stroke-id]')).toHaveAttribute('stroke', '#1B8A7A')
+})
+
+test('on a narrow window, the ink follows dark paper and the board never slides under the editor or the Draw bar', async ({ page }) => {
+  await page.setViewportSize({ width: 640, height: 560 })
+  // Half off the right edge, where focusing it once scrolled the whole board sideways.
+  await seedCards(page, [{ type: 'sketch', x: 380, y: 40, w: 320, content: { title: '', width: 800, height: 600, background: '#2B2E34' } }])
+  const card = sketchCard(page)
+  const before = (await card.boundingBox())!
+  await card.getByTestId('sketch-paper').dblclick()
+  await expect(editor(page)).toBeVisible()
+  // Charcoal ink would vanish on charcoal paper: the pen starts white.
+  await expect(page.locator('[data-testid="ink-colour"][data-hex="#FFFFFF"]')).toHaveAttribute('aria-pressed', 'true')
+  // A pick that still reads on new paper stays; one that wouldn't becomes charcoal.
+  const ink = (hex: string) => page.locator(`[data-testid="ink-colour"][data-hex="${hex}"]`)
+  const paper = async (hex: string) => {
+    await page.getByTestId('sketch-paper-button').click()
+    await page.locator(`[data-testid="sketch-paper"][data-hex="${hex}"]`).click()
+    await page.keyboard.press('Escape')
+  }
+  await ink('#D7263D').click()
+  await expect(ink('#D7263D')).toHaveAttribute('aria-pressed', 'true')
+  await paper('#FFFFFF')
+  expect(await background(page.getByTestId('sketch-surface'))).toBe('rgb(255, 255, 255)')
+  await expect(ink('#D7263D')).toHaveAttribute('aria-pressed', 'true')
+  await ink('#F2C94C').click()
+  await paper('#EDEDEA')
+  await expect(ink('#292D35')).toHaveAttribute('aria-pressed', 'true')
+  await page.getByTestId('sketch-done').click()
+  await expect(editor(page)).toHaveCount(0)
+  expect((await card.boundingBox())!.x).toBeCloseTo(before.x, 0)
+
+  await page.keyboard.press('Escape')
+  await page.getByTestId('tool-draw').click()
+  const bar = page.getByTestId('board-ink-bar')
+  await expect(bar).toBeVisible()
+  const canvas = (await page.getByTestId('canvas').boundingBox())!
+  for (const id of ['ink-pen', 'ink-eraser', 'ink-width-12', 'board-ink-done']) {
+    const r = (await bar.getByTestId(id).boundingBox())!
+    expect(r.x, id).toBeGreaterThanOrEqual(canvas.x)
+    expect(r.x + r.width, id).toBeLessThanOrEqual(canvas.x + canvas.width)
+  }
+  expect((await card.boundingBox())!.x).toBeCloseTo(before.x, 0)
 })

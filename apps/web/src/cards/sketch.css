@@ -18,3 +18,5 @@
 /* Drawing on the board: every press is ink, so nothing on the board catches it. */
 .viewport.board-drawing .card, .viewport.board-drawing .card .ink-hit-path, .viewport.board-drawing .connections { pointer-events: none; }
 .viewport.board-drawing { cursor: crosshair; }
+/* While its editor is open the card hides behind it: no selection outline peeking out around the modal. */
+.card.card-sketch.editing { outline: none; }

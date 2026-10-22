@@ -1,12 +1,13 @@
-import { Show, createEffect, createSignal, on, onCleanup, onMount } from 'solid-js'
+import { Show, createEffect, createSignal, on, onCleanup, onMount, untrack } from 'solid-js'
 import {
-  BOARD_INK_MAX_SPAN, HIGHLIGHTER, MAX_INK_POINTS, boardInkEnvelope, boardInkLocal, hitInkStroke, inkBounds, inkPath, isBoardInkSize, newId,
+  BOARD_INK_MAX_SPAN, HIGHLIGHTER, MAX_INK_POINTS, boardInkEnvelope, boardInkLocal, hitInkStroke, inkBounds, inkPath, isBoardInkSize, newId, readableInk,
   type Card, type Id, type InkMark, type Obj, type Stroke, type Vec,
 } from '@doggynote/core'
-import { COPY } from '@doggynote/theme'
+import { COPY, surfaces } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { boardId, camera } from '../state/ui.ts'
-import { boardDrawing, boardErasing, endBoardDrawing, inkColor, inkTool, inkWidth, setBoardErasing } from '../state/drawing.ts'
+import { boardDrawing, boardErasing, endBoardDrawing, inkColor, inkTool, inkWidth, setBoardErasing, setInkColor } from '../state/drawing.ts'
+import { theme } from '../theme.ts'
 import { showToast } from '../state/toast.ts'
 import { rectOf } from '../canvas/layout.ts'
 import { IconButton, ToolIcons } from '../ui/icons.tsx'
@@ -186,7 +187,8 @@ export function BoardInkPreview(props: { mark: Pick<InkMark, 'points' | 'color' 
   return (
     <Show when={props.mark}>
       {(m) => (
-        <svg class="board-ink-preview" aria-hidden="true" data-testid="board-ink-preview">
+        // Above every card on the board while it's drawn.
+        <svg class="board-ink-preview" style={{ 'z-index': untrack(() => doc.maxZ(boardId())) + 1 }} aria-hidden="true" data-testid="board-ink-preview">
           <path d={inkPath(m())} fill="none" stroke={m().color} stroke-width={m().width} stroke-opacity={m().opacity} stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       )}
@@ -196,6 +198,9 @@ export function BoardInkPreview(props: { mark: Pick<InkMark, 'points' | 'color' 
 
 /** Draw mode's floating bar: the ink tools and Done. */
 export function BoardInkBar() {
+  // The pen never vanishes on the board: an ink too faint on this theme's floor
+  // becomes white or charcoal when drawing starts or the theme changes.
+  createEffect(on([boardDrawing, theme], ([drawing, t]) => { if (drawing) setInkColor(readableInk(untrack(inkColor), surfaces[t].bg)) }))
   return (
     <Show when={boardDrawing()}>
       <section

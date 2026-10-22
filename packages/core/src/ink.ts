@@ -1,4 +1,5 @@
 import type { Rect } from './geometry.ts'
+import { contrastRatio } from './contrast.ts'
 
 // Freehand ink, shared by sketch cards and drawing on the board. A mark's
 // points are in its owner's logical space (a sketch's paper, or a board ink
@@ -33,6 +34,18 @@ export const INK_WIDTHS = [
   { width: 6, name: 'Medium' },
   { width: 12, name: 'Bold' },
 ] as const
+/** Ink under this contrast against what it's drawn on is too faint to see (WCAG's non-text 3:1). */
+export const MIN_INK_CONTRAST = 3
+/**
+ * The ink to draw with on `paper`: the chosen one while it reads, otherwise
+ * charcoal or white, whichever stands out more (white on dark paper, charcoal
+ * on light). So the default pen never vanishes on the paper it's used on.
+ */
+export function readableInk(ink: string, paper: string): string {
+  if (contrastRatio(ink, paper) >= MIN_INK_CONTRAST) return ink
+  const charcoal = INK_PALETTE[0].hex, white = INK_PALETTE[INK_PALETTE.length - 1].hex
+  return contrastRatio(charcoal, paper) >= contrastRatio(white, paper) ? charcoal : white
+}
 /** A highlighter is a wide, see-through pen. */
 export const HIGHLIGHTER = { scale: 3, opacity: 0.3 } as const
 export const MAX_INK_POINTS = 4096
