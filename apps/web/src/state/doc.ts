@@ -16,6 +16,9 @@ import {
   type Obj,
   type Transaction,
   type Sticker,
+  type Stroke,
+  isInkMark,
+  sortedInkStrokes,
   usableSticker,
 } from '@doggynote/core'
 import * as idb from './idb.ts'
@@ -186,6 +189,13 @@ export const getBoard = (id: Id | null | undefined) => {
 export const isReadOnly = () => readOnly
 export const canUndo = () => (undoTick(), undoStack.canUndo)
 export const canRedo = () => (undoTick(), undoStack.canRedo)
+/** Is the next undo (or redo) only ink on this card? The sketch editor's Undo touches nothing else. */
+const drawingStep = (tx: Transaction | undefined, cardId: Id) => !!tx?.length && tx.every((c) => {
+  const o = state.objs[c.id]
+  return o?.kind === 'stroke' && o.cardId === cardId
+})
+export const canUndoDrawing = (cardId: Id) => (undoTick(), drawingStep(undoStack.peek(), cardId))
+export const canRedoDrawing = (cardId: Id) => (undoTick(), drawingStep(undoStack.peekRedo(), cardId))
 
 function historyChanged() {
   // An Undo offer describes the previous command. Once history changes, its
@@ -719,6 +729,8 @@ type Index = {
   boards: Board[]
   /** cardId → live messages, oldest first. */
   comments: Map<Id, Comment[]>
+  /** cardId → live ink, in paint order. */
+  strokes: Map<Id, Stroke[]>
 }
 
 /**
@@ -732,6 +744,7 @@ export const index = createRoot(() =>
     const connections = new Map<Id, Connection[]>()
     const boards: Board[] = []
     const comments = new Map<Id, Comment[]>()
+    const strokes = new Map<Id, Stroke[]>()
     const shown = overlay.objs
     const all = shown ? [...Object.values(state.objs).filter((o) => !(o.id in shown)), ...Object.values(shown)] : Object.values(state.objs)
     for (const o of all) {
@@ -753,16 +766,26 @@ export const index = createRoot(() =>
         const list = comments.get(o.cardId)
         if (list) list.push(o)
         else comments.set(o.cardId, [o])
+      } else if (o.kind === 'stroke') {
+        // Malformed synced geometry never reaches SVG or canvas.
+        if (!isInkMark(o)) continue
+        const list = strokes.get(o.cardId)
+        if (list) list.push(o)
+        else strokes.set(o.cardId, [o])
       }
     }
     for (const list of comments.values()) list.sort((a, b) => a.createdAt - b.createdAt)
-    return { cards, stickers, connections, boards, comments }
+    for (const [id, list] of strokes) strokes.set(id, sortedInkStrokes(list))
+    return { cards, stickers, connections, boards, comments, strokes }
   }),
 )
 
 export const cardsOn = (boardId: Id): Card[] => index().cards.get(boardId) ?? []
 export const connectionsOn = (boardId: Id): Connection[] => index().connections.get(boardId) ?? []
 export const commentsOn = (cardId: Id): Comment[] => index().comments.get(cardId) ?? []
+const NO_STROKES: Stroke[] = []
+/** A sketch's or board ink card's live strokes, in paint order. */
+export const strokesOn = (cardId: Id): Stroke[] => index().strokes.get(cardId) ?? NO_STROKES
 
 /** Trashed (soft-deleted, not purged) cards on a board. Not memoised; read when the panel opens. */
 export function trashedOn(boardId: Id): (Card | Sticker)[] {

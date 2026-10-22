@@ -188,6 +188,17 @@ export const ToolIcons: Record<string, () => JSX.Element> = {
   droplet: () => <path d="M12 3.5c3 3.6 6 7 6 10.2a6 6 0 0 1-12 0c0-3.2 3-6.6 6-10.2z" />,
   label: () => <><path d="M3.5 12V4.5a1 1 0 0 1 1-1H12l8.3 8.3a1 1 0 0 1 0 1.4l-7.1 7.1a1 1 0 0 1-1.4 0z" /><circle cx="8" cy="8" r="1.5" /></>,
   swatch: () => <><rect x="4" y="4" width="16" height="16" rx="2.5" /><path d="M4 14h16M8 17.5h5" /></>,
+  /** A sketch card: a sheet of paper with a doodle on it. */
+  sketch: () => <><rect x="3.5" y="4.5" width="17" height="15" rx="2" /><path d="M7 15c1.5-4 3-5 4-2s2.5 2 3.5-1 2-3 3-1" /></>,
+  /** Drawing straight on the board: a pencil and the line it left, no paper. */
+  draw: () => <><path d="M3.5 20.5c2.5-3 4.5-3 5.5-1.5s2.5 1.5 4-1" /><path d="M15.5 3.5l5 5-8 8-5.5 1 1-5.5Z" /></>,
+  pen: () => <><path d="M16 3.5l4.5 4.5L9 19.5l-5.5 1 1-5.5Z" /><path d="M13.5 6l4.5 4.5" /></>,
+  highlighter: () => <><path d="M9 14.5 16.5 7l3 3-7.5 7.5Z" /><path d="M9 14.5 7 19h4.5l1-1.5M14.5 9l3 3" /><path d="M3 21h8" /></>,
+  eraser: () => <><path d="M8.5 19.5 4 15a1.5 1.5 0 0 1 0-2.1l8.9-8.9a1.5 1.5 0 0 1 2.1 0l5 5a1.5 1.5 0 0 1 0 2.1L12.5 19.5Z" /><path d="M8.5 9.5l6 6M8.5 19.5H20" /></>,
+  expand: () => <path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" />,
+  shrink: () => <path d="M20 10h-6V4M4 14h6v6M14 10l7-7M10 14l-7 7" />,
+  zoomIn: () => <><circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5 20 20M10.5 8v5M8 10.5h5" /></>,
+  zoomOut: () => <><circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5 20 20M8 10.5h5" /></>,
   external: () => <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />,
   chevronDown: () => <path d="m6 9 6 6 6-6" />,
   alignLeft: () => <path d="M4 3v18M8 7h10M8 14h6" />,

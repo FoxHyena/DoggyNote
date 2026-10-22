@@ -114,7 +114,8 @@ export async function prepareAgentChanges(db: D1Database, access: Access, creden
   for (const row of all.values()) {
     if (!readable(access, credential, user.id, row)) continue
     const o = row.object
-    if (o.kind === 'comment') {
+    // Comments and ink follow their card between boards.
+    if (o.kind === 'comment' || o.kind === 'stroke') {
       const card = next(o.cardId)
       if (card?.kind === 'card' && card.boardId !== o.boardId && !changes.has(o.id)) changes.set(o.id, { id: o.id, before: o, after: { ...o, boardId: card.boardId }, expectedRevision: row.revision })
     }
@@ -363,7 +364,7 @@ async function applyProposal(c: Context<AgentEnv>, reverse: boolean, attempt = 0
     for (const row of current.values()) {
       const o = row.object
       if (ids.has(o.id) || !active(o)) continue
-      const references = o.kind === 'board' ? [o.parentId] : o.kind === 'comment' ? [o.cardId, o.boardId] : o.kind === 'connection' ? [o.from, o.to, o.boardId] : o.kind === 'sticker' ? [o.boardId] : [o.boardId, o.columnId, ...(o.type === 'board' ? [o.content.boardId] : [])]
+      const references = o.kind === 'board' ? [o.parentId] : o.kind === 'comment' || o.kind === 'stroke' ? [o.cardId, o.boardId] : o.kind === 'connection' ? [o.from, o.to, o.boardId] : o.kind === 'sticker' ? [o.boardId] : [o.boardId, o.columnId, ...(o.type === 'board' ? [o.content.boardId] : [])]
       if (references.some((id) => id && created.has(id))) return c.json({ error: 'New content depends on this proposal. Move or remove it before reversing.' }, 409)
       if (o.kind === 'comment' && changes.some((ch) => ch.after.kind === 'card' && ch.after.id === o.cardId && ch.after.boardId !== o.boardId)) return c.json({ error: 'New comments were added after this move. Prepare a new proposal to move the card safely.' }, 409)
     }

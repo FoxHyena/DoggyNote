@@ -1,0 +1,366 @@
+import { expect, test, type Browser, type BrowserContext, type Locator, type Page } from '@playwright/test'
+import { MOD, addNote, at, clickEmpty, freshBoard, postSync, waitForSync } from './helpers.ts'
+import { boardOf, setCamera } from './touch.ts'
+
+// Sketch cards and drawing on the board, with real mouse input. A sketch opens
+// in place with a double-click; its editor has the ink tools (pen, highlighter,
+// eraser, widths), the title and paper colour, Undo/Redo, zoom, full screen and
+// Done. Clicking outside it saves and closes. Draw puts ink straight on the board.
+
+test.beforeEach(async ({ page }) => {
+  await freshBoard(page)
+})
+
+const contexts = new Set<BrowserContext>()
+test.afterEach(async () => {
+  await Promise.all([...contexts].map((c) => c.close()))
+  contexts.clear()
+})
+
+const sketchCard = (page: Page) => page.locator('[data-testid="card"][data-type="sketch"]')
+const inkCards = (page: Page) => page.locator('[data-testid="card"][data-type="ink"]')
+const editor = (page: Page) => page.getByTestId('sketch-editor')
+const editorStrokes = (page: Page) => editor(page).locator('[data-stroke-id]')
+
+/** Drag across a box from one fraction of it to another, in small steps like a hand. */
+async function scribble(page: Page, target: Locator, from: [number, number], to: [number, number], steps = 12) {
+  const b = (await target.boundingBox())!
+  await page.mouse.move(b.x + b.width * from[0], b.y + b.height * from[1])
+  await page.mouse.down()
+  await page.mouse.move(b.x + b.width * to[0], b.y + b.height * to[1], { steps })
+  await page.mouse.up()
+}
+
+const background = (el: Locator) => el.evaluate((e) => getComputedStyle(e).backgroundColor)
+
+test('make a sketch, draw with pen, highlighter and eraser, name it and pick paper: it all comes back after a reload', async ({ page }) => {
+  // A new sketch opens straight in the editor. Done closes it.
+  await page.getByTestId('tool-sketch').click()
+  await expect(sketchCard(page)).toHaveCount(1)
+  await expect(editor(page)).toBeVisible()
+  await page.getByTestId('sketch-done').click()
+  await expect(editor(page)).toHaveCount(0)
+  // No title until it has one, and no Edit button on the card.
+  await expect(sketchCard(page).getByTestId('sketch-card-title')).toHaveCount(0)
+  await expect(sketchCard(page).getByRole('button')).toHaveCount(0)
+
+  // Double-click opens it in place.
+  await sketchCard(page).getByTestId('sketch-paper').dblclick()
+  await expect(editor(page)).toBeVisible()
+  const surface = page.getByTestId('sketch-surface')
+
+  // Pen, at the default width.
+  await expect(page.getByTestId('ink-pen')).toHaveAttribute('aria-pressed', 'true')
+  await scribble(page, surface, [0.1, 0.2], [0.9, 0.25])
+  await expect(editorStrokes(page)).toHaveCount(1)
+  await expect(editorStrokes(page).first()).toHaveAttribute('stroke-width', '6')
+
+  // A bolder line in red.
+  await page.getByTestId('ink-width-12').click()
+  await page.locator('[data-testid="ink-colour"][data-hex="#D7263D"]').click()
+  await scribble(page, surface, [0.1, 0.5], [0.9, 0.55])
+  await expect(editorStrokes(page)).toHaveCount(2)
+  await expect(editorStrokes(page).nth(1)).toHaveAttribute('stroke-width', '12')
+  await expect(editorStrokes(page).nth(1)).toHaveAttribute('stroke', '#D7263D')
+
+  // The highlighter is a wide, see-through pen.
+  await page.getByTestId('ink-highlighter').click()
+  await page.getByTestId('ink-width-6').click()
+  await scribble(page, surface, [0.1, 0.8], [0.9, 0.8])
+  await expect(editorStrokes(page)).toHaveCount(3)
+  await expect(editorStrokes(page).nth(2)).toHaveAttribute('stroke-opacity', '0.3')
+  await expect(editorStrokes(page).nth(2)).toHaveAttribute('stroke-width', '18')
+
+  // The eraser takes a line it passes over; colour and width step aside while it's in hand.
+  await page.getByTestId('ink-eraser').click()
+  await expect(page.getByTestId('ink-colour')).toHaveCount(0)
+  await scribble(page, surface, [0.5, 0.05], [0.5, 0.35])
+  await expect(editorStrokes(page)).toHaveCount(2)
+
+  // Undo brings the line back, Redo erases it again. Neither touches the board.
+  await page.getByTestId('sketch-undo').click()
+  await expect(editorStrokes(page)).toHaveCount(3)
+  await page.getByTestId('sketch-redo').click()
+  await expect(editorStrokes(page)).toHaveCount(2)
+  await page.keyboard.press(`${MOD}+z`)
+  await expect(editorStrokes(page)).toHaveCount(3)
+  await expect(sketchCard(page)).toHaveCount(1)
+
+  // Title and paper, in the header and the tools.
+  await page.getByTestId('sketch-title').fill('Walk route')
+  await page.getByTestId('sketch-paper-button').click()
+  await page.locator('[data-testid="sketch-paper"][data-hex="#EDEDEA"]').click()
+  expect(await background(surface)).toBe('rgb(237, 237, 234)')
+  await page.getByTestId('sketch-paper-custom').fill('#e3d5c1')
+  expect(await background(surface)).toBe('rgb(227, 213, 193)')
+  await page.keyboard.press('Escape')
+  await expect(page.getByTestId('sketch-paper-panel')).toHaveCount(0)
+  await expect(editor(page)).toBeVisible()
+
+  // Full screen fills the window, and back.
+  await page.getByTestId('sketch-full').click()
+  const vp = page.viewportSize()!
+  await expect.poll(async () => (await editor(page).boundingBox())!.width).toBe(vp.width)
+  await expect(page.getByTestId('sketch-full')).toHaveAttribute('aria-pressed', 'true')
+  await page.getByTestId('sketch-full').click()
+  await expect.poll(async () => (await editor(page).boundingBox())!.width).toBeLessThan(vp.width)
+
+  // A click outside the editor saves and closes it.
+  await page.mouse.click(6, vp.height / 2)
+  await expect(editor(page)).toHaveCount(0)
+  await expect(sketchCard(page).getByTestId('sketch-card-title')).toHaveText('Walk route')
+  await expect(sketchCard(page).locator('[data-stroke-id]')).toHaveCount(3)
+  expect(await background(sketchCard(page).getByTestId('sketch-paper'))).toBe('rgb(227, 213, 193)')
+
+  await waitForSync(page)
+  await page.reload()
+  await expect(sketchCard(page).getByTestId('sketch-card-title')).toHaveText('Walk route')
+  await expect(sketchCard(page).locator('[data-stroke-id]')).toHaveCount(3)
+  expect(await background(sketchCard(page).getByTestId('sketch-paper'))).toBe('rgb(227, 213, 193)')
+})
+
+test('Escape closes the editor; Enter reopens it; Delete inside it never buries the card', async ({ page }) => {
+  await page.getByTestId('tool-sketch').click()
+  await expect(editor(page)).toBeVisible()
+  await page.keyboard.press('Backspace')
+  await page.keyboard.press('Delete')
+  await page.keyboard.press('Escape')
+  await expect(editor(page)).toHaveCount(0)
+  await expect(sketchCard(page)).toHaveCount(1)
+  await expect(sketchCard(page)).toHaveClass(/selected/)
+  await page.keyboard.press('Enter')
+  await expect(editor(page)).toBeVisible()
+  // Done, then Draw: the sketch is put down, nothing stays picked up.
+  await page.getByTestId('sketch-done').click()
+  await page.getByTestId('tool-draw').click()
+  await expect(page.locator('[data-testid="card"]:is(.selected, .editing)')).toHaveCount(0)
+})
+
+async function friend(browser: Browser, owner: Page) {
+  const id = boardOf(owner)
+  const grant = await owner.request.post(`/api/boards/${id}/members`, { data: { username: 'fido', permission: 'edit', includeChildren: true } })
+  expect(grant.ok(), await grant.text()).toBe(true)
+  const context = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '3' } })
+  contexts.add(context)
+  expect((await context.request.post('/api/auth/login', { data: { username: 'fido', password: 'fetchfetch' } })).ok()).toBe(true)
+  const page = await context.newPage()
+  await page.goto(owner.url())
+  await expect(page.getByTestId('canvas')).toBeVisible()
+  return page
+}
+
+test('someone else on the board sees the strokes as they are drawn', async ({ page, browser }) => {
+  await page.getByTestId('tool-sketch').click()
+  await page.getByTestId('sketch-done').click()
+  await waitForSync(page)
+  const other = await friend(browser, page)
+  await expect(sketchCard(other)).toHaveCount(1)
+
+  await page.bringToFront()
+  await sketchCard(page).getByTestId('sketch-paper').dblclick()
+  await scribble(page, page.getByTestId('sketch-surface'), [0.2, 0.2], [0.8, 0.7])
+  await expect(editorStrokes(page)).toHaveCount(1)
+  // The stroke is saved as soon as it's drawn, while the editor is still open.
+  await waitForSync(page)
+  await expect(sketchCard(other).locator('[data-stroke-id]')).toHaveCount(1, { timeout: 15000 })
+})
+
+test('one person renames a sketch while another changes its paper: both changes survive', async ({ page, browser }) => {
+  await page.getByTestId('tool-sketch').click()
+  await page.getByTestId('sketch-done').click()
+  await waitForSync(page)
+  const other = await friend(browser, page)
+  await expect(sketchCard(other)).toHaveCount(1)
+
+  // Both open the same sketch at once.
+  await sketchCard(page).getByTestId('sketch-paper').dblclick()
+  await sketchCard(other).getByTestId('sketch-paper').dblclick()
+  await expect(editor(page)).toBeVisible()
+  await expect(editor(other)).toBeVisible()
+  await page.getByTestId('sketch-title').fill('Walk route')
+  await other.getByTestId('sketch-paper-button').click()
+  await other.locator('[data-testid="sketch-paper"][data-hex="#E3EEF9"]').click()
+  await other.keyboard.press('Escape')
+  // Each saves while the other's editor is still open.
+  await page.getByTestId('sketch-done').click()
+  await waitForSync(page)
+  await other.getByTestId('sketch-done').click()
+  await waitForSync(other)
+
+  for (const p of [page, other]) {
+    await p.reload()
+    await expect(sketchCard(p).getByTestId('sketch-card-title')).toHaveText('Walk route')
+    await expect.poll(() => background(sketchCard(p).getByTestId('sketch-paper'))).toBe('rgb(227, 238, 249)')
+  }
+})
+
+test('a sketch with more strokes than the clip limit still duplicates', async ({ page }) => {
+  const board = boardOf(page)
+  const sketchId = crypto.randomUUID()
+  const card = { id: sketchId, patch: { id: sketchId, kind: 'card', type: 'sketch', boardId: board, x: 0, y: 0, w: 320, h: 240, z: 1, color: 'none', columnId: null, createdAt: Date.now(), content: { title: '', width: 800, height: 600, background: '#FFFFFF' } } }
+  const strokes = Array.from({ length: 520 }, (_, i) => {
+    const id = crypto.randomUUID()
+    const x = 20 + (i % 26) * 30, y = 20 + Math.floor(i / 26) * 28
+    return { id, patch: { id, kind: 'stroke', boardId: board, cardId: sketchId, tool: 'pen', color: '#292D35', width: 3, opacity: 1, order: i + 1, points: [{ x, y }, { x: x + 20, y: y + 10 }], bounds: { x: x - 1.5, y: y - 1.5, w: 23, h: 13 }, createdAt: Date.now() } }
+  })
+  // The server takes 200 changes per push.
+  for (const changes of [[card, ...strokes.slice(0, 199)], strokes.slice(199, 399), strokes.slice(399)]) {
+    const res = await postSync(page.request, { data: { changes } })
+    expect(res.ok(), await res.text()).toBe(true)
+  }
+  await setCamera(page, { x: -40, y: -40, zoom: 1 })
+  await expect(sketchCard(page).locator('[data-stroke-id]')).toHaveCount(520)
+  await sketchCard(page).getByTestId('sketch-paper').click()
+  await page.getByTestId('duplicate-selection').click()
+  await expect(sketchCard(page)).toHaveCount(2)
+  await expect(sketchCard(page).nth(1).locator('[data-stroke-id]')).toHaveCount(520)
+  await expect(page.getByTestId('toast')).toHaveCount(0)
+  await waitForSync(page)
+  await page.reload()
+  await expect(sketchCard(page)).toHaveCount(2)
+  for (const c of await sketchCard(page).all()) await expect(c.locator('[data-stroke-id]')).toHaveCount(520)
+})
+
+test('Draw puts ink straight on the board, over other cards, and the eraser takes it away', async ({ page }) => {
+  await addNote(page, 'Under the ink', 0.5, 0.4)
+  // Starting to draw puts down whatever was picked up.
+  await expect(page.locator('[data-testid="card"][data-type="note"]')).toHaveClass(/selected/)
+  await page.getByTestId('tool-draw').click()
+  await expect(page.locator('[data-testid="card"].selected')).toHaveCount(0)
+  await expect(page.getByTestId('board-ink-bar')).toBeVisible()
+  await expect(page.getByTestId('tool-draw')).toHaveAttribute('aria-pressed', 'true')
+
+  // A line across the board and the note: the note isn't picked up or moved.
+  const note = page.locator('[data-testid="card"][data-type="note"]')
+  const before = (await note.boundingBox())!
+  const a = await at(page, 0.2, 0.42)
+  const b = await at(page, 0.8, 0.48)
+  await page.mouse.move(a.x, a.y)
+  await page.mouse.down()
+  await page.mouse.move(b.x, b.y, { steps: 15 })
+  await page.mouse.up()
+  await expect(inkCards(page)).toHaveCount(1)
+  await expect(inkCards(page).locator('[data-stroke-id]')).toHaveCount(1)
+  expect(await note.boundingBox()).toEqual(before)
+  await expect(note).not.toHaveClass(/selected/)
+
+  // A second, shorter line.
+  const c = await at(page, 0.3, 0.7)
+  const d = await at(page, 0.5, 0.75)
+  await page.mouse.move(c.x, c.y)
+  await page.mouse.down()
+  await page.mouse.move(d.x, d.y, { steps: 10 })
+  await page.mouse.up()
+  await expect(inkCards(page)).toHaveCount(2)
+
+  // The eraser across the second line takes it (the board's Undo brings it back, Redo takes it again).
+  await page.getByTestId('ink-eraser').click()
+  const e1 = await at(page, 0.4, 0.62)
+  const e2 = await at(page, 0.4, 0.82)
+  await page.mouse.move(e1.x, e1.y)
+  await page.mouse.down()
+  await page.mouse.move(e2.x, e2.y, { steps: 10 })
+  await page.mouse.up()
+  await expect(inkCards(page)).toHaveCount(1)
+  await page.getByTestId('undo').click()
+  await expect(inkCards(page)).toHaveCount(2)
+  await page.keyboard.press(`${MOD}+Shift+z`)
+  await expect(inkCards(page)).toHaveCount(1)
+
+  // Done (or Escape) goes back to selecting; a click on the line picks it up.
+  await page.getByTestId('ink-pen').click()
+  await page.keyboard.press('Escape')
+  await expect(page.getByTestId('board-ink-bar')).toHaveCount(0)
+  const path = inkCards(page).locator('.ink-hit-path').first()
+  const mid = await at(page, 0.5, 0.45)
+  await page.mouse.click(mid.x, mid.y)
+  await expect(inkCards(page).first()).toHaveClass(/selected/)
+  await expect(path).toHaveCount(1)
+
+  await waitForSync(page)
+  await page.reload()
+  await expect(inkCards(page)).toHaveCount(1)
+  await expect(inkCards(page).locator('[data-stroke-id]')).toHaveCount(1)
+})
+
+/** Every button in the editor is fully on screen and inside the editor. */
+async function controlsVisible(page: Page) {
+  const vp = page.viewportSize()!
+  const box = (await editor(page).boundingBox())!
+  expect(box.x).toBeGreaterThanOrEqual(0)
+  expect(box.x + box.width).toBeLessThanOrEqual(vp.width + 0.5)
+  for (const control of await editor(page).locator('button:visible, input:visible').all()) {
+    const r = (await control.boundingBox())!
+    expect(r.x, await control.getAttribute('data-testid') ?? '').toBeGreaterThanOrEqual(box.x - 0.5)
+    expect(r.x + r.width).toBeLessThanOrEqual(box.x + box.width + 0.5)
+    expect(r.y).toBeGreaterThanOrEqual(box.y - 0.5)
+    expect(r.y + r.height).toBeLessThanOrEqual(box.y + box.height + 0.5)
+  }
+  // The paper keeps real room to draw in.
+  const paper = (await page.getByTestId('sketch-surface').boundingBox())!
+  expect(paper.height).toBeGreaterThan(120)
+}
+
+test('the editor’s controls all fit in a narrow window', async ({ page }) => {
+  await page.setViewportSize({ width: 640, height: 560 })
+  await page.getByTestId('tool-sketch').click()
+  await expect(editor(page)).toBeVisible()
+  await page.getByTestId('sketch-title').fill('A rather long sketch title that keeps going and going')
+  await controlsVisible(page)
+  await page.getByTestId('ink-eraser').click()
+  await controlsVisible(page)
+})
+
+test('a sketch and its strokes survive Duplicate board', async ({ page }) => {
+  const board = boardOf(page)
+  const sketchId = crypto.randomUUID()
+  const points = [{ x: 100, y: 100 }, { x: 600, y: 400 }]
+  const res = await postSync(page.request, { data: { changes: [
+    { id: sketchId, patch: { id: sketchId, kind: 'card', type: 'sketch', boardId: board, x: 0, y: 0, w: 320, h: 240, z: 1, color: 'none', columnId: null, createdAt: Date.now(), content: { title: 'Garden plan', width: 800, height: 600, background: '#FBF3DF' } } },
+    ...[0, 1].map((i) => {
+      const id = crypto.randomUUID()
+      const pts = points.map((p) => ({ x: p.x, y: p.y + i * 80 }))
+      const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y)
+      return { id, patch: { id, kind: 'stroke', boardId: board, cardId: sketchId, tool: 'pen', color: '#245FE5', width: 6, opacity: 1, order: i + 1, points: pts, bounds: { x: Math.min(...xs) - 3, y: Math.min(...ys) - 3, w: Math.max(...xs) - Math.min(...xs) + 6, h: Math.max(...ys) - Math.min(...ys) + 6 }, createdAt: Date.now() } }
+    }),
+  ] } })
+  expect(res.ok(), await res.text()).toBe(true)
+  await setCamera(page, { x: -40, y: -40, zoom: 1 })
+  await expect(sketchCard(page).locator('[data-stroke-id]')).toHaveCount(2)
+
+  await page.getByTestId('board-more').click()
+  await page.getByTestId('duplicate-board').click()
+  await expect(page.getByTestId('board-name')).toContainText('copy')
+  expect(boardOf(page)).not.toBe(board)
+  await expect(sketchCard(page).getByTestId('sketch-card-title')).toHaveText('Garden plan')
+  await expect(sketchCard(page).locator('[data-stroke-id]')).toHaveCount(2)
+  await waitForSync(page)
+  await page.reload()
+  await expect(sketchCard(page).locator('[data-stroke-id]')).toHaveCount(2)
+  // The copy is its own: drawing on it leaves the original alone.
+  await sketchCard(page).getByTestId('sketch-paper').dblclick()
+  await scribble(page, page.getByTestId('sketch-surface'), [0.2, 0.6], [0.8, 0.9])
+  await page.getByTestId('sketch-done').click()
+  await expect(sketchCard(page).locator('[data-stroke-id]')).toHaveCount(3)
+  await waitForSync(page)
+  await page.goto(`/#/b/${board}`)
+  await expect(sketchCard(page).locator('[data-stroke-id]')).toHaveCount(2)
+})
+
+test('zoomed out, a sketch is drawn on the overview with its paper and ink', async ({ page }) => {
+  const board = boardOf(page)
+  const id = crypto.randomUUID()
+  const stroke = crypto.randomUUID()
+  const pts = [{ x: 0, y: 300 }, { x: 800, y: 300 }]
+  const res = await postSync(page.request, { data: { changes: [
+    { id, patch: { id, kind: 'card', type: 'sketch', boardId: board, x: 0, y: 0, w: 800, h: 600, z: 1, color: 'none', columnId: null, createdAt: Date.now(), content: { title: '', width: 800, height: 600, background: '#FBF3DF' } } },
+    { id: stroke, patch: { id: stroke, kind: 'stroke', boardId: board, cardId: id, tool: 'pen', color: '#245FE5', width: 40, opacity: 1, order: 1, points: pts, bounds: { x: -20, y: 280, w: 840, h: 40 }, createdAt: Date.now() } },
+  ] } })
+  expect(res.ok(), await res.text()).toBe(true)
+  await setCamera(page, { x: -100, y: -100, zoom: 0.25 })
+  await expect(page.getByTestId('lod-layer')).toBeVisible()
+  const pixel = (x: number, y: number) => page.getByTestId('lod-layer').evaluate((c: HTMLCanvasElement, [px, py]) => [...c.getContext('2d')!.getImageData(px, py, 1, 1).data].slice(0, 3), [x, y])
+  // Screen = (world + 100) / 4: world (100, 100) is paper, world (400, 300) is on the blue line.
+  await expect.poll(() => pixel(50, 50)).toEqual([251, 243, 223])
+  await expect.poll(() => pixel(125, 100)).toEqual([36, 95, 229])
+})
