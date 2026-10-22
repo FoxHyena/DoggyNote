@@ -46,6 +46,7 @@ function SharePanel(props: { boardId: Id; onClose: () => void }) {
   const [error, setError] = createSignal<string | null>(null)
   const [copied, setCopied] = createSignal<string | null>(null)
   const [busy, setBusy] = createSignal(false)
+  const invitingPerson = () => !!username().trim()
   const parent = () => boardPermissions().find((b) => b.id === props.boardId)?.parentId
   let panel!: HTMLDivElement
   onMount(() => {
@@ -89,30 +90,48 @@ function SharePanel(props: { boardId: Id; onClose: () => void }) {
   }
   return <div ref={panel} class="menu share-panel" data-testid="share-panel" role="dialog" aria-label="Board sharing" onKeyDown={agentDialogKeys}><SheetGrip onDismiss={props.onClose} />
     <div class="share-head"><strong>Share board</strong><button class="icon-btn" aria-label="Close sharing" onClick={props.onClose}><Icon size={16} name="close" /></button></div>
-    <p class="share-sub">{sharing()?.legacy ? 'Shared space members already have editing access. Admins manage its invitations.' : 'Private until you invite someone. Only you manage sharing.'}</p>
-    <Show when={parent() && parent() !== `home:${sharing()?.ownerId}`}><p class="share-sub">People with inherited access from “{boardDisplayTitle(doc.getBoard(parent()), 'the parent board')}” keep that access. Manage it on the parent board.</p></Show>
-    <label class="check"><input type="checkbox" data-testid="include-children" checked={includeChildren()} onChange={(e) => setIncludeChildren(e.currentTarget.checked)} />Include boards inside this one</label>
-    <label class="share-permission-field">Invitation permission
-      <select aria-label="Invitation permission" data-testid="invitation-permission" value={permission()} onChange={(e) => setPermission(e.currentTarget.value as 'view' | 'edit')}><option value="view">View only</option><option value="edit">Can edit</option></select>
-    </label>
-    <strong>Invite by username</strong>
-    <form class="share-user-form" onSubmit={addMember} data-testid="share-member-form">
-      <input aria-label="Username to invite" placeholder="Username" value={username()} required minLength={2} maxLength={32} onInput={(e) => setUsername(e.currentTarget.value)} />
-      <button class="bar-btn" type="submit" disabled={busy()}>Invite</button>
-    </form>
-    <ul class="share-members"><For each={sharing()?.members ?? []}>{(m) => <li data-testid="share-member"><span>{m.username}<br /><small>{m.permission === 'edit' ? 'Can edit' : 'View only'}{m.viaLink ? ' · via invitation link' : ''}</small></span><button class="bar-btn" disabled={busy()} aria-label={`Remove access for ${m.username}`} onClick={() => void action(() => api(`/api/boards/${encodeURIComponent(props.boardId)}/members/${encodeURIComponent(m.id)}`, { method: 'DELETE' }))}>Remove</button></li>}</For></ul>
-    <strong>Invite by link</strong>
-    <p class="share-sub">{permission() === 'view' ? 'Anyone with this link can look without signing in.' : 'Sign-in required. This invitation can be accepted for 7 days; access continues until removed.'}</p>
-    <Show when={permission() === 'edit'}><label class="check"><input type="checkbox" data-testid="share-allow-signup" checked={allowSignup()} onChange={(e) => setAllowSignup(e.currentTarget.checked)} />Allow new accounts through this link</label><p class="share-sub">Leave this off to invite existing accounts only.</p></Show>
-    <button class="primary-btn" data-testid="create-share" disabled={busy()} onClick={() => void create()}>{busy() ? 'Saving…' : sharing()?.shares.length ? 'New link' : 'Create link'}</button>
-    <Show when={error() || list.error}><p class="form-error" role="alert">{error() || (list.error instanceof ApiError ? list.error.message : 'Could not load sharing. Try again when online.')}</p><Show when={list.error}><button class="bar-btn" onClick={() => void refetch()}>Retry loading sharing</button></Show></Show>
-    <Show when={list.loading}><p class="share-sub" role="status">Loading sharing…</p></Show>
-    <ul class="share-list"><For each={sharing()?.shares ?? []}>{(s) => <li data-testid="share-link">
-      <input class="share-url" readonly aria-label={`${s.permission === 'edit' ? 'Editing' : 'View-only'} link`} value={shareUrl(s.token, s.permission)} data-testid="share-url" onFocus={(e) => e.currentTarget.select()} />
-      <div class="share-actions"><span class="share-meta">{s.permission === 'edit' ? 'Can edit' : 'View only'} · {s.includeChildren ? 'with inner boards' : 'this board only'}</span><button class="bar-btn" onClick={() => void copy(s)}>{copied() === s.token ? 'Copied!' : 'Copy'}</button><button class="bar-btn" data-testid="revoke-share" disabled={busy()} onClick={() => void action(() => api(`/api/shares/${encodeURIComponent(s.token)}`, { method: 'DELETE' }))}>Turn off</button></div>
-      <Show when={s.expiresAt}><span class="share-expiry">{s.expiresAt! <= Date.now() ? 'Expired for new recipients' : `Accept by ${new Date(s.expiresAt!).toLocaleDateString()}`}{s.allowSignup ? ' · Account creation allowed' : ''}</span></Show>
-      <Show when={s.permission === 'view' && s.scopeVersion === 0}><p class="share-sub">Legacy link: includes referenced boards. Create a new link to share only this board and its nested boards.</p></Show>
-    </li>}</For></ul>
-    <p class="share-sub">Turning a link off removes access granted through it. Previously downloaded copies cannot be recalled.</p>
+    <div class="share-content">
+      <Show when={sharing()?.legacy}><p class="share-sub">Shared space members already have editing access. Admins manage its invitations.</p></Show>
+      <Show when={sharing() && parent() && parent() !== `home:${sharing()?.ownerId}`}><p class="share-sub">People with inherited access from “{boardDisplayTitle(doc.getBoard(parent()), 'the parent board')}” keep that access. Manage it on the parent board.</p></Show>
+      <section class="share-section" aria-label="New invitation settings">
+        <label class="share-permission-field">New invitation access
+          <select aria-label="Invitation permission" data-testid="invitation-permission" value={permission()} onChange={(e) => setPermission(e.currentTarget.value as 'view' | 'edit')}><option value="view">View only</option><option value="edit">Can edit</option></select>
+        </label>
+        <label class="check"><input type="checkbox" data-testid="include-children" checked={includeChildren()} onChange={(e) => setIncludeChildren(e.currentTarget.checked)} />Include boards inside this one</label>
+      </section>
+      <section class="share-section" aria-label="Invite by username">
+        <strong>Invite by username</strong>
+        <form class="share-user-form" onSubmit={addMember} data-testid="share-member-form">
+          <input aria-label="Username to invite" placeholder="Username" value={username()} required minLength={2} maxLength={32} onInput={(e) => setUsername(e.currentTarget.value)} />
+          <button class={invitingPerson() ? 'primary-btn' : 'bar-btn'} type="submit" disabled={busy()}>Invite</button>
+        </form>
+      </section>
+      <section class="share-section" aria-label="Invite by link">
+        <strong>Invite by link</strong>
+        <p class="share-sub">{permission() === 'view' ? 'Anyone with this link can look without signing in.' : 'Sign-in required. Accept within 7 days; access continues until removed.'}</p>
+        <Show when={permission() === 'edit'}><label class="check"><input type="checkbox" data-testid="share-allow-signup" checked={allowSignup()} onChange={(e) => setAllowSignup(e.currentTarget.checked)} />Allow new accounts through this link</label></Show>
+        <button class={invitingPerson() ? 'bar-btn' : 'primary-btn'} data-testid="create-share" disabled={busy()} onClick={() => void create()}>{busy() ? 'Saving…' : sharing()?.shares.length ? 'New link' : 'Create link'}</button>
+      </section>
+      <Show when={error() || list.error}><p class="form-error" role="alert">{error() || (list.error instanceof ApiError ? list.error.message : 'Could not load sharing. Try again when online.')}</p><Show when={list.error}><button class="bar-btn" onClick={() => void refetch()}>Retry loading sharing</button></Show></Show>
+      <Show when={list.loading}><p class="share-sub" role="status">Loading sharing…</p></Show>
+      <Show when={sharing()?.members.length}>
+        <section class="share-section share-existing" aria-label="People with access">
+          <strong>People with access</strong>
+          <ul class="share-members"><For each={sharing()?.members ?? []}>{(m) => <li data-testid="share-member"><span>{m.username}<br /><small>{m.permission === 'edit' ? 'Can edit' : 'View only'}{m.viaLink ? ' · via invitation link' : ''}</small></span><button class="bar-btn" disabled={busy()} aria-label={`Remove access for ${m.username}`} onClick={() => void action(() => api(`/api/boards/${encodeURIComponent(props.boardId)}/members/${encodeURIComponent(m.id)}`, { method: 'DELETE' }))}>Remove</button></li>}</For></ul>
+        </section>
+      </Show>
+      <Show when={sharing()?.shares.length}>
+        <section class="share-section share-existing" aria-label="Existing links">
+          <strong>Existing links</strong>
+          <ul class="share-list"><For each={sharing()?.shares ?? []}>{(s) => <li data-testid="share-link">
+            <input class="share-url" readonly aria-label={`${s.permission === 'edit' ? 'Editing' : 'View-only'} link`} value={shareUrl(s.token, s.permission)} data-testid="share-url" onFocus={(e) => e.currentTarget.select()} />
+            <div class="share-actions"><span class="share-meta">{s.permission === 'edit' ? 'Can edit' : 'View only'} · {s.includeChildren ? 'with inner boards' : 'this board only'}</span><button class="bar-btn" onClick={() => void copy(s)}>{copied() === s.token ? 'Copied!' : 'Copy'}</button><button class="bar-btn" data-testid="revoke-share" disabled={busy()} onClick={() => void action(() => api(`/api/shares/${encodeURIComponent(s.token)}`, { method: 'DELETE' }))}>Turn off</button></div>
+            <Show when={s.expiresAt}><span class="share-expiry">{s.expiresAt! <= Date.now() ? 'Expired for new recipients' : `Accept by ${new Date(s.expiresAt!).toLocaleDateString()}`}{s.allowSignup ? ' · Account creation allowed' : ''}</span></Show>
+            <Show when={s.permission === 'view' && s.scopeVersion === 0}><p class="share-sub">Legacy link: includes referenced boards. Create a new link to share only this board and its nested boards.</p></Show>
+          </li>}</For></ul>
+          <p class="share-sub">Turning a link off removes access granted through it. Previously downloaded copies cannot be recalled.</p>
+        </section>
+      </Show>
+    </div>
   </div>
 }

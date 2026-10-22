@@ -489,8 +489,9 @@ html[data-touch-editing] .canvas-controls { visibility: hidden; }
   .selection-bar.docked .bar-actions .bar-btn { flex: 0 0 auto; min-width: 64px; }
 }
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
-  /* Sticky sheet headers line up with the sheet's own padding; the grip stays on top. */
-  .share-head { top: -28px; margin: -28px -12px 0; padding: 28px 12px 4px; }
+  /* Keep the permission label attached to its full-width touch control. */
+  .share-permission-field { flex-direction: column; align-items: stretch; gap: 4px; }
+  .share-permission-field select { width: 100%; height: 44px; }
 }
 .install-help { padding-left: 12px; }
 
@@ -698,15 +699,17 @@ html[data-input='touch'] .share-panel .bar-btn { padding-inline: 12px; border-ra
 
 /* Creation: familiar cards first, then a compact list of occasional tools. */
 .add-grid.add-primary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.add-primary .add-tile { font-weight: 600; }
+.add-primary .add-tile { min-height: 64px; padding: 4px; border: 0; background: transparent; gap: 4px; font-weight: 600; }
+.add-primary .add-tile-icon { width: 32px; height: 32px; border-radius: 10px; background: transparent; }
+.add-primary .add-tile-icon svg { width: 20px; height: 20px; }
 .add-primary-note .add-tile-icon { background: var(--dn-accent); color: var(--dn-accent-text); }
-.add-group-label { margin: 20px 0 8px; color: var(--dn-text-muted); font-size: 12px; font-weight: 600; }
+.add-group-label { margin: 16px 0 4px; color: var(--dn-text-muted); font-size: 12px; font-weight: 600; }
 .add-grid.add-secondary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 8px; }
-.add-secondary .add-tile { flex-direction: row; justify-content: flex-start; gap: 8px; min-height: 48px; padding: 4px 8px; border: 0; border-radius: 8px; background: transparent; }
+.add-secondary .add-tile { flex-direction: row; justify-content: flex-start; gap: 8px; min-height: 44px; padding: 4px 8px; border: 0; border-radius: 8px; background: transparent; }
 .add-secondary .add-tile-icon { width: 28px; height: 28px; background: transparent; }
 .add-secondary .add-tile-icon svg { width: 20px; height: 20px; }
-.add-grid.add-secondary > .add-tile:last-child { grid-column: auto; min-height: 48px; }
-.add-sheet .nav-menu-head { margin-bottom: 12px; }
+.add-grid.add-secondary > .add-tile:last-child { grid-column: auto; min-height: 44px; }
+.add-sheet .nav-menu-head { min-height: 44px; padding: 0; margin-bottom: 4px; }
 .add-sheet .nav-menu-head strong { font-size: 16px; }
 
 /* Phone selection keeps one row of actions. Palettes live in focused sheets. */
@@ -716,17 +719,21 @@ html[data-input='touch'] .share-panel .bar-btn { padding-inline: 12px; border-ra
 .selection-phone-actions > .bar-btn { flex: 1 1 0; min-width: 44px; min-height: 56px; padding: 6px 2px; display: flex; flex-direction: column; justify-content: center; gap: 4px; font-size: 12px; border-radius: 10px; }
 .selection-phone-actions > .selection-primary { background: var(--dn-accent); color: var(--dn-accent-text); font-weight: 600; }
 html[data-input='touch'] .selection-phone-actions > .selection-primary:active:not(:disabled) { background: var(--dn-accent); color: var(--dn-accent-text); }
-.selection-sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 12px; }
+.selection-sheet-head { display: flex; align-items: center; justify-content: space-between; min-height: 44px; margin-bottom: 4px; gap: 12px; }
 .selection-sheet-head strong { font-size: 16px; font-weight: 600; }
 .selection-sheet-head .bar-btn { min-width: 64px; min-height: 44px; }
-.selection-style-sheet .swatches, .selection-style-sheet .icon-picker { display: grid; grid-template-columns: repeat(4, minmax(44px, 1fr)); gap: 12px 8px; justify-items: center; padding: 8px 0; }
-.selection-style-sheet .swatch { width: 56px; height: 56px; --dot: 32px; }
-.selection-style-sheet .icon-choice { width: 56px; height: 56px; }
+.selection-style-sheet .swatches, .selection-style-sheet .icon-picker { display: grid; width: min(228px, 100%); margin-inline: auto; grid-template-columns: repeat(4, minmax(44px, 1fr)); gap: 8px 12px; justify-items: center; padding: 0; }
+.selection-style-sheet .swatch { width: 48px; height: 48px; --dot: 32px; }
+.selection-style-sheet .icon-choice { width: 48px; height: 48px; }
 .selection-style-sheet .icon-choice > svg { width: 24px; height: 24px; }
 .selection-sheet-align { display: flex; justify-content: space-between; gap: 4px; padding: 4px 0; }
 .selection-sheet-align .bar-icon { min-width: 44px; min-height: 44px; }
 @media (max-width: 599px), (max-height: 500px) and (pointer: coarse) {
   .menu.selection-style-sheet, .menu.add-sheet { border-radius: 18px 18px 0 0; }
+  :is(.menu.selection-style-sheet, .menu.add-sheet, .share-panel) {
+    padding-left: max(16px, env(safe-area-inset-left)) !important;
+    padding-right: max(16px, env(safe-area-inset-right)) !important;
+  }
   .selection-bar.docked:has(.selection-phone-actions) { flex-direction: column; align-items: stretch; gap: 4px; padding-top: 0; }
 }
 
