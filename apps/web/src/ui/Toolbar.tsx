@@ -14,14 +14,17 @@ export type Tool = { id: CardType | 'line'; label: string; icon: IconName }
 
 export const TOOLS: Tool[] = [
   { id: 'note', label: 'Note', icon: 'note' },
-  { id: 'link', label: 'Link', icon: 'link' },
   { id: 'todo', label: 'To-do', icon: 'todo' },
-  { id: 'line', label: 'Line', icon: 'line' },
   { id: 'board', label: 'Board', icon: 'board' },
+  { id: 'link', label: 'Link', icon: 'link' },
+  { id: 'line', label: 'Line', icon: 'line' },
   { id: 'column', label: 'Column', icon: 'column' },
   { id: 'movie', label: 'Movie', icon: 'film' },
   { id: 'swatch', label: 'Colour', icon: 'swatch' },
 ]
+
+export const PRIMARY_TOOLS = TOOLS.slice(0, 3)
+export const MORE_TOOLS = TOOLS.slice(3)
 
 /** A click on a tool drops the card near the viewport centre, in free space. */
 export function centrePlacement(type: CardType = 'note'): Placement {
@@ -78,38 +81,46 @@ export function Toolbar() {
 
   return (
     <aside class="toolbar" aria-label="Tools" onKeyDown={(e) => { if (!e.metaKey && !e.ctrlKey && ['Enter', ' ', 'Delete', 'Backspace'].includes(e.key)) { e.stopPropagation(); if (e.key === 'Backspace') e.preventDefault() } }}>
-      <For each={TOOLS}>
-        {(t) => (
-          <button
-            class="tool"
-            classList={{ active: t.id === 'line' && !!connectMode() }}
-            data-testid={`tool-${t.id}`}
-            aria-label={t.label}
-            onClick={(e) => {
-              if (e.detail !== 0) return
-              if (t.id === 'line') setConnectMode(connectMode() ? null : { from: null })
-              else createCard(t.id, centrePlacement(t.id))
-            }}
-            title={t.id === 'line' ? 'Line: click two cards to connect them' : `${t.label}: click to add, or drag onto the board`}
-            onPointerDown={(e) => onToolPointerDown(e, t)}
-            // The new card takes focus on pointerup; a tap's late mousedown would take it back.
-            onMouseDown={(e) => e.preventDefault()}
-          >
-            <Icon size={22} name={t.icon} />
-            <span>{t.label}</span>
-          </button>
-        )}
+      <For each={[PRIMARY_TOOLS, MORE_TOOLS]}>
+        {(group, index) => <>
+          <Show when={index() === 1}><div class="toolbar-group-label">More</div></Show>
+          <div class={index() === 0 ? "toolbar-primary" : "toolbar-secondary"} role="group" aria-label={index() === 0 ? "Create" : "More tools"}>
+            <For each={group}>
+              {(t) => (
+                <button
+                  class="tool"
+                  classList={{ active: t.id === 'line' && !!connectMode(), 'tool-primary': t.id === 'note' }}
+                  data-testid={`tool-${t.id}`}
+                  aria-label={t.label}
+                  onClick={(e) => {
+                    if (e.detail !== 0) return
+                    if (t.id === 'line') setConnectMode(connectMode() ? null : { from: null })
+                    else createCard(t.id, centrePlacement(t.id))
+                  }}
+                  title={t.id === 'line' ? 'Line: click two cards to connect them' : `${t.label}: click to add, or drag onto the board`}
+                  onPointerDown={(e) => onToolPointerDown(e, t)}
+                  // The new card takes focus on pointerup; a tap's late mousedown would take it back.
+                  onMouseDown={(e) => e.preventDefault()}
+                >
+                  <Icon size={22} name={t.icon} />
+                  <span>{t.label}</span>
+                </button>
+              )}
+            </For>
+          </div>
+        </>}
       </For>
-      <button class="tool" data-testid="tool-stickers" aria-label="Stickers" aria-expanded={stickerTrayOpen()} aria-description={suggestions.length ? suggestions.length === 1 ? 'Pack found in Telegram' : `${suggestions.length} packs found in Telegram` : undefined} title={suggestions.length ? suggestions.length === 1 ? 'Pack found in Telegram' : `${suggestions.length} packs found in Telegram` : undefined} onClick={openStickers}><Icon size={22} name="sticker" /><span>Stickers</span><Show when={suggestions.length}><span class="sticker-found-dot" data-testid="sticker-found-badge" aria-hidden="true" /></Show></button>
-      <div class="toolbar-sep" />
-      <button class="tool" data-testid="tool-image" title="Add image" onClick={() => fileInput.click()}>
-        <Icon size={22} name="image" />
-        <span>Image</span>
-      </button>
-      <button class="tool" data-testid="tool-upload" title="Upload files (PDFs, docs, anything up to 50 MB)" onClick={() => uploadInput.click()}>
-        <Icon size={22} name="upload" />
-        <span>Upload</span>
-      </button>
+      <div class="toolbar-secondary toolbar-media" role="group" aria-label="Media">
+        <button class="tool" data-testid="tool-stickers" aria-label="Stickers" aria-expanded={stickerTrayOpen()} aria-description={suggestions.length ? suggestions.length === 1 ? 'Pack found in Telegram' : `${suggestions.length} packs found in Telegram` : undefined} title={suggestions.length ? suggestions.length === 1 ? 'Pack found in Telegram' : `${suggestions.length} packs found in Telegram` : undefined} onClick={openStickers}><Icon size={22} name="sticker" /><span>Stickers</span><Show when={suggestions.length}><span class="sticker-found-dot" data-testid="sticker-found-badge" aria-hidden="true" /></Show></button>
+        <button class="tool" data-testid="tool-image" title="Add image" onClick={() => fileInput.click()}>
+          <Icon size={22} name="image" />
+          <span>Image</span>
+        </button>
+        <button class="tool" data-testid="tool-upload" title="Upload files (PDFs, docs, anything up to 50 MB)" onClick={() => uploadInput.click()}>
+          <Icon size={22} name="upload" />
+          <span>Upload</span>
+        </button>
+      </div>
       <input
         ref={uploadInput}
         type="file"

@@ -1,3 +1,4 @@
+import { chooseCardColour, selectionMore } from './touch.ts'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { cardByText, freshBoard, postSync, waitForSync } from './helpers.ts'
 import { Fingers, center, closeKeyboard, longPress, note, seedCards, tapOn } from './touch.ts'
@@ -114,7 +115,7 @@ test('selecting a card docks the actions along the bottom', async ({ page }) => 
   await expect(bar).toHaveClass(/docked/)
   await isSheet(page, bar)
   await expect(page.getByTestId('canvas-controls')).toBeHidden()
-  await page.getByTestId('swatch-sky').tap()
+  await chooseCardColour(page, 'sky')
   await expect(cardByText(page, 'Docked')).toHaveClass(/colored/)
   await page.getByTestId('selection-done').tap()
   await expect(bar).toHaveCount(0)
@@ -141,7 +142,7 @@ test('Select more picks several cards for one action', async ({ page }) => {
   await tapOn(page, cardByText(page, 'Two'))
   await tapOn(page, cardByText(page, 'Three'))
   await expect(page.locator('.card.selected')).toHaveCount(3)
-  await expect(page.getByTestId('selection-more')).toContainText('3 picked')
+  await expect(page.getByTestId('selection-bar').getByRole('status')).toHaveText('3 cards picked')
   await page.getByTestId('bury').tap()
   await expect(page.getByTestId('card')).toHaveCount(0)
 })
@@ -198,6 +199,7 @@ test('a comment thread closes when you leave its board', async ({ page }) => {
   await expect(page.getByTestId('board-name')).toHaveText('Car pool')
   await seedCards(page, [note('Who drives?', 0, 0)])
   await tapOn(page, cardByText(page, 'Who drives?'))
+  await selectionMore(page)
   await page.getByTestId('comment-button').tap()
   await expect(page.getByTestId('comments-panel')).toBeVisible()
   await page.goBack()

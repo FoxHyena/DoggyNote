@@ -10,6 +10,12 @@ import { Icon } from './icons.tsx'
 // fold them away, or clear them. Each is one undo step.
 
 export function TodoOptions(props: { card: Card<'todo'> }) {
+  return <BarMenu label="List" title="List options" testId="todo-options" menuTestId="todo-options-menu" icon={<Icon size={18} name="sliders" />}>
+    {(close) => <TodoMenuItems card={props.card} close={close} />}
+  </BarMenu>
+}
+
+export function TodoMenuItems(props: { card: Card<'todo'>; close: () => void }) {
   const content = () => props.card.content
   const sorting = () => content().sortDone !== false
   const done = () => content().items.filter((i) => i.done).length
@@ -29,9 +35,7 @@ export function TodoOptions(props: { card: Card<'todo'> }) {
   const check = (on: boolean) => <span class="menu-check" aria-hidden="true"><Show when={on}><Icon size={16} name="check" /></Show></span>
 
   return (
-    <BarMenu label="List" title="List options" testId="todo-options" menuTestId="todo-options-menu" icon={<Icon size={18} name="sliders" />}>
-      {(close) => (
-        <>
+    <>
           <button class="menu-item" role="menuitemcheckbox" aria-checked={sorting()} data-testid="todo-sort-done" onClick={toggleSort}>
             {check(sorting())}
             Sort done to the bottom
@@ -41,12 +45,10 @@ export function TodoOptions(props: { card: Card<'todo'> }) {
             Fold away done tasks
           </button>
           <div class="menu-sep" role="separator" />
-          <button class="menu-item" role="menuitem" data-testid="todo-clear-done" disabled={!done()} onClick={() => { clear(); close() }}>
+          <button class="menu-item" role="menuitem" data-testid="todo-clear-done" disabled={!done()} onClick={() => { clear(); props.close() }}>
             <span class="menu-check" aria-hidden="true"><Icon size={16} name="bury" /></span>
             {done() ? `Clear ${done()} done` : 'Nothing done yet'}
           </button>
-        </>
-      )}
-    </BarMenu>
+    </>
   )
 }

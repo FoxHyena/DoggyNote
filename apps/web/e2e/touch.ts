@@ -278,3 +278,15 @@ export async function selectionBarFits(page: Page) {
     return 'ok'
   })).toBe('ok')
 }
+
+/** Phone style controls are deliberately behind Colour, instead of crowding the dock. */
+export async function chooseCardColour(page: Page, colour: string) {
+  await page.getByTestId('selection-colour').tap()
+  await page.getByTestId(`swatch-${colour}`).tap()
+  await page.getByTestId('selection-style-done').tap()
+}
+
+/** Open the phone's secondary actions when they aren't already visible. */
+export async function selectionMore(page: Page) {
+  if (!await page.getByTestId('selection-more-menu').isVisible()) await page.getByTestId('selection-more').tap()
+}

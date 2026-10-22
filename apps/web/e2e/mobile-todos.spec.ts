@@ -58,8 +58,8 @@ test('a tap just after the rows swap is ignored, so it cannot hit the row that s
 
 test('list options open as a sheet from the selection bar', async ({ page }) => {
   await tapOn(page, list(page).locator('.todo-title'))
-  await page.getByTestId('todo-options').tap()
-  const menu = page.getByTestId('todo-options-menu')
+  await page.getByTestId('selection-more').tap()
+  const menu = page.getByTestId('selection-more-menu')
   await expect(menu).toBeVisible()
   const box = (await menu.boundingBox())!
   const viewport = page.viewportSize()!

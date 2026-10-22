@@ -8,7 +8,7 @@ import { camera, connectMode, setCamera, setConnectMode, setPaletteOpen, setTras
 import { addAnyFiles, addImages } from '../canvas/paste.ts'
 import { BoardNavigation } from './BoardNavigation.tsx'
 import { ToyboxButton } from './ToyboxPanel.tsx'
-import { TOOLS, centrePlacement } from './Toolbar.tsx'
+import { PRIMARY_TOOLS, MORE_TOOLS, centrePlacement } from './Toolbar.tsx'
 import { Icon } from './icons.tsx'
 import { installMenu } from './menu.ts'
 
@@ -77,28 +77,33 @@ function AddButton() {
         <Icon size={26} name="plus" />
       </button>
       <Show when={open()}>
-        <div class="menu add-sheet" role="menu" aria-label="Add to this board" data-testid="add-sheet"><SheetGrip onDismiss={() => { setOpen(false); trigger.focus() }} />
-          <div class="add-grid">
-            <For each={TOOLS}>
+        <div class="menu add-sheet" role="menu" aria-label="Add to this board" data-testid="add-sheet">
+          <SheetGrip onDismiss={() => { setOpen(false); trigger.focus() }} />
+          <div class="nav-menu-head"><strong>Add to this board</strong></div>
+          <div class="add-grid add-primary" role="group" aria-label="Create">
+            <For each={PRIMARY_TOOLS}>
               {(t) => (
-                <button class="add-tile" role="menuitem" data-testid={`add-${t.id}`} onClick={() => add(t.id)}>
-                  <span class="add-tile-icon"><Icon size={24} name={t.icon} /></span>
-                  {t.label}
+                <button class="bar-btn add-tile" classList={{ "add-primary-note": t.id === "note" }} role="menuitem" data-testid={`add-${t.id}`} onClick={() => add(t.id)}>
+                  <span class="add-tile-icon"><Icon size={20} name={t.icon} /></span>
+                  <span class="add-label">{t.label}</span>
                 </button>
               )}
             </For>
-            <button class="add-tile" role="menuitem" data-testid="add-stickers" onClick={() => { setOpen(false); openStickers() }}><span class="add-tile-icon"><Icon size={24} name="sticker" /></span>Stickers</button>
-            <button class="add-tile" role="menuitem" data-testid="add-photo" onClick={() => pick(photo)}>
-              <span class="add-tile-icon"><Icon size={24} name="image" /></span>
-              Photo
+          </div>
+          <div class="add-grid add-secondary" role="group" aria-label="More things to add">
+            <For each={MORE_TOOLS}>{(t) => <button class="bar-btn add-tile" role="menuitem" data-testid={`add-${t.id}`} onClick={() => add(t.id)}><span class="add-tile-icon"><Icon size={20} name={t.icon} /></span><span class="add-label">{t.label}</span></button>}</For>
+            <button class="bar-btn add-tile" role="menuitem" data-testid="add-stickers" onClick={() => { setOpen(false); openStickers() }}><span class="add-tile-icon"><Icon size={20} name="sticker" /></span><span class="add-label">Stickers</span></button>
+            <button class="bar-btn add-tile" role="menuitem" data-testid="add-photo" onClick={() => pick(photo)}>
+              <span class="add-tile-icon"><Icon size={20} name="image" /></span>
+              <span class="add-label">Photo</span>
             </button>
-            <button class="add-tile" role="menuitem" data-testid="add-camera" onClick={() => pick(camInput)}>
-              <span class="add-tile-icon"><Icon size={24} name="camera" /></span>
-              Camera
+            <button class="bar-btn add-tile" role="menuitem" data-testid="add-camera" onClick={() => pick(camInput)}>
+              <span class="add-tile-icon"><Icon size={20} name="camera" /></span>
+              <span class="add-label">Camera</span>
             </button>
-            <button class="add-tile" role="menuitem" data-testid="add-file" onClick={() => pick(files)}>
-              <span class="add-tile-icon"><Icon size={24} name="upload" /></span>
-              File
+            <button class="bar-btn add-tile" role="menuitem" data-testid="add-file" onClick={() => pick(files)}>
+              <span class="add-tile-icon"><Icon size={20} name="upload" /></span>
+              <span class="add-label">File</span>
             </button>
           </div>
         </div>
