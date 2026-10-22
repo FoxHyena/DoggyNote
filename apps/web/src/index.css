@@ -1141,7 +1141,7 @@ html[data-input="mouse"] .board-card:hover .board-tile {
 }
 
 /* In a column: a compact row, like a movie card. The thumbnail is still the whole
-   picture; with no picture the text takes the full width. */
+   picture, letterboxed; with no picture the text takes the full width. */
 .link-card.link-row {
   display: flex;
   align-items: flex-start;
@@ -1150,13 +1150,9 @@ html[data-input="mouse"] .board-card:hover .board-tile {
 }
 
 .link-row .link-image {
-  /* The picture's own shape (--ar, set once it loads), fitted inside 88 × 108:
-     a poster-shaped cover fills like a movie poster, a wide image stays wide. */
-  flex: 0 0 auto;
-  width: min(88px, calc(108px * var(--ar, 1)));
-  height: auto;
-  max-height: none;
-  aspect-ratio: var(--ar, 1);
+  flex: 0 0 72px;
+  width: 72px;
+  height: 72px;
   border-radius: 6px;
 }
 
