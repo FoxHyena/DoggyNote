@@ -200,6 +200,10 @@ export const ToolIcons: Record<string, () => JSX.Element> = {
   unlock: () => <><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 7.5-2" /></>,
   duplicate: () => <><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></>,
   more: () => <path d="M5.5 12h.1M12 12h.1M18.5 12h.1" stroke-width="3" />,
+  /** A board layout: save one as a template. */
+  template: () => <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 9v12" /></>,
+  /** A layout with a plus: a new board from a template. */
+  templateNew: () => <path d="M21 12V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7M3 9h18M9 9v12M18 15v6M15 18h6" />,
   user: () => (
     <>
       <path d="M7 6 4 5 2.5 11c-.5 3 3 4 4.5 1M17 6l3-1 1.5 6c.5 3-3 4-4.5 1M7 6c3-2 7-2 10 0l1 8c.5 4-3 6-6 6s-6.5-2-6-6Z" />

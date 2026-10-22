@@ -4,10 +4,11 @@
 // gives everything new ids, keeps the layout around the paste point, and is
 // ordered so every object arrives after the ones it refers to.
 
-import type { Board, Card, Connection, Id, Obj } from './model.ts'
+import type { Board, Card, Connection, Id, Obj, Sticker } from './model.ts'
 import type { Rect, Vec } from './geometry.ts'
 import { cardText } from './cardtext.ts'
 import { tmdbPage } from './movie.ts'
+import { boardLabels, cardLabelIds, parseLabels, type Label } from './labels.ts'
 
 export const CLIP_MIME = 'application/x-doggynote+json'
 export const CLIP_LIMIT = 500
@@ -22,6 +23,8 @@ export type ClipPayload = {
   objects: Obj[]
   /** Set by cut: the burial stamp, so a paste can bring the very same cards back. */
   cut?: { at: number }
+  /** The source board's labels that the clip's cards use, so another board can map them by name. */
+  labels?: Label[]
 }
 
 export type ClipSource = {
@@ -35,7 +38,8 @@ export type ClipSource = {
 const alive = (o: Obj | undefined) => !!o && !o.purged && !o.deletedAt && !(o as { hidden?: boolean }).hidden
 
 /** Gather a clip for the picked card ids. Null if there's nothing to copy; 'too-big' past CLIP_LIMIT objects. */
-export function collectClip(ids: Id[], src: ClipSource, opts: { allowBuried?: boolean } = {}): ClipPayload | 'too-big' | null {
+export function collectClip(ids: Id[], src: ClipSource, opts: { allowBuried?: boolean; limit?: number } = {}): ClipPayload | 'too-big' | null {
+  const limit = opts.limit ?? CLIP_LIMIT
   const ok = (o: Obj | undefined): o is Obj => (opts.allowBuried ? !!o && !o.purged : alive(o))
   const picked = ids.map((id) => src.get(id)).filter((o): o is Card => ok(o) && o.kind === 'card')
   if (!picked.length) return null
@@ -67,12 +71,15 @@ export function collectClip(ids: Id[], src: ClipSource, opts: { allowBuried?: bo
         if (o.kind === 'card' && o.type === 'board') boardsToCopy.push((o as Card<'board'>).content.boardId)
       }
     }
-    if (objects.size > CLIP_LIMIT) return 'too-big'
+    if (objects.size > limit) return 'too-big'
   }
   // Connections whose both ends came along.
   for (const o of all) if (o.kind === 'connection' && objects.has(o.from) && objects.has(o.to)) add(o)
-  if (objects.size > CLIP_LIMIT) return 'too-big'
-  return { v: 1, app: 'doggynote', boardId: picked[0].boardId, roots: picked.map((c) => c.id), objects: [...objects.values()] }
+  if (objects.size > limit) return 'too-big'
+  const boardId = picked[0].boardId
+  const used = new Set([...objects.values()].flatMap((o) => (o.kind === 'card' && o.boardId === boardId ? cardLabelIds(o) : [])))
+  const labels = boardLabels(src.get(boardId) as Board | undefined).filter((l) => used.has(l.id))
+  return { v: 1, app: 'doggynote', boardId, roots: picked.map((c) => c.id), objects: [...objects.values()], ...(labels.length ? { labels } : {}) }
 }
 
 export type Materialised = { objects: Obj[]; roots: Id[] }
@@ -127,6 +134,10 @@ export function materialise(
       c.boardId = orig.boardId === clip.boardId ? opts.boardId : map(orig.boardId)!
       c.from = map(orig.from)!
       c.to = map(orig.to)!
+    } else if (base.kind === 'sticker') {
+      // Stickers on a copied board go with it, never back onto the original.
+      const orig = o as Sticker
+      base.boardId = orig.boardId === clip.boardId ? opts.boardId : map(orig.boardId)!
     }
     out.push(base)
   }
@@ -136,6 +147,34 @@ export function materialise(
   const depth = (b: Board): number => { const p = boards.find((x) => x.id === b.parentId); return p ? 1 + depth(p) : 0 }
   out.sort((a, b) => rank(a) - rank(b) || (a.kind === 'board' && b.kind === 'board' ? depth(a as Board) - depth(b as Board) : 0))
   return { objects: out, roots: roots.map((c) => ids.get(c.id)!) }
+}
+
+/**
+ * The board a whole-board copy's stand-in card sits on while it's collected.
+ * Never a real board: if it were the board being copied (say, your home saved
+ * as a template), that board's cards would count as the picked cards' board
+ * and land back on it instead of in the copy.
+ */
+const COPY_HOST = '__copy-host__'
+
+/**
+ * A deep copy of board `rootId` (every card, column member, connection, sticker
+ * and board inside it, but no comments) plus a board card for it on `onBoard`,
+ * centred on `at`. The new board's parent is `onBoard`.
+ */
+export function copyBoardTree(
+  rootId: Id,
+  src: ClipSource,
+  opts: { onBoard: Id; at: Vec; maxZ: number; now: number; newId: () => Id; limit?: number; card?: Partial<Pick<Card, 'w' | 'h' | 'color'>> },
+): { objects: Obj[]; card: Card<'board'>; board: Board } | 'too-big' | null {
+  if (src.get(rootId)?.kind !== 'board') return null
+  const host = { id: `${COPY_HOST}card`, kind: 'card', type: 'board', boardId: COPY_HOST, x: 0, y: 0, w: opts.card?.w ?? 160, h: opts.card?.h ?? 120, z: 0, color: opts.card?.color ?? 'none', content: { boardId: rootId }, createdAt: 0 } as Card<'board'>
+  const clip = collectClip([host.id], { get: (id) => (id === host.id ? host : src.get(id)), all: () => src.all(), rect: () => null }, { limit: opts.limit })
+  if (!clip || clip === 'too-big') return clip
+  const { objects, roots } = materialise(clip, { at: opts.at, boardId: opts.onBoard, maxZ: opts.maxZ, now: opts.now, newId: opts.newId })
+  const card = objects.find((o) => o.id === roots[0]) as Card<'board'>
+  const board = objects.find((o) => o.id === card.content.boardId) as Board
+  return { objects, card, board }
 }
 
 /** The clip as readable markdown, in reading order: what other apps get. */
@@ -183,7 +222,9 @@ export function parseClip(raw: string | null | undefined): ClipPayload | null {
     const c = JSON.parse(raw)
     if (c?.app !== 'doggynote' || c.v !== 1 || !Array.isArray(c.roots) || !Array.isArray(c.objects) || typeof c.boardId !== 'string') return null
     if (c.objects.length > CLIP_LIMIT || !c.objects.every((o: Obj) => o && typeof o.id === 'string' && ['card', 'board', 'connection'].includes(o.kind))) return null
-    return c as ClipPayload
+    const clip = c as ClipPayload
+    if ('labels' in c) clip.labels = parseLabels(c.labels)
+    return clip
   } catch {
     return null
   }

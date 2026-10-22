@@ -8,6 +8,7 @@ import * as doc from '../state/doc.ts'
 import { openBoard, setPaletteOpen } from '../state/ui.ts'
 import { revealCard } from '../state/columns.ts'
 import { hasLabel, labelsOn } from '../state/labels.ts'
+import { inTemplate } from '../state/copies.ts'
 import { BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
 
 // ⌘K "Fetch": search every board title and card text, jump to the result.
@@ -21,13 +22,18 @@ export function search(query: string, limit = 30): Hit[] {
   if (!q) return []
   const hits: Hit[] = []
   const idx = doc.index()
+  // Templates live only in the template picker.
+  const hidden = new Map<Id, boolean>()
+  const skip = (id: Id) => hidden.get(id) ?? (hidden.set(id, inTemplate(id)), hidden.get(id)!)
   for (const b of idx.boards) {
+    if (skip(b.id)) continue
     const t = (b.id === HOME_BOARD_ID ? COPY.home : boardDisplayTitle(b)).toLowerCase()
     const at = t.indexOf(q)
     if (at >= 0) hits.push({ kind: 'board', id: b.id, boardId: b.id, title: boardTitle(b.id), snippet: b.parentId ? `in ${boardTitle(b.parentId)}` : '', score: at === 0 ? 3 : 2 })
   }
   const nq = normalizeLabelName(q)
   for (const [bid, cards] of idx.cards) {
+    if (skip(bid)) continue
     // A card matches its labels' names too, e.g. "lighting" finds every card labelled Lighting.
     const matching = labelsOn(bid).filter((l) => normalizeLabelName(l.name).includes(nq))
     for (const c of cards) {

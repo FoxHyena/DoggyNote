@@ -4,10 +4,16 @@ import { Show, createSignal, onCleanup, onMount, type JSX } from 'solid-js'
 import { AgentProposals } from './AgentProposals.tsx'
 import { ExportButton } from './ExportMenu.tsx'
 import { BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
+import { TemplatePicker } from './TemplatePicker.tsx'
+import { canDuplicate, duplicateBoard, saveAsTemplate } from '../state/copies.ts'
+import { canReadBoard } from '../state/access.ts'
 
 /** One proposal resource and export panel, shared by every board-action trigger. */
 export function BoardActions(props: { boardId: string; primary?: JSX.Element }) {
   const [open, setOpen] = createSignal(false)
+  const [picking, setPicking] = createSignal(false)
+  // Copies write; a proposal preview or a read-only viewer can't.
+  const canCopy = () => !doc.isReadOnly() && !doc.previewing()
   let root!: HTMLDivElement
   let more!: HTMLButtonElement
   let menu!: HTMLDivElement
@@ -41,8 +47,19 @@ export function BoardActions(props: { boardId: string; primary?: JSX.Element }) 
     </button>
     <Show when={open()}><div ref={(el) => { menu = el; queueMicrotask(() => menu.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()) }} class="menu nav-menu board-actions-menu" role="menu" aria-label="Board actions" data-testid="board-actions-menu" onKeyDown={menuKeys}>
       <div class="nav-menu-head sheet-only" aria-hidden="true"><strong>This board</strong></div>
-      <button class="menu-item nav-menu-row" role="menuitem" data-testid="agent-proposals" aria-haspopup="dialog" onClick={() => { png.close(false); close(); proposal.open(more) }}><BoardIconSvg icon="paw" size={18} /><span class="nav-menu-label">Agent proposals</span><Show when={proposal.pending() > 0}><span class="nav-menu-meta">{` · ${proposal.pending()}`}</span></Show></button>
+      <Show when={canCopy()}>
+        <Show when={canDuplicate(props.boardId)}>
+          <button class="menu-item nav-menu-row" role="menuitem" data-testid="duplicate-board" onClick={() => { close(); duplicateBoard(props.boardId) }}><Icon size={18}>{ToolIcons.duplicate()}</Icon><span class="nav-menu-label">Duplicate board</span></button>
+        </Show>
+        <Show when={canReadBoard(props.boardId)}>
+          <button class="menu-item nav-menu-row" role="menuitem" data-testid="save-template" onClick={() => { close(true); saveAsTemplate(props.boardId) }}><Icon size={18}>{ToolIcons.template()}</Icon><span class="nav-menu-label">Save as template</span></button>
+        </Show>
+        <button class="menu-item nav-menu-row" role="menuitem" data-testid="open-templates" aria-haspopup="dialog" onClick={() => { close(); setPicking(true) }}><Icon size={18}>{ToolIcons.templateNew()}</Icon><span class="nav-menu-label">New from template</span></button>
+        <div class="menu-sep" role="separator" />
+      </Show>
       <button class="menu-item nav-menu-row" role="menuitem" data-testid="export" aria-haspopup="dialog" onClick={() => { close(); png.open(more) }}><Icon size={18}>{ToolIcons.download()}</Icon><span class="nav-menu-label">Export PNG</span></button>
+      <button class="menu-item nav-menu-row" role="menuitem" data-testid="agent-proposals" aria-haspopup="dialog" onClick={() => { png.close(false); close(); proposal.open(more) }}><BoardIconSvg icon="paw" size={18} /><span class="nav-menu-label">Agent proposals</span><Show when={proposal.pending() > 0}><span class="nav-menu-meta">{proposal.pending()}</span></Show></button>
     </div></Show>
+    <Show when={picking()}><TemplatePicker anchor={() => more} boardId={props.boardId} close={() => setPicking(false)} /></Show>
   </div>} />} />
 }

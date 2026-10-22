@@ -19,6 +19,7 @@ import * as doc from './doc.ts'
 import { columnChildren, trashSelection } from './actions.ts'
 import { boardId, editingId, select, selection } from './ui.ts'
 import { showToast } from './toast.ts'
+import { carryLabels, labelsOn, moveLabels } from './labels.ts'
 import { rectOf } from '../canvas/layout.ts'
 
 // Copy, cut, paste and duplicate cards. The system clipboard gets three things:
@@ -132,11 +133,17 @@ export function pasteClip(clip: ClipPayload, at: Vec, opts: { columnId?: Id } = 
   const { objects, roots } = materialise(clip, { at: point, boardId: target, maxZ: doc.maxZ(target), now: Date.now(), newId, column })
   const blocked = new Set(objects.filter((o) => !assetReachable(o)).map((o) => o.id))
   if (blocked.size) showToast(`${blocked.size} ${blocked.size === 1 ? 'picture or file' : 'pictures or files'} couldn’t come along: they belong to someone else.`)
-  const kept = objects.filter((o) => !blocked.has(o.id) && !(o.kind === 'connection' && (blocked.has(o.from) || blocked.has(o.to))))
+  let kept = objects.filter((o) => !blocked.has(o.id) && !(o.kind === 'connection' && (blocked.has(o.from) || blocked.has(o.to))))
   if (!kept.length) return
-  doc.commit(kept.map((o) => doc.createChange(o)))
+  // Another board: labels map by name onto this board's (made here if missing).
+  let defs: Record<string, string> | null = null
+  if (target !== clip.boardId) ({ objects: kept, defs } = carryLabels(kept, sourceLabels(clip), target))
+  doc.commit([...kept.map((o) => doc.createChange(o)), ...(defs ? doc.changesFor({ [target]: defs as Partial<Obj> }) : [])])
   select(roots.filter((id) => !blocked.has(id)))
 }
+
+/** The labels a clip's cards use: carried in the clip, or (older clips) read from the source board. */
+const sourceLabels = (clip: ClipPayload) => clip.labels ?? labelsOn(clip.boardId)
 
 /**
  * A cut being pasted while its cards are still buried from that cut: bring the
@@ -166,6 +173,9 @@ function moveBack(clip: ClipPayload, at: Vec, column?: { id: Id; orders: number[
     // Connections can't span boards; comments follow their cards.
     for (const conn of doc.connectionsOn(clip.boardId)) if ((moved.has(conn.from) || moved.has(conn.to)) && !moved.has(conn.id)) patches[conn.id] = { purged: true }
     for (const id of moved) for (const m of doc.commentsOn(id)) patches[m.id] = { boardId: target }
+    // Labels follow by name, as for a copy.
+    const sourceCards = clip.objects.filter((o): o is Card => o.kind === 'card' && o.boardId === clip.boardId).map((o) => doc.getCard(o.id) ?? o)
+    for (const [id, p] of Object.entries(moveLabels(sourceCards, sourceLabels(clip), target))) patches[id] = { ...patches[id], ...p } as Partial<Obj>
   }
   doc.update(patches)
   select(clip.roots)
