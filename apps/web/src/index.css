@@ -229,7 +229,10 @@ html[data-input="mouse"] .menu-item:hover {
 .viewport {
   position: absolute;
   inset: 0;
-  overflow: hidden;
+  /* Clip, not hidden: never a scroll container, so focusing a card half off
+     screen (or anything that scrolls into view) can't slide the whole board
+     sideways under the camera. */
+  overflow: clip;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;

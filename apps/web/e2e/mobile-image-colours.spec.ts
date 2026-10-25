@@ -68,18 +68,21 @@ for (const width of [0, 360]) {
       expect(b.height).toBeGreaterThanOrEqual(44)
       expect(b.width).toBeGreaterThanOrEqual(44)
     }
-    await expect(bar.locator('.swatches')).toHaveCount(0)
+    await expect(bar.locator('.tint-dots')).toHaveCount(0)
     await page.getByTestId('selection-colour').tap()
     const sheet = page.getByTestId('selection-style-sheet')
-    const slots = sheet.locator('.swatches > .swatch')
+    const slots = sheet.locator('.tint-dots > .color-dot')
     await expect(slots).toHaveCount(8)
     for (const box of await slots.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON() as DOMRect))) {
       expect(box.left).toBeGreaterThanOrEqual(0)
       expect(box.right).toBeLessThanOrEqual(vw)
-      expect(box.height).toBeGreaterThanOrEqual(44)
-      expect(box.width).toBeGreaterThanOrEqual(44)
+      expect(box.height).toBeGreaterThanOrEqual(32)
+      expect(box.width).toBeGreaterThanOrEqual(32)
     }
-    expect(await sheet.getByTestId('swatch-none').evaluate((el) => [getComputedStyle(el, '::before').backgroundColor, getComputedStyle(el, '::after').content])).toEqual(['rgba(0, 0, 0, 0)', '""'])
+    // Each 32px dot carries a 44px+ target.
+    for (const target of await slots.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().width - 2 * parseFloat(getComputedStyle(el, '::after').left)))) expect(target).toBeGreaterThanOrEqual(44)
+    // No colour: an empty ring with a slash.
+    expect(await sheet.getByTestId('swatch-none').evaluate((el) => [getComputedStyle(el).backgroundColor, getComputedStyle(el, '::before').content])).toEqual(['rgba(0, 0, 0, 0)', '""'])
     await page.getByTestId('selection-style-done').tap()
     await selectionMore(page)
     await page.getByTestId('position-lock').tap()

@@ -25,7 +25,7 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
   const cards = createMemo(() => [...selection()].map((id) => doc.getCard(id)).filter((c): c is Card => !!c))
   const sole = () => selection().size === 1 ? card() : undefined
   const writable = () => selection().size > 0 && [...selection()].every((id) => doc.canWriteObject(doc.get(id)))
-  const canEdit = () => !!sole() && writable() && ['note', 'todo', 'column', 'image', 'swatch', 'board', 'link', 'movie'].includes(sole()!.type)
+  const canEdit = () => !!sole() && writable() && ['note', 'todo', 'column', 'image', 'swatch', 'board', 'link', 'movie', 'sketch'].includes(sole()!.type)
   const canLabel = () => writable() && cards().length > 0 && cards().every((c) => c.type !== 'column' && c.boardId === cards()[0].boardId)
   const canPing = () => liveState() === 'live' && peers().length > 0
   const close = () => { props.close(); props.point.returnTo.focus({ preventScroll: true }) }

@@ -22,6 +22,8 @@ import { ColumnCard } from '../cards/ColumnCard.tsx'
 import { FileCard } from '../cards/FileCard.tsx'
 import { MovieCard } from '../cards/MovieCard.tsx'
 import { SwatchCard } from '../cards/SwatchCard.tsx'
+import { SketchCard } from '../cards/SketchCard.tsx'
+import { InkCard } from '../cards/InkCard.tsx'
 import { CardLabels } from '../ui/Labels.tsx'
 
 export type CardProps<T extends Card['type'] = Card['type']> = {
@@ -128,6 +130,12 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         <Match when={props.card.type === 'swatch'}>
           <SwatchCard {...(props2() as CardProps<'swatch'>)} />
         </Match>
+        <Match when={props.card.type === 'sketch'}>
+          <SketchCard {...(props2() as CardProps<'sketch'>)} />
+        </Match>
+        <Match when={props.card.type === 'ink'}>
+          <InkCard {...(props2() as CardProps<'ink'>)} />
+        </Match>
         <Match when={props.card.type === 'column'}>
           <ColumnCard {...(props2() as CardProps<'column'>)} />
         </Match>
@@ -158,7 +166,8 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
       <Show when={!props.readOnly && single() && free() && !isPositionLocked(props.card.id) && props.card.type !== 'board' && !props.lod}>
         <div class="resize-handle" data-resize data-testid="resize-handle" title="Resize" />
       </Show>
-      <Show when={!props.readOnly && !props.lod && (!touch() || touchHandles())}>
+      {/* Lines join cards; a mark drawn on the board isn't one. */}
+      <Show when={!props.readOnly && !props.lod && props.card.type !== 'ink' && (!touch() || touchHandles())}>
         <For each={SIDES}>
           {(side) => <div class={`connect-handle ${side}`} classList={{ near: isNear(`${props.card.id}:${side}`) }} data-connect-handle={side} data-testid={`connect-handle-${side}`} title="Drag to connect" />}
         </For>

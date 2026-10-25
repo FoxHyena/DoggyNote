@@ -80,6 +80,8 @@ import { setThreadCardId, threadCardId } from '../state/comments.ts'
 import { haptic, phone, touch } from '../state/device.ts'
 import { resetPageScroll, visible as visibleArea } from '../state/viewport.ts'
 import { showToast } from '../state/toast.ts'
+import { boardDrawing } from '../state/drawing.ts'
+import { BoardInkBar, BoardInkPreview, createBoardInk } from '../drawing/BoardInk.tsx'
 import { CardContextMenu, type ContextPoint } from '../ui/CardContextMenu.tsx'
 
 type Gesture =
@@ -260,7 +262,7 @@ export function Canvas(props: { readOnly: boolean }) {
       editingId,
       (id, prev) => {
         // A colour card has nothing to type into: its panel opens where the card already is.
-        if (id && focusEdits() && doc.getCard(id)?.type !== 'swatch') {
+        if (id && focusEdits() && !panelEdit(id)) {
           if (!prev) editReturn = camera()
           movedWhileEditing = false
           resetPageScroll()
@@ -291,7 +293,7 @@ export function Canvas(props: { readOnly: boolean }) {
     }
     // A colour card has nothing to type into: its panel owns focus and there's no
     // keyboard. Tapping the board finishes it.
-    const typed = doc.getCard(id)?.type !== 'swatch'
+    const typed = !panelEdit(id)
     // The keyboard going away means done, however it went (iOS ✓, Android's back
     // gesture, which keeps focus). Only once it was seen to open: a hardware
     // keyboard never opens one, and turning the phone resizes everything.
@@ -346,7 +348,7 @@ export function Canvas(props: { readOnly: boolean }) {
         const id = editingId()
         if (!id || !focusEdits()) return
         const r = rectOf(id)
-        if (movedWhileEditing || !r || doc.getCard(id)?.type === 'swatch') return void requestAnimationFrame(revealCaret)
+        if (movedWhileEditing || !r || panelEdit(id)) return void requestAnimationFrame(revealCaret)
         const aim = editCamera(r, editRoom(), camera())
         aim.y += caretShift(aim) / aim.zoom
         const c = camera()
@@ -365,6 +367,8 @@ export function Canvas(props: { readOnly: boolean }) {
     return { x: e.clientX - r.left, y: e.clientY - r.top }
   }
   const toWorld = (e: { clientX: number; clientY: number }) => screenToWorld(camera(), local(e))
+  // Draw mode: presses on the board become ink (drawing/BoardInk.tsx).
+  const ink = createBoardInk(() => props.readOnly, toWorld)
 
   const domCardAt = (el: Element | null): Id | null => (el?.closest('[data-card-id]') as HTMLElement | null)?.dataset.cardId ?? null
 
@@ -455,6 +459,7 @@ export function Canvas(props: { readOnly: boolean }) {
     lastPointerType = e.pointerType
     if (e.pointerType === 'touch') return touchDown(e)
     if (e.button === 2) return
+    if (boardDrawing() && e.button === 0 && !spaceHeld() && !(e.target as Element).closest('[data-nodrag]') && ink.down(e)) return capture(e.pointerId)
     if (startStickerGesture(e)) return
     const target = e.target as HTMLElement
     lastPress = null
@@ -617,6 +622,7 @@ export function Canvas(props: { readOnly: boolean }) {
 
   function onPointerMove(e: PointerEvent) {
     if (e.pointerType === 'touch') return touchMove(e)
+    if (ink.move(e)) return
     lastPointer = { clientX: e.clientX, clientY: e.clientY }
     moveGesture(e)
     trackNearHandle(e)
@@ -751,15 +757,15 @@ export function Canvas(props: { readOnly: boolean }) {
           doc.transient(id, { x: Math.round(o.x + dx), y: Math.round(o.y + dy) } as Partial<Card>)
         }
         const set = new Set(g.ids)
-        // Columns hold cards: a drag that carries a column or stickers never drops into one.
-        const hasColumn = g.ids.some((id) => doc.getCard(id)?.type === 'column' || !doc.getCard(id))
+        // Columns hold cards: a drag that carries a column, ink drawn on the board or stickers never drops into one.
+        const hasColumn = g.ids.some((id) => doc.getCard(id)?.type === 'column' || doc.getCard(id)?.type === 'ink' || !doc.getCard(id))
         const col = hasColumn ? null : columnAt(w, set)
         setDropTarget(col ? { columnId: col.id, index: insertIndex(col.id, w.y, set) } : null)
         break
       }
       case 'resize': {
         const c = doc.getCard(g.id)!
-        const min = c.type === 'image' ? 80 : 160
+        const min = c.type === 'ink' ? 8 : c.type === 'image' ? 80 : c.type === 'sketch' ? 120 : 160
         let w = Math.max(min, Math.round(g.w0 + (e.clientX - g.startX) / camera().zoom))
         // Snapping puts the right edge on a grid line.
         const snapping = snapToGrid() && !e.altKey
@@ -791,6 +797,7 @@ export function Canvas(props: { readOnly: boolean }) {
 
   function onPointerUp(e: PointerEvent) {
     if (e.pointerType === 'touch') return touchUp(e)
+    if (ink.up(e)) return
     const g = gesture
     gesture = null
     setPanning(false)
@@ -987,6 +994,8 @@ export function Canvas(props: { readOnly: boolean }) {
     quickTap = null
     if (fingers.size === 2) {
       zoomArm = null
+      // A second finger means pinch and pan, never a line.
+      ink.cancel()
       cancelGesture()
       const [[ia, a], [ib, b]] = [...fingers]
       gesture = { kind: 'pinch', ids: [ia, ib], startCam: camera(), a0: local({ clientX: a.x, clientY: a.y }), b0: local({ clientX: b.x, clientY: b.y }) }
@@ -995,6 +1004,7 @@ export function Canvas(props: { readOnly: boolean }) {
       return
     }
     if (fingers.size > 2) return
+    if (boardDrawing() && ink.down(e)) return capture(e.pointerId)
     if (startStickerGesture(e)) {
       stickerTouch = true
       // A selection left from before (an editor this touch just closed) mustn't follow the finger.
@@ -1050,6 +1060,7 @@ export function Canvas(props: { readOnly: boolean }) {
     if (!fingers.has(e.pointerId)) return
     fingers.set(e.pointerId, { x: e.clientX, y: e.clientY })
     if (fingerDown && Math.hypot(e.clientX - fingerDown.x, e.clientY - fingerDown.y) > TOUCH_SLOP) fingerDown.moved = true
+    if (ink.move(e)) return
     const g = gesture
     if (!g) return
     if (g.kind === 'tzoom') {
@@ -1103,6 +1114,7 @@ export function Canvas(props: { readOnly: boolean }) {
       zoomArm = null
       stickerTouch = false
     }
+    if (ink.up(e)) return
     const g = gesture
     if (!g) return
     if (g.kind === 'pinch') {
@@ -1192,7 +1204,8 @@ export function Canvas(props: { readOnly: boolean }) {
       touchEdit(g.id, { x: e.clientX, y: e.clientY })
     }
     // A colour card has no caret: a double tap just opens its panel.
-    else if (!lod() && c.type === 'swatch' && double) beginEdit(g.id)
+    // A sketch opens its editor on a double tap, like a double-click.
+    else if (!lod() && (c.type === 'swatch' || c.type === 'sketch') && double) beginEdit(g.id)
   }
 
   function swallowNextClick() {
@@ -1233,7 +1246,7 @@ export function Canvas(props: { readOnly: boolean }) {
   }
 
   function onDblClick(e: MouseEvent) {
-    if (props.readOnly || stickerAt(toWorld(e)) || armedSticker()) return
+    if (props.readOnly || boardDrawing() || stickerAt(toWorld(e)) || armedSticker()) return
     // Touch double-taps are handled in touchTap; Chrome also sends a dblclick for them.
     if (lastPointerType === 'touch') return
     if (e.shiftKey || e.metaKey || e.ctrlKey || e.altKey || spaceHeld() || connectMode() || editingId()) return
@@ -1247,8 +1260,8 @@ export function Canvas(props: { readOnly: boolean }) {
         openBoard((card as Card<'board'>).content.boardId)
         return
       }
-      // An image types its caption right under it; a colour card opens its panel.
-      if ((card?.type === 'image' || card?.type === 'swatch') && !lod()) {
+      // An image types its caption right under it; a colour card opens its panel; a sketch opens its editor.
+      if ((card?.type === 'image' || card?.type === 'swatch' || card?.type === 'sketch') && !lod()) {
         e.preventDefault()
         lastPress = null
         beginEdit(card.id)
@@ -1448,12 +1461,13 @@ export function Canvas(props: { readOnly: boolean }) {
       aria-describedby={props.readOnly ? undefined : 'canvas-keys'}
       onFocus={(e) => { if (e.target === vp && tabbed && !props.readOnly && !vp.contains(e.relatedTarget as Node | null)) enterBoard() }}
       style={dots()}
-      classList={{ panning: panning(), moving: moving(), snapping: snapping(), 'snap-on': snapToGrid(), connecting: !!connectPreview(), 'space-held': spaceHeld(), lod: lod(), 'connect-mode': !!connectMode(), readonly: props.readOnly }}
+      classList={{ panning: panning(), moving: moving(), snapping: snapping(), 'snap-on': snapToGrid(), connecting: !!connectPreview(), 'space-held': spaceHeld(), lod: lod(), 'connect-mode': !!connectMode(), readonly: props.readOnly, 'board-drawing': boardDrawing() && !props.readOnly }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerLeave={(e) => { if (e.pointerType !== 'touch') { lastPointer = null; nearAt = null; setNearHandle('') } }}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
+      onLostPointerCapture={(e) => { if (ink.active()) ink.up(e) }}
       onDblClick={onDblClick}
       onContextMenu={(e) => {
         // Long-press lifts cards on touch; editing fields keep their native menu.
@@ -1493,7 +1507,11 @@ export function Canvas(props: { readOnly: boolean }) {
         </Show>
         </div>
         <StickerLayer readOnly={props.readOnly} />
+        <BoardInkPreview mark={ink.preview()} />
       </div>
+      <Show when={!props.readOnly}>
+        <BoardInkBar />
+      </Show>
       <Show when={lod()}>
         <LodLayer />
       </Show>
@@ -1524,6 +1542,8 @@ export function Canvas(props: { readOnly: boolean }) {
 
 // ---- editing on touch ------------------------------------------------------------
 
+/** Cards edited in a panel or editor of their own, with no caret on the card and no keyboard to make room for. */
+const panelEdit = (id: Id) => { const t = doc.getCard(id)?.type; return t === 'swatch' || t === 'sketch' }
 let movedWhileEditing = false
 /** Phones and short touch screens get the editing camera and keyboard handling. */
 const focusEdits = () => touch() && (phone() || visibleArea().height < 600)
