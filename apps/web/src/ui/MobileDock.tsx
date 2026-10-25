@@ -1,3 +1,4 @@
+import { SheetGrip } from './SheetGrip.tsx'
 import { armedSticker, suggestions, openStickers, setStickerTrayOpen, stickerTrayOpen } from '../state/stickers.ts'
 import { For, Show, createSignal } from 'solid-js'
 import { COPY } from '@doggynote/theme'
@@ -6,8 +7,8 @@ import { camera, setCamera, setPaletteOpen, setTrashOpen, trashOpen, viewport } 
 import { addAnyFiles, addImages } from '../canvas/paste.ts'
 import { BoardNavigation } from './BoardNavigation.tsx'
 import { ToyboxButton } from './ToyboxPanel.tsx'
-import { TOOLS, centrePlacement, modeTool, useTool, type Tool } from './Toolbar.tsx'
-import { Icon, ToolIcons } from './icons.tsx'
+import { PRIMARY_TOOLS, MORE_TOOLS, centrePlacement, modeTool, useTool, type Tool } from './Toolbar.tsx'
+import { Icon } from './icons.tsx'
 import { installMenu } from './menu.ts'
 
 // Phones: the creation rail becomes a thumb-height dock. ＋ opens a sheet of
@@ -18,7 +19,7 @@ export function MobileDock(props: { readOnly: boolean }) {
     <nav class="mobile-dock" aria-label="Quick actions" data-testid="mobile-dock">
       <BoardNavigation />
       <button class="icon-btn" data-testid="open-fetch" aria-label={COPY.search} onClick={() => setPaletteOpen(true)}>
-        <Icon>{ToolIcons.search()}</Icon>
+        <Icon name="search" />
         <span class="icon-btn-label">{COPY.search}</span>
       </button>
       <Show when={!props.readOnly} fallback={<span class="dock-gap" />}>
@@ -27,7 +28,7 @@ export function MobileDock(props: { readOnly: boolean }) {
       <ToyboxButton />
       <Show when={!props.readOnly} fallback={<span class="dock-gap" />}>
         <button class="icon-btn" classList={{ on: trashOpen() }} data-testid="tool-trash" aria-label={COPY.trash} aria-expanded={trashOpen()} onClick={() => setTrashOpen(!trashOpen())}>
-          <Icon>{ToolIcons.trash()}</Icon>
+          <Icon name="bury" />
           <span class="icon-btn-label">{COPY.trashShort}</span>
         </button>
       </Show>
@@ -36,20 +37,13 @@ export function MobileDock(props: { readOnly: boolean }) {
 }
 
 export function MobileStickerButton() {
-  return <Show when={!armedSticker()}><button class="mobile-sticker-launcher" data-testid="mobile-stickers" aria-label="Stickers" aria-expanded={stickerTrayOpen()} aria-controls="sticker-tray" aria-description={suggestions.length ? suggestions.length === 1 ? 'Pack found in Telegram' : `${suggestions.length} packs found in Telegram` : undefined} onClick={() => stickerTrayOpen() ? setStickerTrayOpen(false) : openStickers()}><Icon size={25}><path d="M4 4h16v10l-6 6H4Z M14 20v-6h6 M8 9h.01 M15 9h.01 M8 12q4 5 8 0" /></Icon><Show when={suggestions.length}><span class="sticker-found-dot" data-testid="sticker-found-badge" aria-hidden="true" /></Show></button></Show>
+  return <Show when={!armedSticker()}><button class="mobile-sticker-launcher" data-testid="mobile-stickers" aria-label="Stickers" aria-expanded={stickerTrayOpen()} aria-controls="sticker-tray" aria-description={suggestions.length ? suggestions.length === 1 ? 'Pack found in Telegram' : `${suggestions.length} packs found in Telegram` : undefined} onClick={() => stickerTrayOpen() ? setStickerTrayOpen(false) : openStickers()}><Icon size={25} name="sticker" /><Show when={suggestions.length}><span class="sticker-found-dot" data-testid="sticker-found-badge" aria-hidden="true" /></Show></button></Show>
 }
 
 function AddButton() {
   const [open, setOpen] = createSignal(false)
   let root!: HTMLDivElement, trigger!: HTMLButtonElement, photo!: HTMLInputElement, camInput!: HTMLInputElement, files!: HTMLInputElement
   installMenu(open, () => setOpen(false), () => root, () => trigger)
-  // A burst of taps on ＋ shouldn't flicker the sheet open and shut: ignore taps while it animates.
-  let toggledAt = -Infinity
-  const toggle = () => {
-    if (performance.now() - toggledAt < 350) return
-    toggledAt = performance.now()
-    setOpen(!open())
-  }
 
   // Zoomed out there's no card DOM to type into; come in to 100% first.
   const comeClose = () => {
@@ -77,32 +71,37 @@ function AddButton() {
 
   return (
     <div class="dock-add-wrap" ref={root}>
-      <button ref={trigger} class="dock-add" data-testid="dock-add" aria-label="Add to this board" aria-haspopup="menu" aria-expanded={open()} onClick={toggle}>
-        <Icon size={26}>{ToolIcons.plus()}</Icon>
+      <button ref={trigger} class="dock-add" data-testid="dock-add" aria-label="Add to this board" aria-haspopup="menu" aria-expanded={open()} onClick={() => setOpen(!open())}>
+        <Icon size={26} name="plus" />
       </button>
       <Show when={open()}>
         <div class="menu add-sheet" role="menu" aria-label="Add to this board" data-testid="add-sheet">
-          <div class="add-grid">
-            <For each={TOOLS}>
+          <SheetGrip onDismiss={() => { setOpen(false); trigger.focus() }} />
+          <div class="nav-menu-head"><strong>Add to this board</strong></div>
+          <div class="add-grid add-primary" role="group" aria-label="Create">
+            <For each={PRIMARY_TOOLS}>
               {(t) => (
-                <button class="add-tile" role="menuitem" data-testid={`add-${t.id}`} onClick={() => add(t.id)}>
-                  <span class="add-tile-icon"><Icon size={24}>{t.icon()}</Icon></span>
-                  {t.label}
+                <button class="bar-btn add-tile" classList={{ "add-primary-note": t.id === "note" }} role="menuitem" data-testid={`add-${t.id}`} onClick={() => add(t.id)}>
+                  <span class="add-tile-icon"><Icon size={20} name={t.icon} /></span>
+                  <span class="add-label">{t.label}</span>
                 </button>
               )}
             </For>
-            <button class="add-tile" role="menuitem" data-testid="add-stickers" onClick={() => { setOpen(false); openStickers() }}><span class="add-tile-icon"><Icon size={24}><path d="M4 4h16v10l-6 6H4Z M14 20v-6h6 M8 9h.01 M15 9h.01 M8 12q4 5 8 0" /></Icon></span>Stickers</button>
-            <button class="add-tile" role="menuitem" data-testid="add-photo" onClick={() => pick(photo)}>
-              <span class="add-tile-icon"><Icon size={24}>{ToolIcons.image()}</Icon></span>
-              Photo
+          </div>
+          <div class="add-grid add-secondary" role="group" aria-label="More things to add">
+            <For each={MORE_TOOLS}>{(t) => <button class="bar-btn add-tile" role="menuitem" data-testid={`add-${t.id}`} onClick={() => add(t.id)}><span class="add-tile-icon"><Icon size={20} name={t.icon} /></span><span class="add-label">{t.label}</span></button>}</For>
+            <button class="bar-btn add-tile" role="menuitem" data-testid="add-stickers" onClick={() => { setOpen(false); openStickers() }}><span class="add-tile-icon"><Icon size={20} name="sticker" /></span><span class="add-label">Stickers</span></button>
+            <button class="bar-btn add-tile" role="menuitem" data-testid="add-photo" onClick={() => pick(photo)}>
+              <span class="add-tile-icon"><Icon size={20} name="image" /></span>
+              <span class="add-label">Photo</span>
             </button>
-            <button class="add-tile" role="menuitem" data-testid="add-camera" onClick={() => pick(camInput)}>
-              <span class="add-tile-icon"><Icon size={24}>{ToolIcons.camera()}</Icon></span>
-              Camera
+            <button class="bar-btn add-tile" role="menuitem" data-testid="add-camera" onClick={() => pick(camInput)}>
+              <span class="add-tile-icon"><Icon size={20} name="camera" /></span>
+              <span class="add-label">Camera</span>
             </button>
-            <button class="add-tile" role="menuitem" data-testid="add-file" onClick={() => pick(files)}>
-              <span class="add-tile-icon"><Icon size={24}>{ToolIcons.upload()}</Icon></span>
-              File
+            <button class="bar-btn add-tile" role="menuitem" data-testid="add-file" onClick={() => pick(files)}>
+              <span class="add-tile-icon"><Icon size={20} name="upload" /></span>
+              <span class="add-label">File</span>
             </button>
           </div>
         </div>

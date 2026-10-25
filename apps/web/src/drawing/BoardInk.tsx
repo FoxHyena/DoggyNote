@@ -10,7 +10,7 @@ import { boardDrawing, boardErasing, endBoardDrawing, inkColor, inkTool, inkWidt
 import { theme } from '../theme.ts'
 import { showToast } from '../state/toast.ts'
 import { rectOf } from '../canvas/layout.ts'
-import { IconButton, ToolIcons } from '../ui/icons.tsx'
+import { IconButton } from '../ui/icons.tsx'
 import { InkTools } from './InkTools.tsx'
 import './ink.css'
 
@@ -214,7 +214,7 @@ export function BoardInkBar() {
       >
         <InkTools />
         {/* Undo and Redo stay where they always are, in the canvas controls. */}
-        <IconButton testid="board-ink-done" icon={ToolIcons.check} label="Done drawing" title="Done (Esc)" onClick={endBoardDrawing} />
+        <IconButton testid="board-ink-done" icon="check" label="Done drawing" title="Done (Esc)" onClick={endBoardDrawing} />
       </section>
     </Show>
   )

@@ -8,7 +8,7 @@ import { beginEdit, camera, editIsNewCard, endEdit, onEndEdit } from '../state/u
 import { exportScale, exporting } from '../state/export.ts'
 import { clock } from '../state/todos.ts'
 import { resolveMovie, searchMovies, type SearchHit } from '../state/movies.ts'
-import { Icon, ToolIcons } from '../ui/icons.tsx'
+import { Icon } from '../ui/icons.tsx'
 import type { CardProps } from '../canvas/CardView.tsx'
 import { revealCard } from '../canvas/Canvas.tsx'
 
@@ -176,7 +176,7 @@ function MovieSearch(props: { card: Card<'movie'> }) {
                 onClick={() => pick(h)}
               >
                 <span class="movie-result-thumb">
-                  <Show when={h.thumb} fallback={<Icon>{ToolIcons.film()}</Icon>}>
+                  <Show when={h.thumb} fallback={<Icon name="film" />}>
                     <img src={h.thumb} alt="" loading="lazy" referrerpolicy="no-referrer" draggable={false} />
                   </Show>
                 </span>
@@ -235,7 +235,7 @@ export function MovieCard(props: CardProps<'movie'>) {
             // Left without a pick (a reload mid-search): a quiet placeholder, not a search box that grabs focus.
             fallback={
               <div class="movie-empty" data-testid="movie-empty">
-                <Icon>{ToolIcons.film()}</Icon>
+                <Icon name="film" />
                 <Show when={!props.readOnly} fallback={<span>No title picked</span>}>
                   <button class="link-btn" data-nodrag onClick={() => beginEdit(id, { isNew: true })}>Pick a movie or show</button>
                 </Show>
@@ -248,12 +248,12 @@ export function MovieCard(props: CardProps<'movie'>) {
       >
         <div class="movie-card" classList={{ watched: !!c().watched, 'movie-row': inColumn(), 'movie-tall': !inColumn() }} data-status={c().status} data-testid="movie-card">
           <div class="movie-poster" data-testid="movie-poster">
-            <Show when={c().assetId} fallback={<span class="movie-poster-empty"><Icon>{ToolIcons.film()}</Icon></span>}>
+            <Show when={c().assetId} fallback={<span class="movie-poster-empty"><Icon name="film" /></span>}>
               <Poster assetId={c().assetId!} title={c().title} width={inColumn() ? ROW_POSTER_W : props.card.w - PAD * 2} />
             </Show>
             {/* Where there's no Watched button to show it (share links, view-only boards). */}
             <Show when={c().watched && props.readOnly}>
-              <span class="movie-watched-badge" aria-hidden="true"><Icon>{ToolIcons.check()}</Icon></span>
+              <span class="movie-watched-badge" aria-hidden="true"><Icon name="check" /></span>
             </Show>
           </div>
           <div class="movie-body">
@@ -277,7 +277,7 @@ export function MovieCard(props: CardProps<'movie'>) {
                     data-testid="movie-watched"
                     onClick={toggleWatched}
                   >
-                    <Icon>{ToolIcons.check()}</Icon>
+                    <Icon name="check" />
                   </button>
                   <Show when={c().info}>
                     <button
@@ -289,7 +289,7 @@ export function MovieCard(props: CardProps<'movie'>) {
                       data-testid="movie-details-toggle"
                       onClick={toggleDetails}
                     >
-                      <Icon>{ToolIcons.info()}</Icon>
+                      <Icon name="info" />
                     </button>
                   </Show>
                 </div>

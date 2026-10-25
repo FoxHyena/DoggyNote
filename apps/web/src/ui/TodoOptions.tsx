@@ -4,12 +4,18 @@ import * as doc from '../state/doc.ts'
 import { showToast } from '../state/toast.ts'
 import { editingId, endEdit } from '../state/ui.ts'
 import { BarMenu } from './BarMenu.tsx'
-import { Icon, ToolIcons } from './icons.tsx'
+import { Icon } from './icons.tsx'
 
 // "List" in the selection bar of a to-do card: sort done tasks to the bottom,
 // fold them away, or clear them. Each is one undo step.
 
 export function TodoOptions(props: { card: Card<'todo'> }) {
+  return <BarMenu label="List" title="List options" testId="todo-options" menuTestId="todo-options-menu" icon={<Icon size={18} name="sliders" />}>
+    {(close) => <TodoMenuItems card={props.card} close={close} />}
+  </BarMenu>
+}
+
+export function TodoMenuItems(props: { card: Card<'todo'>; close: () => void }) {
   const content = () => props.card.content
   const sorting = () => content().sortDone !== false
   const done = () => content().items.filter((i) => i.done).length
@@ -26,12 +32,10 @@ export function TodoOptions(props: { card: Card<'todo'> }) {
     set({ items: clearDone(content().items) }, true)
     showToast(`Cleared ${n} done ${n === 1 ? 'task' : 'tasks'}`, 5000, { label: 'Undo', run: () => doc.undo() })
   }
-  const check = (on: boolean) => <span class="menu-check" aria-hidden="true"><Show when={on}><Icon size={16}>{ToolIcons.check()}</Icon></Show></span>
+  const check = (on: boolean) => <span class="menu-check" aria-hidden="true"><Show when={on}><Icon size={16} name="check" /></Show></span>
 
   return (
-    <BarMenu label="List" title="List options" testId="todo-options" menuTestId="todo-options-menu" icon={<Icon size={18}>{ToolIcons.sliders()}</Icon>}>
-      {(close) => (
-        <>
+    <>
           <button class="menu-item" role="menuitemcheckbox" aria-checked={sorting()} data-testid="todo-sort-done" onClick={toggleSort}>
             {check(sorting())}
             Sort done to the bottom
@@ -41,12 +45,10 @@ export function TodoOptions(props: { card: Card<'todo'> }) {
             Fold away done tasks
           </button>
           <div class="menu-sep" role="separator" />
-          <button class="menu-item" role="menuitem" data-testid="todo-clear-done" disabled={!done()} onClick={() => { clear(); close() }}>
-            <span class="menu-check" aria-hidden="true"><Icon size={16}>{ToolIcons.trash()}</Icon></span>
+          <button class="menu-item" role="menuitem" data-testid="todo-clear-done" disabled={!done()} onClick={() => { clear(); props.close() }}>
+            <span class="menu-check" aria-hidden="true"><Icon size={16} name="bury" /></span>
             {done() ? `Clear ${done()} done` : 'Nothing done yet'}
           </button>
-        </>
-      )}
-    </BarMenu>
+    </>
   )
 }

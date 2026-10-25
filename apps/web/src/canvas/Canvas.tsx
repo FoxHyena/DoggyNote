@@ -37,8 +37,9 @@ import {
   type Vec,
 } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
+import { enterBoard } from '../state/keyboardNav.ts'
 import { CollaborationOverlay } from '../ui/Collaboration.tsx'
-import { pingAt, liveState, clearLivePreviews } from '../state/realtime.ts'
+import { peers, liveState, clearLivePreviews } from '../state/realtime.ts'
 import * as doc from '../state/doc.ts'
 import {
   beginEdit,
@@ -81,6 +82,7 @@ import { resetPageScroll, visible as visibleArea } from '../state/viewport.ts'
 import { showToast } from '../state/toast.ts'
 import { boardDrawing } from '../state/drawing.ts'
 import { BoardInkBar, BoardInkPreview, createBoardInk } from '../drawing/BoardInk.tsx'
+import { CardContextMenu, type ContextPoint } from '../ui/CardContextMenu.tsx'
 
 type Gesture =
   | { kind: 'sticker'; original: Sticker; action: 'move' | 'transform'; start: Vec; client: Vec; canDrag: boolean; moved: boolean; snap: Record<Id, Partial<Obj>> }
@@ -114,7 +116,7 @@ const EDIT_DOCK = 56
 type Client = { clientX: number; clientY: number; altKey?: boolean }
 
 export function Canvas(props: { readOnly: boolean }) {
-  const [contextPoint, setContextPoint] = createSignal<{ x: number; y: number; screenX: number; screenY: number } | null>(null)
+  const [contextPoint, setContextPoint] = createSignal<ContextPoint | null>(null)
   let vp!: HTMLDivElement
   const [marquee, setMarquee] = createSignal<Rect | null>(null)
   const [spaceHeld, setSpaceHeld] = createSignal(false)
@@ -226,6 +228,8 @@ export function Canvas(props: { readOnly: boolean }) {
   // ---- camera per board ------------------------------------------------------
   createEffect(
     on(boardId, (id) => {
+      cancelCameraAnimation()
+      stopMomentum()
       // Effects can run before the ResizeObserver's first callback. Measure even when a
       // saved camera is restored: a ⌘1 or ⌘0 that lands first would otherwise fit the
       // board into the 1×1 placeholder viewport and zoom out to the minimum.
@@ -1276,6 +1280,7 @@ export function Canvas(props: { readOnly: boolean }) {
   let wheelFrame = 0
   function onWheel(e: WheelEvent) {
     e.preventDefault()
+    cancelCameraAnimation()
     stopMomentum()
     const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? vp.clientHeight : 1
     if (e.ctrlKey || e.metaKey) {
@@ -1302,10 +1307,15 @@ export function Canvas(props: { readOnly: boolean }) {
   const onGestureStart = (e: Event) => {
     e.preventDefault()
     gestureZoom = camera().zoom
+    if (fingers.size) return
+    cancelCameraAnimation()
+    stopMomentum()
   }
   const onGestureChange = (e: Event) => {
     e.preventDefault()
     if (fingers.size) return
+    cancelCameraAnimation()
+    stopMomentum()
     const ge = e as Event & { scale: number; clientX: number; clientY: number }
     setCamera(zoomAt(camera(), local(ge), gestureZoom * ge.scale))
   }
@@ -1392,9 +1402,14 @@ export function Canvas(props: { readOnly: boolean }) {
     window.addEventListener('keydown', onGestureEscape, true)
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
+    window.addEventListener('keydown', noteTab, true)
+    window.addEventListener('pointerdown', forgetTab, true)
     document.addEventListener('paste', onPaste)
     document.addEventListener('copy', onCopy)
     onCleanup(() => {
+      cancelCameraAnimation()
+      stopMomentum()
+      cancelAnimationFrame(wheelFrame)
       ro.disconnect()
       vp.removeEventListener('wheel', onWheel)
       vp.removeEventListener('touchmove', onTouchMoveNative)
@@ -1405,6 +1420,8 @@ export function Canvas(props: { readOnly: boolean }) {
       window.removeEventListener('keydown', onGestureEscape, true)
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
+      window.removeEventListener('keydown', noteTab, true)
+      window.removeEventListener('pointerdown', forgetTab, true)
       document.removeEventListener('paste', onPaste)
       document.removeEventListener('copy', onCopy)
     })
@@ -1429,11 +1446,20 @@ export function Canvas(props: { readOnly: boolean }) {
     }
   }
 
+  // Tab onto the board goes straight to a card; a click on empty canvas doesn't pick one.
+  let tabbed = false
+  const noteTab = (e: KeyboardEvent) => { tabbed = e.key === 'Tab' }
+  const forgetTab = () => { tabbed = false }
+
   return (
     <div
       ref={vp}
       class="viewport"
       data-testid="canvas"
+      tabIndex={0}
+      aria-label={props.readOnly ? 'Board' : 'Board. Tab goes to the cards.'}
+      aria-describedby={props.readOnly ? undefined : 'canvas-keys'}
+      onFocus={(e) => { if (e.target === vp && tabbed && !props.readOnly && !vp.contains(e.relatedTarget as Node | null)) enterBoard() }}
       style={dots()}
       classList={{ panning: panning(), moving: moving(), snapping: snapping(), 'snap-on': snapToGrid(), connecting: !!connectPreview(), 'space-held': spaceHeld(), lod: lod(), 'connect-mode': !!connectMode(), readonly: props.readOnly, 'board-drawing': boardDrawing() && !props.readOnly }}
       onPointerDown={onPointerDown}
@@ -1444,10 +1470,19 @@ export function Canvas(props: { readOnly: boolean }) {
       onLostPointerCapture={(e) => { if (ink.active()) ink.up(e) }}
       onDblClick={onDblClick}
       onContextMenu={(e) => {
-        // Long-press is ours on touch (lift a card), not the browser's menu.
-        if (lastPointerType !== 'touch' && (liveState() !== 'live' || (e.target as Element).closest('input,textarea,[contenteditable="true"],a,button'))) return
+        // Long-press lifts cards on touch; editing fields keep their native menu.
+        if (lastPointerType === 'touch') { e.preventDefault(); return }
+        const target = e.target as Element
+        if (target.closest('input,textarea,[contenteditable="true"],a')) return
+        const id = cardIdAt(target, e)
+        const card = id ? doc.getCard(id) : undefined
+        if (!card && target.closest('button,[data-nodrag]')) return
+        const canPing = liveState() === 'live' && peers().length > 0
+        if ((!card || props.readOnly) && !canPing) return
         e.preventDefault()
-        if (lastPointerType !== 'touch') { const p = toWorld(e); setContextPoint({ ...p, screenX: e.clientX, screenY: e.clientY }) }
+        endEdit()
+        if (card && !props.readOnly && !selection().has(card.id)) select([card.id])
+        setContextPoint({ ...toWorld(e), screenX: e.clientX, screenY: e.clientY, cardId: props.readOnly ? null : card?.id ?? null, returnTo: (card && cardEl(card.id)) || vp })
       }}
       onDragOver={(e) => {
         if (!props.readOnly) e.preventDefault()
@@ -1458,8 +1493,9 @@ export function Canvas(props: { readOnly: boolean }) {
         handleCanvasDrop(e, toWorld(e))
       }}
     >
+      <Show when={!props.readOnly}><p id="canvas-keys" class="save-label-quiet">Option or Alt with the arrow keys moves between cards. The arrow keys move the selected card. Enter edits a card or opens a board.</p></Show>
       <CollaborationOverlay />
-      <Show when={contextPoint()}><div class="menu canvas-ping-menu" data-nodrag style={{ position: 'fixed', left: `${Math.min(contextPoint()!.screenX, innerWidth - 160)}px`, top: `${Math.min(contextPoint()!.screenY, innerHeight - 60)}px`, 'z-index': 50 }}><button class="menu-item" onMouseDown={(e) => e.preventDefault()} onClick={() => { pingAt(contextPoint()!); setContextPoint(null) }} onBlur={() => setContextPoint(null)} onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setContextPoint(null); document.querySelector<HTMLButtonElement>('[data-testid="collaborators"]')?.focus() } }} ref={(el) => queueMicrotask(() => el.focus())}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>{COPY.lookHere}</button></div></Show>
+      <Show when={contextPoint()} keyed>{(point) => <CardContextMenu point={point} close={() => setContextPoint(null)} />}</Show>
       <div class="world" data-testid="world" style={{ transform: transform() }}>
         <Show when={snapping()}>
           <GridGlow />
@@ -1659,9 +1695,14 @@ export function stopMomentum() {
 }
 
 let anim = 0
+let cameraAnimation = 0
+let removeMotionListener: (() => void) | undefined
 export function cancelCameraAnimation() {
+  cameraAnimation++
   cancelAnimationFrame(anim)
   anim = 0
+  removeMotionListener?.()
+  removeMotionListener = undefined
 }
 
 /**
@@ -1683,12 +1724,33 @@ export function revealCard(id: Id, from = 0) {
 
 /** Ease the camera to a target. Short and springy: it should feel physical, not slow. */
 export function animateCamera(to: { x: number; y: number; zoom: number }, ms = 220, done?: () => void) {
-  cancelAnimationFrame(anim)
+  cancelCameraAnimation()
   stopMomentum()
+  const version = cameraAnimation
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)')
+  const finish = () => {
+    if (version !== cameraAnimation) return
+    cancelCameraAnimation()
+    setCamera(to)
+    done?.()
+  }
+  const land = () => {
+    if (version !== cameraAnimation) return
+    cancelAnimationFrame(anim)
+    setCamera(to)
+    // Focus callbacks may need the card DOM mounted at the new camera first.
+    anim = requestAnimationFrame(finish)
+  }
+  const preference = () => { if (reduce.matches) land() }
+  reduce.addEventListener('change', preference)
+  removeMotionListener = () => reduce.removeEventListener('change', preference)
+  if (reduce.matches || ms <= 0) return land()
   const from = camera()
   const t0 = performance.now()
   const ease = (t: number) => 1 - Math.pow(1 - t, 3)
   const step = (now: number) => {
+    if (version !== cameraAnimation) return
+    if (reduce.matches) return land()
     const t = Math.min(1, (now - t0) / ms)
     const k = ease(t)
     // Read every frame: the viewport can change size mid-glide (a phone's keyboard).
@@ -1702,10 +1764,7 @@ export function animateCamera(to: { x: number; y: number; zoom: number }, ms = 2
     const cy = cf.y + (ct.y - cf.y) * k
     setCamera({ x: cx - v.width / 2 / zoom, y: cy - v.height / 2 / zoom, zoom })
     if (t < 1) anim = requestAnimationFrame(step)
-    else {
-      anim = 0
-      done?.()
-    }
+    else finish()
   }
   anim = requestAnimationFrame(step)
 }

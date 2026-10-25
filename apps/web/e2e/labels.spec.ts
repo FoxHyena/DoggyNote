@@ -1,7 +1,8 @@
+import { runCardAction } from './helpers.ts'
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test'
 import { MOD, addNote, clickEmpty, freshBoard, waitForSync } from './helpers.ts'
 
-// Labels open from the selection bar in a small popover: type to filter, click
+// Labels open from right-click in a small popover: type to filter, click
 // to toggle, Enter or Create to make one. Rows rename in place.
 
 const contexts = new Set<BrowserContext>()
@@ -31,7 +32,7 @@ async function openLabels(page: Page, card: ReturnType<Page['locator']>) {
   await expect(card).not.toHaveClass(/selected/)
   await card.click()
   await expect(card).toHaveClass(/selected/)
-  await page.getByTestId('labels-button').click()
+  await runCardAction(page, 'Labels')
   await expect(popover(page)).toBeVisible()
   await expect(page.getByTestId('labels-input')).toBeFocused()
 }
@@ -56,8 +57,8 @@ test('create, filter, toggle and rename labels in place; they persist and reach 
   const card = await addNote(page, `Warm side light ${tag}`)
   await openLabels(page, card)
 
-  // A small panel anchored to the button, not a full-screen dialog.
-  const anchor = (await page.getByTestId('labels-button').boundingBox())!
+  // A small panel anchored to the card, not a full-screen dialog.
+  const anchor = (await card.boundingBox())!
   const box = (await popover(page).boundingBox())!
   expect(box.width).toBeLessThan(340)
   expect(Math.abs(box.x - anchor.x)).toBeLessThan(anchor.width + 16)
@@ -71,7 +72,7 @@ test('create, filter, toggle and rename labels in place; they persist and reach 
   await expect(row(page, 'Lighting').getByTestId('label-toggle')).toHaveAttribute('aria-pressed', 'true')
   await expect(page.getByTestId('labels-input')).toHaveValue('')
   // Gold chip, from the theme.
-  expect(await background(chips(card).first())).toBe(await token(page, '--dn-card-gold-bg'))
+  await expect(chips(card).first()).toHaveCSS('background-color', await token(page, '--dn-card-gold-bg'))
 
   // A second one through the Create button.
   await page.getByTestId('labels-input').fill('Question')
@@ -187,12 +188,12 @@ test('a custom colour from the wheel, and a rename that clashes stays open with 
   await expect(chips(card)).toHaveText(['Mood'])
   // A light custom colour gets black text; a dark one gets white.
   expect(await background(chips(card).first())).toBe('rgb(161, 178, 195)')
-  expect(await textColor(chips(card).first())).toBe('rgb(0, 0, 0)')
+  await expect.poll(() => textColor(chips(card).first())).toBe('rgb(0, 0, 0)')
   await row(page, 'Mood').hover()
   await row(page, 'Mood').getByTestId('label-recolor').click()
   await row(page, 'Mood').getByTestId('label-custom-color').fill('#1a2b3c')
   await expect.poll(() => background(chips(card).first())).toBe('rgb(26, 43, 60)')
-  expect(await textColor(chips(card).first())).toBe('rgb(255, 255, 255)')
+  await expect.poll(() => textColor(chips(card).first())).toBe('rgb(255, 255, 255)')
 
   await page.getByTestId('labels-input').fill('Tone')
   await page.keyboard.press('Enter')
@@ -261,7 +262,7 @@ test('Remove takes a label off the board, and Undo in the toast brings it back o
   await clickEmpty(page)
   await a.click()
   await b.click({ modifiers: ['Shift'] })
-  await page.getByTestId('labels-button').click()
+  await runCardAction(page, 'Labels')
   await page.keyboard.type('Mood')
   await page.keyboard.press('Enter')
   await expect(chips(a)).toHaveText(['Mood'])
@@ -302,5 +303,6 @@ test('new labels get a random preset, a different one each time on a fresh board
   expect(colors[0]).not.toBe(colors[1])
   expect(colors).toContain(first)
   // Preset chips pick black or white text too: dark gold/peach etc. all read with one of them.
-  for (const chip of await chips(card).all()) expect(['rgb(0, 0, 0)', 'rgb(255, 255, 255)']).toContain(await textColor(chip))
+  // Polled: WebKit can read a chip mid-render and report no colour at all.
+  for (const chip of await chips(card).all()) await expect.poll(() => textColor(chip)).toMatch(/^rgb\((0, 0, 0|255, 255, 255)\)$/)
 })

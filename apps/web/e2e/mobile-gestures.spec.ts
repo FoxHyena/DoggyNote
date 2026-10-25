@@ -1,3 +1,4 @@
+import { chooseCardColour } from './touch.ts'
 import { expect, test, type Page } from '@playwright/test'
 import { at, camera, cardByText, freshBoard, waitForSync } from './helpers.ts'
 import { Fingers, center, longPress, note, pinch, seedCards, setCamera, tap, tapHoldSlide, tapOn, touchDrag } from './touch.ts'
@@ -50,7 +51,7 @@ test('a tap on a column title selects it for colour; a second tap renames it', a
   await tapOn(page, column.getByTestId('column-title'))
   await expect(column).toHaveClass(/selected/)
   await expect(page.getByTestId('column-title-input')).toHaveCount(0)
-  await page.getByTestId('swatch-sky').tap()
+  await chooseCardColour(page, 'sky')
   await expect(column).toHaveClass(/colored/)
   await tapOn(page, column.getByTestId('column-title'))
   await expect(page.getByTestId('column-title-input')).toBeFocused()

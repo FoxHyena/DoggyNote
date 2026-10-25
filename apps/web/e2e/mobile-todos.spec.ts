@@ -9,9 +9,15 @@ const list = (page: Page) => page.locator('[data-type=todo]').first()
 const texts = (page: Page) => list(page).locator('.todo-item .todo-text').evaluateAll((els) => els.map((e) => e.firstChild?.textContent ?? ''))
 
 async function tapGutter(page: Page, text: string) {
-  const box = (await list(page).getByRole('checkbox', { name: text }).boundingBox())!
-  // A fingertip lands a little off the 14px box.
-  await tap(page, { x: box.x + box.width / 2 + 10, y: box.y + box.height / 2 + 4 })
+  let point!: { x: number; y: number }
+  await expect.poll(async () => {
+    const box = await list(page).getByRole('checkbox', { name: text }).boundingBox()
+    if (!box) return false // A sync render can briefly replace the row.
+    // A fingertip lands a little off the 14px box.
+    point = { x: box.x + box.width / 2 + 10, y: box.y + box.height / 2 + 4 }
+    return true
+  }).toBe(true)
+  await tap(page, point)
 }
 
 test.beforeEach(async ({ page }) => {
@@ -52,8 +58,8 @@ test('a tap just after the rows swap is ignored, so it cannot hit the row that s
 
 test('list options open as a sheet from the selection bar', async ({ page }) => {
   await tapOn(page, list(page).locator('.todo-title'))
-  await page.getByTestId('todo-options').tap()
-  const menu = page.getByTestId('todo-options-menu')
+  await page.getByTestId('selection-more').tap()
+  const menu = page.getByTestId('selection-more-menu')
   await expect(menu).toBeVisible()
   const box = (await menu.boundingBox())!
   const viewport = page.viewportSize()!

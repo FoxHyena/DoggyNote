@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { MOD, clickEmpty, freshBoard, pullAllObjects, waitForSync } from './helpers.ts'
+import { MOD, clickEmpty, freshBoard, postSync, pullAllObjects, waitForSync } from './helpers.ts'
 import { boardOf, seedCards, setCamera } from './touch.ts'
 
 // Movie and show cards, against a stand-in TMDB (e2e/fixture-server.mjs): search
@@ -184,7 +184,7 @@ test('a poster can’t be borrowed by someone who can’t see it', async ({ page
   const resolved = await (await page.request.post('/api/movies/resolve', { data: { tmdbId: 157336, kind: 'movie' } })).json()
   const board = crypto.randomUUID(), card = crypto.randomUUID()
   const now = Date.now()
-  const mine = await page.request.post('/api/sync', { data: { changes: [
+  const mine = await postSync(page.request, { data: { changes: [
     { id: board, patch: { id: board, kind: 'board', parentId: null, title: 'Rex only', icon: 'paw', color: 'gold', createdAt: now } },
     { id: card, patch: { id: card, kind: 'card', type: 'movie', boardId: board, x: 0, y: 0, w: 300, h: 162, z: 1, color: 'none', createdAt: now, content: { kind: 'movie', tmdbId: 157336, title: 'Interstellar', assetId: resolved.assetId, status: 'ok' } } },
   ] } })

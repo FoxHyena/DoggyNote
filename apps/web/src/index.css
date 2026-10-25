@@ -164,8 +164,9 @@ html[data-input="mouse"] .icon-btn:hover:not(:disabled) {
   z-index: 50;
 }
 
-/* The canvas right-click menu sits at the pointer: size it to its one item, not to the screen edge. */
+/* Canvas menus sit at the pointer; a solo location ping stays compact. */
 .canvas-ping-menu { right: auto; min-width: 0; }
+.card-context-menu { min-width: 190px; }
 
 .menu-item {
   display: flex;
@@ -247,6 +248,12 @@ html[data-input="mouse"] .menu-item:hover {
   background-position: var(--dot-x, 0) var(--dot-y, 0);
 }
 
+/* Tabbing onto an empty board still shows where focus is. */
+.viewport:focus-visible {
+  outline: 2px solid var(--dn-selection);
+  outline-offset: -2px;
+}
+
 /* Snapping: the snapped card glides the last few px instead of jumping. */
 .viewport.snapping .card.dragging,
 .viewport.snapping .card.resizing {
@@ -281,7 +288,7 @@ html[data-input="mouse"] .menu-item:hover {
 /* A paw while panning. */
 .viewport.space-held,
 .viewport.readonly {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24'%3E%3Cg fill='%23e8a849' stroke='%231c1b1a' stroke-width='1'%3E%3Cellipse cx='12' cy='15.5' rx='4.4' ry='3.8'/%3E%3Ccircle cx='6.3' cy='10' r='2.1'/%3E%3Ccircle cx='9.6' cy='6.4' r='2.1'/%3E%3Ccircle cx='14.4' cy='6.4' r='2.1'/%3E%3Ccircle cx='17.7' cy='10' r='2.1'/%3E%3C/g%3E%3C/svg%3E") 13 13, grab;
+  cursor: url("./assets/paw-cursor.svg") 13 13, grab;
 }
 
 .viewport.panning {
@@ -569,22 +576,22 @@ html[data-input='mouse'] .connect-handle:hover {
   margin: 0 0 0.4em;
 }
 
-.rich h1,
-.rich h2,
-.rich h3 {
+.rich .md-h1,
+.rich .md-h2,
+.rich .md-h3 {
   margin: 0.2em 0 0.35em;
   line-height: 1.25;
 }
 
-.rich h1 {
+.rich .md-h1 {
   font-size: 1.35em;
 }
 
-.rich h2 {
+.rich .md-h2 {
   font-size: 1.18em;
 }
 
-.rich h3 {
+.rich .md-h3 {
   font-size: 1.05em;
 }
 
@@ -621,9 +628,9 @@ html[data-input='mouse'] .connect-handle:hover {
   background: color-mix(in srgb, currentColor 10%, transparent);
 }
 
-.rich h4,
-.rich h5,
-.rich h6 {
+.rich .md-h4,
+.rich .md-h5,
+.rich .md-h6 {
   margin: 0.2em 0 0.35em;
   font-size: 1em;
 }
@@ -1419,19 +1426,11 @@ html[data-input="mouse"] .danger-btn:hover {
   color: var(--dn-text-muted);
 }
 
-.loader .tail {
-  transform-origin: 22px 32px;
-  animation: wag 0.65s ease-in-out infinite alternate;
-}
-
-@keyframes wag {
-  from {
-    transform: rotate(-22deg);
-  }
-  to {
-    transform: rotate(18deg);
-  }
-}
+.dn-icon { flex-shrink: 0; vertical-align: middle; }
+.dog-mark { display: inline-flex; align-items: center; justify-content: center; }
+.loader .dog-mark { color: var(--dn-accent); animation: dog-fetch 1.2s ease-in-out infinite alternate; }
+@keyframes dog-fetch { from { opacity: 0.65; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .loader .dog-mark { animation: none; } }
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -2385,7 +2384,11 @@ html[data-input='touch'] .movie-icon-btn::after {
   color: var(--dn-text);
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
   z-index: 60;
-  animation: slide-in 160ms ease-out;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), opacity 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  @starting-style {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
 }
 
 

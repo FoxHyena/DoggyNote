@@ -1,3 +1,4 @@
+import { SheetGrip } from './SheetGrip.tsx'
 import { installCanvasPanel } from './canvasPanel.ts'
 import './canvas-entry.css'
 import { For, Show, createSignal } from 'solid-js'
@@ -11,7 +12,7 @@ import { toyboxCards, toyboxId } from '../state/toybox.ts'
 import { addAnyFiles, addText } from '../canvas/paste.ts'
 import { describeCard } from './TrashPanel.tsx'
 import { placementAt } from './Toolbar.tsx'
-import { Icon, ToolIcons } from './icons.tsx'
+import { Icon } from './icons.tsx'
 import { phone, touch } from '../state/device.ts'
 import { showToast } from '../state/toast.ts'
 import { screenToWorld } from '@doggynote/core'
@@ -29,7 +30,7 @@ export function ToyboxButton() {
       data-tooltip={`Your private ${COPY.unsorted}`}
       onClick={() => setToyboxOpen(!toyboxOpen())}
     >
-      <Icon>{ToolIcons.inbox()}</Icon>
+      <Icon name="inbox" />
       <span class="icon-btn-label">
         {COPY.unsorted}
         <Show when={toyboxCards().length}><span class="count-inline"> · {toyboxCards().length}</span></Show>
@@ -109,11 +110,11 @@ export function ToyboxPanel() {
 
   return (
     <Show when={toyboxOpen()}>
-      <aside ref={panel} class="trash toybox" data-testid="toybox-panel" aria-label={COPY.unsorted} onPaste={onPaste} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
+      <aside ref={panel} class="trash toybox" data-testid="toybox-panel" aria-label={COPY.unsorted} onPaste={onPaste} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}><SheetGrip onDismiss={() => setToyboxOpen(false)} />
         <header class="trash-head">
           <h2>{COPY.unsorted}</h2>
           <button class="icon-btn" title="Close" onClick={() => setToyboxOpen(false)}>
-            <Icon>{ToolIcons.close()}</Icon>
+            <Icon name="close" />
           </button>
         </header>
         <p class="toybox-sub">Only you can see this. {touch() ? 'Place things onto a board when you\'re ready.' : 'Drag things onto a board when you\'re ready.'}</p>
@@ -135,7 +136,7 @@ export function ToyboxPanel() {
           />
           <div class="toybox-add-actions">
             <button class="icon-btn" data-testid="toybox-photo" aria-label="Add a photo" title="Add a photo" onClick={() => photo.click()}>
-              <Icon>{ToolIcons.image()}</Icon>
+              <Icon name="image" />
             </button>
             <button class="primary-btn" data-testid="toybox-add" disabled={!draft().trim()} onClick={add}>Add</button>
           </div>
@@ -185,7 +186,7 @@ export function ToyboxPanel() {
                       showToast(`${COPY.buried} 1 card`, 5000, { label: 'Undo', run: () => doc.undo() })
                     }}
                   >
-                    <Icon size={16}>{ToolIcons.trash()}</Icon>
+                    <Icon size={16} name="bury" />
                   </button>
                 </li>
               )}

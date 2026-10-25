@@ -1,3 +1,4 @@
+import { runCardAction } from './helpers.ts'
 import { readFile } from 'node:fs/promises'
 import { expect, test, type Page } from '@playwright/test'
 import { MOD, dragBy, freshBoard, postSync, pullAllObjects, waitForSync } from './helpers.ts'
@@ -199,7 +200,7 @@ for(const viewport of [{width:600,height:900},{width:720,height:900},{width:720,
       return r.left>=b.left && r.right<=b.right && r.top>=b.top && r.bottom<=b.bottom
     })
   })).toBe(true)
-  await page.getByTestId('bury').click()
+  await runCardAction(page, 'Bury')
   for(const id of ids) await expect(card(page,id)).toHaveCount(0)
   await page.keyboard.press(`${MOD}+z`)
   for(const id of ids) await expect(card(page,id)).toBeVisible()
@@ -207,7 +208,7 @@ for(const viewport of [{width:600,height:900},{width:720,height:900},{width:720,
   await expect(card(page,ids[0]!).getByTestId('position-lock-badge')).toBeVisible()
 })
 
-test('column/member is one alignment unit; member lock pins column and can be unlocked from parent', async ({ page }) => {
+test('member locks stay item-scoped and bar alignment requires explicitly selecting the column', async ({ page }) => {
   const ids = await seed(page), boardId = boardOf(page), columnId = crypto.randomUUID()
   const response = await postSync(page.request,{data:{changes:[{id:columnId,patch:{id:columnId,kind:'card',type:'column',boardId,x:100,y:450,w:280,h:220,z:4,color:'none',content:{title:'Long research column title with a locked reference'},createdAt:Date.now()}},{id:ids[0],patch:{columnId,order:1,positionLocked:true}}]}})
   expect(response.ok(),await response.text()).toBe(true)
@@ -216,9 +217,13 @@ test('column/member is one alignment unit; member lock pins column and can be un
   const before = (await geometry(page,[columnId]))[0]
   await dragBy(page,card(page,columnId).locator('.column-head'),60,50)
   expect((await geometry(page,[columnId]))[0]).toEqual(before)
-  await expect(page.getByTestId('unlock-column-layout')).toBeVisible()
-  await page.getByTestId('unlock-column-layout').click()
+  await expect(page.getByTestId('unlock-column-layout')).toHaveCount(0)
   await selectOnly(page,ids[0]!)
+  await page.getByTestId('position-lock').click()
+  await card(page,ids[1]!).click({modifiers:['Shift']})
+  await expect(page.getByTestId('align-selection')).toHaveCount(0)
+  expect((await geometry(page,[columnId]))[0]).toEqual(before)
+  await selectOnly(page,columnId)
   await card(page,ids[1]!).click({modifiers:['Shift']})
   await page.getByTestId('align-top').click()
   expect((await geometry(page,[columnId,ids[1]!])).map((r)=>r.y)).toEqual([100,100])

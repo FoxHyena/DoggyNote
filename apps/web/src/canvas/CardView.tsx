@@ -1,6 +1,6 @@
 import { ErrorBoundary, For, Match, Show, Switch, createSelector, onCleanup, onMount, type JSX } from 'solid-js'
-import { SIDES, type Card } from '@doggynote/core'
-import { COPY, cardColor, cardColorVars } from '@doggynote/theme'
+import { SIDES, cardSpokenName, type Card } from '@doggynote/core'
+import { COPY, boardDisplayTitle, cardColor, cardColorVars } from '@doggynote/theme'
 import { isPreviewCurrent, previewBadge, type Badge } from '../state/preview.ts'
 import { isPositionLocked } from '../state/position.ts'
 
@@ -11,7 +11,7 @@ import { registerCardEl } from './layout.ts'
 import * as doc from '../state/doc.ts'
 import { isResolved } from '../state/comments.ts'
 import { openThread } from '../ui/CommentsPanel.tsx'
-import { Icon, ToolIcons } from '../ui/icons.tsx'
+import { Icon } from '../ui/icons.tsx'
 import { draggingIds, resizingId } from './dnd.ts'
 import { NoteCard } from '../cards/NoteCard.tsx'
 import { TodoCard } from '../cards/TodoCard.tsx'
@@ -83,6 +83,8 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         colored: cardColor(props.card.color) !== 'none',
       }}
       tabIndex={-1}
+      role="group"
+      aria-label={props.lod ? undefined : cardSpokenName(props.card, (id) => boardDisplayTitle(doc.getBoard(id), 'Board'))}
       data-card-id={props.card.id}
       data-testid="card"
       data-type={props.card.type}
@@ -143,7 +145,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
       </Show>
       </ErrorBoundary>
       <Show when={isPositionLocked(props.card.id) && !props.readOnly && !props.lod}>
-        <span class="position-lock-badge" data-testid="position-lock-badge" title={props.card.positionLocked === true ? 'Position locked — select to unlock' : 'Column layout locked — unlock the column or its locked member'} aria-label="Position locked"><svg width="12" height="14" viewBox="0 0 12 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="6" width="9" height="7" rx="1.5" /><path d="M3.5 6V3.5a2.5 2.5 0 0 1 5 0V6" /></svg></span>
+        <span class="position-lock-badge" data-testid="position-lock-badge" title={props.card.positionLocked === true ? 'Position locked — select to unlock' : 'Column layout locked — unlock the column or its locked member'} aria-label="Position locked"><Icon name="lock" size={12} /></span>
       </Show>
       <Show when={comments() && !props.lod}>
         <button
@@ -157,7 +159,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
             openThread(props.card.id)
           }}
         >
-          <Icon size={13}>{ToolIcons.comment()}</Icon>
+          <Icon size={13} name="comment" />
           {comments()}
         </button>
       </Show>

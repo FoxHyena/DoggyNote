@@ -129,12 +129,15 @@ test('selection controls retain their dimensions and stay clear of floating canv
   expect(box!.x).toBeGreaterThanOrEqual(canvas!.x)
   expect(box!.x + box!.width).toBeLessThanOrEqual(canvas!.x + canvas!.width)
   const docked = await bar.evaluate((el) => el.classList.contains('docked'))
-  // A 24px dot with a mouse; docked, a 32px dot in a target at least 40 wide and 44 tall.
-  const swatch = (await bar.locator('.swatch').first().boundingBox())!
   if (docked) {
-    expect(swatch.width).toBeGreaterThanOrEqual(40)
-    expect(swatch.height).toBe(44)
-  } else expect(swatch.width).toBe(24)
+    // Phone colours are on demand; their full-size targets remain inside the sheet.
+    await expect(bar.locator('.swatch')).toHaveCount(0)
+    await page.getByTestId('selection-colour').click()
+    const swatch = (await page.getByTestId('selection-style-sheet').locator('.swatch').first().boundingBox())!
+    expect(swatch.width).toBeGreaterThanOrEqual(44)
+    expect(swatch.height).toBeGreaterThanOrEqual(44)
+    await page.getByTestId('selection-style-done').click()
+  } else expect((await bar.locator('.swatch').first().boundingBox())!.width).toBe(24)
   if (docked) {
     // Phone width: the bar docks along the bottom and the canvas controls step aside.
     await expect(page.getByTestId('canvas-controls')).toBeHidden()
@@ -142,8 +145,10 @@ test('selection controls retain their dimensions and stay clear of floating canv
     const controls = await page.getByTestId('canvas-controls').boundingBox()
     expect(box!.x + box!.width <= controls!.x || controls!.x + controls!.width <= box!.x || box!.y + box!.height <= controls!.y || controls!.y + controls!.height <= box!.y).toBe(true)
   }
-  await page.getByTestId('bury').scrollIntoViewIfNeeded()
-  await expect(page.getByTestId('bury')).toBeInViewport()
+  if (docked) {
+    await page.getByTestId('bury').scrollIntoViewIfNeeded()
+    await expect(page.getByTestId('bury')).toBeInViewport()
+  } else await expect(bar.getByTestId('bury')).toHaveCount(0)
 })
 
 test('creation tools respond to keyboard activation', async ({ page }, info) => {
@@ -194,7 +199,7 @@ test('quick capture leaves room for status in a short window', async ({ page }, 
   await captureAppearances(page, info, 'capture')
 })
 
-test('touch comments preserve the canvas origin and show long author metadata after toolbar scrolling', async ({ page, browser }, info) => {
+test('touch comments preserve the canvas origin and show long author metadata from More', async ({ page, browser }, info) => {
   const username = `visual_author_${crypto.randomUUID().replaceAll('-', '').slice(0, 16)}`
   const password = 'visual-comment-password'
   const created = await page.request.post('/api/users', { data: { username, password } })
@@ -214,7 +219,8 @@ test('touch comments preserve the canvas origin and show long author metadata af
     await expect(touch.getByTestId('board-name')).toHaveText('Long author comment layout review')
     await addNote(touch, 'Weekend plans and a deliberately long contextual card title', 0.5, 0.5)
     const commentAction = touch.getByTestId('comment-button')
-    // Reproduce the review path: reveal a trailing action in the touch selection bar.
+    // Phone secondary actions live in More rather than a scrolling toolbar.
+    await touch.getByTestId('selection-more').click()
     await commentAction.scrollIntoViewIfNeeded()
     await commentAction.click()
     const panel = touch.getByTestId('comments-panel')

@@ -1,11 +1,11 @@
+import { chooseCardColour, selectionMore } from './touch.ts'
 import { expect, test, type Page } from '@playwright/test'
 import { expectHandlesHittable, freshBoard, waitForSync } from './helpers.ts'
 import { FIXTURES } from './ports.ts'
 import { seedCards, selectionBarFits, tapOn } from './touch.ts'
 
-// On a phone the colours and actions share one sheet along the bottom. Every tint
-// and the custom slot fit one row with fingertip targets, and every action is
-// labelled on screen without a sideways scroll.
+// On a phone five labelled actions fit the dock. Colour opens a focused sheet
+// with seven tints and a custom slot, each with a full fingertip target.
 
 test.beforeEach(async ({ page }) => {
   await freshBoard(page)
@@ -33,7 +33,7 @@ test('tap a colour in the sheet and the picture is framed in it', async ({ page 
   const card = await addImage(page)
   await tapOn(page, card.getByTestId('card-image'))
   await expect(page.getByTestId('selection-bar')).toBeVisible()
-  await page.getByTestId('swatch-ball').tap()
+  await chooseCardColour(page, 'ball')
   await expect(card).toHaveClass(/colored/)
   const ball = await page.evaluate(() => {
     const p = document.createElement('span')
@@ -44,12 +44,12 @@ test('tap a colour in the sheet and the picture is framed in it', async ({ page 
     return c
   })
   await expect.poll(() => card.locator('.image-card').evaluate((el) => getComputedStyle(el, '::after').boxShadow)).toContain(ball)
-  await page.getByTestId('swatch-none').tap()
+  await chooseCardColour(page, 'none')
   await expect(card).not.toHaveClass(/colored/)
 })
 
 for (const width of [0, 360]) {
-  test(`the sheet fits${width ? ` a ${width}px phone` : ''}: one row of colours, labelled actions, no scrolling`, async ({ page }) => {
+  test(`the sheet fits${width ? ` a ${width}px phone` : ''}: five actions, palettes on demand, no scrolling`, async ({ page }) => {
     if (width) await page.setViewportSize({ width, height: 740 })
     const card = await addImage(page)
     await tapOn(page, card.getByTestId('card-image'))
@@ -58,26 +58,9 @@ for (const width of [0, 360]) {
     await selectionBarFits(page)
     const vw = page.viewportSize()!.width
 
-    // Seven tints and the custom slot, all on screen, on one row, each a 44px-tall target.
-    const slots = bar.locator('.swatches > .swatch')
-    await expect(slots).toHaveCount(8)
-    const boxes = await slots.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON() as DOMRect))
-    for (const b of boxes) {
-      expect(b.left).toBeGreaterThanOrEqual(0)
-      expect(b.right).toBeLessThanOrEqual(vw)
-      expect(b.height).toBeGreaterThanOrEqual(44)
-      expect(b.width).toBeGreaterThanOrEqual(40)
-      expect(Math.round(b.top)).toBe(Math.round(boxes[0].top))
-    }
-    // Neighbouring targets don't overlap.
-    for (let i = 1; i < boxes.length; i++) expect(boxes[i].left).toBeGreaterThanOrEqual(boxes[i - 1].right - 0.5)
-    // No colour reads as "none": an empty, slashed ring.
-    expect(await bar.getByTestId('swatch-none').evaluate((el) => [getComputedStyle(el, '::before').backgroundColor, getComputedStyle(el, '::after').content])).toEqual(['rgba(0, 0, 0, 0)', '""'])
-
-    // The lock is one of the actions, and every action shows its label without scrolling.
-    const actions = bar.locator('.bar-actions')
+    const actions = bar.locator('.selection-phone-actions')
     expect(await actions.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
-    for (const [id, label] of [['edit-card', 'Edit'], ['position-lock', 'Lock'], ['comment-button', 'Comment'], ['selection-more', 'More'], ['bury', 'Bury'], ['selection-done', 'Done']] as const) {
+    for (const [id, label] of [['edit-card', 'Edit'], ['selection-colour', 'Colour'], ['labels-button', 'Labels'], ['selection-more', 'More'], ['bury', 'Bury']] as const) {
       const button = actions.getByTestId(id)
       await expect(button).toBeInViewport({ ratio: 1 })
       await expect(button).toContainText(label)
@@ -85,10 +68,23 @@ for (const width of [0, 360]) {
       expect(b.height).toBeGreaterThanOrEqual(44)
       expect(b.width).toBeGreaterThanOrEqual(44)
     }
-    await expect(bar.locator('.bar-position')).toHaveCount(0)
-    await actions.getByTestId('position-lock').tap()
-    await expect(actions.getByTestId('position-lock')).toContainText('Unlock')
-    await expect(actions.getByTestId('position-lock')).toHaveAttribute('aria-pressed', 'true')
+    await expect(bar.locator('.swatches')).toHaveCount(0)
+    await page.getByTestId('selection-colour').tap()
+    const sheet = page.getByTestId('selection-style-sheet')
+    const slots = sheet.locator('.swatches > .swatch')
+    await expect(slots).toHaveCount(8)
+    for (const box of await slots.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON() as DOMRect))) {
+      expect(box.left).toBeGreaterThanOrEqual(0)
+      expect(box.right).toBeLessThanOrEqual(vw)
+      expect(box.height).toBeGreaterThanOrEqual(44)
+      expect(box.width).toBeGreaterThanOrEqual(44)
+    }
+    expect(await sheet.getByTestId('swatch-none').evaluate((el) => [getComputedStyle(el, '::before').backgroundColor, getComputedStyle(el, '::after').content])).toEqual(['rgba(0, 0, 0, 0)', '""'])
+    await page.getByTestId('selection-style-done').tap()
+    await selectionMore(page)
+    await page.getByTestId('position-lock').tap()
+    await expect(page.getByTestId('position-lock')).toContainText('Unlock')
+    await expect(page.getByTestId('position-lock')).toHaveAttribute('aria-checked', 'true')
   })
 }
 

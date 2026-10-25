@@ -1,6 +1,6 @@
 import { Show, createSignal } from 'solid-js'
 import { COPY } from '@doggynote/theme'
-import { BoardIconSvg, Icon, ToolIcons } from './icons.tsx'
+import { BoardIconSvg, Icon } from './icons.tsx'
 import { APP_VERSION, applyUpdate, pendingUpdate, updateRequired } from '../state/updates.ts'
 
 export function UpdateToast() {
@@ -47,7 +47,7 @@ export function UpdateToast() {
             {pendingUpdate()!.kind === 'desktop' ? 'Restart' : 'Reload'}
           </button>
           <button class="icon-btn" title="Later" onClick={() => setDismissed(pendingUpdate()!.version)}>
-            <Icon>{ToolIcons.close()}</Icon>
+            <Icon name="close" />
           </button>
         </div>
       </Show>

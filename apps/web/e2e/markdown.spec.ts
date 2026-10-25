@@ -52,7 +52,7 @@ test('notes are stored as the markdown you typed and rendered formatted', async 
   await page.keyboard.press('Escape')
 
   const note = cardByText(page, 'Walkies')
-  await expect(note.locator('h1')).toHaveText('Walkies')
+  await expect(note.locator('.md-h1')).toHaveText('Walkies')
   await expect(note.locator('li.task')).toHaveCount(2)
   await expect(note.locator('strong')).toHaveText('good')
 
@@ -115,9 +115,12 @@ test('Tab nests list items and Shift-Tab brings them back', async ({ page }) => 
   const note = cardByText(page, 'Walk plan')
   await expect(note.locator('li li')).toHaveText('river')
   // Nested items sit one step right of their parent, as in the editor.
-  const parent = (await note.locator('li', { hasText: 'park' }).first().locator('> p').boundingBox())!
-  const child = (await note.locator('li li', { hasText: 'river' }).first().boundingBox())!
-  expect(child.x).toBeGreaterThan(parent.x + 10)
+  // A sync acknowledgement can replace the static tree between measurements.
+  await expect.poll(() => note.evaluate((element) => {
+    const parent = [...element.querySelectorAll('li > p')].find((p) => p.textContent === 'park')?.getBoundingClientRect()
+    const child = [...element.querySelectorAll('li li')].find((li) => li.textContent === 'river')?.getBoundingClientRect()
+    return parent?.width && child?.width ? child.x - parent.x : 0
+  })).toBeGreaterThan(10)
 })
 
 test('Backspace at the start of a list item outdents it, then makes it a line of its own', async ({ page }) => {
@@ -277,7 +280,7 @@ test('old-format notes still show, and get converted to markdown', async ({ page
   const note = cardByText(page, 'Legacy pup')
   await expect(async () => {
     await page.keyboard.press(`${MOD}+1`)
-    await expect(note.locator('h2')).toHaveText('Legacy pup', { timeout: 1000 })
+    await expect(note.locator('.md-h2')).toHaveText('Legacy pup', { timeout: 1000 })
   }).toPass({ timeout: 15_000 })
   await expect(note.locator('strong')).toHaveText('here')
   await expect.poll(() => serverMarkdown(page, 'Legacy pup'), { timeout: 15_000 }).toBe('## Legacy pup\n\nstill **here**')

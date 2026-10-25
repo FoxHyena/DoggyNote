@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cardLabel, cardText, isKnownCardType, type Card } from './index.ts'
+import { cardLabel, cardSpokenName, cardText, isKnownCardType, type Card } from './index.ts'
 
 const card = (type: string, content: unknown) => ({ id: 'c', kind: 'card', type, boardId: 'b', x: 0, y: 0, w: 1, h: 1, z: 0, color: 'none', createdAt: 0, content }) as unknown as Card
 
@@ -28,5 +28,13 @@ describe('malformed synced cards', () => {
     expect(cardText(card('todo', { title: 'x', items: null }))).toBe('')
     expect(typeof cardLabel(card('note', null), () => '')).toBe('string')
     expect(cardLabel(card('board', null), () => '')).toBe('Card')
+  })
+})
+
+describe('cardSpokenName', () => {
+  it('says the kind, then the name, without repeating itself', () => {
+    expect(cardSpokenName(card('note', { md: '# Trip to the coast\nPack towels' }), () => '')).toBe('Note: Trip to the coast')
+    expect(cardSpokenName(card('todo', { title: '', items: [] }), () => '')).toBe('To-do list')
+    expect(cardSpokenName(card('board', { boardId: 'b1' }), () => 'Holiday plans')).toBe('Board: Holiday plans')
   })
 })

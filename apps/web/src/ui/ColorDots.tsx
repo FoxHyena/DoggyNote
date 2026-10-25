@@ -2,7 +2,7 @@ import { For, Show, type JSX } from 'solid-js'
 import { contrastRatio, normalizeSwatchHex } from '@doggynote/core'
 import { surfaces } from '@doggynote/theme'
 import { theme } from '../theme.ts'
-import { Icon, ToolIcons } from './icons.tsx'
+import { Icon } from './icons.tsx'
 import './color-dots.css'
 
 export type ColorDot = {
@@ -63,7 +63,7 @@ export function ColorDots(props: {
       </For>
       <label class="color-dot color-custom" classList={{ on: !!props.custom.value, edge: nearPanel(props.custom.value) }} style={props.custom.value ? { '--dot': props.custom.value } : undefined} data-tip={props.custom.value ? `Custom colour ${props.custom.value}` : 'Custom colour'}>
         <Show when={!props.custom.value}>
-          <Icon size={14}>{ToolIcons.plus()}</Icon>
+          <Icon size={14} name="plus" />
         </Show>
         <input
           type="color"

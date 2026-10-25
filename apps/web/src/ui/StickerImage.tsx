@@ -35,7 +35,7 @@ export function cacheStickerAlpha(assetId: string, img: HTMLImageElement) {
 /** Art that arrives within this just appears. Slower art gets the blank, then fades in over it. */
 const QUICK_MS = 120
 
-export function StickerImage(props: { sticker: StickerAsset; class?: string; onReady?: () => void; animate?: boolean }) {
+export function StickerImage(props: { sticker: StickerAsset; class?: string; onReady?: () => void; animate?: boolean; priority?: boolean }) {
   const [url, setUrl] = createSignal<string>()
   const [playing, setPlaying] = createSignal(false)
   const [failed, setFailed] = createSignal(false)
@@ -78,5 +78,5 @@ export function StickerImage(props: { sticker: StickerAsset; class?: string; onR
     <Show when={!failed() && (state() === 'loading' || state() === 'arriving') && !playing()}><span class="sticker-blank" aria-hidden="true"><span class="sticker-blank-face"><span>{props.sticker.emoji || '🐾'}</span></span></span></Show>
     <Show when={!failed()} fallback={<span class="sticker-unavailable" role="img" aria-label="Sticker image unavailable">{props.sticker.emoji || '◇'}</span>}>
       <img class={props.class} src={url()} decoding="async" alt={`${props.sticker.emoji || 'Sticker'} · ${props.sticker.packName}`} draggable={false} crossOrigin="anonymous" onLoad={(e) => loaded(e.currentTarget)} onError={() => setFailed(true)} onAnimationEnd={() => { if (state() === 'arriving') setState('ready') }} />
-    </Show><Show when={props.animate && props.sticker.format !== 'static'}><StickerAnimation sticker={props.sticker} enabled={!!props.animate} onReady={setPlaying} /></Show></span>
+    </Show><Show when={props.animate && props.sticker.format !== 'static'}><StickerAnimation sticker={props.sticker} enabled={!!props.animate} priority={props.priority} onReady={setPlaying} /></Show></span>
 }

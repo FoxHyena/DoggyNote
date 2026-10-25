@@ -15,12 +15,13 @@ test('a click selects a note and shows its icon toolbar; a second click or doubl
   const bar = page.getByTestId('selection-bar')
   await expect(bar).toBeVisible()
   // Icons, named for screen readers and tooltips, keep the bar on one row.
-  for (const id of ['position-lock', 'duplicate-selection', 'comment-button', 'bury']) {
+  for (const id of ['position-lock']) {
     await expect(bar.getByTestId(id)).toHaveAttribute('data-tip', /.+/)
     await expect(bar.getByTestId(id)).toHaveText('')
   }
+  for (const id of ['labels-button', 'duplicate-selection', 'comment-button', 'bury', 'selection-column-toggle', 'unlock-column-layout']) await expect(bar.getByTestId(id)).toHaveCount(0)
   const box = (await bar.boundingBox())!
-  const action = (await bar.getByTestId('bury').boundingBox())!
+  const action = (await bar.getByTestId('position-lock').boundingBox())!
   expect(box.height).toBeLessThan(action.height * 2)
   // One item can't be aligned, so the align icons stay out of the way.
   await expect(page.getByTestId('align-selection')).toHaveCount(0)
@@ -97,18 +98,13 @@ test('the note editor spaces blank lines like the rendered note', async ({ page 
   expect(Math.abs((await card.boundingBox())!.height - rendered)).toBeLessThan(full * 1.5)
 })
 
-test('hovering an icon button shows its tooltip; icon buttons leave no gaps for the pointer', async ({ page }) => {
+test('hovering an item control shows its tooltip and pressing dismisses it', async ({ page }) => {
   await freshBoard(page)
   const note = await addNote(page, 'Tooltip note', 0.4, 0.5)
   await clickEmpty(page)
   await note.click()
-  await page.getByTestId('duplicate-selection').hover()
-  await expect(page.getByRole('tooltip')).toContainText('Duplicate')
-  await page.getByTestId('bury').hover()
-  await expect(page.getByRole('tooltip')).toContainText('Bury')
-  const dup = (await page.getByTestId('duplicate-selection').boundingBox())!
-  const next = (await page.getByTestId('duplicate-selection').locator('xpath=following-sibling::button[1]').boundingBox())!
-  expect(next.x - (dup.x + dup.width)).toBeLessThan(1)
+  await page.getByTestId('position-lock').hover()
+  await expect(page.getByRole('tooltip')).toContainText('Lock position')
   await page.mouse.down()
   await expect(page.getByRole('tooltip')).toHaveCount(0)
   await page.mouse.up()
@@ -119,7 +115,7 @@ test('tooltips appear right over the hovered button', async ({ page }) => {
   const note = await addNote(page, 'Tooltip place', 0.4, 0.5)
   await clickEmpty(page)
   await note.click()
-  const button = page.getByTestId('comment-button')
+  const button = page.getByTestId('position-lock')
   await button.hover()
   const tip = page.getByRole('tooltip')
   await expect(tip).toBeVisible()
@@ -129,7 +125,7 @@ test('tooltips appear right over the hovered button', async ({ page }) => {
   expect(t.y + t.height).toBeLessThanOrEqual(b.y)
 })
 
-test('the bar sits above the selection, below it without room, and at the bottom when a tall selection runs off', async ({ page }) => {
+test('the bar sits above the selection, below it without room, and clear of a tall selection', async ({ page }) => {
   await freshBoard(page)
   const md = (lines: number) => Array.from({ length: lines }, (_, i) => `Line ${i + 1}`).join('\n\n')
   await seedCards(page, [note('Short one', 0, 300), note('Up top', 300, 0), note(md(60), 600, 0)])
@@ -153,10 +149,16 @@ test('the bar sits above the selection, below it without room, and at the bottom
   await tall.click({ position: { x: 30, y: 20 } })
   const tallBox = (await tall.boundingBox())!
   expect(tallBox.y + tallBox.height).toBeGreaterThan(canvas.y + canvas.height)
+  // A tall card may now leave clear space beside it: use that rather than cover its text.
   await expect.poll(async () => {
     const b = (await bar.boundingBox())!
-    return canvas.y + canvas.height - (b.y + b.height)
-  }).toBeLessThan(80)
+    return b.x + b.width <= tallBox.x || b.x >= tallBox.x + tallBox.width || b.y + b.height <= tallBox.y || b.y >= tallBox.y + tallBox.height
+  }).toBe(true)
+  const b = (await bar.boundingBox())!
+  expect(b.x).toBeGreaterThanOrEqual(canvas.x)
+  expect(b.x + b.width).toBeLessThanOrEqual(canvas.x + canvas.width)
+  expect(b.y).toBeGreaterThanOrEqual(canvas.y)
+  expect(b.y + b.height).toBeLessThanOrEqual(canvas.y + canvas.height)
 })
 
 test('a column header centres its title and count, and collapse slides', async ({ page }) => {

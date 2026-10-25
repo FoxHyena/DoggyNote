@@ -5,7 +5,7 @@ import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { inkColor, inkTool, inkWidth, setInkColor } from '../state/drawing.ts'
 import { phone } from '../state/device.ts'
-import { IconButton, ToolIcons } from '../ui/icons.tsx'
+import { IconButton } from '../ui/icons.tsx'
 import { installMenu } from '../ui/menu.ts'
 import { agentDialogKeys } from '../ui/agentDialog.ts'
 import { InkLayer } from './InkLayer.tsx'
@@ -230,8 +230,8 @@ export function StrokeEditor(props: {
   const stop = (e: Event) => e.stopPropagation()
   const history = (
     <>
-      <IconButton testid="sketch-undo" icon={ToolIcons.undo} label="Undo" title="Undo (⌘Z)" disabled={!writable() || !doc.canUndoDrawing(props.card.id)} onClick={undo} />
-      <IconButton testid="sketch-redo" icon={ToolIcons.redo} label="Redo" title="Redo (⇧⌘Z)" disabled={!writable() || !doc.canRedoDrawing(props.card.id)} onClick={redo} />
+      <IconButton testid="sketch-undo" icon="undo" label="Undo" title="Undo (⌘Z)" disabled={!writable() || !doc.canUndoDrawing(props.card.id)} onClick={undo} />
+      <IconButton testid="sketch-redo" icon="redo" label="Redo" title="Redo (⇧⌘Z)" disabled={!writable() || !doc.canRedoDrawing(props.card.id)} onClick={redo} />
     </>
   )
   return (
@@ -289,7 +289,7 @@ export function StrokeEditor(props: {
               <Show when={!phone()}>
                 <ZoomMenu zoom={zoom()} scale={scale()} setZoom={setZoom} full={full()} setFull={setFull} />
               </Show>
-              <IconButton testid="sketch-done" icon={ToolIcons.check} label="Done" title="Done (Esc)" onClick={done} />
+              <IconButton testid="sketch-done" icon="check" label="Done" title="Done (Esc)" onClick={done} />
             </div>
           </header>
           <div ref={viewport} class="ink-viewport" data-testid="sketch-viewport">

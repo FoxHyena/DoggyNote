@@ -1,12 +1,15 @@
+import type { Card } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
 import { nudgeSelection } from '../state/position.ts'
 import { burySelection, selectAll } from '../state/actions.ts'
+import { moveToCard } from '../state/keyboardNav.ts'
 import {
   beginEdit,
   clearSelection,
   connectMode,
   editingId,
   endEdit,
+  openBoard,
   paletteOpen,
   selection,
   setConnectMode,
@@ -79,6 +82,11 @@ export function installShortcuts(opts: { readOnly: boolean }) {
     }
     if (mod && e.key.toLowerCase() === 'y') return void (e.preventDefault(), doc.redo())
     if (mod && e.key.toLowerCase() === 'a') return void (e.preventDefault(), selectAll())
+    const ARROWS = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' } as const
+    if (!mod && e.altKey && e.key in ARROWS) {
+      e.preventDefault()
+      return moveToCard(ARROWS[e.key as keyof typeof ARROWS])
+    }
     if (!mod && !e.altKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key) && selection().size) {
       e.preventDefault()
       const step = e.shiftKey ? 10 : 1
@@ -98,7 +106,9 @@ export function installShortcuts(opts: { readOnly: boolean }) {
       // A mark drawn on the board has nothing to edit.
       if (c && c.type !== 'ink') {
         e.preventDefault()
-        beginEdit(id)
+        // Enter does what a double-click does: edit a card, open a board. Rename is in the bar.
+        if (c.type === 'board') openBoard((c as Card<'board'>).content.boardId)
+        else beginEdit(id)
       }
     }
   }

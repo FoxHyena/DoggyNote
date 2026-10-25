@@ -6,6 +6,8 @@ import * as doc from './doc.ts'
 
 export const [selection, setSelection] = createSignal<ReadonlySet<Id>>(new Set())
 export const [editingId, setEditingId] = createSignal<Id | null>(null)
+/** Only one set of card actions floats over the selection at a time. */
+export const [cardContextOpen, setCardContextOpen] = createSignal(false)
 export const [camera, setCamera] = createSignal<Camera>({ x: -200, y: -150, zoom: 1 })
 export const [viewport, setViewport] = createSignal({ width: 1, height: 1, left: 0, top: 0 })
 /** Line tool: next two card clicks create a connection. */

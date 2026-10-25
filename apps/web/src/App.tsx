@@ -38,7 +38,7 @@ import { addText } from './canvas/paste.ts'
 import { showToast } from './state/toast.ts'
 import { startUpdateChecks } from './state/updates.ts'
 import { paletteOpen, setPaletteOpen } from './state/ui.ts'
-import { Icon, ToolIcons } from './ui/icons.tsx'
+import { Icon } from './ui/icons.tsx'
 import { Signup } from './ui/Signup.tsx'
 import { EditInvite } from './ui/EditInvite.tsx'
 import { BoardNavigation } from './ui/BoardNavigation.tsx'
@@ -47,7 +47,6 @@ import { installNativeSave } from './state/lifecycle.ts'
 import { ExitSaveDialog } from './ui/ExitSaveDialog.tsx'
 import { EditDock } from './ui/EditDock.tsx'
 import { MobileDock, MobileStickerButton } from './ui/MobileDock.tsx'
-import { installSheetDrag } from './ui/sheet.ts'
 import { phone } from './state/device.ts'
 import { installClipboard } from './state/clipboard.ts'
 import { isPreviewBoard } from './state/preview.ts'
@@ -114,8 +113,6 @@ function EditorApp() {
     else await boot()
   })
 
-  onMount(() => onCleanup(installSheetDrag()))
-
   onMount(() => {
     const off = installShortcuts({ get readOnly() { return !editable() } })
     const clipOff = installClipboard({ get readOnly() { return !editable() } })
@@ -159,7 +156,7 @@ function EditorApp() {
             right={
               <>
                 <Show when={!phone()}>
-                  <button class="icon-btn" data-testid="open-fetch" aria-label={`${COPY.search} (⌘K)`} data-tooltip={`${COPY.search} (⌘K)`} onClick={() => setPaletteOpen(true)}><Icon>{ToolIcons.search()}</Icon></button>
+                  <button class="icon-btn" data-testid="open-fetch" aria-label={`${COPY.search} (⌘K)`} data-tooltip={`${COPY.search} (⌘K)`} onClick={() => setPaletteOpen(true)}><Icon name="search" /></button>
                   <ToyboxButton />
                 </Show>
                 <Collaborators />

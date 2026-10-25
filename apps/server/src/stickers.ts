@@ -3,7 +3,7 @@ import { normalizeStickerPack } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
 import { randomToken, sha256Hex } from './crypto.ts'
 import type { AppEnv } from './env.ts'
-import { packFromTelegram, storeTelegramSticker, telegramCall, boundedBytes, TelegramError, type StickerPack, type TelegramSticker } from './telegram.ts'
+import { packFromTelegram, storeTelegramAnimation, storeTelegramSticker, telegramCall, boundedBytes, TelegramError, type StickerPack, type TelegramSticker } from './telegram.ts'
 
 export const stickers = new Hono<AppEnv>()
 type PackRow = { name: string; title: string; manifest: string; upstream: string }
@@ -61,9 +61,11 @@ stickers.post('/stickers/packs/:name/load', async (c) => {
     while (!failure && next < Math.min(offset + count, pack.stickers.length)) {
       const i = next++
       const s = pack.stickers[i]
-      if (s.available) continue
+      if (s.available && !s.animationError) continue
       try {
-        await storeTelegramSticker(c.env, s, raw[i], user)
+        // A ready sticker whose animation failed earlier retries only its animation.
+        if (s.available) await storeTelegramAnimation(c.env, s, raw[i], user)
+        else await storeTelegramSticker(c.env, s, raw[i], user)
         s.available = true
         delete s.error
       } catch (e) {

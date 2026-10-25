@@ -289,13 +289,7 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
     z-index: 95;
     animation: sheet-up 240ms cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .menu::before,
-  .templates-popover::before,
-  .share-panel::before,
-  .export-panel::before,
-  .save-details::before,
-  .popover.labels-panel::before,
-  .trash::before {
+  .sheet-grip::before {
     content: '';
     position: absolute;
     top: 8px;
@@ -386,37 +380,20 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   from { transform: translateY(40%); opacity: 0; }
 }
 
-/* The Add sheet: big friendly tiles. */
-.add-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
-  gap: 8px;
-}
-.add-tile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  min-height: 84px;
-  padding: 10px 4px;
-  border: 1px solid var(--dn-border);
-  border-radius: 14px;
-  background: var(--dn-card);
-  color: var(--dn-text);
-  font: inherit;
-  font-size: 13px;
-  transition: transform 120ms ease-out;
-}
-.add-tile:active { transform: scale(0.94); background: var(--dn-card-hover); }
-.add-tile-icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--dn-card-hover);
-  color: var(--dn-accent);
-}
+/* One button grammar and column grid for every creation action. */
+.add-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 8px; }
+.add-tile { min-width: 0; min-height: 44px; justify-content: flex-start; gap: 6px; padding: 4px; border-radius: 8px; line-height: 20px; text-align: left; transition: transform 120ms ease-out; }
+.add-tile:active { transform: scale(0.97); }
+.add-tile-icon { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; color: var(--dn-text-muted); }
+.add-label { min-width: 0; overflow-wrap: anywhere; }
+.add-primary .add-tile { font-weight: 600; }
+.add-primary .add-tile-icon { color: inherit; }
+.add-sheet .add-primary-note,
+html[data-input='mouse'] .add-sheet .add-primary-note:hover,
+html[data-input='touch'] .add-sheet .add-primary-note:active:not(:disabled) { background: var(--dn-accent); color: var(--dn-accent-text); }
+.add-secondary { margin-top: 4px; }
+.add-sheet .nav-menu-head { min-height: 44px; padding: 0; margin-bottom: 12px; }
+.add-sheet .nav-menu-head strong { font-size: 16px; }
 
 /* Inbox list scrolls by touch; items are placed with their buttons. */
 html[data-input='touch'] .toybox-item { touch-action: pan-y; cursor: default; }
@@ -495,9 +472,8 @@ html[data-touch-editing] .canvas-controls { visibility: hidden; }
   .selection-bar.docked .bar-actions .bar-btn { flex: 0 0 auto; min-width: 64px; }
 }
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
-  /* Sticky sheet headers line up with the sheet's own padding; the grip stays on top. */
-  .share-head { top: -22px; margin: -22px -12px 0; padding: 22px 12px 4px; }
-  .menu::before, .share-panel::before, .export-panel::before, .save-details::before, .popover.labels-panel::before, .trash::before { z-index: 3; }
+  .share-head { top: -28px; margin-top: -28px; padding-top: 28px; }
+  .share-permission-field select { height: 44px; }
 }
 .install-help { padding-left: 12px; }
 
@@ -513,8 +489,6 @@ html[data-touch-editing] .mobile-dock { visibility: hidden; }
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .trash { box-shadow: 0 -2px 0 var(--dn-border), 0 -14px 40px rgb(0 0 0 / 0.32); }
   /* V2-15: a tidy three-column Add grid; a lone last tile takes the whole row. */
-  .add-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .add-grid > .add-tile:last-child:nth-child(3n + 1) { grid-column: 1 / -1; flex-direction: row; justify-content: center; gap: 10px; min-height: 56px; }
   /* V2-14: colours centred in their row; Done lines up with the actions. */
   .selection-bar.docked .swatches { margin-inline: auto; }
   .selection-bar.docked .bar-done { align-self: flex-start; margin-top: 5px; }
@@ -618,11 +592,19 @@ html[data-input='touch'] .card > .connect-handle { border-color: var(--dn-select
     width: max-content;
     max-width: calc(100% - 24px);
     box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
-    animation: toast-down 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition-duration: 200ms;
+    @starting-style {
+      opacity: 0;
+      transform: translate(-50%, -10px);
+    }
   }
   .toast-action { min-height: 40px; }
 }
-@keyframes toast-down { from { opacity: 0; transform: translate(-50%, -10px); } }
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    @starting-style { transform: translateX(-50%); }
+  }
+}
 /* UX1-04: the connect hint never swallows the tap meant for a card. */
 .connect-banner { pointer-events: none; }
 .connect-banner button { pointer-events: auto; }
@@ -655,8 +637,7 @@ html[data-input='touch'] :is(.icon-btn, .bar-btn, .menu-item, .tool, .toast-acti
 }
 
 /* V3-07: the share sheet's choices read as choices. */
-.share-tabs button[aria-pressed='true'] { box-shadow: inset 0 0 0 1.5px var(--dn-selection); color: var(--dn-text); font-weight: 600; }
-html[data-input='touch'] .share-panel .bar-btn:not(.share-tabs .bar-btn) { padding-inline: 12px; border-radius: 10px; background: var(--dn-card-hover); color: var(--dn-text); }
+html[data-input='touch'] .share-panel .bar-btn { padding-inline: 12px; border-radius: 10px; background: var(--dn-card-hover); color: var(--dn-text); }
 
 /* V3-13: a paw on the empty states. */
 .trash-empty::before,
@@ -668,8 +649,8 @@ html[data-input='touch'] .share-panel .bar-btn:not(.share-tabs .bar-btn) { paddi
   margin: 4px auto 10px;
   background: var(--dn-accent);
   opacity: 0.8;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 11.2c-2.1 0-3.1 2.8-4.6 4.4-1.3 1.4-1.1 3.5.5 4.1 1.5.6 2.7-.5 4.1-.5s2.7 1.1 4.1.5c1.6-.6 1.8-2.7.5-4.1-1.5-1.6-2.5-4.4-4.6-4.4Z'/%3E%3Cellipse cx='5.6' cy='10.2' rx='1.85' ry='2.5' transform='rotate(-30 5.6 10.2)'/%3E%3Cellipse cx='9.6' cy='6.7' rx='1.85' ry='2.5' transform='rotate(-10 9.6 6.7)'/%3E%3Cellipse cx='14.4' cy='6.7' rx='1.85' ry='2.5' transform='rotate(10 14.4 6.7)'/%3E%3Cellipse cx='18.4' cy='10.2' rx='1.85' ry='2.5' transform='rotate(30 18.4 10.2)'/%3E%3C/svg%3E") center / contain no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 11.2c-2.1 0-3.1 2.8-4.6 4.4-1.3 1.4-1.1 3.5.5 4.1 1.5.6 2.7-.5 4.1-.5s2.7 1.1 4.1.5c1.6-.6 1.8-2.7.5-4.1-1.5-1.6-2.5-4.4-4.6-4.4Z'/%3E%3Cellipse cx='5.6' cy='10.2' rx='1.85' ry='2.5' transform='rotate(-30 5.6 10.2)'/%3E%3Cellipse cx='9.6' cy='6.7' rx='1.85' ry='2.5' transform='rotate(-10 9.6 6.7)'/%3E%3Cellipse cx='14.4' cy='6.7' rx='1.85' ry='2.5' transform='rotate(10 14.4 6.7)'/%3E%3Cellipse cx='18.4' cy='10.2' rx='1.85' ry='2.5' transform='rotate(30 18.4 10.2)'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("@phosphor-icons/core/fill/paw-print-fill.svg") center / contain no-repeat;
+  mask: url("@phosphor-icons/core/fill/paw-print-fill.svg") center / contain no-repeat;
 }
 .trash-empty, .fetch-hint { text-align: center; }
 
@@ -677,66 +658,12 @@ html[data-input='touch'] .share-panel .bar-btn:not(.share-tabs .bar-btn) { paddi
 /* Mixed lock actions must not push the alignment picker off a phone screen. */
 .selection-bar.docked .bar-position { flex-wrap: wrap; overflow: visible; }
 
-/* Phones: three calm rows (position tools only when there are any, colours,
-   actions), on the same 12px inset as the other sheets. Every action is an icon
-   over its label in equal cells, so nothing hides behind a sideways scroll on a
-   360px screen; Done closes the row. Colours are 32px dots in full-row 44px
-   targets: seven tints and the custom slot fit edge to edge. */
-@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
-  .selection-bar.docked .bar-actions { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; gap: 0; }
-  .selection-bar.docked .bar-actions .bar-btn {
-    /* Never narrower than its label (fonts differ by platform); spare room is shared. */
-    flex: 1 0 auto;
-    min-width: 44px;
-    max-width: 72px;
-    min-height: 52px;
-    flex-direction: column;
-    justify-content: center;
-    gap: 3px;
-    padding: 4px 2px;
-    font-size: 11px;
-    line-height: 1.1;
-    white-space: nowrap;
-    border-radius: 12px;
-  }
-  .selection-bar.docked .bar-actions .bar-btn > svg { flex: 0 0 auto; }
-  /* Done ends the row (sticky, in case a long row still has to scroll on a tiny screen). */
-  .selection-bar.docked .bar-actions .bar-done {
-    position: sticky;
-    right: 0;
-    z-index: 1;
-    margin: 0 0 0 auto;
-    align-self: stretch;
-    color: var(--dn-text-muted);
-    background: var(--dn-panel);
-  }
-  .selection-bar.docked .bar-position .bar-btn.bar-icon {
-    flex: 0 0 44px;
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
-    padding: 0;
-    border-radius: 12px;
-  }
-}
-@media (max-width: 599px) {
-  .selection-bar.docked { gap: 8px; padding-top: 12px; }
-  .selection-bar.docked .bar-style { flex-wrap: wrap; gap: 8px; padding-bottom: 0; overflow: visible; }
-  .selection-bar.docked .swatches { flex: 1 0 100%; justify-content: space-between; gap: 0; margin-inline: 0; }
-  .selection-bar.docked .swatch { flex: 1 1 0; width: auto; min-width: 0; max-width: 48px; height: 44px; --dot: 32px; }
-  .selection-bar.docked .icon-picker { flex: 1 0 100%; justify-content: space-between; gap: 0; }
-  .selection-bar.docked .icon-picker .icon-choice { flex: 1 1 0; min-width: 0; max-width: 48px; }
-  .selection-bar.docked .bar-actions { border-top: 1px solid var(--dn-border); padding-top: 6px; }
-}
-
-/* Two- and three-way choices in phone sheets (Appearance, link permission) sit in one
+/* Appearance choices in phone sheets sit in one
    shared track, so the unpicked options read as options rather than loose text. */
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .theme-choices { gap: 0; margin: 0 12px 12px; padding: 3px; border: 1px solid var(--dn-border); border-radius: 12px; }
   .viewer-menu .theme-choices { padding-bottom: 3px; border-bottom: 1px solid var(--dn-border); }
   .theme-choice { border-radius: 9px; }
-  .share-tabs { gap: 0; padding: 3px; border: 1px solid var(--dn-border); border-radius: 12px; }
-  .share-tabs button { border-radius: 9px; }
 }
 
 /* A field in a phone sheet scrolls into view inside the sheet (state/viewport.ts),
@@ -748,4 +675,67 @@ html[data-input='touch'] .share-panel .bar-btn:not(.share-tabs .bar-btn) { paddi
 /* The label sheet: titled like the other sheets, its colours spread across the row. */
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
   .popover.labels-panel > .label-dots { grid-template-columns: repeat(7, minmax(0, 1fr)); justify-items: center; padding: 0 0 4px; }
+}
+
+/* Phone selection keeps one row of actions. Palettes live in focused sheets. */
+.selection-phone-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--dn-text-muted); font-size: 12px; }
+.selection-phone-head .bar-btn { min-width: 64px; min-height: 44px; gap: 6px; }
+.selection-phone-actions { display: flex; align-items: stretch; gap: 4px; }
+.selection-phone-actions > .bar-btn { flex: 1 1 0; min-width: 44px; min-height: 56px; padding: 6px 2px; display: flex; flex-direction: column; justify-content: center; gap: 4px; font-size: 12px; border-radius: 10px; }
+.selection-phone-actions > .selection-primary { background: var(--dn-accent); color: var(--dn-accent-text); font-weight: 600; }
+html[data-input='touch'] .selection-phone-actions > .selection-primary:active:not(:disabled) { background: var(--dn-accent); color: var(--dn-accent-text); }
+.selection-sheet-head { display: flex; align-items: center; justify-content: space-between; min-height: 44px; margin-bottom: 12px; gap: 12px; }
+.selection-sheet-head strong { font-size: 16px; font-weight: 600; }
+.selection-sheet-head .bar-btn { min-width: 64px; min-height: 44px; }
+.selection-style-sheet .swatches, .selection-style-sheet .icon-picker { display: grid; width: min(212px, 100%); margin-inline: auto; grid-template-columns: repeat(4, minmax(44px, 1fr)); gap: 4px 12px; justify-items: center; padding: 0; }
+.selection-style-sheet .swatch { width: 44px; height: 44px; --dot: 32px; }
+.selection-style-sheet .icon-choice { width: 44px; height: 44px; }
+.selection-style-sheet .icon-choice.on { outline: 2px solid var(--dn-selection); outline-offset: -2px; }
+.selection-style-sheet .icon-choice > svg { width: 24px; height: 24px; }
+.selection-sheet-align { display: flex; justify-content: space-between; gap: 4px; padding: 4px 0; }
+.selection-sheet-align .bar-icon { min-width: 44px; min-height: 44px; }
+@media (max-width: 599px), (max-height: 500px) and (pointer: coarse) {
+  .menu.selection-style-sheet, .menu.add-sheet { border-radius: 18px 18px 0 0; }
+  :is(.menu.selection-style-sheet, .menu.add-sheet, .share-panel) {
+    padding-left: max(16px, env(safe-area-inset-left)) !important;
+    padding-right: max(16px, env(safe-area-inset-right)) !important;
+  }
+  .selection-bar.docked:has(.selection-phone-actions) { flex-direction: column; align-items: stretch; gap: 4px; padding-top: 0; }
+}
+
+.bar-menu .nav-menu-head strong { font-size: 16px; }
+
+.app:has(.selection-phone-actions) .mobile-sticker-launcher { visibility: hidden; }
+.bar-menu .nav-menu-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.bar-menu .nav-menu-head .bar-btn { min-height: 44px; min-width: 64px; }
+@media (max-width: 599px), (max-height: 500px) and (pointer: coarse) { .menu.bar-menu { border-radius: 18px 18px 0 0; } }
+/* A separate grip owns vertical pulls without disabling sheet-body scrolling. */
+.sheet-grip { display: none; }
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  [data-phone-sheet] { padding-top: max(28px, var(--admin-padding-top, 0px), var(--agents-padding, 0px)) !important; }
+  .sheet-grip {
+    display: block;
+    position: sticky;
+    /* Counter the reserved padding, including at the sticky scroll boundary. */
+    top: -28px;
+    margin-top: -28px;
+    height: 28px;
+    flex-shrink: 0;
+    z-index: 5;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  [data-phone-sheet] > :is(.dialog-head, .agents-heading) {
+    top: -28px;
+    margin-top: -28px;
+    padding-top: 28px;
+  }
+}
+
+/* Compact sheets keep the 28px grip target centred, away from header controls.
+   Its last 12px share the noninteractive space above the heading's text. */
+@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
+  :is(.menu.add-sheet, .menu.selection-style-sheet)[data-phone-sheet] { padding-top: 16px !important; }
+  :is(.add-sheet, .selection-style-sheet) > .sheet-grip { width: 96px; margin-inline: auto; top: -16px; margin-top: -16px; margin-bottom: -12px; }
 }

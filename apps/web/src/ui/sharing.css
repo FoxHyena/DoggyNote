@@ -4,8 +4,6 @@
   max-width: calc(100vw - 24px);
   max-height: calc(100dvh - 72px);
   padding: 16px;
-  display: grid;
-  gap: 12px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -16,26 +14,28 @@
   gap: 12px;
   position: sticky;
   top: -16px;
-  margin: -16px -16px 0;
+  min-height: 44px;
+  margin: 0 -16px 16px;
   z-index: 1;
   background: var(--dn-panel);
-  padding: 20px 16px 4px;
+  padding: 0 16px;
 }
-.share-head strong { min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
+.share-head strong { min-width: 0; font-size: 16px; overflow-wrap: anywhere; }
 .share-head .icon-btn { flex: 0 0 auto; }
 .share-sub { margin: 0; color: var(--dn-text-muted); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
-.share-panel > strong { font-size: 13px; }
-.share-tabs { display: flex; gap: 8px; margin: 0; }
-.share-tabs button { flex: 1; justify-content: center; }
-.share-tabs button[aria-pressed='true'] { background: var(--dn-card-hover); color: var(--dn-text); }
-.share-members { padding: 0; margin: 0 0 4px; list-style: none; }
+.share-content { display: grid; gap: 16px; }
+.share-section { display: grid; gap: 8px; min-width: 0; }
+.share-section > strong { font-size: 13px; font-weight: 600; }
+.share-section > strong + .share-sub { margin-top: -4px; }
+.share-existing { border-top: 1px solid var(--dn-border); padding-top: 16px; }
+.share-members { padding: 0; margin: 0; list-style: none; }
 .share-members li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--dn-border); }
 .share-members li > span { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 13px; }
 .share-members li > button { flex-shrink: 0; }
 .share-members small, .share-expiry { color: var(--dn-text-muted); font-size: 12px; line-height: 1.5; }
 .share-user-form { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
 .share-user-form input { flex: 1 1 120px; min-width: 0; border: 1px solid var(--dn-border); border-radius: 8px; padding: 8px; background: var(--dn-bg); color: var(--dn-text); }
-.share-user-form select { min-width: 0; border: 1px solid var(--dn-border); border-radius: 8px; padding: 8px; background: var(--dn-panel); color: var(--dn-text); }
+.share-user-form input::placeholder { color: var(--dn-text-muted); opacity: 1; }
 .share-panel :is(button, input:not([type='checkbox']), select) { min-height: 36px; }
 .share-panel .check { min-height: 36px; margin: 0; line-height: 1.5; }
 .share-panel .check input { flex-shrink: 0; }
@@ -52,3 +52,11 @@
 @media (pointer: coarse) {
   .share-panel :is(button, input:not([type='checkbox']), select), .share-panel .check { min-height: 44px; }
 }
+
+.share-permission-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; }
+.share-permission-select { position: relative; flex: 0 0 128px; }
+.share-permission-field select { appearance: none; width: 100%; height: 36px; border: 1px solid var(--dn-border); border-radius: 8px; padding: 0 36px 0 12px; background: var(--dn-bg); color: var(--dn-text); font: inherit; }
+/* Match the text inset inside the 1px border; the native select still owns input. */
+.share-permission-select > svg { position: absolute; right: 13px; top: 50%; margin-top: -8px; pointer-events: none; color: var(--dn-text-muted); }
+
+@media (pointer: coarse) { .share-permission-field select { height: 44px; } }

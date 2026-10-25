@@ -1,0 +1,142 @@
+{
+  "before": {
+    "STICKER_PERF": {
+      "browserName": "chromium",
+      "overview": {
+        "p50": 10,
+        "p95": 10.700000000000045,
+        "samples": 118
+      },
+      "detail": {
+        "p50": 10,
+        "p95": 10.699999999999818,
+        "samples": 119
+      },
+      "detailNodes": 70,
+      "heapMB": 10
+    },
+    "STICKER_PACK_PERF": {
+      "browserName": "chromium",
+      "baseline": {
+        "p50": 10,
+        "p95": 10.600000000000023,
+        "samples": 118
+      },
+      "closed": {
+        "p50": 10,
+        "p95": 10.699999999999818,
+        "samples": 119
+      },
+      "open": {
+        "p50": 10,
+        "p95": 10.699999999999818,
+        "samples": 120
+      },
+      "mountedImages": 21,
+      "requestedImages": 20
+    },
+    "STICKER_ANIMATED_PERF": {
+      "browserName": "chromium",
+      "sample": {
+        "p50": 10,
+        "p95": 10.600000000000136,
+        "samples": 118
+      },
+      "players": 11
+    },
+    "PERF": {
+      "loadMs": 322,
+      "fitCards": 0,
+      "bigImages": 0,
+      "mountedAt100": 35,
+      "pan": {
+        "frames": 238,
+        "p50": 10,
+        "p95": 10.800000000000182,
+        "max": 11.099999999999909
+      },
+      "zoomOut": {
+        "frames": 158,
+        "p50": 10,
+        "p95": 10.699999999999818,
+        "max": 10.800000000000182
+      },
+      "panFar": {
+        "p95": 11,
+        "worst": 11.099999999999454
+      },
+      "heapMB": 12,
+      "nodes": 731
+    }
+  },
+  "after": {
+    "STICKER_PERF": {
+      "browserName": "chromium",
+      "overview": {
+        "p50": 10,
+        "p95": 10.899999999999864,
+        "samples": 118
+      },
+      "detail": {
+        "p50": 10,
+        "p95": 10.799999999999727,
+        "samples": 123
+      },
+      "detailNodes": 70,
+      "heapMB": 10
+    },
+    "STICKER_PACK_PERF": {
+      "browserName": "chromium",
+      "baseline": {
+        "p50": 10,
+        "p95": 10.899999999999864,
+        "samples": 131
+      },
+      "closed": {
+        "p50": 10,
+        "p95": 10.900000000000091,
+        "samples": 120
+      },
+      "open": {
+        "p50": 10,
+        "p95": 10.800000000000182,
+        "samples": 121
+      },
+      "mountedImages": 21,
+      "requestedImages": 20
+    },
+    "STICKER_ANIMATED_PERF": {
+      "browserName": "chromium",
+      "sample": {
+        "p50": 10,
+        "p95": 10.899999999999977,
+        "samples": 125
+      },
+      "players": 10
+    },
+    "PERF": {
+      "loadMs": 289,
+      "fitCards": 0,
+      "bigImages": 0,
+      "mountedAt100": 35,
+      "pan": {
+        "frames": 240,
+        "p50": 10,
+        "p95": 11,
+        "max": 11.099999999999909
+      },
+      "zoomOut": {
+        "frames": 160,
+        "p50": 10,
+        "p95": 10.899999999999636,
+        "max": 11.100000000000364
+      },
+      "panFar": {
+        "p95": 10.799999999999272,
+        "worst": 10.899999999999636
+      },
+      "heapMB": 12,
+      "nodes": 731
+    }
+  }
+}

@@ -1,7 +1,7 @@
 import { createEffect, onCleanup, type Accessor } from 'solid-js'
 
 /** Small popovers share keyboard dismissal, focus restoration and arrow navigation. */
-export function installMenu(open: Accessor<boolean>, close: () => void, root: () => HTMLElement, trigger: () => HTMLButtonElement) {
+export function installMenu(open: Accessor<boolean>, close: () => void, root: () => HTMLElement, trigger: () => HTMLElement) {
   createEffect(() => {
     if (!open()) return
     queueMicrotask(() => { if (open()) root().querySelector<HTMLButtonElement>('.menu button:not(:disabled)')?.focus() })

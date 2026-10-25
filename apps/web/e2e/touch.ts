@@ -50,6 +50,14 @@ export class Fingers {
     if (isChromium(this.page)) await this.page.waitForTimeout(CHROMIUM_GESTURE_WINDOW_MS)
   }
 
+  /** Browser cancellation (e.g. an interrupted system gesture), never a release. */
+  async cancel() {
+    if (isChromium(this.page)) await (await cdp(this.page)).send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] })
+    else for (const [id, p] of this.down) await this.send('touchEnd', id, 'pointercancel', p)
+    this.down.clear()
+    this.most = 0
+  }
+
   private async send(type: 'touchStart' | 'touchMove' | 'touchEnd', id: number, pointer: string, p: Pt) {
     if (isChromium(this.page)) {
       // CDP diffs each event against the previous one: a finger missing from a
@@ -67,8 +75,8 @@ export class Fingers {
       // re-render replaces the touched element, deliver to the canvas as capture would.
       const touched = targets.get(id)
       const target = touched?.isConnected ? touched : document.querySelector('[data-testid="canvas"]') ?? document.body
-      target.dispatchEvent(new PointerEvent(pointer, { pointerId: 100 + id, pointerType: 'touch', isPrimary: id === 0, clientX: p.x, clientY: p.y, bubbles: true, cancelable: true, composed: true, button: pointer === 'pointermove' ? -1 : 0, buttons: pointer === 'pointerup' ? 0 : 1 }))
-      if (pointer === 'pointerup') {
+      target.dispatchEvent(new PointerEvent(pointer, { pointerId: 100 + id, pointerType: 'touch', isPrimary: id === 0, clientX: p.x, clientY: p.y, bubbles: true, cancelable: true, composed: true, button: pointer === 'pointermove' ? -1 : 0, buttons: pointer === 'pointerup' || pointer === 'pointercancel' ? 0 : 1 }))
+      if (pointer === 'pointerup' || pointer === 'pointercancel') {
         targets.delete(id)
         // A finger that didn't move far is a tap: browsers follow it with a click.
       }
@@ -269,4 +277,16 @@ export async function selectionBarFits(page: Page) {
     } finally { for (const g of groups) g.scrollLeft = 0 }
     return 'ok'
   })).toBe('ok')
+}
+
+/** Phone style controls are deliberately behind Colour, instead of crowding the dock. */
+export async function chooseCardColour(page: Page, colour: string) {
+  await page.getByTestId('selection-colour').tap()
+  await page.getByTestId(`swatch-${colour}`).tap()
+  await page.getByTestId('selection-style-done').tap()
+}
+
+/** Open the phone's secondary actions when they aren't already visible. */
+export async function selectionMore(page: Page) {
+  if (!await page.getByTestId('selection-more-menu').isVisible()) await page.getByTestId('selection-more').tap()
 }

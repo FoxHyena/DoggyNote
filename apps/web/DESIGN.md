@@ -173,7 +173,7 @@ DoggyNote is a lamp-lit room where your things are spread out on the floor. The 
 
 The den is dark by default and has a daytime twin in oat and milk tones. Both are tuned together. Every colour has a value in each theme, and contrast is enforced by test, not taste. Density is calm rather than sparse. Controls are compact (13px labels, 32px icon buttons), so the board gets the space.
 
-Personality lives in small, specific dog moments rather than decoration. A board tile tilts when you hover it. The login logo leans at an angle. A dragged tool's ghost is slightly askew. Stickers wear a white die-cut border. The pan cursor is a paw. Everything else is plain. The den rejects the cool-grey, blue-button sterility of corporate SaaS, and it rejects frosted glass, neon glows and purple-blue gradients.
+Personality lives in small, specific dog moments rather than decoration. A board tile tilts when you hover it. The Phosphor paw login logo leans at an angle. A dragged tool's ghost is slightly askew. Stickers wear a white die-cut border. The pan cursor is a paw. Everything else is plain. The den rejects the cool-grey, blue-button sterility of corporate SaaS, and it rejects frosted glass, neon glows and purple-blue gradients.
 
 **Key Characteristics:**
 - Warm brown neutrals throughout; no cool greys anywhere.
@@ -294,23 +294,40 @@ Pill-shaped, 12px weight 500, 1px × 8px padding, with each label's own backgrou
 Den Floor fill, 1px border, 8px radius, at least 44px tall, 14px text. Focus is a 2px selection outline with no offset. Errors appear as Collar Coral text beneath, or as a Collar swatch block for form-level errors.
 
 ### Menus and popovers
-Shelf background, 1px border, 10px radius, floating shadow, 4px inner padding. Rows are at least 36px tall, 13px text, 6px radius, with a hover fill. Keyboard hints sit right-aligned in muted 12px. Separators are 1px border lines inset 6px.
+Shelf background, 1px border, 10px radius, floating shadow, 4px inner padding. Rows are at least 36px tall, 13px text, 6px radius, with a hover fill. Keyboard hints sit right-aligned in muted 12px. Right-clicking a card hides the selection bar while its menu offers edit (Rename for boards), duplicate, label, comment and bury actions; arrows move through the menu and Escape returns focus to the card. A location ping appears only when another live participant is present. Separators are 1px border lines inset 6px.
 
 ### Dialogs and sheets
 Shelf background, 14px radius, at most 460px wide, over a 45% black backdrop. Headings are 16px. On phones, dialogs and panels become bottom sheets over the scrim token.
 
+### Creation tools
+Note, To-do and Board lead the desktop rail and phone Add sheet. Note is the single accented choice. Occasional tools sit in a quieter More tier; desktop tools keep click and drag creation. Phone Add uses one three-column catalogue of identical 44px inline icon-and-label buttons, with 4px row gaps and 8px column gaps. The first three tools use weight 600; Note alone has the primary button fill. Occasional tools remain visible on the same column grid, without a second heading or button grammar. Add and palette sheets use 16px gutters and a 44px header; their centred 96px-wide grip retains its 28px drag target while sharing the noninteractive space above the heading text.
+
+### Sharing
+One labelled Invitation permission control applies to new username invitations and links. Existing access and links retain their own permissions. View only is the default; Can edit exposes the account-creation option for links. Settings are labelled for new invitations; existing people and links form separate sections, shown only when populated. Use 16px between sections, 8px within sections and 4px from a heading to its explanation. The permission label and compact 128px native select share a row on desktop and phone. The select has balanced 12px text/chevron insets inside its border and one Phosphor caret; it is 36px tall on desktop and 44px on touch. Typing a username gives Invite the single primary emphasis. General privacy and redundant checkbox copy stay out of the creation flow; inherited access and invitation-expiry consequences remain explicit.
+
 ### Selection bar
-A floating shelf pill (12px radius, floating shadow) centred above the selection, popping in over 140ms. It holds the swatches, icon picker, labels and actions. It wraps rather than scrolls on narrow windows, and docks to the bottom edge on phones.
+A floating shelf pill (12px radius, floating shadow) centred above the selection, popping in over 140ms. It anchors to the selected item, including column members, with a 14px gap above, below or beside it. Obstacle-driven sliding is limited to 64px from viewport-clamped anchor positions; crowded boards permit neighboring overlap rather than distant placement. The selected content and column disclosure take priority. Labels popovers also avoid card content and the bar; crowded boards use the position covering the least content. The desktop bar holds swatches, board icons, item position locks, eligible alignment and list options. Card actions live in right-click; Open is available through double-click or Enter. Collapse uses the column header disclosure only. Selecting a member exposes no parent-column actions, and alignment requires any affected parent column to be explicitly selected. It wraps rather than scrolls on narrow windows. On phones, a compact dock shows Open (boards) or Edit, Colour, Labels, Bury and More. Only Open/Edit gets the accent fill; Done closes the selection separately. Colour and board icons open focused sheets with a centred four-by-two grid: 44px targets, 12px column gaps and 4px row gaps, preserving 32px colour dots and 24px icons. Leave 12px between the header row and the full target tile. Selected icons use the selection outline as well as a neutral fill; hover uses the fill alone. More holds Rename, board icons, locks, alignment, duplication, comments, connectors and list options when applicable. The selected colour always reflects the displayed card or board.
 
 ### Stickers
 Image stickers with a white die-cut outline and a hard offset shadow, placed directly on the canvas. They are browsed in a rounded 18px tray with a 4-column grid of 12px-radius tiles.
 
+### Icons
+- All interface icons and dog artwork come from the official MIT-licensed `@phosphor-icons/core` SVG pack, pinned in the web package. `ui/iconAssets.ts` statically imports the curated set; `Icon` owns their native 256×256 viewBox, `currentColor`, and decorative semantics. Never redraw paths, override strokes, or put a complete SVG inside another SVG.
+- Regular is the control weight. Fill is reserved for the brand paw and filled favorite/pinned states. Existing sizes, labels, hit areas, and theme colors remain authoritative.
+- Account uses UserCircle. Bury/Buried bones uses Archive with its label; the selectable board bone remains Bone, and permanent deletion uses Trash. Dog replaces the former custom illustration; loading pulses the whole glyph and stays static with reduced motion.
+- Stored board-icon IDs remain `paw`, `bone`, `ball`, `collar`, `kennel`, `bowl`, `star`, `heart`. Their pack equivalents are PawPrint, Bone, TennisBall, Tag (a collar tag), HouseLine, BowlFood, Star, Heart. Unknown IDs render PawPrint.
+- The favicon, installed app icons, paw cursor, and empty-state paw all derive from the same upstream filled PawPrint. Regenerate with `pnpm --filter web icons`; the script also regenerates desktop icon formats.
+- Canvas connections, transform rings, progress graphics, collaborator pointer/ping geometry, third-party marks, and user stickers retain their own geometry. The upstream notice ships at `/licenses/phosphor-icons.txt`.
+
 ### Motion
 - **Standard:** 120ms for hover colour and background; 140–160ms ease-out for pop-ins, toasts and menus; 70ms ease-out for snap-to-grid glides.
+- **Fetch:** no entrance animation. The frequent keyboard command is visible and focused immediately.
 - **Phone sheets:** 200–240ms on `cubic-bezier(0.22, 1, 0.36, 1)`, a fast settle with no overshoot.
+- **Sheet gestures:** only the explicit grip owns a pull; the body keeps native scrolling. Follow the active pointer directly; cancellation restores the sheet and re-grabbing interrupts dismissal. Release settles over 180ms ease-out, or immediately under reduced motion.
+- **Toasts:** preserve horizontal centering throughout entry. Transform/opacity transitions take 160ms on desktop and 200ms on phones; message replacement and dismissal remain immediate.
 - **Dog moment overshoot:** `cubic-bezier(0.3, 1.6, 0.6, 1)` at about 140ms, reserved for playful pickups (board tile hover, the phone dock's amber add button).
 - **Bury sink:** a buried card's copy falls into Buried bones over 380ms (`cubic-bezier(0.5, 0, 0.75, 0)`, shrinking and tilting −12°), then the icon bumps. Only the copy animates, never the canvas card.
-- Everything respects `prefers-reduced-motion`.
+- Everything respects `prefers-reduced-motion`, including JavaScript camera moves. Those apply their target immediately and retain completion/focus behavior; enabling reduced motion during a glide finishes it at its target.
 
 ## Do's and Don'ts
 

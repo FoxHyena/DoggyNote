@@ -1,0 +1,37 @@
+        Info Looking up installed tauri packages to check mismatched versions...
+     Running beforeBuildCommand `pnpm --filter web exec vite build --outDir dist-native-motion --emptyOutDir`
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 316 modules transformed.
+rendering chunks...
+computing gzip size...
+dist-native-motion/manifest.webmanifest                          0.71 kB
+dist-native-motion/index.html                                    1.13 kB │ gzip:   0.51 kB
+dist-native-motion/assets/stickerOutline.worker-uSfHFBon.js      1.57 kB
+dist-native-motion/assets/pdf.worker.min-Dswkl-cV.mjs        1,265.41 kB
+dist-native-motion/assets/index-AX8MmUua.css                   127.21 kB │ gzip:  24.14 kB
+dist-native-motion/assets/pdf.worker.min-zC6nfbxG.js             0.06 kB │ gzip:   0.08 kB
+dist-native-motion/assets/dist-js-Dv6FAeJL.js                    0.11 kB │ gzip:   0.12 kB
+dist-native-motion/assets/rolldown-runtime-hePW80VL.js           0.71 kB │ gzip:   0.42 kB
+dist-native-motion/assets/dist-js-DL02ZEdX.js                    1.04 kB │ gzip:   0.51 kB
+dist-native-motion/assets/event-DgOCphlC.js                      1.37 kB │ gzip:   0.65 kB
+dist-native-motion/assets/core-Djq8_Zg8.js                       2.75 kB │ gzip:   1.08 kB
+dist-native-motion/assets/window-BUUelDs0.js                    13.26 kB │ gzip:   3.19 kB
+dist-native-motion/assets/dist-DyVmH21U.js                      22.22 kB │ gzip:   8.59 kB
+dist-native-motion/assets/lottie_light_canvas-Cs-g0YX2.js      203.79 kB │ gzip:  55.46 kB
+dist-native-motion/assets/pdf-Ldw4kiDl.js                      430.30 kB │ gzip: 128.99 kB
+dist-native-motion/assets/codemirror-1oC5373k.js               510.96 kB │ gzip: 178.19 kB
+dist-native-motion/assets/index-CJORSSf8.js                    651.58 kB │ gzip: 221.51 kB
+
+✓ built in 1.20s
+[plugin builtin:vite-reporter]
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+   Compiling doggynote v0.1.0 (/Users/oreo/.paseo/worktrees/2pf6ay6i/mundane-bulldog/apps/desktop/src-tauri)
+    Finished `release` profile [optimized] target(s) in 41.34s
+       Built application at: /Users/oreo/.paseo/worktrees/2pf6ay6i/mundane-bulldog/apps/desktop/src-tauri/target/release/doggynote
+    Bundling DoggyNote Motion QA.app (/Users/oreo/.paseo/worktrees/2pf6ay6i/mundane-bulldog/apps/desktop/src-tauri/target/release/bundle/macos/DoggyNote Motion QA.app)
+    Finished 1 bundle at:
+        /Users/oreo/.paseo/worktrees/2pf6ay6i/mundane-bulldog/apps/desktop/src-tauri/target/release/bundle/macos/DoggyNote Motion QA.app (13.69 MiB)
