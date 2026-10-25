@@ -145,8 +145,10 @@ test('selection controls retain their dimensions and stay clear of floating canv
     const controls = await page.getByTestId('canvas-controls').boundingBox()
     expect(box!.x + box!.width <= controls!.x || controls!.x + controls!.width <= box!.x || box!.y + box!.height <= controls!.y || controls!.y + controls!.height <= box!.y).toBe(true)
   }
-  await page.getByTestId('bury').scrollIntoViewIfNeeded()
-  await expect(page.getByTestId('bury')).toBeInViewport()
+  if (docked) {
+    await page.getByTestId('bury').scrollIntoViewIfNeeded()
+    await expect(page.getByTestId('bury')).toBeInViewport()
+  } else await expect(bar.getByTestId('bury')).toHaveCount(0)
 })
 
 test('creation tools respond to keyboard activation', async ({ page }, info) => {

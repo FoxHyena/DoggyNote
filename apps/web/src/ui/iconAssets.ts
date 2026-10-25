@@ -9,6 +9,7 @@ import squaresFourSvg from '@phosphor-icons/core/regular/squares-four.svg?raw'
 import rowsSvg from '@phosphor-icons/core/regular/rows.svg?raw'
 import imageSvg from '@phosphor-icons/core/regular/image.svg?raw'
 import boneSvg from '@phosphor-icons/core/regular/bone.svg?raw'
+import archiveSvg from '@phosphor-icons/core/regular/archive.svg?raw'
 import trashSvg from '@phosphor-icons/core/regular/trash.svg?raw'
 import arrowUUpLeftSvg from '@phosphor-icons/core/regular/arrow-u-up-left.svg?raw'
 import arrowUUpRightSvg from '@phosphor-icons/core/regular/arrow-u-up-right.svg?raw'
@@ -89,7 +90,7 @@ export const ICONS = {
   board: body(squaresFourSvg),
   column: body(rowsSvg),
   image: body(imageSvg),
-  bury: body(boneSvg),
+  bury: body(archiveSvg),
   trash: body(trashSvg),
   undo: body(arrowUUpLeftSvg),
   redo: body(arrowUUpRightSvg),

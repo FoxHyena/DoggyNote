@@ -21,23 +21,30 @@ export function cardObstacles(selected: readonly string[], windowCoordinates = f
 }
 
 /** Prefer the first clear position; slide around nearby edges on crowded boards.
- * When every position is occupied, use the smallest covered area. */
-export function placeFloating(size: { width: number; height: number }, bounds: Rect, preferred: Vec[], obstacles: Rect[], gap = 8): Vec {
+ * A bounded search may overlap neighbours to stay near its anchor. Protected
+ * content takes priority over ordinary obstacles when no clear position exists. */
+export function placeFloating(size: { width: number; height: number }, bounds: Rect, preferred: Vec[], obstacles: Rect[], gap = 8, options: { maxShift?: number; protectedObstacles?: Rect[] } = {}): Vec {
   const clamp = (p: Vec): Vec => ({ x: Math.max(bounds.x, Math.min(p.x, bounds.x + bounds.w - size.width)), y: Math.max(bounds.y, Math.min(p.y, bounds.y + bounds.h - size.height)) })
-  const overlap = (p: Vec) => obstacles.reduce((area, r) => area + Math.max(0, Math.min(p.x + size.width + gap, r.x + r.w) - Math.max(p.x - gap, r.x)) * Math.max(0, Math.min(p.y + size.height + gap, r.y + r.h) - Math.max(p.y - gap, r.y)), 0)
-  let best = clamp(preferred[0]), covered = Infinity
+  const overlap = (p: Vec, rects: Rect[]) => rects.reduce((area, r) => area + Math.max(0, Math.min(p.x + size.width + gap, r.x + r.w) - Math.max(p.x - gap, r.x)) * Math.max(0, Math.min(p.y + size.height + gap, r.y + r.h) - Math.max(p.y - gap, r.y)), 0)
+  const anchors = options.maxShift === undefined ? preferred : preferred.map(clamp)
+  let best = clamp(anchors[0]), covered = Infinity, protectedCovered = Infinity
   const consider = (p: Vec) => {
-    const at = clamp(p), area = overlap(at)
-    if (area < covered) { best = at; covered = area }
-    return area === 0
+    const at = clamp(p), area = overlap(at, obstacles), protectedArea = overlap(at, options.protectedObstacles ?? [])
+    if (protectedArea < protectedCovered || (protectedArea === protectedCovered && area < covered)) {
+      best = at; covered = area; protectedCovered = protectedArea
+    }
+    return area === 0 && protectedArea === 0
   }
   for (const p of preferred) if (consider(p)) return best
-  const shifts = obstacles.flatMap((r) => preferred.flatMap((p) => [
+  const shifts = [...obstacles, ...(options.protectedObstacles ?? [])].flatMap((r) => anchors.flatMap((p) => [
     { x: r.x - size.width - gap, y: p.y }, { x: r.x + r.w + gap, y: p.y },
     { x: p.x, y: r.y - size.height - gap }, { x: p.x, y: r.y + r.h + gap },
   ]))
-  const distance = (p: Vec) => Math.min(...preferred.map((a) => Math.abs(a.x - p.x) + Math.abs(a.y - p.y)))
+  const distance = (p: Vec) => Math.min(...anchors.map((a) => Math.abs(a.x - p.x) + Math.abs(a.y - p.y)))
   shifts.sort((a, b) => distance(a) - distance(b))
-  for (const p of shifts) if (consider(p)) break
+  for (const p of shifts) {
+    if (options.maxShift !== undefined && distance(clamp(p)) > options.maxShift) continue
+    if (consider(p)) break
+  }
   return best
 }

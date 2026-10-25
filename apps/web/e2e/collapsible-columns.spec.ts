@@ -139,11 +139,11 @@ test('locked member allows collapse while alignment uses the visible header and 
   await page.getByTestId('position-lock').click()
   await waitForSync(page)
   await test.step('header disclosure stays reachable above a selected locked first member', async () => {
-    await expect(page.getByTestId('selection-column-toggle')).toHaveText('Collapse column')
+    await expect(page.getByTestId('selection-column-toggle')).toHaveCount(0)
     await f.toggle.click()
     await expect(f.toggle).toHaveAttribute('aria-expanded', 'false')
   })
-  await expect(page.getByTestId('unlock-column-layout')).toBeVisible()
+  await expect(page.getByTestId('unlock-column-layout')).toHaveCount(0)
   // Collapse slides shut; measure once it has settled on the header.
   await expect.poll(async () => (await f.column.boundingBox())!.height).toBe(58)
   const original = await f.column.boundingBox()
@@ -201,7 +201,7 @@ test('two authorized sessions converge on collapse and concurrent title edits wi
   await context.close()
 })
 
-test('selected columns can collapse from the overview toolbar without hunting for a tiny header', async ({ page }) => {
+test('column collapse stays on its header after returning from the overview', async ({ page }) => {
   const f = await fixture(page, 20)
   await f.column.getByTestId('column-title').click({ modifiers: ['Shift'] })
   await expect(f.column).toHaveClass(/selected/)
@@ -211,12 +211,12 @@ test('selected columns can collapse from the overview toolbar without hunting fo
     await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(0.8 ** i, 4)
   }
   await expect(page.getByTestId('lod-layer')).toBeVisible()
-  await page.getByTestId('selection-column-toggle').click()
-  await expect(page.getByTestId('selection-column-toggle')).toHaveText('Expand column')
+  await expect(page.getByTestId('selection-column-toggle')).toHaveCount(0)
   await page.keyboard.press(`${MOD}+0`)
   await expect.poll(async () => (await camera(page)).zoom).toBeCloseTo(1, 4)
+  await f.toggle.click()
   await expect(f.toggle).toHaveAttribute('aria-expanded', 'false')
-  await page.getByTestId('selection-column-toggle').click()
+  await f.toggle.click()
   await expect(f.column.locator('.in-column')).toHaveCount(20)
 })
 

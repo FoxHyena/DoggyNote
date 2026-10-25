@@ -1,7 +1,8 @@
+import { runCardAction } from './helpers.ts'
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test'
 import { MOD, addNote, clickEmpty, freshBoard, waitForSync } from './helpers.ts'
 
-// Labels open from the selection bar in a small popover: type to filter, click
+// Labels open from right-click in a small popover: type to filter, click
 // to toggle, Enter or Create to make one. Rows rename in place.
 
 const contexts = new Set<BrowserContext>()
@@ -31,7 +32,7 @@ async function openLabels(page: Page, card: ReturnType<Page['locator']>) {
   await expect(card).not.toHaveClass(/selected/)
   await card.click()
   await expect(card).toHaveClass(/selected/)
-  await page.getByTestId('labels-button').click()
+  await runCardAction(page, 'Labels')
   await expect(popover(page)).toBeVisible()
   await expect(page.getByTestId('labels-input')).toBeFocused()
 }
@@ -56,8 +57,8 @@ test('create, filter, toggle and rename labels in place; they persist and reach 
   const card = await addNote(page, `Warm side light ${tag}`)
   await openLabels(page, card)
 
-  // A small panel anchored to the button, not a full-screen dialog.
-  const anchor = (await page.getByTestId('labels-button').boundingBox())!
+  // A small panel anchored to the card, not a full-screen dialog.
+  const anchor = (await card.boundingBox())!
   const box = (await popover(page).boundingBox())!
   expect(box.width).toBeLessThan(340)
   expect(Math.abs(box.x - anchor.x)).toBeLessThan(anchor.width + 16)
@@ -261,7 +262,7 @@ test('Remove takes a label off the board, and Undo in the toast brings it back o
   await clickEmpty(page)
   await a.click()
   await b.click({ modifiers: ['Shift'] })
-  await page.getByTestId('labels-button').click()
+  await runCardAction(page, 'Labels')
   await page.keyboard.type('Mood')
   await page.keyboard.press('Enter')
   await expect(chips(a)).toHaveText(['Mood'])

@@ -1,3 +1,4 @@
+import { runCardAction } from './helpers.ts'
 import { expect, test, type Page } from '@playwright/test'
 import { MOD, at, cardByText, cards, clickEmpty, freshBoard, postSync, pullAllObjects, waitForSync } from './helpers.ts'
 import { boardOf, note, seedCards } from './touch.ts'
@@ -71,7 +72,7 @@ test('⌘D duplicates beside the original; a column brings its cards', async ({ 
 test('the Duplicate button does the same', async ({ page }) => {
   await seedCards(page, [note('Good boy', 0, 0)])
   await selectAllCards(page)
-  await page.getByTestId('duplicate-selection').click()
+  await runCardAction(page, 'Duplicate')
   await expect(page.locator('[data-testid=card]', { hasText: 'Good boy' })).toHaveCount(2)
 })
 

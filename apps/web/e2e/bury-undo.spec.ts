@@ -1,3 +1,4 @@
+import { runCardAction } from './helpers.ts'
 import { expect, test } from '@playwright/test'
 import { MOD, addNote, cardByText, freshBoard } from './helpers.ts'
 
@@ -17,10 +18,10 @@ test('the Delete key buries the selection, says so, and Undo brings it back', as
   await expect(cardByText(page, 'Second slip')).toBeVisible()
 })
 
-test('Bury in the selection bar shows the same toast', async ({ page }) => {
+test('Bury in the right-click menu shows the same toast', async ({ page }) => {
   await freshBoard(page)
   await addNote(page, 'Old bone')
-  await page.getByTestId('bury').click()
+  await runCardAction(page, 'Bury')
   await expect(page.getByTestId('toast')).toContainText('Buried 1 card')
   await expect(page.getByTestId('toast-action')).toHaveText('Undo')
   await page.getByTestId('toast-action').click()
@@ -43,7 +44,7 @@ test('a buried card sinks into Buried bones, and the copy cleans itself up', asy
   await freshBoard(page)
   await addNote(page, 'Sinking bone')
   const ghosts = await watchGhosts(page)
-  await page.getByTestId('bury').click()
+  await runCardAction(page, 'Bury')
   expect(await ghosts()).toBe(1)
   // The copy is decoration: not a card, not announced, gone once it lands.
   await expect(page.locator('.bury-ghost')).toHaveCount(0)

@@ -1,9 +1,9 @@
-import { Show, createEffect, createSignal, onCleanup, onMount } from 'solid-js'
+import { Show, createEffect, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
 import { Portal } from 'solid-js/web'
 import { COPY } from '@doggynote/theme'
-import type { Vec } from '@doggynote/core'
+import type { Card, Vec } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
-import { beginEdit, setCardContextOpen } from '../state/ui.ts'
+import { beginEdit, selection, setCardContextOpen } from '../state/ui.ts'
 import { burySelection } from '../state/actions.ts'
 import { duplicateSelection } from '../state/clipboard.ts'
 import { liveState, peers, pingAt } from '../state/realtime.ts'
@@ -22,8 +22,11 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
   const [labels, setLabels] = createSignal(false)
   const [at, setAt] = createSignal({ left: props.point.screenX, top: props.point.screenY })
   const card = () => doc.getCard(props.point.cardId ?? '')
-  const writable = () => doc.canWriteObject(card())
-  const canEdit = () => writable() && ['note', 'todo', 'column', 'image', 'swatch', 'board', 'link', 'movie'].includes(card()?.type ?? '')
+  const cards = createMemo(() => [...selection()].map((id) => doc.getCard(id)).filter((c): c is Card => !!c))
+  const sole = () => selection().size === 1 ? card() : undefined
+  const writable = () => selection().size > 0 && [...selection()].every((id) => doc.canWriteObject(doc.get(id)))
+  const canEdit = () => !!sole() && writable() && ['note', 'todo', 'column', 'image', 'swatch', 'board', 'link', 'movie'].includes(sole()!.type)
+  const canLabel = () => writable() && cards().length > 0 && cards().every((c) => c.type !== 'column' && c.boardId === cards()[0].boardId)
   const canPing = () => liveState() === 'live' && peers().length > 0
   const close = () => { props.close(); props.point.returnTo.focus({ preventScroll: true }) }
   const run = (action: () => void) => { close(); action() }
@@ -40,16 +43,16 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
   })
   return (
     <Portal>
-      <Show when={!labels()} fallback={<LabelsPopover cards={[card()!]} anchor={() => props.point.returnTo} close={close} />}>
+      <Show when={!labels()} fallback={<LabelsPopover cards={cards()} anchor={() => props.point.returnTo} close={close} />}>
         <div ref={menu} class="menu canvas-ping-menu" classList={{ 'card-context-menu': !!card() }} role="menu" aria-label={card() ? 'Card actions' : COPY.lookHere} data-testid="canvas-context-menu" data-nodrag
           style={{ position: 'fixed', left: `${at().left}px`, top: `${at().top}px` }}
           onPointerDown={(e) => e.stopPropagation()} onContextMenu={(e) => e.preventDefault()}>
           <SheetGrip onDismiss={close} />
           <Show when={card()}>
-            <button class="menu-item" role="menuitem" disabled={!canEdit()} onClick={() => run(() => beginEdit(card()!.id))}><Icon name="edit" size={18} />Edit</button>
+            <button class="menu-item" role="menuitem" disabled={!canEdit()} onClick={() => run(() => beginEdit(card()!.id))}><Icon name="edit" size={18} />{card()?.type === 'board' ? 'Rename' : 'Edit'}</button>
             <button class="menu-item" role="menuitem" disabled={!writable()} onClick={() => run(duplicateSelection)}><Icon name="duplicate" size={18} />Duplicate</button>
-            <button class="menu-item" role="menuitem" disabled={!writable() || card()?.type === 'column'} onClick={() => setLabels(true)}><Icon name="label" size={18} />Labels</button>
-            <button class="menu-item" role="menuitem" disabled={card()?.type === 'board'} onClick={() => run(() => openThread(card()!.id))}><Icon name="comment" size={18} />Comment</button>
+            <button class="menu-item" role="menuitem" disabled={!canLabel()} onClick={() => setLabels(true)}><Icon name="label" size={18} />Labels</button>
+            <button class="menu-item" role="menuitem" disabled={!sole() || sole()?.type === 'board'} onClick={() => run(() => openThread(card()!.id))}><Icon name="comment" size={18} />Comment</button>
             <div class="menu-sep" role="separator" />
             <button class="menu-item" role="menuitem" disabled={!writable()} onClick={() => run(burySelection)}><Icon name="bury" size={18} />{COPY.bury}</button>
           </Show>

@@ -1,3 +1,4 @@
+import { runCardAction } from './helpers.ts'
 import { FIXTURES } from './ports.ts'
 import { openParentBoard } from './helpers.ts'
 import { postSync } from './helpers.ts'
@@ -435,7 +436,7 @@ test.describe('trash', () => {
     await addNote(page, 'bone one', 0.3, 0.3)
     await addNote(page, 'bone two', 0.6, 0.6)
     await page.keyboard.press(`${MOD}+a`)
-    await page.getByTestId('bury').click()
+    await runCardAction(page, 'Bury')
     await page.getByTestId('tool-trash').click()
     await expect(page.getByTestId('trash-item')).toHaveCount(2)
     await page.getByTestId('trash-item').filter({ hasText: 'bone one' }).getByTestId('restore').click()

@@ -1,3 +1,4 @@
+import { runCardAction } from './helpers.ts'
 import { openParentBoard } from './helpers.ts'
 import { expect, test } from '@playwright/test'
 import { MOD, addNote, cardByText, freshBoard, waitForSync } from './helpers.ts'
@@ -11,7 +12,7 @@ test('board selection, explicit rename and double-click opening never create a n
   await tile.click()
   await expect(page.getByTestId('board-name')).toHaveText('Interaction QA')
   await expect(tile).toHaveClass(/selected/)
-  await page.getByTestId('rename-board').click()
+  await runCardAction(page, 'Rename')
   await page.getByTestId('board-title-input').fill('Renamed kennel')
   await page.keyboard.press('Enter')
   await cardByText(page, 'Renamed kennel').locator('.board-tile').dblclick()
@@ -19,14 +20,14 @@ test('board selection, explicit rename and double-click opening never create a n
   await expect(page.locator('[data-type="note"]')).toHaveCount(0)
   await openParentBoard(page, 'last')
   await cardByText(page, 'Renamed kennel').click()
-  await page.getByTestId('open-board').click()
+  await page.keyboard.press('Enter')
   await expect(page.getByTestId('board-name')).toHaveText('Renamed kennel')
 })
 
 test('Buried bones has no notification badge when items are buried', async ({ page }) => {
   await freshBoard(page)
   await addNote(page, 'A recoverable bone')
-  await page.getByTestId('bury').click()
+  await runCardAction(page, 'Bury')
   await expect(page.getByTestId('tool-trash').locator('.badge')).toHaveCount(0)
   await page.getByTestId('tool-trash').click()
   await expect(page.getByTestId('trash-panel')).toContainText('A recoverable bone')
