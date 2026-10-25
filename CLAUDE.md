@@ -43,7 +43,7 @@ server, so each test works on its own `freshBoard()`.
 
 After merging to `main`, manually run `.github/workflows/release.yml` on main as a separate release action:
 1. The full CI runs again.
-2. The Mac app is built and signed with the self-signed "DoggyNote Signing" cert. Its updater bundle, DMG and versioned `desktop/<version>/latest.json` are staged in R2; the public fallback manifest stays unchanged.
+2. The Mac app is built, then signed with a Developer ID Application certificate with hardened runtime and a secure timestamp. Apple must accept notarization, stapling and Gatekeeper checks for both the app and DMG before its updater bundle, DMG and versioned `desktop/<version>/latest.json` are staged in R2; the public fallback manifest stays unchanged. The updater archive is created from the stapled app before receiving its Tauri signature.
 3. The Worker and web app deploy, with migrations applied first. The Worker selects the staged manifest matching `APP_VERSION`, making the compatible updater available when its minimum-client gate takes effect.
 4. After deployment, the fallback `desktop/latest.json` and GitHub release are published. A failed desktop build cannot strand old clients; a new desktop is not advertised by the old Worker.
 
@@ -54,6 +54,7 @@ The version is `0.<minor in version.json>.<run number>`; bump `minor` by hand fo
 - The updater key and signing cert live in `~/.tauri/` on the maintainer's Mac and in GitHub secrets. **Back them up.**
   - Losing the updater key means installed apps can't verify updates, and everyone reinstalls once.
   - Losing the cert means one more Keychain prompt per person.
+- Release signing uses GitHub Actions secrets `MACOS_CERT_P12` (base64 Developer ID Application certificate and private key) and `MACOS_CERT_PASSWORD` (export password). Notarization uses `APPLE_ID`, `APPLE_PASSWORD` (an Apple app-specific password) and `APPLE_TEAM_ID`. These are scoped to the steps that need them; the certificate is imported only after the build. Keep the existing Tauri updater key when changing Apple certificates. Moving from the old self-signed certificate may require users to approve Keychain access or sign in once more.
 
 **API compatibility:** the web app and Worker deploy together, but desktop apps lag behind. API changes must be additive. A breaking change has to bump `MIN_CLIENT` in `apps/server/wrangler.toml`, which sends older apps to an "update required" screen.
 
