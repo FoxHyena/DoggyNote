@@ -131,13 +131,16 @@ test('selection controls retain their dimensions and stay clear of floating canv
   const docked = await bar.evaluate((el) => el.classList.contains('docked'))
   if (docked) {
     // Phone colours are on demand; their full-size targets remain inside the sheet.
-    await expect(bar.locator('.swatch')).toHaveCount(0)
+    await expect(bar.locator('.tint-dots')).toHaveCount(0)
     await page.getByTestId('selection-colour').click()
-    const swatch = (await page.getByTestId('selection-style-sheet').locator('.swatch').first().boundingBox())!
-    expect(swatch.width).toBeGreaterThanOrEqual(44)
-    expect(swatch.height).toBeGreaterThanOrEqual(44)
+    // 32px dots in 44px tiles.
+    const dots = page.getByTestId('selection-style-sheet').locator('.tint-dots')
+    const tile = await dots.evaluate((el) => { const s = getComputedStyle(el); return [parseFloat(s.gridTemplateColumns), parseFloat(s.gridAutoRows)] })
+    expect(tile[0]).toBeGreaterThanOrEqual(44)
+    expect(tile[1]).toBeGreaterThanOrEqual(44)
+    expect((await dots.locator('.color-dot').first().boundingBox())!.width).toBe(32)
     await page.getByTestId('selection-style-done').click()
-  } else expect((await bar.locator('.swatch').first().boundingBox())!.width).toBe(24)
+  } else expect((await bar.locator('.tint-dots .color-dot').first().boundingBox())!.width).toBe(24)
   if (docked) {
     // Phone width: the bar docks along the bottom and the canvas controls step aside.
     await expect(page.getByTestId('canvas-controls')).toBeHidden()

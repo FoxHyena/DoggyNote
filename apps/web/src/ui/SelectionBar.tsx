@@ -12,6 +12,7 @@ import { COLUMN_HEADER, layoutTick, rectOf } from '../canvas/layout.ts'
 import { union, worldToScreen } from '@doggynote/core'
 import { BOARD_ICONS, BoardIconSvg, Icon, IconButton, type IconName } from './icons.tsx'
 import { canvasControlsSize } from './CanvasControls.tsx'
+import { ColorDots } from './ColorDots.tsx'
 import { openThread } from './CommentsPanel.tsx'
 import { TodoOptions, TodoMenuItems } from './TodoOptions.tsx'
 import { BarMenu } from './BarMenu.tsx'
@@ -127,36 +128,16 @@ export function SelectionBar() {
     return { left: at.x + size.width / 2, top: at.y }
   })
 
+  // Any other colour comes from the wheel, applied once it closes: one change, one undo step.
   const colours = () => (
-    <div class="swatches" role="group" aria-label="Colour">
-      <For each={CARD_COLORS}>
-        {(c) => (
-          <button
-            class="swatch"
-            aria-pressed={currentColor() === c}
-            classList={{ on: currentColor() === c, 'swatch-none': c === 'none' }}
-            style={{ '--sw': `var(--dn-card-${c}-bg)` }}
-            data-testid={`swatch-${c}`}
-            data-tip={COPY.colorNames[c]}
-            aria-label={COPY.colorNames[c]}
-            onClick={() => setColor(selection(), c)}
-          />
-        )}
-      </For>
-      {/* Any other colour: the system picker. One change, one undo step. */}
-      <label class="swatch swatch-custom" classList={{ on: !!customColor() }} style={customColor() ? { '--sw': customColor()! } : undefined} data-tip={customColor() ? `Custom colour ${customColor()}` : 'Custom colour'} data-testid="swatch-custom">
-        <Show when={!customColor()}>
-          <Icon size={16} name="plus" />
-        </Show>
-        <input
-          type="color"
-          data-testid="swatch-custom-input"
-          aria-label="Custom colour"
-          value={(customColor() ?? DEFAULT_SWATCH_HEX).toLowerCase()}
-          onChange={(e) => pickCustom(e.currentTarget.value)}
-        />
-      </label>
-    </div>
+    <ColorDots
+      class="tint-dots"
+      label="Colour"
+      dots={CARD_COLORS.map((c) => ({ value: c, name: COPY.colorNames[c], paint: c === 'none' ? 'transparent' : `var(--dn-card-${c}-bg)`, testid: `swatch-${c}`, none: c === 'none' }))}
+      value={currentColor()}
+      onPick={(c) => setColor(selection(), c as CardColor)}
+      custom={{ value: customColor(), fallback: DEFAULT_SWATCH_HEX, testid: 'swatch-custom-input', slotTestId: 'swatch-custom', live: false, onPick: pickCustom }}
+    />
   )
   const boardIcons = () => (
     <div class="icon-picker" aria-label="Board icon">

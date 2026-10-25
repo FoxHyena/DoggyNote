@@ -13,11 +13,15 @@ export type ColorDot = {
   paint: string
   /** Test hooks, e.g. `{ 'data-hex': '#FFFFFF' }`. */
   data?: Record<string, string>
+  /** This dot's own test id (instead of the shared `dotTestId`). */
+  testid?: string
+  /** "No colour": an empty ring with a slash, so it never reads as a dark or white tint. */
+  none?: boolean
 }
 
 /**
  * One row of colour dots with the system colour wheel in the last slot: the
- * shared picker for colour cards, labels, ink and sketch paper. The custom slot
+ * shared picker for card tints, colour cards, labels, ink and sketch paper. The custom slot
  * shows a "+" until a colour outside the presets is chosen, then wears it.
  * Sizes come from `--cd-dot` and `--cd-gap` (24px and 8px; bigger for fingers).
  */
@@ -29,9 +33,9 @@ export function ColorDots(props: {
   dots: readonly ColorDot[]
   value: string | null
   onPick: (value: string) => void
-  dotTestId: string
-  /** The wheel. `value` is the custom colour when one is chosen (not a preset). */
-  custom: { value: string | null; fallback: string; testid: string; onPick: (hex: string) => void; live?: boolean; autofocus?: boolean }
+  dotTestId?: string
+  /** The wheel. `value` is the custom colour when one is chosen (not a preset). `testid` is the input's, `slotTestId` the slot's. */
+  custom: { value: string | null; fallback: string; testid: string; slotTestId?: string; onPick: (hex: string) => void; live?: boolean; autofocus?: boolean }
   /** Focus lands on the current dot when the panel opens. */
   autofocus?: boolean
   class?: string
@@ -49,9 +53,9 @@ export function ColorDots(props: {
           <button
             type="button"
             class="color-dot"
-            classList={{ on: props.value === d.value, edge: nearPanel(d.paint) }}
+            classList={{ on: props.value === d.value, edge: nearPanel(d.paint), none: !!d.none }}
             style={{ '--dot': d.paint }}
-            data-testid={props.dotTestId}
+            data-testid={d.testid ?? props.dotTestId}
             {...d.data}
             data-autofocus={(props.autofocus && props.value === d.value) || undefined}
             aria-label={d.name}
@@ -61,7 +65,7 @@ export function ColorDots(props: {
           />
         )}
       </For>
-      <label class="color-dot color-custom" classList={{ on: !!props.custom.value, edge: nearPanel(props.custom.value) }} style={props.custom.value ? { '--dot': props.custom.value } : undefined} data-tip={props.custom.value ? `Custom colour ${props.custom.value}` : 'Custom colour'}>
+      <label class="color-dot color-custom" data-testid={props.custom.slotTestId} classList={{ on: !!props.custom.value, edge: nearPanel(props.custom.value) }} style={props.custom.value ? { '--dot': props.custom.value } : undefined} data-tip={props.custom.value ? `Custom colour ${props.custom.value}` : 'Custom colour'}>
         <Show when={!props.custom.value}>
           <Icon size={14} name="plus" />
         </Show>

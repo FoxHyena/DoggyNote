@@ -26,6 +26,8 @@
 html[data-input='mouse'] .color-dot:not(.on):hover { box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-border); }
 html[data-input='mouse'] .color-custom:not(.on):hover { color: var(--dn-text); }
 .color-dot.edge { border-color: var(--dn-text-muted); }
+/* No colour: an empty ring with a slash. */
+.color-dot.none::before { content: ''; width: 1.5px; height: 72%; border-radius: 1px; background: var(--dn-text-muted); transform: rotate(45deg); }
 .color-custom { border-style: dashed; }
 .color-custom.on { border-style: solid; }
 /* The real picker covers the dot, so a click or tap opens the system colour wheel. */
