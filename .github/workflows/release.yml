@@ -104,10 +104,17 @@ jobs:
         env:
           MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
           MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          : "${MACOS_CERT_P12:?MACOS_CERT_P12 is required}"
+          : "${MACOS_CERT_PASSWORD:?MACOS_CERT_PASSWORD is required}"
+          : "${APPLE_TEAM_ID:?APPLE_TEAM_ID is required}"
           KC="$RUNNER_TEMP/signing.keychain-db"
           KCPW=$(openssl rand -base64 18)
-          echo "$MACOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          echo "::add-mask::$KCPW"
+          umask 077
+          trap 'rm -f "$RUNNER_TEMP/cert.p12"' EXIT
+          printf '%s' "$MACOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
           security create-keychain -p "$KCPW" "$KC"
           security set-keychain-settings -lut 3600 "$KC"
           security unlock-keychain -p "$KCPW" "$KC"
@@ -116,15 +123,21 @@ jobs:
           rm "$RUNNER_TEMP/cert.p12"
           # codesign only resolves identities in keychains on the search list.
           security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
-          # Sign by fingerprint: the cert is self-signed (untrusted), so lookups by name can miss it.
-          ID=$(security find-identity -p codesigning "$KC" | awk '/DoggyNote Signing/ {print $2; exit}')
-          test -n "$ID" || { security find-identity -p codesigning "$KC"; exit 1; }
+          # Only accept a valid Developer ID Application identity for our team.
+          ID=$(security find-identity -v -p codesigning "$KC" | awk -v team="$APPLE_TEAM_ID" '
+            /"Developer ID Application:/ && index($0, "(" team ")\"") { print $2; exit }
+          ')
+          test -n "$ID" || { echo "No valid Developer ID Application certificate/private key for the configured team" >&2; exit 1; }
           echo "SIGN_KEYCHAIN=$KC" >> "$GITHUB_ENV"
           echo "SIGN_IDENTITY=$ID" >> "$GITHUB_ENV"
 
-      - name: Sign + package
+      - name: Sign, notarize + package
         working-directory: apps/desktop
+        timeout-minutes: 75
         env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: OUT=release sh scripts/release-desktop.sh
