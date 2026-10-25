@@ -40,6 +40,17 @@ export async function at(page: Page, fx: number, fy: number) {
 export const cards = (page: Page) => page.getByTestId('card')
 export const cardByText = (page: Page, text: string) => page.locator('[data-testid="card"]', { hasText: text }).last()
 
+/** Open the real right-click menu on a selected card without changing the selection. */
+export async function openCardMenu(page: Page, card = page.locator('[data-testid="card"].selected').first()) {
+  await card.click({ button: 'right', position: { x: 30, y: 20 } })
+  await expect(page.getByTestId('canvas-context-menu')).toBeVisible()
+}
+
+export async function runCardAction(page: Page, name: string, card?: Locator) {
+  await openCardMenu(page, card)
+  await page.getByTestId('canvas-context-menu').getByRole('menuitem', { name, exact: true }).click()
+}
+
 /** Double-click empty canvas, type, and leave edit mode. */
 export async function addNote(page: Page, text: string, fx = 0.5, fy = 0.5) {
   const p = await at(page, fx, fy)

@@ -1,3 +1,4 @@
+import { runCardAction } from './helpers.ts'
 import { expect, test, type Locator } from '@playwright/test'
 import { at, cardByText, freshBoard, MOD } from './helpers.ts'
 import { note, seedCards, setCamera } from './touch.ts'
@@ -23,7 +24,7 @@ test('selection actions flip below a neighbour, then labels stay clear as their 
   const bar = page.getByTestId('selection-bar')
   await clearOf(bar, [selected, neighbour])
   expect((await bar.boundingBox())!.y).toBeGreaterThan((await selected.boundingBox())!.y)
-  await page.getByTestId('labels-button').click()
+  await runCardAction(page, 'Labels')
   const panel = page.getByTestId('labels-popover')
   await clearOf(panel, [selected, neighbour])
   await page.getByTestId('labels-input').fill('Weekend')
@@ -32,7 +33,7 @@ test('selection actions flip below a neighbour, then labels stay clear as their 
   await expect(selected.getByTestId('card-labels')).toHaveText('Weekend')
   await clearOf(panel, [selected, neighbour])
   await page.keyboard.press('Escape')
-  await expect(page.getByTestId('labels-button')).toBeFocused()
+  await expect(selected).toBeFocused()
 })
 
 test('crowded actions find an offset when both above and below contain cards', async ({ page }) => {
@@ -52,7 +53,7 @@ test('card context actions support arrows, Escape, editing, duplication, labels,
   await open()
   await expect(page.getByTestId('selection-bar')).toHaveCount(0)
   await expect(menu.getByRole('menuitem')).toHaveText(['Edit', 'Duplicate', 'Labels', 'Comment', 'Bury'])
-  // Menus share the migrated icon family and Bury uses Bone, distinct from permanent deletion.
+  // Menus share the migrated icon family and Bury uses Archive, distinct from permanent deletion.
   await expect(menu.locator('svg')).toHaveCount(5)
   for (const name of ['edit', 'duplicate', 'label', 'comment', 'bury']) {
     const icon = menu.locator(`svg[data-icon="${name}"]`)

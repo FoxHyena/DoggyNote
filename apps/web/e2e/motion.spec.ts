@@ -1,3 +1,4 @@
+import { runCardAction } from './helpers.ts'
 import { expect, test } from '@playwright/test'
 import { addNote, camera, cardByText, MOD } from './helpers.ts'
 import { cameraSamples, expectCenteredToast, motionBoard, watchCamera, watchToast } from './motion-helpers.ts'
@@ -73,7 +74,7 @@ for (const theme of ['dark', 'light'] as const) for (const reduced of [false, tr
       await expectCenteredToast(page)
       await page.getByTestId('toast').click()
       await watchToast(page)
-      await page.getByTestId('bury').click()
+      await runCardAction(page, 'Bury')
       await expectCenteredToast(page)
       await page.getByTestId('toast-action').click()
       await expect(cardByText(page, 'Toast undo check')).toBeVisible()

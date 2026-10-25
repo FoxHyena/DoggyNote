@@ -1,3 +1,4 @@
+import { runCardAction } from './helpers.ts'
 import { pullAllObjects } from './helpers.ts'
 import { postSync } from './helpers.ts'
 import { waitForSync } from './helpers.ts'
@@ -46,7 +47,7 @@ test('start a thread, reply, resolve and reopen; the badge keeps count', async (
   const note = uniq('ball')
   await addNote(page, note)
   await dragBy(page, cardByText(page, note), 12, 0) // select (a click would open it)
-  await page.getByTestId('comment-button').click()
+  await runCardAction(page, 'Comment')
   await expect(page.getByTestId('comments-panel')).toContainText(note)
   await expect(page.getByTestId('comment-input')).toBeFocused()
 
@@ -90,7 +91,7 @@ test('edit your message; delete takes it back from everyone, restorable until th
   const secret = uniq('secret plan')
   await addNote(page, note)
   await dragBy(page, cardByText(page, note), 12, 0) // select (a click would open it)
-  await page.getByTestId('comment-button').click()
+  await runCardAction(page, 'Comment')
   await send(page, 'typo hre')
   await page.getByTestId('comment-edit').click()
   await page.getByTestId('comment-edit-input').fill(secret)
@@ -140,9 +141,9 @@ test('two people replying at once both land, under their own names', async ({ pa
   const p2 = await ctx.newPage()
   await p2.goto(url)
   await dragBy(p2, cardByText(p2, note), 12, 0)
-  await p2.getByTestId('comment-button').click()
+  await runCardAction(p2, 'Comment')
   await dragBy(page, cardByText(page, note), 12, 0) // select (a click would open it)
-  await page.getByTestId('comment-button').click()
+  await runCardAction(page, 'Comment')
 
   // Both send before either has pulled the other's message.
   await Promise.all([send(page, 'rex says woof'), send(p2, 'fido says arf')])
@@ -180,7 +181,7 @@ test('share links show threads read-only', async ({ page, browser }) => {
   const note = uniq('frisbee')
   await addNote(page, note)
   await dragBy(page, cardByText(page, note), 12, 0) // select (a click would open it)
-  await page.getByTestId('comment-button').click()
+  await runCardAction(page, 'Comment')
   await send(page, 'visible to the link')
   await synced(page)
   const res = await page.request.post('/api/shares', { data: { boardId: boardOf(page) } })

@@ -3,13 +3,12 @@ import { For, Show, createEffect, createMemo, createSignal, onCleanup } from 'so
 import { ALIGNMENTS, DEFAULT_SWATCH_HEX, type Alignment, type BoardIcon, type Card } from '@doggynote/core'
 import { CARD_COLORS, COPY, cardColor, isPresetColor, normalizeHex, type CardColor } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
-import { columnCollapsed, setColumnCollapsed } from '../state/columns.ts'
 import { burySelection, setColor } from '../state/actions.ts'
-import { alignSelection, isPositionLocked, lockSelection, selectedAlignmentUnits, unlockSelectionLayouts } from '../state/position.ts'
+import { alignSelection, isPositionLocked, lockSelection, selectedAlignmentUnits } from '../state/position.ts'
 import { beginEdit, camera, cardContextOpen, clearSelection, connectMode, editingId, openBoard, selectMore, selection, setConnectMode, setSelectMore, viewport } from '../state/ui.ts'
 import { phone, touch } from '../state/device.ts'
 import { draggingIds } from '../canvas/dnd.ts'
-import { layoutTick, rectOf } from '../canvas/layout.ts'
+import { COLUMN_HEADER, layoutTick, rectOf } from '../canvas/layout.ts'
 import { union, worldToScreen } from '@doggynote/core'
 import { BOARD_ICONS, BoardIconSvg, Icon, IconButton, type IconName } from './icons.tsx'
 import { canvasControlsSize } from './CanvasControls.tsx'
@@ -21,7 +20,7 @@ import { Popover } from './Popover.tsx'
 import { LabelsButton } from './Labels.tsx'
 import { cardObstacles, placeFloating } from './floatingPlacement.ts'
 
-// Floating bar for the current selection: colour, board icon, bury (trash).
+// Floating controls for the selected items. Mouse card actions live in right-click.
 // On touch it also offers what a mouse does with clicks and modifier keys
 // (edit, connect, add to the selection). On phones it docks to the bottom.
 
@@ -32,6 +31,7 @@ export function SelectionBar() {
   const [barSize, setBarSize] = createSignal({ width: 400, height: 46 })
   const cards = createMemo(() => [...selection()].map((id) => doc.getCard(id)).filter((c): c is Card => !!c))
   const conns = createMemo(() => [...selection()].filter((id) => doc.get(id)?.kind === 'connection'))
+  const connectionOnly = () => !cards().length && conns().length > 0
   // Touch screens get a bar along the bottom: thumbs reach it, and it never covers the card.
   const docked = () => phone() || touch()
   // While typing in a to-do list, its colour and list options stay within reach
@@ -40,11 +40,6 @@ export function SelectionBar() {
   const show = () => !cardContextOpen() && (cards().length || conns().length) && !draggingIds().size && (!editingId() || editingList()) && !connectMode()
   createEffect(() => { if (!show() || !phone()) setPanel(null) })
   const sole = () => (cards().length === 1 && selection().size === 1 ? cards()[0] : undefined)
-  const selectedColumn = () => {
-    const c = sole()
-    const col = c?.type === 'column' ? c : c?.columnId ? doc.getCard(c.columnId) : undefined
-    return col?.type === 'column' && col.boardId === c?.boardId ? col : undefined
-  }
   const editable = () => {
     const c = sole()
     return !!c && (c.type === 'note' || c.type === 'todo' || c.type === 'column' || c.type === 'image' || c.type === 'swatch' || c.type === 'link' || c.type === 'movie') && doc.canWriteObject(c)
@@ -59,8 +54,11 @@ export function SelectionBar() {
   }
   const writable = () => cards().every((c) => doc.canWriteObject(c))
   const allLocked = () => cards().every((c) => c.positionLocked === true)
-  // Alignment needs two movable things; otherwise the icons would only take up room.
-  const canAlign = () => writable() && selectedAlignmentUnits().length >= 2 && !selectedAlignmentUnits().every((c) => isPositionLocked(c.id))
+  // Never move an unselected parent column on behalf of a selected member.
+  const canAlign = () => {
+    const units = selectedAlignmentUnits()
+    return writable() && units.length >= 2 && units.every((c) => selection().has(c.id)) && units.some((c) => !isPositionLocked(c.id))
+  }
   const soleBoard = () => {
     const c = cards()
     return c.length === 1 && c[0].type === 'board' ? doc.getBoard((c[0] as Card<'board'>).content.boardId) : undefined
@@ -83,9 +81,9 @@ export function SelectionBar() {
     <BarAction testid="position-lock" icon={allLocked() ? 'lock' : 'unlock'} label={lockLabel()} text={allLocked() ? 'Unlock' : 'Lock'} title={allLocked() ? 'Unlock position' : 'Lock position: protect layout while keeping content editable'} pressed={allLocked()} labelled={docked()} onClick={() => lockSelection(!allLocked())} />
   )
   const partlyLocked = () => cards().some((c) => c.positionLocked === true) && !cards().every((c) => c.positionLocked === true)
-  const columnLocked = () => cards().some((c) => isPositionLocked(c.id) && c.positionLocked !== true)
   // Docked, the lock is one of the labelled actions; the position row only holds what's left.
-  const positionRow = () => !docked() || partlyLocked() || columnLocked() || canAlign()
+  const positionRow = () => !docked() || partlyLocked() || canAlign()
+  const hasActions = () => docked() || connectionOnly() || (sole()?.type === 'todo' && writable())
 
   // Float just above the selection, or below it if there's no room.
   const pos = createMemo(() => {
@@ -98,13 +96,15 @@ export function SelectionBar() {
     const v = viewport()
     if (!u) return { left: v.width / 2, top: 12 }
     const cam = camera()
-    // A member's toolbar must leave its column's header (and its collapse toggle) reachable.
-    const parentTops = cards().flatMap((c) => {
+    // Protect the header without using it as the member's anchor.
+    const headers = cards().flatMap((c) => {
       const parent = c.columnId ? doc.getCard(c.columnId) : undefined
       const r = parent?.type === 'column' && parent.boardId === c.boardId ? rectOf(parent.id) : null
-      return r ? [r.y] : []
+      if (!r) return []
+      const p = worldToScreen(cam, r)
+      return [{ x: p.x, y: p.y, w: r.w * cam.zoom, h: COLUMN_HEADER * cam.zoom }]
     })
-    const tl = worldToScreen(cam, { x: u.x, y: Math.min(u.y, ...parentTops) })
+    const tl = worldToScreen(cam, u)
     const br = worldToScreen(cam, { x: u.x + u.w, y: u.y + u.h })
     const size = { width: Math.min(barSize().width, v.width - 16), height: barSize().height }
     const x = (tl.x + br.x - size.width) / 2
@@ -114,7 +114,14 @@ export function SelectionBar() {
       { x, y: br.y + 14 },
       { x: br.x + 14, y: tl.y },
       { x: tl.x - size.width - 14, y: tl.y },
-    ], [...cardObstacles(cards().map((c) => c.id)), { x: 16, y: v.height - 16 - controls.height, w: controls.width, h: controls.height }])
+    ], cardObstacles(cards().map((c) => c.id)), 8, {
+      maxShift: 64,
+      protectedObstacles: [
+        ...rects.map((r) => ({ ...worldToScreen(cam, r), w: r.w * cam.zoom, h: r.h * cam.zoom })),
+        ...headers,
+        { x: 16, y: v.height - 16 - controls.height, w: controls.width, h: controls.height },
+      ],
+    })
     return { left: at.x + size.width / 2, top: at.y }
   })
 
@@ -185,19 +192,11 @@ export function SelectionBar() {
       >
         <Show when={phone()} fallback={<>
         <Show when={cards().length && !editingList()}>
-          <Show when={selectedColumn()}>
-            <button class="bar-btn" data-testid="selection-column-toggle" aria-expanded={!columnCollapsed(selectedColumn())} onClick={() => setColumnCollapsed(selectedColumn()!.id, !columnCollapsed(selectedColumn()))}>
-              {columnCollapsed(selectedColumn()) ? 'Expand column' : 'Collapse column'}
-            </button>
-          </Show>
           <Show when={writable() && positionRow()}>
           <div class="bar-group bar-position">
             <Show when={!docked()}>{lockButton()}</Show>
             <Show when={partlyLocked()}>
               <button class="bar-btn" onClick={() => lockSelection(false)}>Unlock selected</button>
-            </Show>
-            <Show when={columnLocked()}>
-              <button class="bar-btn" data-testid="unlock-column-layout" data-tip="Unlock the position locks in this column" onClick={unlockSelectionLayouts}>Unlock column layout</button>
             </Show>
             <Show when={canAlign()}>
               <div class="bar-align" role="group" aria-label="Align selection" data-testid="align-selection">
@@ -210,19 +209,24 @@ export function SelectionBar() {
           </div>
           </Show>
         </Show>
+        <Show when={cards().some((c) => c.type !== 'swatch')}>
         <div class="bar-group bar-style">
         {/* A colour card is its colour: the card tints are for everything else. */}
-        <Show when={cards().some((c) => c.type !== 'swatch')}>
-          {colours()}
-        </Show>
+        {colours()}
         <Show when={soleBoard()}>
+          <Show when={docked()}>
           <button class="bar-btn" data-testid="open-board" onClick={() => openBoard(soleBoard()!.id)}>Open</button>
           <button class="bar-btn" data-testid="rename-board" disabled={!doc.canWriteObject(soleBoard())} onClick={() => beginEdit(cards()[0].id)}>Rename</button>
+          </Show>
           <div class="bar-sep" />
           {boardIcons()}
         </Show>
         </div>
+        </Show>
+        <Show when={hasActions()}>
+        <Show when={cards().some((c) => c.type !== 'swatch')}>
         <div class="bar-sep" />
+        </Show>
         <div class="bar-group bar-actions">
         <Show when={touch() && editable()}>
           <button class="bar-btn" data-testid="edit-card" onClick={() => beginEdit(sole()!.id)}>
@@ -235,13 +239,13 @@ export function SelectionBar() {
         </Show>
         <Show when={!editingList()}>
         <Show when={docked() && writable() && cards().length}>{lockButton()}</Show>
-        <Show when={canLabel()}>
+        <Show when={docked() && canLabel()}>
           <LabelsButton cards={cards()} labelled={docked()} />
         </Show>
-        <Show when={canDuplicate()}>
+        <Show when={docked() && canDuplicate()}>
           <BarAction testid="duplicate-selection" icon="duplicate" label="Duplicate" title="Duplicate (⌘D)" labelled={docked()} onClick={() => duplicateSelection()} />
         </Show>
-        <Show when={cards().length === 1 && cards()[0].type !== 'board'}>
+        <Show when={docked() && cards().length === 1 && cards()[0].type !== 'board'}>
           <BarAction testid="comment-button" icon="comment" label="Comment" title="Comment on this card" labelled={docked()} onClick={() => openThread(cards()[0].id)} />
         </Show>
         <Show when={touch() && sole()}>
@@ -256,10 +260,13 @@ export function SelectionBar() {
             {selection().size > 1 ? `${selection().size} picked` : 'Select'}
           </button>
         </Show>
-        <BarAction testid="bury" icon="bury" label={COPY.bury} title={`${COPY.bury}: move to ${COPY.trash} (Delete)`} labelled={docked()} onClick={burySelection} />
+        <Show when={docked() || connectionOnly()}>
+          <BarAction testid="bury" icon="bury" label={COPY.bury} title={`${COPY.bury}: move to ${COPY.trash} (Delete)`} labelled={docked()} onClick={burySelection} />
+        </Show>
         </Show>
 
         </div>
+        </Show>
         </>}>
           <div class="selection-phone-head">
             <span role="status">{`${selection().size} ${conns().length ? 'item' : 'card'}${selection().size === 1 ? '' : 's'} picked`}<Show when={cards().some((c) => isPositionLocked(c.id))}> · {cards().filter((c) => isPositionLocked(c.id)).length} locked</Show></span>
@@ -283,9 +290,7 @@ export function SelectionBar() {
                 <Show when={writable() && cards().length}>
                   <button class="menu-item" role="menuitemcheckbox" aria-checked={allLocked()} aria-label={lockLabel()} data-testid="position-lock" onClick={() => lockSelection(!allLocked())}><Icon name={allLocked() ? 'lock' : 'unlock'} />{allLocked() ? 'Unlock position' : 'Lock position'}</button>
                 </Show>
-                <Show when={columnLocked()}><button class="menu-item" role="menuitem" data-testid="unlock-column-layout" onClick={() => { close(); unlockSelectionLayouts() }}>Unlock column layout</button></Show>
                 <Show when={canAlign()}><div class="selection-sheet-align" role="group" aria-label="Align selection" data-testid="align-selection"><For each={ALIGNMENTS}>{(a) => <IconButton testid={`align-${a.value}`} icon={ALIGN_ICONS[a.value]} label={a.label} onClick={() => { close(); alignSelection(a.value) }} />}</For></div></Show>
-                <Show when={selectedColumn()}><button class="menu-item" role="menuitem" data-testid="selection-column-toggle" onClick={() => { close(); setColumnCollapsed(selectedColumn()!.id, !columnCollapsed(selectedColumn())) }}>{columnCollapsed(selectedColumn()) ? 'Expand column' : 'Collapse column'}</button></Show>
                 <Show when={sole()?.type === 'todo' && writable()}><TodoMenuItems card={sole() as Card<'todo'>} close={close} /></Show>
                 <Show when={canDuplicate()}><button class="menu-item" role="menuitem" data-testid="duplicate-selection" onClick={() => { close(); duplicateSelection() }}><Icon name="duplicate" />Duplicate</button></Show>
                 <Show when={sole() && sole()!.type !== 'board'}><button class="menu-item" role="menuitem" data-testid="comment-button" onClick={() => { close(); openThread(sole()!.id) }}><Icon name="comment" />Comment</button></Show>

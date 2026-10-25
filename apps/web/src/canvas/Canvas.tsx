@@ -1467,7 +1467,7 @@ export function Canvas(props: { readOnly: boolean }) {
         if ((!card || props.readOnly) && !canPing) return
         e.preventDefault()
         endEdit()
-        if (card && !props.readOnly) select([card.id])
+        if (card && !props.readOnly && !selection().has(card.id)) select([card.id])
         setContextPoint({ ...toWorld(e), screenX: e.clientX, screenY: e.clientY, cardId: props.readOnly ? null : card?.id ?? null, returnTo: (card && cardEl(card.id)) || vp })
       }}
       onDragOver={(e) => {

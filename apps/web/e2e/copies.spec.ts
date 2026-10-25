@@ -1,3 +1,4 @@
+import { runCardAction } from './helpers.ts'
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
 import { MOD, at, cardByText, clickEmpty, freshBoard, postSync, pullAllObjects, waitForSync } from './helpers.ts'
 import { boardOf, setCamera } from './touch.ts'
@@ -265,7 +266,7 @@ test('duplicating on the same board keeps the labels as they are', async ({ page
   await seedLabelled(page, { [LIGHT]: ['Lighting', 'gold'] }, [{ md: 'Beam', x: 0, labels: [LIGHT] }])
   await clickEmpty(page)
   await cardByText(page, 'Beam').click()
-  await page.getByTestId('duplicate-selection').click()
+  await runCardAction(page, 'Duplicate')
   await expect(page.locator('[data-testid=card]', { hasText: 'Beam' })).toHaveCount(2)
   for (const card of await page.locator('[data-testid=card]', { hasText: 'Beam' }).all()) await expect(card.getByTestId('card-labels').locator('.label-chip')).toHaveText(['Lighting'])
   await waitForSync(page)

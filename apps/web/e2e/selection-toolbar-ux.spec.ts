@@ -15,12 +15,13 @@ test('a click selects a note and shows its icon toolbar; a second click or doubl
   const bar = page.getByTestId('selection-bar')
   await expect(bar).toBeVisible()
   // Icons, named for screen readers and tooltips, keep the bar on one row.
-  for (const id of ['position-lock', 'duplicate-selection', 'comment-button', 'bury']) {
+  for (const id of ['position-lock']) {
     await expect(bar.getByTestId(id)).toHaveAttribute('data-tip', /.+/)
     await expect(bar.getByTestId(id)).toHaveText('')
   }
+  for (const id of ['labels-button', 'duplicate-selection', 'comment-button', 'bury', 'selection-column-toggle', 'unlock-column-layout']) await expect(bar.getByTestId(id)).toHaveCount(0)
   const box = (await bar.boundingBox())!
-  const action = (await bar.getByTestId('bury').boundingBox())!
+  const action = (await bar.getByTestId('position-lock').boundingBox())!
   expect(box.height).toBeLessThan(action.height * 2)
   // One item can't be aligned, so the align icons stay out of the way.
   await expect(page.getByTestId('align-selection')).toHaveCount(0)
@@ -97,18 +98,13 @@ test('the note editor spaces blank lines like the rendered note', async ({ page 
   expect(Math.abs((await card.boundingBox())!.height - rendered)).toBeLessThan(full * 1.5)
 })
 
-test('hovering an icon button shows its tooltip; icon buttons leave no gaps for the pointer', async ({ page }) => {
+test('hovering an item control shows its tooltip and pressing dismisses it', async ({ page }) => {
   await freshBoard(page)
   const note = await addNote(page, 'Tooltip note', 0.4, 0.5)
   await clickEmpty(page)
   await note.click()
-  await page.getByTestId('duplicate-selection').hover()
-  await expect(page.getByRole('tooltip')).toContainText('Duplicate')
-  await page.getByTestId('bury').hover()
-  await expect(page.getByRole('tooltip')).toContainText('Bury')
-  const dup = (await page.getByTestId('duplicate-selection').boundingBox())!
-  const next = (await page.getByTestId('duplicate-selection').locator('xpath=following-sibling::button[1]').boundingBox())!
-  expect(next.x - (dup.x + dup.width)).toBeLessThan(1)
+  await page.getByTestId('position-lock').hover()
+  await expect(page.getByRole('tooltip')).toContainText('Lock position')
   await page.mouse.down()
   await expect(page.getByRole('tooltip')).toHaveCount(0)
   await page.mouse.up()
@@ -119,7 +115,7 @@ test('tooltips appear right over the hovered button', async ({ page }) => {
   const note = await addNote(page, 'Tooltip place', 0.4, 0.5)
   await clickEmpty(page)
   await note.click()
-  const button = page.getByTestId('comment-button')
+  const button = page.getByTestId('position-lock')
   await button.hover()
   const tip = page.getByRole('tooltip')
   await expect(tip).toBeVisible()
