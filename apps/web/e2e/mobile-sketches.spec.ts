@@ -109,6 +109,19 @@ async function flick(page: Page, from: { x: number; y: number }, to: { x: number
   await f.release(0)
 }
 
+/**
+ * Tap a Done button until its panel closes. Right after a synthetic flick,
+ * CI's x64 Chromium can still hold the touch gesture open and give the next tap
+ * no click (see Fingers.release); no hand gets from a stroke to Done that fast.
+ */
+async function tapDone(page: Page, testid: string) {
+  const done = page.getByTestId(testid)
+  await expect(async () => {
+    if (await done.count()) await done.tap({ timeout: 1000 })
+    await expect(done).toHaveCount(0, { timeout: 1000 })
+  }).toPass()
+}
+
 test('quick finger strokes are kept, in a sketch and on the board', async ({ page }) => {
   await seedCards(page, [{ type: 'sketch', x: 20, y: 40, w: 300, content: { title: '', width: 800, height: 600, background: '#FFFFFF' } }])
   const card = page.locator('[data-testid="card"][data-type="sketch"]')
@@ -121,7 +134,7 @@ test('quick finger strokes are kept, in a sketch and on the board', async ({ pag
   await flick(page, { x: s.x + s.width * 0.2, y: s.y + s.height * 0.3 }, { x: s.x + s.width * 0.7, y: s.y + s.height * 0.4 })
   await flick(page, { x: s.x + s.width * 0.2, y: s.y + s.height * 0.7 }, { x: s.x + s.width * 0.7, y: s.y + s.height * 0.8 })
   await expect(editor(page).locator('[data-stroke-id]')).toHaveCount(2)
-  await page.getByTestId('sketch-done').tap()
+  await tapDone(page, 'sketch-done')
   // Put the sketch down, so the dock is back.
   await page.getByTestId('selection-done').tap()
 
@@ -132,7 +145,7 @@ test('quick finger strokes are kept, in a sketch and on the board', async ({ pag
   await flick(page, { x: 60, y }, { x: 220, y: y + 40 })
   const ink = page.locator('[data-testid="card"][data-type="ink"]')
   await expect(ink).toHaveCount(1)
-  await page.getByTestId('board-ink-done').tap()
+  await tapDone(page, 'board-ink-done')
   await waitForSync(page)
   await page.reload()
   await expect(card.locator('[data-stroke-id]')).toHaveCount(2)
