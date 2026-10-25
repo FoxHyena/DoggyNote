@@ -220,8 +220,9 @@ test('a sketch with more strokes than the clip limit still duplicates', async ({
   }
   await setCamera(page, { x: -40, y: -40, zoom: 1 })
   await expect(sketchCard(page).locator('[data-stroke-id]')).toHaveCount(520)
-  await sketchCard(page).getByTestId('sketch-paper').click()
-  await page.getByTestId('duplicate-selection').click()
+  // Card actions live in the right-click menu.
+  await sketchCard(page).getByTestId('sketch-paper').click({ button: 'right' })
+  await page.getByTestId('canvas-context-menu').getByRole('menuitem', { name: 'Duplicate', exact: true }).click()
   await expect(sketchCard(page)).toHaveCount(2)
   await expect(sketchCard(page).nth(1).locator('[data-stroke-id]')).toHaveCount(520)
   await expect(page.getByTestId('toast')).toHaveCount(0)
@@ -229,6 +230,13 @@ test('a sketch with more strokes than the clip limit still duplicates', async ({
   await page.reload()
   await expect(sketchCard(page)).toHaveCount(2)
   for (const c of await sketchCard(page).all()) await expect(c.locator('[data-stroke-id]')).toHaveCount(520)
+})
+
+test('Edit in the right-click menu opens a sketch in place', async ({ page }) => {
+  await seedCards(page, [{ type: 'sketch', x: 40, y: 40, w: 300, content: { title: '', width: 800, height: 600, background: '#FFFFFF' } }])
+  await sketchCard(page).getByTestId('sketch-paper').click({ button: 'right' })
+  await page.getByTestId('canvas-context-menu').getByRole('menuitem', { name: 'Edit', exact: true }).click()
+  await expect(editor(page)).toBeVisible()
 })
 
 test('Draw puts ink straight on the board, over other cards, and the eraser takes it away', async ({ page }) => {

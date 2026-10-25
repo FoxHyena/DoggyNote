@@ -180,6 +180,9 @@ export function StrokeEditor(props: {
       }
       setFit(Math.max(0.05, Math.min((w - GUTTER * 2) / props.width, (h - GUTTER * 2) / props.height)))
     }
+    // Fit now, before the first paint: waiting for the observer's first call
+    // shows (and lets a fast first stroke land on) the unfitted paper for a frame.
+    measure()
     const ro = new ResizeObserver(measure)
     ro.observe(backdrop)
     ro.observe(head)
