@@ -527,7 +527,7 @@ test('a shared card offers its actions and a location ping for the other partici
   await other.bringToFront()
   await cardByText(other, 'Point to this card').click({ button: 'right', position: { x: 30, y: 20 } })
   const menu = other.getByTestId('canvas-context-menu')
-  await expect(menu.getByRole('menuitem')).toHaveText(['Edit', 'Duplicate', 'Labels', 'Comment', 'Bury', 'Look here'])
+  await expect(menu.getByRole('menuitem')).toHaveText(['Edit', 'Duplicate', 'Make a synced copy', 'Labels', 'Comment', 'Bury', 'Look here'])
   await other.keyboard.press('End')
   await expect(menu.getByRole('menuitem', { name: 'Look here', exact: true })).toBeFocused()
   await other.keyboard.press('Enter')

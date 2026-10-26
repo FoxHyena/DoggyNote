@@ -7,6 +7,8 @@ import { accessRevision, canEditBoard, refreshAccess } from './access.ts'
 import { loadRecovery, preserveActiveEdit, preserveDenied } from './recovery.ts'
 import { cancelEdit, editingId } from './ui.ts'
 import { SIZES, localBlob, markUploaded, onAssetQueued, pendingUploads, type AssetSize } from './assets.ts'
+import { showToast } from './toast.ts'
+import { COPY } from '@doggynote/theme'
 
 // Background sync: upload images, push queued patches, then pull everything
 // newer than our cursor. Runs on every local change (debounced), on focus, when
@@ -56,7 +58,9 @@ async function push() {
     const pending = doc.pendingOutbox().slice(0, PUSH_CHUNK)
     if (!pending.length) return
     try {
-      await api('/api/sync', { method: 'POST', json: { changes: pending.map((p) => ({ id: p.id, patch: { ...p.patch, id: p.id } })) } })
+      const res = await api<{ detachedIds?: string[] }>('/api/sync', { method: 'POST', json: { changes: pending.map((p) => ({ id: p.id, patch: { ...p.patch, id: p.id } })) } })
+      // The server unsynced a note you can't edit everywhere; it keeps your edit.
+      if (res?.detachedIds?.length) showToast(COPY.synced.detached, 7000)
     } catch (error) {
       if (error instanceof ApiError && error.status === 403 && Array.isArray(error.details.deniedIds)) {
         await preserveDenied(error.details.deniedIds as string[], error.message)

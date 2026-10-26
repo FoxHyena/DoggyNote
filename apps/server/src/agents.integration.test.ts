@@ -2,6 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 import { Hono } from 'hono'
 import { expect, it } from 'vitest'
+import { noteDocument, noteState, replaceText } from '@doggynote/core'
 import { agents } from './agents.ts'
 import { sha256Hex } from './crypto.ts'
 import type { AppEnv, Env } from './env.ts'
@@ -226,5 +227,43 @@ it('agents never see labels, and their whole-object replacements keep them', asy
     expect((await f.request(`/agent-proposals/${id}/approve`, {})).status).toBe(200)
     const stored = JSON.parse((f.sql.prepare("SELECT data FROM objects WHERE id='labelled'").get() as { data: string }).data)
     expect(stored).toMatchObject({ content: { md: 'After' }, [`label${token}`]: true })
+  } finally { f.sql.close() }
+})
+
+it('an approved edit to a synced note updates every copy, or unsyncs it when a copy is out of reach', async () => {
+  const f = await fixture()
+  try {
+    const doc = noteDocument()
+    replaceText(doc.getText('markdown'), 'Walk at 6')
+    const clone = noteState(doc); doc.destroy()
+    f.sql.exec("INSERT INTO users(id,username,pw_hash,is_admin,created_at) VALUES('fido','fido','unused',0,1)")
+    for (const [board, owner] of [['other', 'rex'], ['kennel', 'fido']]) {
+      f.sql.prepare("INSERT INTO objects(id,kind,data,seq,updated_at) VALUES(?,'board',?,1,1)").run(board, JSON.stringify({ id: board, kind: 'board', title: board, parentId: null, icon: 'paw', color: 'gold', createdAt: 1 }))
+      f.sql.prepare('INSERT INTO board_access(board_id,owner_id,legacy) VALUES(?,?,0)').run(board, owner)
+    }
+    const put = (id: string, board: string, group: string, seq: number) => {
+      f.sql.prepare("INSERT INTO objects(id,kind,board_id,data,seq,updated_at) VALUES(?,'card',?,?,?,1)").run(id, board, JSON.stringify({ ...f.card(id, 'Walk at 6'), boardId: board, syncId: group }), seq)
+      f.sql.prepare('INSERT INTO note_states(id,state,revision) VALUES(?,?,1)').run(id, clone)
+    }
+    put('a', 'root', 'a', 2); put('b', 'other', 'a', 3)
+    put('x', 'root', 'x', 4); put('y', 'kennel', 'x', 5)
+    f.sql.exec("UPDATE counters SET value=5 WHERE name='seq'")
+    const edit = async (id: string, text: string) => {
+      const read = await (await f.request('/agent/boards/root', undefined, f.token)).json() as { objects: { object: Record<string, unknown>; revision: number }[] }
+      const card = read.objects.find((o) => o.object.id === id)!
+      // Sync membership is the app's: agents never see it.
+      expect(card.object.syncId).toBeUndefined()
+      const staged = await f.request('/agent/proposals', { idempotencyKey: `synced-edit-${id}`, label: 'Edit', operations: [{ action: 'replace', expectedRevision: card.revision, object: { ...card.object, content: { md: text } } }] }, f.token)
+      expect(staged.status, await staged.clone().text()).toBe(201)
+      return f.request(`/agent-proposals/${(await staged.json() as { id: string }).id}/approve`, {})
+    }
+    const stored = (id: string) => JSON.parse((f.sql.prepare('SELECT data FROM objects WHERE id=?').get(id) as { data: string }).data)
+    expect((await edit('a', 'Walk at 7')).status).toBe(200)
+    expect(stored('a')).toMatchObject({ syncId: 'a', content: { md: 'Walk at 7' } })
+    expect(stored('b')).toMatchObject({ syncId: 'a', content: { md: 'Walk at 7' } })
+    // y is on fido's board, which rex can't edit: x keeps the edit and stops syncing.
+    expect((await edit('x', 'Walk at 8')).status).toBe(200)
+    expect(stored('x')).toMatchObject({ syncId: null, content: { md: 'Walk at 8' } })
+    expect(stored('y')).toMatchObject({ syncId: 'x', content: { md: 'Walk at 6' } })
   } finally { f.sql.close() }
 })
