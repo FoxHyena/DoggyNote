@@ -245,7 +245,7 @@ export function Canvas(props: { readOnly: boolean }) {
   )
   createEffect(
     on(boardId, () => {
-      stopMomentum(); cancelGesture(); cancelStickerPlacement()
+      resetInteraction(); cancelStickerPlacement()
       // A thread belongs to a card on the board you left.
       setThreadCardId(null)
     }, { defer: true }),
@@ -267,6 +267,12 @@ export function Canvas(props: { readOnly: boolean }) {
           const r = rectOf(id)
           if (r) animateCamera(editCamera(r, editRoom(), camera()), 260, () => requestAnimationFrame(revealCaret))
         } else if (!id && prev) {
+          // Native text handles do not capture their pointer to the canvas.
+          // Their editor may disappear before the release reaches us.
+          for (const pointerId of editorFingers) fingers.delete(pointerId)
+          editorFingers.clear()
+          stopKeepingEditFocus()
+          if (!fingers.size && !gesture) clearTouchHistory()
           if (editReturn && !movedWhileEditing) animateCamera(editReturn, 260)
           editReturn = null
           resetPageScroll()
@@ -560,9 +566,11 @@ export function Canvas(props: { readOnly: boolean }) {
     return true
   }
 
+  const capturedPointers = new Set<number>()
   function capture(pointerId: number) {
     try {
       vp.setPointerCapture(pointerId)
+      capturedPointers.add(pointerId)
     } catch {
       // The pointer is already gone (or synthetic); events still bubble here.
     }
@@ -798,6 +806,7 @@ export function Canvas(props: { readOnly: boolean }) {
   }
 
   function onPointerUp(e: PointerEvent) {
+    capturedPointers.delete(e.pointerId)
     if (e.pointerType === 'touch') return touchUp(e)
     const g = gesture
     gesture = null
@@ -959,6 +968,7 @@ export function Canvas(props: { readOnly: boolean }) {
   // selection box on empty canvas). Two fingers pinch and pan. Tap selects;
   // tapping the selected card again edits or opens it.
   const fingers = new Map<number, Vec>()
+  const editorFingers = new Set<number>()
   let lastTap: Tap | null = null
   // A quick tap anywhere (card, sticker or canvas): a finger coming back down
   // right after one, near it, is ready to slide-zoom.
@@ -967,6 +977,27 @@ export function Canvas(props: { readOnly: boolean }) {
   let zoomArm: Vec | null = null
   // The finger is on a sticker: nothing it does may select text.
   let stickerTouch = false
+  function clearTouchHistory() {
+    lastTap = quickTap = fingerDown = zoomArm = null
+    stickerTouch = false
+  }
+  /** A system interruption abandons all input; a second finger only cancels
+   * the current gesture, preserving both live fingers for the pinch. */
+  function resetInteraction() {
+    stopMomentum()
+    cancelCameraAnimation()
+    cancelGesture()
+    fingers.clear()
+    editorFingers.clear()
+    clearTouchHistory()
+    setSpaceHeld(false)
+    stopKeepingEditFocus()
+    const captured = [...capturedPointers]
+    capturedPointers.clear()
+    for (const id of captured) {
+      try { if (vp.hasPointerCapture(id)) vp.releasePointerCapture(id) } catch { /* Already released by the browser. */ }
+    }
+  }
   // A paw print where the finger asked for something.
   const [paw, setPaw] = createSignal<{ x: number; y: number; n: number } | null>(null)
   let pawTimer: ReturnType<typeof setTimeout> | undefined
@@ -994,6 +1025,7 @@ export function Canvas(props: { readOnly: boolean }) {
     } else if (fingerDown) fingerDown.moved = true
     quickTap = null
     if (fingers.size === 2) {
+      editorFingers.clear()
       zoomArm = null
       cancelGesture()
       const [[ia, a], [ib, b]] = [...fingers]
@@ -1012,6 +1044,7 @@ export function Canvas(props: { readOnly: boolean }) {
     const target = e.target as HTMLElement
     // The editor owns single touches inside the card being edited (caret, selection).
     if (insideEditor(e, editingId())) {
+      editorFingers.add(e.pointerId)
       // A touch on the rest of the card (an image above its caption) would blur
       // the field, and focus leaving the card ends the edit.
       if (!target.closest('textarea, input, select, label, a, button, [contenteditable], .cm-editor')) e.preventDefault()
@@ -1103,6 +1136,7 @@ export function Canvas(props: { readOnly: boolean }) {
 
   function touchUp(e: PointerEvent) {
     fingers.delete(e.pointerId)
+    editorFingers.delete(e.pointerId)
     if (!fingers.size) {
       const t = performance.now()
       // A tap that placed a sticker is done: dragging the new sticker straight away moves it.
@@ -1384,12 +1418,26 @@ export function Canvas(props: { readOnly: boolean }) {
   const onSelectStart = (e: Event) => { if (gesture && lastPointerType === 'touch') e.preventDefault() }
   const onTouchMoveNative = (e: TouchEvent) => { if (stickerTouch || gesture?.kind === 'tzoom') e.preventDefault() }
 
-  onCleanup(() => { cancelGesture(); cancelStickerPlacement() })
+  onCleanup(() => { resetInteraction(); cancelStickerPlacement() })
   onMount(() => {
+    const finishOutside = (e: PointerEvent) => {
+      if (!e.composedPath().includes(vp) && (fingers.has(e.pointerId) || capturedPointers.has(e.pointerId))) onPointerUp(e)
+    }
+    const lostCapture = (e: PointerEvent) => {
+      // Implicit capture loss follows a normal pointerup as well. Only reset
+      // when this pointer is still active, not a new gesture started by the up.
+      if (capturedPointers.has(e.pointerId) || fingers.has(e.pointerId)) resetInteraction()
+    }
+    const hidden = () => { if (document.hidden) resetInteraction() }
     const ro = new ResizeObserver(measure)
     ro.observe(vp)
     vp.addEventListener('wheel', onWheel, { passive: false })
     vp.addEventListener('touchmove', onTouchMoveNative, { passive: false })
+    vp.addEventListener('lostpointercapture', lostCapture)
+    window.addEventListener('pointerup', finishOutside, true)
+    window.addEventListener('pointercancel', finishOutside, true)
+    window.addEventListener('blur', resetInteraction)
+    document.addEventListener('visibilitychange', hidden)
     document.addEventListener('selectstart', onSelectStart)
     vp.addEventListener('gesturestart', onGestureStart)
     vp.addEventListener('gesturechange', onGestureChange)
@@ -1408,6 +1456,11 @@ export function Canvas(props: { readOnly: boolean }) {
       ro.disconnect()
       vp.removeEventListener('wheel', onWheel)
       vp.removeEventListener('touchmove', onTouchMoveNative)
+      vp.removeEventListener('lostpointercapture', lostCapture)
+      window.removeEventListener('pointerup', finishOutside, true)
+      window.removeEventListener('pointercancel', finishOutside, true)
+      window.removeEventListener('blur', resetInteraction)
+      document.removeEventListener('visibilitychange', hidden)
       document.removeEventListener('selectstart', onSelectStart)
       vp.removeEventListener('gesturestart', onGestureStart)
       vp.removeEventListener('gesturechange', onGestureChange)

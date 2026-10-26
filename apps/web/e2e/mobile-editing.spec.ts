@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { at, camera, cardByText, freshBoard, waitForSync } from './helpers.ts'
-import { closeKeyboard, fakeKeyboard, note, seedCards, setCamera, tap, tapEmpty, tapOn, touchAddNote } from './touch.ts'
+import { closeKeyboard, fakeKeyboard, note, pinch, seedCards, setCamera, tap, tapEmpty, tapOn, touchAddNote, touchDrag } from './touch.ts'
 
 // Editing on a phone: two taps to type, the card glides to a readable size,
 // a note's formatting rides above the keyboard, and closing the keyboard (or
@@ -111,6 +111,57 @@ test('closing the keyboard finishes the edit, even when focus stays (Android bac
   await expect(cardByText(page, 'Fetch ball')).not.toHaveClass(/selected/)
   await expect.poll(async () => JSON.stringify(await camera(page))).toBe(JSON.stringify(before))
 })
+
+test('an editor touch released outside the canvas cannot lock input after keyboard dismissal', async ({ page }) => {
+  await seedCards(page, [note('Edit loop', 0, 0), note('Next note', 0, 160)])
+  for (let i = 0; i < 3; i++) {
+    const first = cardByText(page, 'Edit loop')
+    await tapOn(page, first); await tapOn(page, first)
+    const editor = page.getByTestId('note-editor')
+    await expect(editor).toBeFocused()
+    await fakeKeyboard(page, true)
+    await page.keyboard.press('End'); await page.keyboard.type(` ${i}`)
+    // Native text handles can finish outside the viewport after the keyboard
+    // removes their original editor. The canvas never receives that pointerup.
+    await editor.evaluate((el, id) => {
+      const r = el.getBoundingClientRect()
+      el.dispatchEvent(new PointerEvent('pointerdown', { pointerId: id, pointerType: 'touch', clientX: r.x + 10, clientY: r.y + 10, bubbles: true, cancelable: true }))
+    }, 450 + i)
+    await fakeKeyboard(page, false)
+    await expect(editor).toHaveCount(0)
+    await expect(page.getByTestId('canvas')).not.toHaveClass(/moving/)
+    await page.evaluate((id) => window.dispatchEvent(new PointerEvent('pointerup', { pointerId: id, pointerType: 'touch' })), 450 + i)
+    const next = cardByText(page, 'Next note')
+    await tapOn(page, next)
+    await expect(next).toHaveClass(/selected/)
+    await page.getByTestId('selection-done').tap()
+  }
+  const p = await at(page, 0.8, 0.7), before = await camera(page)
+  await touchDrag(page, p, { x: p.x - 45, y: p.y - 30 })
+  expect((await camera(page)).tx).toBeLessThan(before.tx - 25)
+  await pinch(page, p, 1.2)
+  await waitForSync(page)
+  await page.reload()
+  await expect(cardByText(page, 'Edit loop 0 1 2')).toBeVisible()
+})
+
+for (const interruption of ['blur', 'lostpointercapture', 'pointercancel'] as const) {
+  test(`canvas gestures recover after ${interruption}`, async ({ page }) => {
+    await seedCards(page, [note('Still responds', 0, 0)])
+    const p = await at(page, 0.8, 0.7)
+    await page.getByTestId('canvas').evaluate((el, { p, interruption }) => {
+      const event = { pointerId: 801, pointerType: 'touch', bubbles: true, cancelable: true, clientX: p.x, clientY: p.y }
+      el.dispatchEvent(new PointerEvent('pointerdown', event))
+      el.dispatchEvent(new PointerEvent('pointermove', { ...event, clientX: p.x - 40 }))
+      if (interruption === 'blur') { window.dispatchEvent(new Event('blur')); window.dispatchEvent(new Event('focus')) }
+      else if (interruption === 'pointercancel') window.dispatchEvent(new PointerEvent('pointercancel', event))
+      else el.dispatchEvent(new PointerEvent('lostpointercapture', event))
+    }, { p, interruption })
+    const card = cardByText(page, 'Still responds')
+    await tapOn(page, card)
+    await expect(card).toHaveClass(/selected/)
+  })
+}
 
 test('double-tap, type, close the keyboard makes a note', async ({ page }) => {
   await touchAddNote(page, 'Squirrel spotted')
