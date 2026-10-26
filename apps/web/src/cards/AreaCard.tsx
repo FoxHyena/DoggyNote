@@ -51,7 +51,7 @@ export function AreaCard(props: CardProps<'area'>) {
       <span class="area-title" data-edit-title><Show when={props.editing} fallback={<strong data-testid="area-title">{title() || 'Area'}</strong>}><input ref={el => onMount(() => el.focus())} class="column-title-input" aria-label="Area name" data-testid="area-title-input" value={title()} placeholder="Area" onInput={e => doc.transient(props.card.id, { content: { title: e.currentTarget.value } })} onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); endEdit() } }} /></Show></span>
       <Show when={!props.readOnly && !props.lod}>
         <div class="area-actions" data-nodrag onPointerDown={e => e.stopPropagation()}>
-          <button class="bar-btn" data-testid="area-tidy" disabled={isPositionLocked(props.card.id)} onClick={() => tidyArea(props.card.id)}><Icon name="alignTop" size={16} />Tidy</button>
+          <button class="bar-btn" data-testid="area-tidy" disabled={isPositionLocked(props.card.id)} onClick={() => tidyArea(props.card.id)}><Icon name="tidy" size={16} />Tidy</button>
           <BarMenu label="Add to area" title="Add to area" testId="area-add" menuTestId="area-add-menu" icon={<Icon name="plus" size={16} />}>
             {close => <><For each={choices}>{choice => <button class="menu-item" role="menuitem" disabled={isPositionLocked(props.card.id)} onClick={() => { close(); add(choice.type) }}><Icon name={choice.icon} size={18} />{choice.title}</button>}</For>
               <button class="menu-item" role="menuitem" disabled={isPositionLocked(props.card.id)} onClick={() => { close(); file.click() }}><Icon name="upload" size={18} />Image or file</button>
@@ -60,7 +60,7 @@ export function AreaCard(props: CardProps<'area'>) {
             </>}
           </BarMenu>
           <BarMenu label="" title="Area actions" testId="area-more" menuTestId="area-more-menu" icon={<Icon name="more" size={18} />}>
-            {close => <><button class="menu-item" role="menuitem" disabled={isPositionLocked(props.card.id)} onClick={() => { close(); tidyArea(props.card.id) }}>Tidy area</button><button class="menu-item" role="menuitem" disabled={isPositionLocked(props.card.id)} onClick={() => { close(); removeArea(props.card.id) }}><Icon name="multi" />Remove area, keep contents</button><button class="menu-item" role="menuitem" disabled={isPositionLocked(props.card.id)} onClick={() => { close(); buryArea(props.card.id) }}><Icon name="bury" />Bury area and contents</button></>}
+            {close => <><button class="menu-item" role="menuitem" disabled={isPositionLocked(props.card.id)} onClick={() => { close(); tidyArea(props.card.id) }}><Icon name="tidy" />Tidy area</button><button class="menu-item" role="menuitem" disabled={isPositionLocked(props.card.id)} onClick={() => { close(); removeArea(props.card.id) }}><Icon name="multi" />Remove area, keep contents</button><button class="menu-item" role="menuitem" disabled={isPositionLocked(props.card.id)} onClick={() => { close(); buryArea(props.card.id) }}><Icon name="bury" />Bury area and contents</button></>}
           </BarMenu>
           <input ref={file} class="area-file-input" type="file" multiple aria-label="Add images or files to area" onChange={e => { setAddingToArea(props.card.id); setColumnCollapsed(props.card.id, false); const at = areaAddPoint()!; addAnyFiles([...e.currentTarget.files ?? []], at, undefined, props.card.id); setAddingToArea(null); e.currentTarget.value = '' }} />
         </div>

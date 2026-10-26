@@ -142,6 +142,7 @@ export const ICONS = {
   alignTop: body(alignTopSvg),
   alignMiddleV: body(alignCenterVerticalSvg),
   alignBottom: body(alignBottomSvg),
+  tidy: body(squaresFourSvg),
   lock: body(lockSimpleSvg),
   unlock: body(lockSimpleOpenSvg),
   duplicate: body(copySvg),
