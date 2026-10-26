@@ -27,16 +27,21 @@ export function SyncedMarker(props: { card: Card }) {
   const writable = () => doc.canWriteObject(props.card)
   const toggle = () => {
     if (wasOpen) return close()
-    const r = trigger.getBoundingClientRect(), width = 260
-    // Beside the chip, off the card, when there's room; otherwise below it.
-    const side = r.left - 6 - width >= 8
-    const below = r.bottom + 6 + 180 < window.innerHeight
-    setAt(side ? { left: r.left - 6 - width, top: Math.max(8, r.top) } : { left: Math.max(8, Math.min(r.left, window.innerWidth - width - 8)), top: below ? r.bottom + 6 : r.top - 6 })
+    const r = trigger.getBoundingClientRect(), width = 260, gap = 6
+    // Beside the card, never over it or the tool rail: left of the marker when
+    // the board has room there, else right of the card, else below the marker.
+    const board = trigger.closest('[data-testid="canvas"]')?.getBoundingClientRect() ?? { left: 0, right: window.innerWidth }
+    const card = trigger.closest('[data-card-id]')?.getBoundingClientRect() ?? r
+    const left = r.left - gap - width, right = card.right + gap
+    const top = Math.max(8, r.top)
+    const below = r.bottom + gap + 180 < window.innerHeight
+    const placed = left >= board.left + 8 ? 'side' : right + width <= Math.min(board.right, window.innerWidth) - 8 ? 'side' : 'below'
+    setAt(placed === 'side' ? { left: left >= board.left + 8 ? left : right, top } : { left: Math.max(8, Math.min(r.left, window.innerWidth - width - 8)), top: below ? r.bottom + gap : r.top - gap })
     setOpen(true)
     queueMicrotask(() => {
       if (!menu) return
-      if (side) setAt((a) => ({ ...a, top: Math.max(8, Math.min(a.top, window.innerHeight - menu.offsetHeight - 8)) }))
-      else if (!below) setAt((a) => ({ ...a, top: r.top - 6 - menu.offsetHeight }))
+      if (placed === 'side') setAt((a) => ({ ...a, top: Math.max(8, Math.min(a.top, window.innerHeight - menu.offsetHeight - 8)) }))
+      else if (!below) setAt((a) => ({ ...a, top: r.top - gap - menu.offsetHeight }))
     })
   }
   const run = (action: () => void) => { close(); action() }

@@ -11,7 +11,8 @@ import { LABEL_FIELD } from '@doggynote/core'
 // Agents don't handle labels yet: they never see label fields, and a whole-object
 // replacement keeps the ones already there.
 const labelFields = (o: object) => Object.fromEntries(Object.entries(o).filter(([key]) => LABEL_FIELD.test(key)))
-const withoutLabels = <T extends object>(o: T): T => Object.fromEntries(Object.entries(o).filter(([key]) => !LABEL_FIELD.test(key))) as T
+/** Labels and sync membership stay app-only: agents neither read nor write them. */
+const withoutLabels = <T extends object>(o: T): T => Object.fromEntries(Object.entries(o).filter(([key]) => !LABEL_FIELD.test(key) && key !== 'syncId')) as T
 
 const assetOf = (o: { kind: string; content?: unknown }): string | undefined => (o.kind === 'card' ? (o.content as { assetId?: string } | undefined)?.assetId : undefined)
 
@@ -65,10 +66,11 @@ function schemaError(result: { error: z.ZodError }) {
   return result.error.issues.slice(0, 3).map((i) => `${i.path.join('.') || 'request'}: ${i.message}`).join('; ')
 }
 
+/** Sync membership (`syncId`) is the app's, not the agent's, so it never counts as a difference. */
 export function sameAgentState(a: AgentObject, b: AgentObject): boolean {
   const normalize = (value: unknown): unknown => {
     if (Array.isArray(value)) return value.map(normalize)
-    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).filter(([key, v]) => !(key === 'h' && (value as { kind?: string }).kind === 'card') && v !== undefined).sort(([a], [b]) => a.localeCompare(b)).map(([key, v]) => [key, normalize(v)]))
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).filter(([key, v]) => !(key === 'h' && (value as { kind?: string }).kind === 'card') && key !== 'syncId' && v !== undefined).sort(([a], [b]) => a.localeCompare(b)).map(([key, v]) => [key, normalize(v)]))
     return value
   }
   return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b))
@@ -394,12 +396,19 @@ async function applyProposal(c: Context<AgentEnv>, reverse: boolean, attempt = 0
   const gateStatement = db.prepare(`UPDATE agent_proposals SET status='${transitional}' WHERE id=?1 AND status='${previous}' AND ${guard} AND ${dependencyGuard} AND (SELECT value FROM counters WHERE name='access_revision')=?2 ${credentialGuard}`)
   const stmts = [reverse ? gateStatement.bind(p.id, Number(a.revision)) : gateStatement.bind(p.id, Number(a.revision), credential.id, now)]
   let accessChanged = false
+  const fanned: D1PreparedStatement[] = [], fannedBoards: string[] = []
   for (const ch of changes) {
     const o = ch.after
+    // Agents never see or set syncId: a note keeps its live sync group.
+    const live = current.get(ch.id)?.object as { kind?: string; syncId?: string | null } | undefined
+    if (o.kind === 'card' && o.type === 'note' && live?.kind === 'card' && live.syncId) (o as { syncId?: string | null }).syncId = live.syncId
     let note: Awaited<ReturnType<typeof prepareNote>> | undefined
     if (o.kind === 'card' && o.type === 'note' && !o.purged) {
       note = await prepareNote(db, o.id, o.content.md, undefined, ch.expectedRevision ?? 0)
       stmts.push(db.prepare(`INSERT OR REPLACE INTO note_write_guard(id,revision,object_seq) SELECT ?2,?3,?4 WHERE ${gate}`).bind(p.id, o.id, note.previousRevision, ch.expectedRevision ?? 0))
+      // Synced copies get the same merge as an edit in the app, with the same rules.
+      const fan = await agentFanOut(db, a, o as unknown as Record<string, unknown>, note.state, new Set(changes.map((x) => x.id)), { gate, gateId: p.id, now, userId: c.get('user').id })
+      if (fan?.md != null) { note = { ...note, state: fan.state }; o.content = { ...o.content, md: fan.md }; fanned.push(...fan.stmts); fannedBoards.push(...fan.boards) }
     }
     const owner = ownerFor(o.id, o.kind === 'board' ? null : o.boardId) ?? deletedCommentOwner(o.kind, o as unknown as Record<string, unknown>, ch.before ? { kind: ch.before.kind, author_id: ch.before.kind === 'comment' ? ch.before.authorId : null, deleted_at: ch.before.deletedAt ?? null, purged: ch.before.purged ? 1 : 0 } : undefined, c.get('user').id)
     stmts.push(db.prepare(`UPDATE counters SET value=value+1 WHERE name='seq' AND ${gate}`).bind(p.id))
@@ -411,6 +420,7 @@ async function applyProposal(c: Context<AgentEnv>, reverse: boolean, attempt = 0
     }
     if ((ch.before && ch.before.kind !== 'board' && o.kind !== 'board' && ch.before.boardId !== o.boardId) || o.kind === 'comment') accessChanged = true
   }
+  stmts.push(...fanned)
   if (accessChanged) stmts.push(db.prepare(`UPDATE counters SET value=value+1 WHERE name='access_revision' AND ${gate}`).bind(p.id))
   // Capture resulting revisions inside the same transaction for safe reversal.
   stmts.push(db.prepare(`UPDATE agent_proposals SET status='${final}',applied_at=?2,applied_revisions=(SELECT json_group_object(id,seq) FROM objects WHERE id IN (${changes.map((ch) => `'${ch.id}'`).join(',')})) WHERE id=?1 AND status='${transitional}'`).bind(p.id, now))
@@ -427,10 +437,11 @@ async function applyProposal(c: Context<AgentEnv>, reverse: boolean, attempt = 0
     if (latest?.status === previous && attempt < 2) return applyProposal(c, reverse, attempt + 1)
     return c.json({ error: 'Revision conflict: the board changed after this proposal. Ask the agent to read it and prepare a new proposal.' }, 409)
   }
-  await notifyRooms(c.env, changes.flatMap((ch) => [onBoard(ch.after), ...(ch.before ? [onBoard(ch.before)] : [])]))
+  await notifyRooms(c.env, [...changes.flatMap((ch) => [onBoard(ch.after), ...(ch.before ? [onBoard(ch.before)] : [])]), ...fannedBoards])
   return c.json({ ok: true, status: final, count: changes.length })
 }
 agents.post('/agent-proposals/:id/approve', requireUser, (c) => applyProposal(c, false))
 agents.post('/agent-proposals/:id/reverse', requireUser, (c) => applyProposal(c, true))
 import { prepareNote } from './notes.ts'
+import { agentFanOut } from './synced.ts'
 import { notifyRooms } from './realtime.ts'

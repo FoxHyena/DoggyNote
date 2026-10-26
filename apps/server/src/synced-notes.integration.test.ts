@@ -53,7 +53,7 @@ async function fixture() {
   type Pulled = { id: string; syncId?: string | null; content?: { md?: string }; noteState?: string; hidden?: boolean }
   const pull = async (user = 'rex') => ((await (await request('/sync?since=0', undefined, user)).json()) as { objects: Pulled[] }).objects
   const find = async (id: string, user = 'rex') => (await pull(user)).find((o) => o.id === id)
-  return { push, pushAs, pull, find }
+  return { push, pushAs, pull, find, sql }
 }
 
 const card = (id: string, boardId: string, extra: Record<string, unknown> = {}) => ({ id, kind: 'card', type: 'note', boardId, x: 0, y: 0, w: 240, h: 80, z: 1, color: 'none', createdAt: 1, ...extra })
@@ -79,9 +79,6 @@ it('edits to either copy update both, and an independent copy stops following', 
   await linked(f)
   expect((await edit(f, 'a', 'Walk at 7')).status).toBe(200)
   expect((await f.find('b'))?.content?.md).toBe('Walk at 7')
-  // fido can edit "shared", so his edit reaches rex's copy on "other" too.
-  expect((await edit(f, 'a', 'Walk at 7, bring the ball', 'fido')).status).toBe(200)
-  expect((await f.find('b'))?.content?.md).toBe('Walk at 7, bring the ball')
   expect((await edit(f, 'b', 'Walk at 8')).status).toBe(200)
   expect((await f.find('a'))?.content?.md).toBe('Walk at 8')
   // Make an independent copy: b keeps its text, and edits stop flowing.
@@ -142,4 +139,22 @@ it("fido can't join a group he can't edit, and a copied syncId without a join is
   expect((await f.find('b'))?.content?.md).toBe('Walk at 6')
   // A bad syncId is a bad request.
   expect((await f.push({ id: 'a', syncId: 'no spaces!', syncJoin: true })).status).toBe(400)
+})
+
+it("a copy whose editor can't edit every copy stops syncing and keeps the edit", async () => {
+  const f = await fixture()
+  await f.push({ ...card('a', 'shared'), content: { md: 'Walk at 6' }, noteUpdate: state('Walk at 6') })
+  const clone = (await f.find('a', 'fido'))!.noteState!
+  // fido can edit "shared" now, so he may link his own copy on his kennel.
+  expect((await f.pushAs('fido', { id: 'a', syncId: 'a', syncJoin: true }, { ...card('f1', 'kennel'), syncId: 'a', syncJoin: true, content: { md: 'Walk at 6' }, noteUpdate: clone })).status).toBe(200)
+  // rex downgrades fido to view on "shared".
+  f.sql.exec("UPDATE board_grants SET permission='view' WHERE id='g1'; UPDATE counters SET value=value+1 WHERE name='access_revision'")
+  const res = await edit(f, 'f1', 'Walk at 6, fido says 7', 'fido')
+  expect(res.status).toBe(200)
+  expect((await res.json() as { detachedIds?: string[] }).detachedIds).toEqual(['f1'])
+  expect(await f.find('f1', 'fido')).toMatchObject({ syncId: null, content: { md: 'Walk at 6, fido says 7' } })
+  expect((await f.find('a'))?.content?.md).toBe('Walk at 6')
+  // rex's own edits no longer reach fido's copy either.
+  await edit(f, 'a', 'Walk at 8')
+  expect((await f.find('f1', 'fido'))?.content?.md).toBe('Walk at 6, fido says 7')
 })

@@ -61,6 +61,7 @@ test('a synced copy on another board follows a friend’s edits live, lists both
   await expect(cards(page)).toHaveCount(1)
   await waitForSync(page)
   await freshBoard(page, 'Vet')
+  const vet = boardOf(page)
   await pasteAt(page, 0.5, 0.5)
   const copy = cardByText(page, 'Walk at 6')
   await expect(copy.getByTestId('synced-marker')).toBeVisible()
@@ -71,11 +72,16 @@ test('a synced copy on another board follows a friend’s edits live, lists both
   await copy.getByTestId('synced-marker').click()
   const menu = page.getByTestId('synced-menu')
   await expect(menu.getByTestId('synced-copy')).toHaveText([/Vet.*This copy/, /Walks.*Go to/])
+  // Beside the card, on the board: never over the note or the tool rail.
+  const [m, c, board] = [(await menu.boundingBox())!, (await copy.boundingBox())!, (await page.getByTestId('canvas').boundingBox())!]
+  expect(m.x >= c.x + c.width || m.x + m.width <= c.x || m.y >= c.y + c.height).toBe(true)
+  expect(m.x).toBeGreaterThanOrEqual(board.x)
   await page.keyboard.press('Escape')
   await expect(menu).toHaveCount(0)
 
-  // fido has the Walks board open; rex types in the copy on Vet.
+  // fido can edit both boards and has Walks open; rex types in the copy on Vet.
   await share(page, walks)
+  await share(page, vet)
   const friend = await fido(browser, walks, walksUrl)
   await expect(cardByText(friend, 'Walk at 6')).toBeVisible()
   await live(page); await live(friend)
@@ -178,5 +184,36 @@ test('Toy box privacy: no synced copy goes in or out, and fido never sees rex’
   // In rex's app the shared note is plain again: its copy is private now.
   await page.reload()
   await expect(cardByText(page, 'Park on Saturday')).toBeVisible()
+  await expect(page.getByTestId('synced-marker')).toHaveCount(0)
+})
+
+test('a friend who can’t edit every copy gets an independent copy, and the original is untouched', async ({ page, browser }) => {
+  // A board of rex's own, outside the shared tree: fido can't see or edit it.
+  const den = crypto.randomUUID()
+  expect((await postSync(page.request, { data: { changes: [{ id: den, patch: { id: den, kind: 'board', parentId: null, title: 'Private den', icon: 'paw', color: 'gold', createdAt: Date.now() } }] } })).ok()).toBe(true)
+  await freshBoard(page, 'Pack board')
+  const board = boardOf(page), url = page.url()
+  await seedCards(page, [note('Treats: 3 a day', 0, 0)])
+  await makeSyncedCopy(page, 'Treats: 3 a day')
+  // The copy goes to rex's private board, which fido can't see or edit.
+  await page.keyboard.press(`${MOD}+X`)
+  await waitForSync(page)
+  await page.goto(`/#/b/${den}`)
+  await expect(page.getByTestId('board-name')).toHaveText('Private den')
+  await pasteAt(page, 0.5, 0.5)
+  await expect(cardByText(page, 'Treats: 3 a day').getByTestId('synced-marker')).toBeVisible()
+  await waitForSync(page)
+
+  await share(page, board)
+  const friend = await fido(browser, board, url)
+  await editAtEnd(friend, 'Treats: 3 a day')
+  await friend.keyboard.type(' (fido says 5)')
+  await friend.keyboard.press('Escape')
+  await waitForSync(friend)
+  await expect(friend.getByTestId('toast')).toContainText('stopped syncing')
+  // rex's copy kept its text; the pack board's note is now independent.
+  await page.bringToFront()
+  await page.reload()
+  await expect(cardByText(page, 'Treats: 3 a day')).toHaveText('Treats: 3 a day')
   await expect(page.getByTestId('synced-marker')).toHaveCount(0)
 })

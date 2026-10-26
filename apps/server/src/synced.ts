@@ -15,22 +15,26 @@ import type { IncomingChange } from './sync.ts'
 //   every live copy is written with the merged state in the same batch. Those
 //   writes go through the normal note path, so their guards, seq and room
 //   notifications are the usual ones.
+// - Editing rights: if the writer can't edit every live copy, nothing is
+//   written to the others. The writer's own copy leaves the group in that same
+//   write (it keeps their edit), and the response lists it in `detachedIds`.
+// - Agent proposals go through the same merge (`agentFanOut`).
 
 const ID = /^[a-zA-Z0-9_:-]{1,64}$/
 
 export type SyncRow = { id: string; data: string; seq: number; board_id: string | null; owner_id: string | null; deleted_at: number | null; purged: number | null; note_state: string | null; note_revision: number | null; kind: string; author_id: string | null }
-type Member = { id: string; board_id: string | null; owner_id: string | null; data: string; state: string | null }
+type Member = { id: string; seq: number; board_id: string | null; owner_id: string | null; data: string; state: string | null; revision: number | null }
 
-export type SyncPlan = { error?: string; deniedIds?: string[]; extra: IncomingChange[]; extraRows: SyncRow[]; fanned: Set<string> }
+export type SyncPlan = { error?: string; deniedIds?: string[]; extra: IncomingChange[]; extraRows: SyncRow[]; fanned: Set<string>; detached: string[] }
 
 async function members(db: D1Database, syncId: string): Promise<Member[]> {
-  const { results } = await db.prepare(`SELECT o.id, o.board_id, o.owner_id, o.data, n.state FROM objects o LEFT JOIN note_states n ON n.id=o.id WHERE json_extract(o.data,'$.syncId')=?1 AND o.kind='card' AND COALESCE(json_extract(o.data,'$.purged'),0)=0 LIMIT ${SYNC_GROUP_LIMIT * 4}`).bind(syncId).all<Member>()
+  const { results } = await db.prepare(`SELECT o.id, o.seq, o.board_id, o.owner_id, o.data, n.state, n.revision FROM objects o LEFT JOIN note_states n ON n.id=o.id WHERE json_extract(o.data,'$.syncId')=?1 AND o.kind='card' AND COALESCE(json_extract(o.data,'$.purged'),0)=0 LIMIT ${SYNC_GROUP_LIMIT * 4}`).bind(syncId).all<Member>()
   return results
 }
 
 /** Validates sync fields in place and plans the fan-out. */
 export async function planSyncedNotes(db: D1Database, access: Access, changes: IncomingChange[], existing: Map<string, SyncRow>): Promise<SyncPlan> {
-  const plan: SyncPlan = { extra: [], extraRows: [], fanned: new Set() }
+  const plan: SyncPlan = { extra: [], extraRows: [], fanned: new Set(), detached: [] }
   const prospective = new Map<string, Record<string, unknown>>()
   const joins = new Map<string, string[]>()
   const touched = new Set<string>()
@@ -78,6 +82,12 @@ export async function planSyncedNotes(db: D1Database, access: Access, changes: I
       if (refused || live + inBatch > SYNC_GROUP_LIMIT) return { ...plan, error: refused ? "You can't sync with a copy you can't edit" : 'That note has too many synced copies', deniedIds: joins.get(group) }
     }
     const live = others.filter((m) => !m.owner_id && isLiveSynced(JSON.parse(m.data)))
+    const inGroup = changes.filter((c) => syncIdOf(prospective.get(c.id) as never) === group && isLiveSynced(prospective.get(c.id) as never))
+    if (live.some((m) => !access.canEdit(m.board_id ?? ''))) {
+      // You can't edit every copy: yours stops syncing and keeps your edit.
+      for (const c of inGroup) { c.patch.syncId = null; plan.detached.push(c.id) }
+      continue
+    }
     // This batch's copies: their stored state plus what this push adds.
     const local = changes.filter((c) => syncIdOf(prospective.get(c.id) as never) === group && isLiveSynced(prospective.get(c.id) as never)).map((c) => {
       const prev = existing.get(c.id)
@@ -104,4 +114,31 @@ export async function planSyncedNotes(db: D1Database, access: Access, changes: I
     plan.extraRows = results
   }
   return plan
+}
+
+/**
+ * The same merge for an approved agent proposal that edits note `o` (mutated in
+ * place: its syncId may be cleared, its text becomes the merged text). Returns
+ * the statements that write the other copies, gated like the proposal's own.
+ */
+export async function agentFanOut(db: D1Database, access: Access, o: Record<string, unknown>, state: string, exclude: Set<string>, opts: { gate: string; gateId: string; now: number; userId: string }) {
+  const group = syncIdOf(o as never)
+  if (!group) return null
+  if (String(o.boardId ?? '').startsWith('toybox:')) { o.syncId = null; return null }
+  if (!isLiveSynced(o as never)) return null
+  const live = (await members(db, group)).filter((m) => !exclude.has(m.id) && !m.owner_id && isLiveSynced(JSON.parse(m.data)))
+  if (live.some((m) => !access.canEdit(m.board_id ?? ''))) { o.syncId = null; return { detached: true, state, md: null, stmts: [], boards: [] } }
+  const merged = mergeNoteStates([state, ...live.map((m) => m.state)])
+  const stmts: D1PreparedStatement[] = [], boards: string[] = []
+  for (const m of live) {
+    if (holdsAll(m.state, merged.state)) continue
+    boards.push(m.board_id ?? '')
+    stmts.push(
+      db.prepare(`INSERT OR REPLACE INTO note_write_guard(id,revision,object_seq) SELECT ?2,?3,?4 WHERE ${opts.gate}`).bind(opts.gateId, m.id, m.revision ?? 0, m.seq),
+      db.prepare(`UPDATE counters SET value=value+1 WHERE name='seq' AND ${opts.gate}`).bind(opts.gateId),
+      db.prepare(`UPDATE objects SET data=json_set(data,'$.content.md',?2), seq=(SELECT value FROM counters WHERE name='seq'), updated_at=?3, updated_by=?4 WHERE id=?5 AND ${opts.gate}`).bind(opts.gateId, merged.md, opts.now, opts.userId, m.id),
+      db.prepare(`INSERT INTO note_states(id,state,revision) SELECT ?2,?3,?4 WHERE ${opts.gate} ON CONFLICT(id) DO UPDATE SET state=excluded.state,revision=excluded.revision`).bind(opts.gateId, m.id, merged.state, (m.revision ?? 0) + 1),
+    )
+  }
+  return { detached: false, state: merged.state, md: merged.md, stmts, boards }
 }

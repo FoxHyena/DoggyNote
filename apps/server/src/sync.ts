@@ -227,12 +227,14 @@ async function pushSync(c: Context<AppEnv>) {
     throw e
   }
   await notifyRooms(c.env, parsed.flatMap(({ id, patch }) => [String(patch.boardId ?? existing.get(id)?.board_id ?? (patch.kind === 'board' ? id : '')), existing.get(id)?.board_id ?? '']))
+  // Additive: older apps ignore it, and the next pull shows the copy unsynced anyway.
+  const detached = synced.detached.length ? { detachedIds: synced.detached } : {}
   if (noteId) {
     const row = await db.prepare('SELECT state FROM note_states WHERE id=?1').bind(noteId).first<{ state: string }>()
     const document = noteDocument(row?.state)
-    try { return c.json({ ok: true, update: encodeUpdate(Y.encodeStateAsUpdate(document, vector)) }) } finally { document.destroy() }
+    try { return c.json({ ok: true, update: encodeUpdate(Y.encodeStateAsUpdate(document, vector)), ...detached }) } finally { document.destroy() }
   }
-  return c.json({ ok: true, count: parsed.length, ...(positions.lockedIds.length ? { lockedIds: positions.lockedIds } : {}) })
+  return c.json({ ok: true, count: parsed.length, ...(positions.lockedIds.length ? { lockedIds: positions.lockedIds } : {}), ...detached })
 }
 sync.post('/sync', pushSync)
 sync.post('/notes/:noteId/sync', pushSync)

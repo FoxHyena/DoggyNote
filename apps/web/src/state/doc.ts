@@ -124,14 +124,13 @@ export function noteDoc(id: Id): Y.Doc {
   document = noteDocument(object?.noteState)
   notes.set(id, document)
   if (object) applyPatchToStore(id, { noteState: noteState(document) })
-  document.on('update', (update: Uint8Array, origin: unknown) => {
+  document.on('update', (_update: Uint8Array, origin: unknown) => {
     if (!state.objs[id]) return
     const text = document!.getText('markdown').toString(), encoded = noteState(document!)
     applyPatchToStore(id, { content: { md: text }, noteState: encoded } as Partial<Obj>)
     if (newNoteEdit === id && origin !== REMOTE_ORIGIN) undoStack.amendTop(id, { content: { md: text } })
     if (persist) dirtyObjs.add(id)
     if (origin !== REMOTE_ORIGIN) {
-      mirrorToCopies(id, update)
       record(id, { noteUpdate: encoded })
       for (const listener of outboxListeners) listener()
       if (!noteFlushScheduled) {
@@ -143,9 +142,9 @@ export function noteDoc(id: Id): Y.Doc {
   return document
 }
 // ---- synced copies ----------------------------------------------------------
-// Synced notes (packages/core/src/synced.ts) share one history, so an edit here
-// applies to the copies on this device straight away. The server merges it
-// into every copy too; this only saves a round trip for copies you can see.
+// Synced notes (packages/core/src/synced.ts). The server merges an edit into
+// every copy, and the copies arrive with the pull right after the push. There is
+// no local shortcut: the server alone decides whether you may edit every copy.
 
 /** syncId → the live synced notes on this device. Tracks only the fields it reads. */
 const syncGroups = createRoot(() => createMemo(() => {
@@ -161,15 +160,6 @@ export function syncedCopies(id: Id): Card<'note'>[] {
   const o = get(id), group = syncIdOf(o)
   if (!group) return []
   return (syncGroups().get(group) ?? []).filter((other) => other !== id).map((other) => getCard(other) as Card<'note'>).filter(Boolean)
-}
-function mirrorToCopies(id: Id, update: Uint8Array) {
-  const group = syncIdOf(state.objs[id])
-  if (!group || !isLiveSynced(state.objs[id])) return
-  for (const other of syncGroups().get(group) ?? []) {
-    if (other === id || !state.objs[other]?.noteState) continue
-    // Each copy records its own text; the server sends it back merged anyway.
-    Y.applyUpdate(noteDoc(other), update, REMOTE_ORIGIN)
-  }
 }
 
 /** Retain creation ownership across the gap between push acknowledgement and access refresh. */

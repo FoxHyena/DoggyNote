@@ -94,6 +94,8 @@ export const COPY = {
     independentHint: 'This card keeps its text and stops following the others.',
     madeIndependent: 'This copy goes its own way now. The others stay in sync.',
     gone: 'That copy has wandered off.',
+    /** The server unsynced your copy: you can't edit every copy. */
+    detached: "This note stopped syncing: you can't edit every copy. Your edit is kept here.",
   },
   /** The public guides at /docs. */
   guides: {
