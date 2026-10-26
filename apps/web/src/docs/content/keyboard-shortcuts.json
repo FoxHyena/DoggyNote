@@ -1,0 +1,68 @@
+{
+  "slug": "keyboard-shortcuts",
+  "category": "reference",
+  "kind": "reference",
+  "title": "Keyboard shortcuts",
+  "summary": "Every key that adds, edits, moves and finds things on a board, with the Mac and Windows versions.",
+  "status": "published",
+  "order": 20,
+  "benefit": "Add cards and tidy a board without reaching for the toolbar.",
+  "outcome": "You can add a note, a to-do list or a board with one key, and find the rest of the shortcuts whenever you need them.",
+  "keywords": ["keys", "hotkeys", "keyboard", "shortcut", "cheat sheet", "command", "control"],
+  "sections": [
+    {
+      "id": "see-them-all",
+      "title": "See every shortcut",
+      "paragraphs": [
+        "Press ? (Shift and /) on a board to open the Keyboard shortcuts panel under the account button. You can also open it from the account menu: choose Account, then Keyboard shortcuts.",
+        "Press Escape, press ? again, or click anywhere else to close it.",
+        "On a Mac the panel shows ⌘ (Command), ⇧ (Shift) and ⌥ (Option). On Windows and Linux it shows Ctrl, Shift and Alt instead. This guide uses the Mac keys; on Windows, read Ctrl for ⌘ and Alt for ⌥."
+      ]
+    },
+    {
+      "id": "add",
+      "title": "Add cards with one key",
+      "paragraphs": [
+        "N adds a note, T adds a to-do list and B adds a board. The new card lands under the mouse pointer, or in the middle of the view if the pointer isn't over the board, and it opens for typing straight away. Press Escape when you're done.",
+        "L starts a line: click one card, then another, to connect them. Press L or Escape to stop.",
+        "These single keys do nothing while you're typing in a note, a field or a search box, while a menu or panel is open, or on a board you can only view."
+      ]
+    },
+    {
+      "id": "selected",
+      "title": "Selected cards",
+      "paragraphs": [
+        "Enter edits the selected card, or opens it if it's a board. Escape finishes editing, or clears the selection.",
+        "Delete (or Backspace) buries the selected cards in Buried bones, DoggyNote's bin. ⌘D duplicates them and ⌘A selects everything on the board.",
+        "The arrow keys nudge the selection one step; hold Shift for a bigger step. ⌥ with an arrow key moves the selection to the nearest card in that direction."
+      ]
+    },
+    {
+      "id": "edit",
+      "title": "Undo, copy and paste",
+      "paragraphs": [
+        "⌘Z undoes and ⇧⌘Z redoes (Ctrl+Y works on Windows too).",
+        "⌘C copies, ⌘X cuts and ⌘V pastes the selected cards, on the same board or another one. ⇧⌘V pastes just the text, as a plain note.",
+        "While writing in a note, ⌘B makes text bold and ⌘I makes it italic."
+      ]
+    },
+    {
+      "id": "view",
+      "title": "Find and move around",
+      "paragraphs": [
+        "⌘K opens Fetch, which searches every board and card you can see.",
+        "Hold Space and drag to pan the board. ⌘= zooms in, ⌘− zooms out, ⌘0 goes back to 100% and ⌘1 fits everything on the board in view.",
+        "⌘' turns snap to grid on or off."
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "On a phone or tablet",
+      "paragraphs": [
+        "Phones don't show the shortcuts panel. A keyboard attached to a tablet works the same as on a computer."
+      ]
+    }
+  ],
+  "related": ["explore-the-docs"],
+  "links": []
+}

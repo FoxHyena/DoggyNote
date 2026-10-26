@@ -1,11 +1,12 @@
 import './canvas-entry.css'
 import { For, Show, createEffect, createMemo, createSignal, onCleanup } from 'solid-js'
-import { ALIGNMENTS, DEFAULT_SWATCH_HEX, type Alignment, type BoardIcon, type Card } from '@doggynote/core'
+import { ALIGNMENTS, DISTRIBUTIONS, DEFAULT_SWATCH_HEX, type Alignment, type Distribution, type BoardIcon, type Card } from '@doggynote/core'
 import { CARD_COLORS, COPY, cardColor, isPresetColor, normalizeHex, type CardColor } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { canCreateAreaFromSelection, createAreaFromSelection } from '../state/areas.ts'
-import { burySelection, setColor } from '../state/actions.ts'
-import { alignSelection, isPositionLocked, lockSelection, selectedAlignmentUnits } from '../state/position.ts'
+import { burySelection, canMoveSelection, setColor } from '../state/actions.ts'
+import { MoveToBoardPopover, moveTargets } from './MoveToBoard.tsx'
+import { alignSelection, distributeSelection, isPositionLocked, lockSelection, selectedAlignmentUnits, selectedDistributableUnits } from '../state/position.ts'
 import { beginEdit, camera, cardContextOpen, clearSelection, connectMode, editingId, openBoard, selectMore, selection, setConnectMode, setSelectMore, viewport } from '../state/ui.ts'
 import { phone, touch } from '../state/device.ts'
 import { draggingIds } from '../canvas/dnd.ts'
@@ -28,9 +29,9 @@ import { cardObstacles, placeFloating } from './floatingPlacement.ts'
 // (edit, connect, add to the selection). On phones it docks to the bottom.
 
 export function SelectionBar() {
-  const [panel, setPanel] = createSignal<'colour' | 'icon' | null>(null)
+  const [panel, setPanel] = createSignal<'colour' | 'icon' | 'move' | null>(null)
   let colourTrigger!: HTMLButtonElement, moreTrigger!: HTMLButtonElement, panelAnchor!: HTMLElement
-  const openPanel = (kind: 'colour' | 'icon') => { panelAnchor = kind === 'colour' ? colourTrigger : moreTrigger; setPanel(kind) }
+  const openPanel = (kind: 'colour' | 'icon' | 'move') => { panelAnchor = kind === 'colour' ? colourTrigger : moreTrigger; setPanel(kind) }
   const [barSize, setBarSize] = createSignal({ width: 400, height: 46 })
   const cards = createMemo(() => [...selection()].map((id) => doc.getCard(id)).filter((c): c is Card => !!c))
   const conns = createMemo(() => [...selection()].filter((id) => doc.get(id)?.kind === 'connection'))
@@ -63,6 +64,11 @@ export function SelectionBar() {
   const canAlign = () => {
     const units = selectedAlignmentUnits()
     return writable() && units.length >= 2 && units.every((c) => selection().has(c.id)) && units.some((c) => !isPositionLocked(c.id))
+  }
+  // Even spacing needs three unlocked units to have a middle to move.
+  const canDistribute = () => {
+    const units = selectedDistributableUnits()
+    return canAlign() && units.length >= 3 && units.every((c) => selection().has(c.id))
   }
   const soleBoard = () => {
     const c = cards()
@@ -188,6 +194,12 @@ export function SelectionBar() {
                 <For each={ALIGNMENTS}>{(a) => <IconButton testid={`align-${a.value}`} icon={ALIGN_ICONS[a.value]} label={a.label} onClick={() => alignSelection(a.value)} />}</For>
               </div>
             </Show>
+            <Show when={canDistribute()}>
+              <div class="bar-sep" />
+              <div class="bar-align bar-distribute" role="group" aria-label="Distribute selection" data-testid="distribute-selection">
+                <For each={DISTRIBUTIONS}>{(d) => <IconButton testid={`distribute-${d.value}`} icon={DISTRIBUTE_ICONS[d.value]} label={d.label} title={`${d.label}: equal gaps between cards`} onClick={() => distributeSelection(d.value)} />}</For>
+              </div>
+            </Show>
             <Show when={cards().some((c) => isPositionLocked(c.id))}>
               <span class="position-lock-status" role="status">{cards().filter((c) => isPositionLocked(c.id)).length} locked{cards().some((c) => isPositionLocked(c.id) && c.positionLocked !== true) ? ' (column layout)' : ''}</span>
             </Show>
@@ -277,9 +289,11 @@ export function SelectionBar() {
                   <button class="menu-item" role="menuitemcheckbox" aria-checked={allLocked()} aria-label={lockLabel()} data-testid="position-lock" onClick={() => lockSelection(!allLocked())}><Icon name={allLocked() ? 'lock' : 'unlock'} />{allLocked() ? 'Unlock position' : 'Lock position'}</button>
                 </Show>
                 <Show when={canAlign()}><div class="selection-sheet-align" role="group" aria-label="Align selection" data-testid="align-selection"><For each={ALIGNMENTS}>{(a) => <IconButton testid={`align-${a.value}`} icon={ALIGN_ICONS[a.value]} label={a.label} onClick={() => { close(); alignSelection(a.value) }} />}</For></div></Show>
+                <Show when={canDistribute()}><div class="selection-sheet-align selection-sheet-distribute" role="group" aria-label="Distribute selection" data-testid="distribute-selection"><For each={DISTRIBUTIONS}>{(d) => <button class="menu-item" role="menuitem" data-testid={`distribute-${d.value}`} onClick={() => { close(); distributeSelection(d.value) }}><Icon name={DISTRIBUTE_ICONS[d.value]} />{d.label}</button>}</For></div></Show>
                 <Show when={sole()?.type === 'todo' && writable()}><TodoMenuItems card={sole() as Card<'todo'>} close={close} /></Show>
                 <Show when={canCreateAreaFromSelection()}><button class="menu-item" role="menuitem" data-testid="area-from-selection" onClick={() => { close(); createAreaFromSelection() }}>Create area from selection</button></Show>
                 <Show when={canDuplicate()}><button class="menu-item" role="menuitem" data-testid="duplicate-selection" onClick={() => { close(); duplicateSelection() }}><Icon name="duplicate" />Duplicate</button></Show>
+                <Show when={canMoveSelection() && moveTargets().length}><button class="menu-item" role="menuitem" data-testid="move-to-board" onClick={() => { close(); openPanel('move') }}><Icon name="moveTo" />Move to board…</button></Show>
                 <Show when={canMakeSyncedCopy(sole())}><button class="menu-item" role="menuitem" data-testid="make-synced-copy" onClick={() => { close(); makeSyncedCopy(sole()!.id) }}><Icon name="synced" />{COPY.synced.make}</button></Show>
                 <Show when={sole() && sole()!.type !== 'board'}><button class="menu-item" role="menuitem" data-testid="comment-button" onClick={() => { close(); openThread(sole()!.id) }}><Icon name="comment" />Comment</button></Show>
                 <Show when={sole()}><button class="menu-item" role="menuitem" data-testid="connect-card" onClick={() => { close(); startConnect() }}><Icon name="line" />Connect to another card</button></Show>
@@ -287,7 +301,8 @@ export function SelectionBar() {
               </>}
             </BarMenu>
           </div>
-          <Show when={panel()}>
+          <Show when={panel() === 'move'}><MoveToBoardPopover anchor={() => panelAnchor} close={() => setPanel(null)} /></Show>
+          <Show when={panel() === 'colour' || panel() === 'icon'}>
             <Popover anchor={() => panelAnchor} label={panel() === 'colour' ? 'Card colour' : 'Board icon'} testid="selection-style-sheet" class="menu selection-style-sheet" close={() => setPanel(null)}>
               <div class="selection-sheet-head"><strong>{panel() === 'colour' ? 'Colour' : 'Board icon'}</strong><button class="bar-btn" data-testid="selection-style-done" onClick={() => setPanel(null)}>Done</button></div>
               <Show when={panel() === 'colour'} fallback={boardIcons()}>{colours()}</Show>
@@ -315,6 +330,8 @@ const ALIGN_ICONS: Record<Alignment, IconName> = {
   left: 'alignLeft', 'center-x': 'alignCenterH', right: 'alignRight',
   top: 'alignTop', 'center-y': 'alignMiddleV', bottom: 'alignBottom',
 }
+
+const DISTRIBUTE_ICONS: Record<Distribution, IconName> = { horizontal: 'distributeH', vertical: 'distributeV' }
 
 /** Touch: what to do next while connecting cards, and a way out. */
 export function ConnectBanner() {

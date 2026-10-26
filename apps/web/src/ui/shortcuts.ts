@@ -1,4 +1,4 @@
-import type { Card } from '@doggynote/core'
+import type { Card, CardType } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
 import { nudgeSelection } from '../state/position.ts'
 import { burySelection, selectAll } from '../state/actions.ts'
@@ -12,15 +12,29 @@ import {
   openBoard,
   paletteOpen,
   selection,
+  boardId,
   setConnectMode,
   setPaletteOpen,
+  setShortcutsOpen,
   setTrashOpen,
   trashOpen,
 } from '../state/ui.ts'
 import { zoomBy, zoomTo, zoomToFit } from '../canvas/Canvas.tsx'
 import { toggleSnap } from '../state/grid.ts'
+import { centrePlacement, placementAt, useTool } from './Toolbar.tsx'
 
-const isTyping = (t: EventTarget | null) => !!(t as HTMLElement | null)?.closest?.('input,textarea,[contenteditable="true"]')
+const isTyping = (t: EventTarget | null) => !!(t as HTMLElement | null)?.closest?.('input,textarea,select,[contenteditable]:not([contenteditable="false"])')
+
+/** Single keys that add a card where the mouse is (or mid-view), like the toolbar's tools. */
+const CREATE_KEYS: Record<string, CardType | 'line'> = { n: 'note', t: 'todo', b: 'board', l: 'line' }
+
+// The last mouse position, so N, T and B add a card under the pointer.
+let pointer: { x: number; y: number } | null = null
+const trackPointer = (e: PointerEvent) => { pointer = e.pointerType === 'touch' ? null : { x: e.clientX, y: e.clientY } }
+const forgetPointer = () => { pointer = null }
+
+/** Any menu, popover or sheet that's open owns the keyboard, even if focus has wandered off it. */
+const overlayOpen = () => !!document.querySelector('.menu, [role="menu"], .popover, [role="dialog"], [role="alertdialog"]')
 
 export function installShortcuts(opts: { readOnly: boolean }) {
   const onKey = (e: KeyboardEvent) => {
@@ -45,6 +59,10 @@ export function installShortcuts(opts: { readOnly: boolean }) {
       else clearSelection()
       return
     }
+
+    // "?" (Shift+/) shows every shortcut, on any board you can see, even from a
+    // top-bar button (focus returns to Account when the sheet closes).
+    if (e.key === '?' && !mod && !e.altKey && !typing && !target?.closest?.('.menu, [role="menu"]')) return void (e.preventDefault(), setShortcutsOpen(true))
 
     // Menu and toolbar buttons keep ordinary typing keys away from canvas edits.
     if ((e.target as Element)?.closest?.('.menu, .topbar, .canvas-controls, .follow-banner, .selection-bar') && !mod) {
@@ -75,6 +93,15 @@ export function installShortcuts(opts: { readOnly: boolean }) {
       return
     }
     if (editingId()) return
+
+    const tool = CREATE_KEYS[e.key.toLowerCase()]
+    if (tool && !mod && !e.altKey && !e.shiftKey && !e.repeat) {
+      // Never while a menu or popover is open, nor on a board you can only view.
+      if (overlayOpen() || !doc.canWriteObject(doc.getBoard(boardId()))) return
+      e.preventDefault()
+      const type = tool === 'line' ? 'note' : tool
+      return useTool(tool, () => (pointer && placementAt(pointer.x, pointer.y)) || centrePlacement(type))
+    }
 
     if (mod && e.key.toLowerCase() === 'z') {
       e.preventDefault()
@@ -113,5 +140,11 @@ export function installShortcuts(opts: { readOnly: boolean }) {
     }
   }
   window.addEventListener('keydown', onKey)
-  return () => window.removeEventListener('keydown', onKey)
+  window.addEventListener('pointermove', trackPointer, { passive: true })
+  document.documentElement.addEventListener('pointerleave', forgetPointer)
+  return () => {
+    window.removeEventListener('keydown', onKey)
+    window.removeEventListener('pointermove', trackPointer)
+    document.documentElement.removeEventListener('pointerleave', forgetPointer)
+  }
 }

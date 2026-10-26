@@ -20,6 +20,9 @@ html.ios-standalone,
 .ios-standalone body,
 .ios-standalone #root { height: var(--app-height, 100%); }
 
+/* Motion that isn't colour. The dog-moment overshoot is for playful pickups only (DESIGN.md, Motion). */
+:root { --ease-overshoot: cubic-bezier(0.3, 1.6, 0.6, 1); }
+
 body {
   background: var(--dn-bg);
   color: var(--dn-text);
@@ -782,7 +785,7 @@ html[data-input='mouse'] .connect-handle:hover {
   min-width: 28px;
   height: 26px;
   border: 0;
-  border-radius: 5px;
+  border-radius: 6px;
   background: transparent;
   font-size: 13px;
 }
@@ -1060,13 +1063,13 @@ html[data-input='mouse'] .todo-done-toggle:hover {
   border-radius: 14px;
   background: var(--tile-bg);
   color: var(--tile-fg);
-  transition: transform 140ms cubic-bezier(0.3, 1.6, 0.6, 1);
+  transition: transform 140ms var(--ease-overshoot);
 }
 
 .in-column .board-tile {
   width: 36px;
   height: 36px;
-  border-radius: 9px;
+  border-radius: 8px;
   flex-shrink: 0;
 }
 
@@ -1391,7 +1394,7 @@ html[data-input="mouse"] .link-title:hover {
   gap: 5px;
   padding: 5px 9px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 8px;
   background: transparent;
   color: var(--dn-text);
   font-size: 13px;
@@ -2425,7 +2428,7 @@ html[data-input='touch'] .movie-icon-btn::after {
 .update-toast { bottom: 76px; }
 .diagnostics { bottom: 76px; }
 [data-tooltip] { position: relative; }
-[data-tooltip]::after { content: attr(data-tooltip); position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); padding: 7px 9px; border: 1px solid var(--dn-border); border-radius: 7px; background: var(--dn-panel); color: var(--dn-text); box-shadow: 0 3px 12px rgb(0 0 0 / .12); font-size: 12px; font-weight: 400; white-space: normal; width: max-content; max-width: min(280px, calc(100vw - 32px)); overflow-wrap: anywhere; pointer-events: none; z-index: 200; opacity: 0; visibility: hidden; transition: opacity 120ms; }
+[data-tooltip]::after { content: attr(data-tooltip); position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); padding: 7px 9px; border: 1px solid var(--dn-border); border-radius: 6px; background: var(--dn-panel); color: var(--dn-text); box-shadow: 0 3px 12px rgb(0 0 0 / .12); font-size: 12px; font-weight: 400; white-space: normal; width: max-content; max-width: min(280px, calc(100vw - 32px)); overflow-wrap: anywhere; pointer-events: none; z-index: 200; opacity: 0; visibility: hidden; transition: opacity 120ms; }
 html[data-input='mouse'] [data-tooltip]:hover::after, [data-tooltip]:focus-visible::after { opacity: 1; visibility: visible; transition-delay: 400ms; }
 [data-tooltip][aria-expanded='true']::after { display: none; }
 .canvas-controls [data-tooltip]::after { top: auto; bottom: calc(100% + 10px); left: 0; transform: none; }
@@ -2447,7 +2450,7 @@ html[data-input='mouse'] [data-tooltip]:hover::after, [data-tooltip]:focus-visib
   .topbar .board-navigation .icon-btn-label, .topbar .boards-caret { display: none; }
   .topbar .crumb.current { max-width: 54vw; }
   .topbar .board-heading { gap: 2px; }
-  .topbar .share-permission { font-size: 10px; padding: 0 3px; }
+  .topbar .share-permission { font-size: 11px; padding: 0 4px; }
   .tauri .topbar { padding-left: 8px; }
   .tauri .topbar-left { padding-left: 76px; width: calc(100% - 76px); }
   .tauri .topbar .crumb.current { max-width: 35vw; }

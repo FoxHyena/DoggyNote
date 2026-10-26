@@ -11,7 +11,8 @@ import { COPY } from '@doggynote/theme'
 import { canPrompt, installed, isIOS, promptInstall } from '../state/install.ts'
 import { isTauri } from '../state/platform.ts'
 import { GUIDES_URL } from '../state/api.ts'
-import { touch } from '../state/device.ts'
+import { phone, touch } from '../state/device.ts'
+import { setShortcutsOpen } from '../state/ui.ts'
 
 export { SyncStatus } from './SyncStatus.tsx'
 
@@ -64,6 +65,8 @@ export function AccountMenu(props: ThemeToggleProps) {
     <div class="zoom account-menu" ref={container} onKeyDown={(event) => {
       // Account dialogs install their own keyboard containment on document/window.
       if (!open() && event.target !== trigger) return
+      // "?" from the (closed) Account button reaches the shortcut sheet.
+      if (!open() && event.key === '?') return
       event.stopPropagation()
       if (event.key === 'Escape' && open()) { event.preventDefault(); close(true) }
     }}>
@@ -119,6 +122,7 @@ export function AccountMenu(props: ThemeToggleProps) {
             </Show>
           </Show>
           <button class="menu-item" data-testid="manage-agents" onClick={() => { close(); setAgents(true) }}>Agent connections</button>
+          <Show when={!phone()}><button class="menu-item" data-testid="open-shortcuts" onClick={() => { close(); setShortcutsOpen(true) }}>Keyboard shortcuts<kbd class="nav-menu-meta">?</kbd></button></Show>
           <a class="menu-item" data-testid="open-guides" href={GUIDES_URL} target="_blank" rel="noopener" onClick={() => close()}>{COPY.guides.open}</a>
           <button class="menu-item" data-testid="about" onClick={() => { close(); setAbout(true) }}>About &amp; credits</button>
           <button class="menu-item" data-testid="sign-out" onClick={() => { close(); void logout() }}>

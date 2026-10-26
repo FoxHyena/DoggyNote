@@ -9,13 +9,14 @@
   "benefit": "Tidy a board without nudging each card by hand, then keep the layout you like.",
   "outcome": "Your cards share an edge or a centre, and a locked card stays where you put it.",
   "prerequisites": ["A board you can edit."],
-  "keywords": ["align", "arrange", "tidy", "lock", "pin"],
+  "keywords": ["align", "arrange", "tidy", "lock", "pin", "distribute", "space evenly"],
   "sections": [
     {
       "id": "how-it-works",
       "title": "How it works",
       "paragraphs": [
         "Select two or more cards and six align icons appear in the selection bar: Align left, Align horizontal centers, Align right, Align top, Align vertical centers and Align bottom. The cards line up against the outer edges, or the middle, of everything you selected.",
+        "Select three or more cards and two more icons appear after them: Distribute horizontally and Distribute vertically. They space the cards so every gap between neighbours is the same, and the two outermost cards stay where they are. One Undo puts them all back.",
         "Lock position pins a card where it is. A locked card can't be dragged, resized, nudged with the arrow keys or moved by an align, but you can still edit its text, caption or drawing."
       ]
     },
@@ -66,7 +67,7 @@
       "id": "mixed-selections",
       "title": "Locked cards in a selection",
       "paragraphs": [
-        "When only some of the selected cards are locked, the bar shows how many, for example 1 locked, and offers Unlock selected. An align still uses the locked cards to work out the line, but only the unlocked cards move. If every selected card is locked, the align icons disappear until you unlock one.",
+        "When only some of the selected cards are locked, the bar shows how many, for example 1 locked, and offers Unlock selected. An align still uses the locked cards to work out the line, but only the unlocked cards move. A distribute leaves locked cards out altogether: they stay put, and the even spacing is worked out from the unlocked cards, so it needs three of them. If every selected card is locked, the align icons disappear until you unlock one.",
         "Cards inside a column move with the column. To align a column, select the column itself. Locking a card in a column also locks the column's position."
       ]
     },
@@ -74,7 +75,7 @@
       "id": "limits",
       "title": "On a phone, and other limits",
       "paragraphs": [
-        "On a phone, tap a card, then tap More in the bar at the bottom of the screen. Lock position and the align icons are there. To select several cards, choose Pick more cards and tap the others.",
+        "On a phone, tap a card, then tap More in the bar at the bottom of the screen. Lock position, the align icons and, for three or more cards, Distribute horizontally and Distribute vertically are there. To select several cards, choose Pick more cards and tap the others.",
         "You need edit access to align or lock cards. A lock is about layout only: it doesn't hide a card or stop anyone editing it, and you can still Bury a locked card (move it to Buried bones, DoggyNote's bin)."
       ]
     }

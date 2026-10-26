@@ -12,14 +12,14 @@ import { addAnyFiles, addImages } from '../canvas/paste.ts'
 import { beginBoardDrawing, boardDrawing, endBoardDrawing } from '../state/drawing.ts'
 import { Icon, type IconName } from './icons.tsx'
 
-export type Tool = { id: CardType | 'line' | 'draw'; label: string; icon: IconName }
+export type Tool = { id: CardType | 'line' | 'draw'; label: string; icon: IconName; key?: string }
 
 export const TOOLS: Tool[] = [
-  { id: 'note', label: 'Note', icon: 'note' },
-  { id: 'todo', label: 'To-do', icon: 'todo' },
-  { id: 'board', label: 'Board', icon: 'board' },
+  { id: 'note', label: 'Note', icon: 'note', key: 'N' },
+  { id: 'todo', label: 'To-do', icon: 'todo', key: 'T' },
+  { id: 'board', label: 'Board', icon: 'board', key: 'B' },
   { id: 'link', label: 'Link', icon: 'link' },
-  { id: 'line', label: 'Line', icon: 'line' },
+  { id: 'line', label: 'Line', icon: 'line', key: 'L' },
   { id: 'column', label: 'Column', icon: 'column' },
   { id: 'area', label: 'Area', icon: 'multi' },
   { id: 'movie', label: 'Movie', icon: 'film' },
@@ -112,7 +112,8 @@ export function Toolbar() {
                     if (e.detail !== 0) return
                     useTool(t.id, () => centrePlacement(t.id as CardType))
                   }}
-                  title={t.id === 'line' ? 'Line: click two cards to connect them' : t.id === 'draw' ? 'Draw: ink straight on the board' : `${t.label}: click to add, or drag onto the board`}
+                  title={`${t.id === 'line' ? 'Line: click two cards to connect them' : t.id === 'draw' ? 'Draw: ink straight on the board' : `${t.label}: click to add, or drag onto the board`}${t.key ? ` (${t.key})` : ''}`}
+                  aria-keyshortcuts={t.key}
                   onPointerDown={(e) => onToolPointerDown(e, t)}
                   // The new card takes focus on pointerup; a tap's late mousedown would take it back.
                   onMouseDown={(e) => e.preventDefault()}
