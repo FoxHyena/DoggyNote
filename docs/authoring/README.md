@@ -4,7 +4,7 @@ Public content lives in `apps/web/src/docs/content/<slug>.json`. Copy [feature.t
 
 ## Write around a user goal
 
-Use a short, stable, lower-case hyphenated slug (for example `align-cards`) and a title that names an outcome. Summary is one short sentence (maximum 240 characters); title maximum 120 characters. Supply benefit and a complete sentence for outcome. Order is a finite number; ties sort by title. Navigation and landing cards come from these same files.
+Use a short, stable, lower-case hyphenated slug (for example `align-cards`) and a title that names an outcome. Summary is one short sentence (maximum 240 characters); title maximum 120 characters. Supply benefit and a complete sentence for outcome. Optional `keywords` add other words people search with ("color", "photo"); they are never shown. Order is a finite number; ties sort by title. Navigation and landing cards come from these same files.
 
 Choose a category: `getting-started`, `working-on-boards`, `research-media`, `writing-drawing`, `sharing`, `reference`. Empty categories stay out of the UI. Choose `kind`: `task` for instructions, `explanation` for a concept, `reference` for facts or lookup. Do not use a task guide as a home for implementation notes.
 
@@ -28,7 +28,7 @@ Add a figure to the relevant section:
 }]
 ```
 
-Dimensions must match the actual image bytes; the renderer reserves their aspect ratio. Alt describes meaningful visible evidence, while the caption explains the demonstrated state. Record tested revision, platform/build, synthetic fixture, capture method and QA round in your own `docs/qa/<feature>/` log. User-facing pages do not contain those records. A published task requires at least one screenshot and one flow. Missing referenced assets fail validation even in a draft. Until actual captures exist, omit `figures` and leave `status` as `draft`.
+Capture each screenshot in both appearances and add the dark one as `"darkSrc"` (for example `selected-cards-aligned-dark.png`). It must be the same size as the light one; readers see the copy that matches their Appearance, and the other is never downloaded. Dimensions must match the actual image bytes; the renderer reserves their aspect ratio. Alt describes meaningful visible evidence, while the caption explains the demonstrated state. Record tested revision, platform/build, synthetic fixture, capture method and QA round in your own `docs/qa/<feature>/` log. User-facing pages do not contain those records. A published task requires at least one screenshot and one flow. Missing referenced assets fail validation even in a draft. Until actual captures exist, omit `figures` and leave `status` as `draft`.
 
 ## Links, publication and preview
 

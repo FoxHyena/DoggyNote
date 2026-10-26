@@ -1,4 +1,5 @@
 import { For, Show, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
+import { Dynamic } from 'solid-js/web'
 import { COPY } from '@doggynote/theme'
 import articles from 'virtual:docs-content'
 import { categories, docsRoute, type Article, type DocLink, type Section } from './schema.ts'
@@ -9,10 +10,35 @@ import '../state/device.ts'
 import './docs.css'
 
 const href = (article: Article) => `/docs/${article.slug}`
+const fold = (text: string) => text.toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+
+/** Every word of the query must start a word somewhere in the guide. Matches in the title count most, then keywords, summary and headings, then the steps themselves. */
+function search(query: string): Article[] {
+  const words = fold(query).split(/\s+/).filter(Boolean)
+  if (!words.length) return articles
+  const starts = (text: string, word: string) => new RegExp(`(^|[^\\p{L}\\p{N}])${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'u').test(text)
+  const ranked = articles.flatMap((a, index) => {
+    const title = fold(a.title)
+    const tagged = fold([...(a.keywords ?? []), a.summary, categories[a.category], ...a.sections.map(s => s.title)].join(' '))
+    const body = fold([a.benefit, a.outcome, ...a.sections.flatMap(s => [...(s.paragraphs ?? []), s.callout?.text ?? '', s.flow?.entry ?? '', ...(s.flow?.steps.flatMap(st => [st.action, st.result]) ?? [])])].join(' '))
+    let score = 0
+    for (const w of words) {
+      const points = starts(title, w) ? 3 : starts(tagged, w) ? 2 : starts(body, w) ? 1 : 0
+      if (!points) return []
+      score += points
+    }
+    return [{ a, index, score }]
+  })
+  return ranked.sort((x, y) => y.score - x.score || x.index - y.index).map(r => r.a)
+}
 const kinds = { task: 'How-to', explanation: 'Explanation', reference: 'Reference' }
 
 function Links(props: { links: DocLink[] }) {
   return <ul class="docs-links"><For each={props.links}>{link => <li><a href={link.href}>{link.label}</a></li>}</For></ul>
+}
+
+function GuideList(props: { articles: Article[]; level: 3 | 4 }) {
+  return <ul class="docs-guide-list"><For each={props.articles}>{a => <li><a class="docs-guide-row" href={href(a)}><Dynamic component={`h${props.level}`} class="docs-guide-title">{a.title}</Dynamic><Show when={a.kind !== 'task'}><span class="docs-meta">{kinds[a.kind]}</span></Show><p>{a.summary}</p></a></li>}</For></ul>
 }
 
 function ArticleSection(props: { section: Section }) {
@@ -26,7 +52,8 @@ function ArticleSection(props: { section: Section }) {
       <div class="docs-flow-end"><p><strong>When you’re done.</strong> {flow().completion}</p><p><strong>Change your mind?</strong> {flow().correction}</p></div>
     </div>}</Show>
     <Show when={s().callout}>{callout => <aside class="docs-callout"><strong>{callout().title}</strong><p>{callout().text}</p></aside>}</Show>
-    <For each={s().figures}>{figure => <figure><img src={figure.src} alt={figure.alt} width={figure.width} height={figure.height} loading="lazy" decoding="async" /><figcaption>{figure.caption}</figcaption></figure>}</For>
+    {/* With a dark variant, CSS shows the one matching the page's appearance; a hidden lazy image is never fetched. */}
+    <For each={s().figures}>{figure => <figure><img class={figure.darkSrc ? 'docs-figure-light' : undefined} src={figure.src} alt={figure.alt} width={figure.width} height={figure.height} loading="lazy" decoding="async" /><Show when={figure.darkSrc}><img class="docs-figure-dark" src={figure.darkSrc} alt={figure.alt} width={figure.width} height={figure.height} loading="lazy" decoding="async" /></Show><figcaption>{figure.caption}</figcaption></figure>}</For>
     <Show when={s().links?.length}><Links links={s().links!} /></Show>
   </section>
 }
@@ -39,7 +66,7 @@ export default function Docs() {
   const notFound = !!route.slug && !article
   const [menuOpen, setMenuOpen] = createSignal(false)
   const [query, setQuery] = createSignal('')
-  const results = createMemo(() => articles.filter(a => `${a.title} ${a.summary}`.toLocaleLowerCase().includes(query().trim().toLocaleLowerCase())))
+  const results = createMemo(() => search(query()))
   let trigger!: HTMLButtonElement
   let shell!: HTMLDivElement
   let header!: HTMLElement
@@ -97,9 +124,12 @@ export default function Docs() {
           <div class="docs-landing">
             <h1>{COPY.guides.heading}</h1>
             <p class="docs-lead">Short, practical guides for making yourself at home in {COPY.appName}.</p>
-            <label class="docs-search"><span>{COPY.guides.search}</span><input type="search" placeholder="Search titles and summaries…" value={query()} onInput={e => setQuery(e.currentTarget.value)} /></label>
+            <label class="docs-search"><span>{COPY.guides.search}</span><input type="search" placeholder="Try labels, sketch or undo…" value={query()} onInput={e => setQuery(e.currentTarget.value)} /></label>
             <div class="docs-section-label"><h2>{query().trim() ? 'Search results' : 'All guides'}</h2><span role="status" aria-live="polite">{results().length} {results().length === 1 ? 'guide' : 'guides'}</span></div>
-            <Show when={results().length}><ul class="docs-guide-list"><For each={results()}>{a => <li><a class="docs-guide-row" href={href(a)}><h3>{a.title}</h3><span class="docs-meta">{kinds[a.kind]}</span><p>{a.summary}</p></a></li>}</For></ul></Show>
+            {/* Browsing, the guides are grouped like the sidebar; a search is one ranked list. */}
+            <Show when={query().trim()} fallback={<For each={groups}>{([key, label]) => <section class="docs-guide-group" aria-labelledby={`group-${key}`}><h3 id={`group-${key}`} class="docs-group-heading">{label}</h3><GuideList articles={articles.filter(a => a.category === key)} level={4} /></section>}</For>}>
+              <Show when={results().length}><GuideList articles={results()} level={3} /></Show>
+            </Show>
             <Show when={!results().length}><div class="docs-empty"><h3>{COPY.guides.noMatch}</h3><p>Nothing matches “{query()}”. Try a shorter word, or browse every guide.</p><button type="button" onClick={() => setQuery('')}>Clear search</button></div></Show>
           </div>
         </Show>

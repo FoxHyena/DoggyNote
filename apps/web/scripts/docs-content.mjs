@@ -19,10 +19,13 @@ export function readArticles(directory = contentDirectory, publicDirectory = fil
       validateArticle(article)
       if (file !== `${article.slug}.json`) throw new Error('Filename must match slug')
       for (const figure of article.sections.flatMap(s => s.figures ?? [])) {
-        const bytes = readFileSync(`${publicDirectory}${figure.src}`)
-        const [width, height] = imageDimensions(bytes)
-        if (width !== figure.width || height !== figure.height) throw new Error(`Wrong dimensions for ${figure.src}: ${width}×${height}`)
-        if (bytes.length > 1500000) throw new Error(`Optimize ${figure.src}: maximum 1.5 MB`)
+        // The dark variant stands in for the light one, so it must be the same size.
+        for (const src of [figure.src, figure.darkSrc].filter(Boolean)) {
+          const bytes = readFileSync(`${publicDirectory}${src}`)
+          const [width, height] = imageDimensions(bytes)
+          if (width !== figure.width || height !== figure.height) throw new Error(`Wrong dimensions for ${src}: ${width}×${height}`)
+          if (bytes.length > 1500000) throw new Error(`Optimize ${src}: maximum 1.5 MB`)
+        }
       }
       return article
     } catch (e) { throw new Error(`${file}: ${e.message}`) }
@@ -40,7 +43,6 @@ export function docsContentPlugin() {
     resolveId(source) { if (source === 'virtual:docs-content') return id },
     load(source) {
       if (source !== id) return
-      this.addWatchFile(contentDirectory)
       for (const f of readdirSync(contentDirectory)) this.addWatchFile(`${contentDirectory}/${f}`)
       // Drafts are removed BEFORE Rollup sees content: no public data/route bypass.
       return publicArticleSource(readArticles())

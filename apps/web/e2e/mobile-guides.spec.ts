@@ -34,6 +34,20 @@ test.describe('signed out', () => {
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   })
+
+  test('on a phone, the guides are grouped, and a guide’s screenshots fit and load', async ({ page }) => {
+    await page.goto('/docs')
+    await expect(page.locator('#docs-main').getByRole('heading', { name: 'Writing & drawing', level: 3 })).toBeVisible()
+    await page.locator('.docs-guide-row', { hasText: 'Draw a sketch card' }).tap()
+    await expect(page.getByRole('heading', { name: 'Draw a sketch card', exact: true, level: 1 })).toBeVisible()
+    for (const figure of await page.locator('.docs-section figure').all()) {
+      await figure.scrollIntoViewIfNeeded()
+      const img = figure.locator('img:visible')
+      await expect.poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0)).toBe(true)
+      expect((await img.boundingBox())!.width).toBeLessThanOrEqual(page.viewportSize()!.width)
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  })
 })
 
 test('on a phone, the account sheet has the appearance icon and the guides link', async ({ page }) => {

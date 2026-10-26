@@ -2,112 +2,96 @@
   "slug": "duplicate-and-reuse-layouts",
   "category": "working-on-boards",
   "kind": "task",
-  "title": "Duplicate boards and reuse layouts",
-  "summary": "Explore an independent copy or start a new board from a reusable layout.",
-  "status": "draft",
-  "order": 60,
-  "benefit": "Keep useful research structures while giving each new project room to change.",
-  "outcome": "You have an independent board or selection whose edits leave the original unchanged.",
+  "title": "Duplicate cards, boards and templates",
+  "summary": "Copy a few cards or a whole board, or save a board as a template to start new ones from.",
+  "status": "published",
+  "order": 140,
+  "benefit": "Reuse a layout that works instead of building it again.",
+  "outcome": "You have a copy you can change freely, while the original stays exactly as it was.",
+  "keywords": ["copy", "paste", "template", "clone", "reuse"],
   "sections": [
     {
       "id": "how-copies-work",
-      "title": "What an independent copy includes",
+      "title": "What a copy includes",
       "paragraphs": [
-        "An independent copy keeps the content and layout while giving the copied items their own identities. For example, duplicate a research board with notes, images, columns, nested boards and connectors, then develop a different direction in the copy.",
-        "A whole-board copy includes the board's nested board tree. Shortcuts to other projects keep their existing destinations; those other projects are not duplicated. Images and files keep valid asset references. Discussion stays on the original, so a copy never presents old comments as new posts.",
-        "Copied synced notes remain linked to other copied instances in the same copied tree or selection. Their shared text is independent of the original group. A copied single instance becomes an independent note. Creating an explicit synced copy is a separate action."
+        "A copy is independent: change it and the original stays the same, and the other way round. Cards keep their text, pictures, colours, labels and drawings. Lines between cards come along when both ends are copied, and a copied column brings its cards.",
+        "Copying a board also copies every board inside it. Comments stay on the original, so the copy starts without old conversations."
       ]
     },
     {
-      "id": "copy-a-selection",
-      "title": "Duplicate cards or a selection",
+      "id": "duplicate-cards",
+      "title": "Duplicate cards",
       "flow": {
-        "entry": "Open an editable board and select the cards you want to reuse. Finish text editing to show the selection controls.",
+        "entry": "Select the cards you want to copy: click one, or Shift-click several.",
         "steps": [
-          {
-            "action": "Choose Duplicate in the selection controls, or press Command+D on Mac or Control+D in a browser on other systems.",
-            "result": "Independent copies appear slightly offset and become the current selection."
-          },
-          {
-            "action": "Edit or move a copied card.",
-            "result": "The original card keeps its own text and layout."
-          }
+          { "action": "Right-click one of them and choose Duplicate, or press ⌘D (Ctrl+D on Windows). On a phone, tap More in the bar at the bottom, then Duplicate.", "result": "The copies appear just below and to the right of the originals, already selected so you can drag them into place." },
+          { "action": "Change a copy, for example edit its text.", "result": "The original card keeps its own text." }
         ],
-        "completion": "The copies use the board's normal local save and sync behavior. A selected column includes its members. A member copied without its column becomes a free card. Connectors copy when both endpoints are included.",
-        "correction": "Use Undo once to remove the complete duplication, or Redo to restore it."
-      }
+        "completion": "The copies save straight away like any other new card.",
+        "correction": "Undo removes all the copies in one step."
+      },
+      "figures": [{
+        "src": "/docs/assets/duplicate-and-reuse-layouts/card-menu-duplicate.png",
+        "darkSrc": "/docs/assets/duplicate-and-reuse-layouts/card-menu-duplicate-dark.png",
+        "alt": "A selected blue note titled Before the vet, with its right-click menu open: Edit, Duplicate (highlighted), Labels, Comment and Bury.",
+        "caption": "Duplicate is in the right-click menu, alongside Edit, Labels, Comment and Bury.",
+        "width": 792,
+        "height": 570
+      }],
+      "paragraphs": ["To put cards on a different board, copy them with ⌘C (Ctrl+C), open the other board and paste with ⌘V (Ctrl+V)."]
     },
     {
-      "id": "copy-a-board",
-      "title": "Duplicate a complete board tree",
+      "id": "duplicate-a-board",
+      "title": "Duplicate a whole board",
       "flow": {
-        "entry": "Open the source board and choose More board actions.",
+        "entry": "Open the board you want to copy and choose the … button at the right of the top bar.",
         "steps": [
-          {
-            "action": "Choose Duplicate board, then give the copy a name.",
-            "result": "The dialog explains that the copy is private and independent, and that discussion stays on the original."
-          },
-          {
-            "action": "Choose Create private copy.",
-            "result": "DoggyNote checks the complete board tree, opens the copied board, and adds a tile to your personal home."
-          },
-          {
-            "action": "Open a copied nested board or change a copied note.",
-            "result": "You work inside the independent tree; the source remains available unchanged."
-          }
+          { "action": "Choose Duplicate board.", "result": "A copy called, for example, Vet visit checklist copy appears next to the original's board card, and DoggyNote opens it." },
+          { "action": "Rename the copy by clicking its name in the top bar, then change whatever you like.", "result": "The original board and everything inside it stay as they were." }
         ],
-        "completion": "New private copies do not inherit the source's public links or access grants. Check Save status before closing if saving reports a problem.",
-        "correction": "Cancel while the copy is being prepared to leave the source unchanged. One Undo reverses the copied graph and returns you to the previous board."
-      }
+        "completion": "The copy sits next to the original, inside the same board. If you can't add cards there, it goes in your Doghouse, your home board, instead.",
+        "correction": "Choose Undo in the message that appears. Undo removes the copy and takes you back to the original."
+      },
+      "figures": [{
+        "src": "/docs/assets/duplicate-and-reuse-layouts/board-menu.png",
+        "darkSrc": "/docs/assets/duplicate-and-reuse-layouts/board-menu-dark.png",
+        "alt": "The board's … menu open under the top bar, listing Duplicate board, Save as template, New from template, Export PNG and Agent proposals.",
+        "caption": "The board's … menu holds Duplicate board, Save as template and New from template.",
+        "width": 560,
+        "height": 510
+      }],
+      "paragraphs": ["Your Doghouse (your home board) and your Inbox can't be duplicated, but you can save either one as a template."]
     },
     {
-      "id": "start-from-a-template",
-      "title": "Start with Research, Moodboard or Project brief",
+      "id": "save-a-template",
+      "title": "Save a board as a template",
       "flow": {
-        "entry": "Choose More board actions, then Templates.",
+        "entry": "Open a board whose layout you'd like to reuse, such as a checklist you fill in before every vet visit.",
         "steps": [
-          {
-            "action": "Choose Research, Moodboard or Project brief.",
-            "result": "The selected starter suggests a name and a useful structure for the task."
-          },
-          {
-            "action": "Adjust the new board name and choose Create board.",
-            "result": "A new private board opens with independent starter content, ready to change."
-          }
+          { "action": "Choose the … button, then Save as template.", "result": "A message says “Saved as a template. Good trick!” You stay on the board." },
+          { "action": "Later, on any board, choose the … button, then New from template.", "result": "Templates lists your templates by name, with the date you saved each one." },
+          { "action": "Choose a template.", "result": "A new board with that name and layout appears on the board you're on, and DoggyNote opens it." }
         ],
-        "completion": "Each creation is independent, even when you use the same template repeatedly. Find the new board from your personal home.",
-        "correction": "Cancel to return without creating a board, or Undo the completed creation in one step."
-      }
+        "completion": "Templates are yours alone: they don't appear in Fetch or on any board, and other people don't see them. A template is a snapshot, so later changes to the original board don't change it, and boards made from it are independent too.",
+        "correction": "Undo in the message removes the template or the new board you just made. To delete a template, choose the × beside it in Templates. A message says “Template removed.” and offers Undo."
+      },
+      "figures": [{
+        "src": "/docs/assets/duplicate-and-reuse-layouts/templates-popover.png",
+        "darkSrc": "/docs/assets/duplicate-and-reuse-layouts/templates-popover-dark.png",
+        "alt": "The Templates list under the … button, with one template, Vet visit checklist, its save date and an × to remove it.",
+        "caption": "New from template lists your saved templates. The × removes one.",
+        "width": 576,
+        "height": 332
+      }]
     },
     {
-      "id": "save-a-personal-layout",
-      "title": "Save your own layout for later",
-      "flow": {
-        "entry": "Open a useful board, then choose More board actions and Save as template.",
-        "steps": [
-          {
-            "action": "Enter a layout name and choose Save layout.",
-            "result": "A private independent snapshot is added to Personal layouts. The source board stays open."
-          },
-          {
-            "action": "Open Templates, choose your saved layout, enter a new board name, and choose Create board.",
-            "result": "A fresh independent copy opens. Later changes to the new board, source board and saved layout do not overwrite one another."
-          }
-        ],
-        "completion": "Personal layouts survive reload and sync with your account. Empty boards can be saved too. Saved layouts are snapshots, so changes made to the source after saving do not update them.",
-        "correction": "Use Remove beside a saved layout to take it out of the library. Undo restores it. Removing the layout does not delete boards you already created from it."
-      }
-    },
-    {
-      "id": "availability-and-correction",
-      "title": "Access, offline use and interruptions",
+      "id": "access",
+      "title": "Who can copy what",
       "paragraphs": [
-        "Duplicating a selection needs edit access to its destination board. A whole board or saved layout needs access to every canonical descendant; an inaccessible descendant causes an error instead of silently creating an incomplete tree.",
-        "Ordinary local card selections can duplicate while offline. Copying a board tree or saving or reusing a personal layout needs connectivity and a completed sync so DoggyNote can check the complete source. Built-in starters are available locally once the app is loaded.",
-        "If preparation fails, keep the original open, check your connection or access, and try again. Canceling preparation does not change the original. Completed copies use the same save, retry and recovery controls as other board edits.",
-        "Use the Undo offer before making another change, or use keyboard Undo for your latest change. If a collaborator changes a copied item or adds a stroke that Undo would hide, DoggyNote may keep the whole copy and explain why Undo was skipped. A skipped Undo keeps you on the copied board."
+        "Duplicating cards needs edit access to the board you're on. A board you duplicate or make from a template needs somewhere to go: if you can't add to the current board, it goes in your Doghouse. Your list of templates only ever shows the ones you saved yourself."
       ]
     }
   ],
-  "related": []
+  "related": ["align-and-lock-cards", "labels-and-search"],
+  "links": []
 }

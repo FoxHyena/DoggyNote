@@ -2,102 +2,83 @@
   "slug": "align-and-lock-cards",
   "category": "working-on-boards",
   "kind": "task",
-  "title": "Line up cards and lock their positions",
-  "summary": "Align references together and keep a reference fixed while you arrange nearby notes.",
-  "status": "draft",
-  "order": 10,
-  "benefit": "Tidy a collection of references without dragging each card into place, then protect the layout you want to keep.",
-  "outcome": "Selected cards line up, and a locked reference stays in place while nearby notes move or resize.",
-  "prerequisites": [
-    "Editing access to the board.",
-    "Two or more selected layout units when using alignment."
-  ],
+  "title": "Line up cards and lock them in place",
+  "summary": "Align a row of cards in one click, and lock a card so it stays put while you tidy around it.",
+  "status": "published",
+  "order": 110,
+  "benefit": "Tidy a board without nudging each card by hand, then keep the layout you like.",
+  "outcome": "Your cards share an edge or a centre, and a locked card stays where you put it.",
+  "prerequisites": ["A board you can edit."],
+  "keywords": ["align", "arrange", "tidy", "lock", "pin"],
   "sections": [
     {
       "id": "how-it-works",
-      "title": "How alignment and position locks work",
+      "title": "How it works",
       "paragraphs": [
-        "Use alignment to tidy a row of images or line up cards in one action. A position lock protects deliberate layout changes while leaving content available to edit.",
-        "Each alignment uses the outside bounds of the selected layout units. Edge commands use those outer edges; center commands use the middle of that selection area.",
-        "Align… offers Align left, Align horizontal centers, Align right, Align top, Align vertical centers and Align bottom."
+        "Select two or more cards and six align icons appear in the selection bar: Align left, Align horizontal centers, Align right, Align top, Align vertical centers and Align bottom. The cards line up against the outer edges, or the middle, of everything you selected.",
+        "Lock position pins a card where it is. A locked card can't be dragged, resized, nudged with the arrow keys or moved by an align, but you can still edit its text, caption or drawing."
       ]
     },
     {
-      "id": "align-images",
-      "title": "Align three image cards",
+      "id": "align-cards",
+      "title": "Line up three photos",
       "flow": {
-        "entry": "Open an editable board with three image cards at uneven positions.",
+        "entry": "Open a board with three photos at slightly different heights, for example the pictures for a puppy class flyer.",
         "steps": [
-          {
-            "action": "Clear an old selection if needed. With a mouse, hold Shift and click each image. On a touchscreen, tap one image, tap Select in the selection toolbar, then tap the other images.",
-            "result": "The selected images show outlines and share a selection toolbar."
-          },
-          {
-            "action": "Open Align… in the toolbar and choose Align top.",
-            "result": "The unlocked images move so their top edges line up. Their widths and contents stay the same."
-          },
-          {
-            "action": "Use Undo, then Redo if you want to compare the layouts.",
-            "result": "One Undo restores all previous positions for that command. Redo applies the alignment again."
-          }
+          { "action": "Click the first photo, then hold Shift and click the other two. You can also drag a box around them on an empty part of the board.", "result": "All three are outlined, and the selection bar appears above them with the align icons." },
+          { "action": "Choose Align top.", "result": "The photos move so their top edges line up. Their sizes don't change. A message says “Aligned. Undo restores the previous positions.”" }
         ],
-        "completion": "The alignment is saved with the board. Save status shows whether changes are still waiting to sync.",
-        "correction": "Use Undo in the alignment feedback before making another change. You can also press ⌘Z on a Mac or Ctrl+Z in other browsers to reverse the latest change."
-      }
-    },
-    {
-      "id": "lock-reference",
-      "title": "Keep a reference in place",
-      "flow": {
-        "entry": "Select the reference image whose layout you want to keep.",
-        "steps": [
-          {
-            "action": "Choose Lock position in the selection toolbar.",
-            "result": "A lock indicator appears and the action changes to Unlock position."
-          },
-          {
-            "action": "Select a nearby note. Drag it, nudge it with the arrow keys, or drag its resize handle. Hold Shift with an arrow key for a larger nudge.",
-            "result": "The note changes while the locked reference stays in place."
-          },
-          {
-            "action": "Select the reference again and choose Unlock position when you want to move or resize it.",
-            "result": "The reference can be arranged again using the normal board tools."
-          }
-        ],
-        "completion": "The position lock is saved with the board and remains when you reopen it or restart the Mac app.",
-        "correction": "Lock and unlock changes support Undo and Redo. Unlock position is available in the same selection toolbar."
+        "completion": "The new positions save straight away, and everyone on the board sees them.",
+        "correction": "Choose Undo in the message, use Undo at the bottom left of the board, or press ⌘Z (Ctrl+Z on Windows). One Undo puts every card back."
       },
-      "paragraphs": [
-        "Locked items resist dragging, resizing, nudging and alignment. You can still edit their text or other content. Content edits can change a text card’s height or the flow of a column; a position lock does not freeze the content."
-      ]
+      "figures": [{
+        "src": "/docs/assets/align-and-lock-cards/aligned-photos.png",
+        "darkSrc": "/docs/assets/align-and-lock-cards/aligned-photos-dark.png",
+        "alt": "Three selected photos, Sit and stay, Fetch practice and Sunset walk, line up along their top edges. Above them, the selection bar shows a lock icon, six align icons and the card colours.",
+        "caption": "After Align top, the three photos share a top edge.",
+        "width": 1552,
+        "height": 608
+      }]
+    },
+    {
+      "id": "lock-a-card",
+      "title": "Keep a card in place",
+      "flow": {
+        "entry": "Click the card you want to keep where it is.",
+        "steps": [
+          { "action": "Choose Lock position, the open padlock at the start of the selection bar.", "result": "The padlock closes, the bar says “1 locked”, and a small padlock appears in the card's corner." },
+          { "action": "Drag a nearby card, or press the arrow keys to nudge it. Hold Shift with an arrow key for a bigger step.", "result": "The other cards move. The locked card stays where it is, even when it's part of the selection." },
+          { "action": "Select the locked card and choose Unlock position when you want to move it again.", "result": "The padlock opens, and the card moves and resizes as usual." }
+        ],
+        "completion": "Locks are saved with the board, so the card is still locked when you, or anyone else, opens it later.",
+        "correction": "Undo reverses a lock or an unlock. If you try to drag a locked card, a message reminds you to select it and choose Unlock position."
+      },
+      "figures": [{
+        "src": "/docs/assets/align-and-lock-cards/locked-photo.png",
+        "darkSrc": "/docs/assets/align-and-lock-cards/locked-photo-dark.png",
+        "alt": "A selected photo with a small padlock in its top-right corner. The selection bar shows a closed padlock, the text 1 locked, and an Unlock position tooltip.",
+        "caption": "A locked card shows a padlock, and the selection bar offers Unlock position.",
+        "width": 880,
+        "height": 656
+      }]
     },
     {
       "id": "mixed-selections",
-      "title": "Align a mixed selection",
+      "title": "Locked cards in a selection",
       "paragraphs": [
-        "Locked items remain part of the alignment reference but stay fixed. The toolbar shows how many selected cards are locked, and the feedback reports which layout units stayed in place.",
-        "If every selected layout unit is locked, Align is unavailable until you unlock one. Unlock selected releases explicit locks in a mixed selection."
+        "When only some of the selected cards are locked, the bar shows how many, for example 1 locked, and offers Unlock selected. An align still uses the locked cards to work out the line, but only the unlocked cards move. If every selected card is locked, the align icons disappear until you unlock one.",
+        "Cards inside a column move with the column. To align a column, select the column itself. Locking a card in a column also locks the column's position."
       ]
     },
     {
-      "id": "columns",
-      "title": "Keep columns and their members together",
+      "id": "limits",
+      "title": "On a phone, and other limits",
       "paragraphs": [
-        "Selecting a card inside a column uses its whole column as the alignment unit. Members keep their order. Selecting both the column and one of its members still moves that column only once.",
-        "Locking a column protects its members’ layout. A locked member also pins the column, so moving or resizing the outer column cannot shift that reference indirectly.",
-        "Select the column or an affected member and choose Unlock column layout to unlock the column and its locked members. Content inside the column remains editable while its layout is locked."
-      ]
-    },
-    {
-      "id": "save-correct-share",
-      "title": "Save, correct and share the result",
-      "paragraphs": [
-        "A position lock is a layout aid for editors. It does not change who can see or edit the board. People with view-only access can look at the result but cannot change positions or locks.",
-        "You can still deliberately choose Bury for a locked card. Undo brings it back, or restore it from Buried bones. Editor lock indicators do not appear in a PNG export.",
-        "If another session has changed a position, Undo may keep the newer layout and explain why it cannot reverse the older layout change. If a position is locked elsewhere while you are offline, reconnecting keeps the locked layout and preserves your unrelated content edits."
+        "On a phone, tap a card, then tap More in the bar at the bottom of the screen. Lock position and the align icons are there. To select several cards, choose Pick more cards and tap the others.",
+        "You need edit access to align or lock cards. A lock is about layout only: it doesn't hide a card or stop anyone editing it, and you can still Bury a locked card (move it to Buried bones, DoggyNote's bin)."
       ]
     }
   ],
-  "related": [],
+  "related": ["collapse-columns", "duplicate-and-reuse-layouts"],
   "links": []
 }

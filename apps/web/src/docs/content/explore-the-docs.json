@@ -8,13 +8,14 @@
   "order": 10,
   "benefit": "Keep the instructions close while you work.",
   "outcome": "You can find a guide, jump to a section and share a direct link to it.",
+  "keywords": ["help", "search the guides", "link"],
   "sections": [
     {
       "id": "choose-a-guide",
       "title": "Choose a guide",
       "paragraphs": [
-        "Start on the guides home page. Guides are grouped by what you want to do. Each card shows a title, a short summary and the kind of guide: how-to, explanation or reference.",
-        "Type in Sniff out a guide to filter by title and summary. Clear the search to see every guide again."
+        "Start on the guides home page. Guides are grouped by topic, such as Working on boards or Writing & drawing. Each one shows a title, a short summary and the kind of guide: how-to, explanation or reference.",
+        "Type in Sniff out a guide to search titles, summaries and headings. Results that match the title come first. Clear the search to see every guide again."
       ],
       "links": [{ "label": "Browse all guides", "href": "/docs" }]
     },
@@ -24,7 +25,7 @@
       "flow": {
         "entry": "Open a guide from the guides home page.",
         "steps": [
-          { "action": "Choose a heading under On this page.", "result": "The guide scrolls to that section, and the page address gains the section's anchor." },
+          { "action": "Choose a heading under On this page.", "result": "The guide scrolls to that section, and the address now points to that section." },
           { "action": "Copy the page address from your browser.", "result": "The link opens the same guide at the same section. Nobody needs to sign in to read it." }
         ],
         "completion": "The section link still works after a refresh. Your browser's Back and Forward buttons retrace your steps.",

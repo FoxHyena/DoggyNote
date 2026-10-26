@@ -57,7 +57,10 @@ html[data-input="mouse"] .docs-sidebar a:hover { background: var(--dn-card-hover
 .docs-guide-list li { border-bottom: 1px solid var(--dn-border); }
 .docs-guide-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; padding: 16px 12px; margin: 0 -12px; border-radius: 8px; text-decoration: none; color: var(--dn-text) !important; }
 html[data-input="mouse"] .docs-guide-row:hover { background: var(--dn-card-hover); }
-.docs-guide-row h3 { overflow-wrap: anywhere; }
+.docs-guide-row .docs-guide-title { margin: 0; font-size: 16px; line-height: 1.3; font-weight: 600; overflow-wrap: anywhere; }
+/* Category groups on the home page: the sidebar's quiet label, with room above. */
+.docs-guide-group + .docs-guide-group { margin-top: 32px; }
+.docs-shell .docs-group-heading { font-size: 13px; font-weight: 600; color: var(--dn-text-muted); margin: 24px 0 4px; }
 .docs-guide-row p { grid-column: 1; color: var(--dn-text-muted); font-size: 14px; margin-top: 4px; }
 .docs-guide-row .docs-meta { grid-column: 2; grid-row: 1; align-self: baseline; }
 .docs-meta { font-size: 12px; color: var(--dn-text-muted); white-space: nowrap; }
@@ -70,6 +73,7 @@ html[data-input="mouse"] .docs-guide-row:hover { background: var(--dn-card-hover
 .docs-article-layout { display: grid; grid-template-columns: minmax(0, 680px) minmax(140px, 200px); gap: 48px; }
 .docs-article { min-width: 0; overflow-wrap: anywhere; }
 .docs-outcome { padding: 16px 0; margin: 24px 0 8px; border-top: 1px solid var(--dn-border); border-bottom: 1px solid var(--dn-border); font-size: 14px; }
+.docs-outcome p { max-width: 70ch; }
 .docs-outcome p + p { color: var(--dn-text-muted); margin-top: 4px; }
 .docs-section { margin-top: 40px; }
 .docs-section h2 { margin-bottom: 12px; scroll-margin-top: calc(var(--docs-header-height, 64px) + 24px); }
@@ -95,6 +99,8 @@ html[data-input="mouse"] .docs-toc a:hover { color: var(--dn-text); }
 .docs-callout p { margin-top: 4px; color: var(--dn-text-muted); }
 .docs-section figure { margin: 24px 0; }
 .docs-section img { display: block; width: 100%; height: auto; border: 1px solid var(--dn-border); border-radius: 10px; background: var(--dn-panel); }
+/* Screenshots come in both appearances; show the one that matches the page. */
+html[data-theme="dark"] .docs-section img.docs-figure-light, html:not([data-theme="dark"]) .docs-section img.docs-figure-dark { display: none; }
 .docs-section figcaption { font-size: 12px; color: var(--dn-text-muted); padding: 8px 4px; }
 .docs-links { padding-left: 20px; }
 .docs-links li { margin-top: 6px; }

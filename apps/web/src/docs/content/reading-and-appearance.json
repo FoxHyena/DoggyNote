@@ -5,16 +5,17 @@
   "title": "Read comfortably",
   "summary": "Switch between light and dark, and move through the guides with your keyboard.",
   "status": "published",
-  "order": 20,
+  "order": 900,
   "benefit": "Read the instructions in a way that suits your screen.",
   "outcome": "You can change the appearance, enlarge the text and get around without a mouse.",
+  "keywords": ["dark mode", "light mode", "theme", "appearance", "accessibility", "keyboard", "zoom"],
   "sections": [
     {
       "id": "appearance",
       "title": "Choose an appearance",
       "paragraphs": [
         "Use the Appearance button in the header. Its icon shows the current choice: a sun for Light, a moon for Dark, and a screen for System, which follows your device. Each press moves to the next one: System, Light, Dark, then System again.",
-        "The app has the same button in your account menu, and shared boards have it in their top bar. Your choice is remembered in this browser, so the guides and the app match. If the browser blocks storage, the choice still applies to the page you're on."
+        "The app has the same button in your account menu, and shared boards have it in their top bar. Your choice is remembered in this browser, so the guides and the app match."
       ]
     },
     {
