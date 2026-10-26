@@ -1,3 +1,4 @@
+import { areaAt, areaPlacement, rootAreaId, setAreaDropTarget } from '../state/areas.ts'
 import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, onMount, untrack } from 'solid-js'
 import { isPositionLocked } from '../state/position.ts'
 import { StickerLayer, groupTurn, selectionRing, setGroupTurn, setManipulatingSticker, stickerAt, stickerRingAt } from './StickerLayer.tsx'
@@ -6,6 +7,7 @@ import { ringGesture, transformSticker, transformStickerGroup, stickerBounds, us
 import { exporting } from '../state/export.ts'
 import {
   GRID,
+  AREA_HEADER, isArea,
   LOD_ZOOM,
   dotSpacing,
   edgeNear,
@@ -69,7 +71,7 @@ import { columnChildren, connect, createCard } from '../state/actions.ts'
 import { CardView } from './CardView.tsx'
 import { LodLayer } from './LodLayer.tsx'
 import { Connections } from './Connections.tsx'
-import { cardEl, cardHeight, rectOf, setMeasuring } from './layout.ts'
+import { cardEl, rectOf, worldPosition, worldSticker, freezeArea, thawAreas, setMeasuring } from './layout.ts'
 import { setDropTarget, dropTarget, connectPreview, setConnectPreview, draggingIds, setDraggingIds, resizingId, setResizingId } from './dnd.ts'
 import { snapTick, snapToGrid } from '../state/grid.ts'
 import { handleCanvasDrop, handleCanvasPaste } from './paste.ts'
@@ -92,7 +94,7 @@ type Gesture =
   | { kind: 'marquee'; start: Vec; base: Set<Id> }
   | { kind: 'press'; id: Id; start: Vec; shift: boolean; target: HTMLElement; client: Vec }
   | { kind: 'drag'; ids: Id[]; primary: Id; startWorld: Vec; origins: Map<Id, Vec>; snap: Record<Id, Partial<Obj>>; lastGrid?: string }
-  | { kind: 'resize'; id: Id; startX: number; w0: number; snap: Record<Id, Partial<Obj>>; lastGrid?: number }
+  | { kind: 'resize'; id: Id; startX: number; w0: number; h0?: number; startY?: number; snap: Record<Id, Partial<Obj>>; lastGrid?: number }
   | { kind: 'connect'; from: Id; fromSide: Side }
   // Touch: a finger is down but hasn't decided yet (tap, pan, drag or long-press).
   | { kind: 'tpress'; id: Id | null; start: Vec; last: Vec; target: HTMLElement; pointerId: number; nodrag: boolean; timer: ReturnType<typeof setTimeout> }
@@ -165,7 +167,7 @@ export function Canvas(props: { readOnly: boolean }) {
   createEffect(() => {
     const hidden = [...selection()].filter(hiddenByColumn)
     if (hidden.length) {
-      const parents = hidden.map((id) => doc.getCard(id)!.columnId!)
+      const parents = hidden.map(id => rootAreaId(id) && columnCollapsed(doc.getCard(rootAreaId(id))) ? rootAreaId(id)! : doc.getCard(id)?.columnId).filter((id): id is string => !!id)
       select(new Set([...selection()].filter((id) => !hidden.includes(id)).concat(parents)))
       // Undoing a search reveal (or a remote collapse) must not strand the
       // selection below the now-hidden stack. Keep its header in context.
@@ -213,11 +215,11 @@ export function Canvas(props: { readOnly: boolean }) {
   )
 
   const visible = createMemo(() => {
-    if (exporting()) return doc.cardsOn(boardId()).filter((c) => !c.columnId)
+    if (exporting()) return doc.cardsOn(boardId()).filter(c => !c.columnId && !hiddenByColumn(c.id))
     const r = cull()
     const active = doc.getCard(editingId())
     const editingRoot = active?.columnId ?? active?.id
-    return doc.cardsOn(boardId()).filter((c) => !c.columnId && (c.id === editingRoot || intersects(r, { x: c.x, y: c.y, w: c.w, h: cardHeight(c) })))
+    return doc.cardsOn(boardId()).filter(c => { const box = !c.columnId && rectOf(c.id); return !!box && (c.id === editingRoot || intersects(r, box)) })
   })
 
   const measure = () => {
@@ -237,8 +239,8 @@ export function Canvas(props: { readOnly: boolean }) {
       const saved = loadCamera(id)
       if (saved) return setCamera(saved)
       const v = viewport()
-      const rects = doc.cardsOn(id).filter((c) => !c.columnId).map((c) => ({ x: c.x, y: c.y, w: c.w, h: cardHeight(c) }))
-      rects.push(...doc.stickersOn(id).map(stickerBounds))
+      const rects = doc.cardsOn(id).filter(c => !c.columnId).flatMap(c => { const r = rectOf(c.id); return r ? [r] : [] })
+      rects.push(...doc.stickersOn(id).filter(s => !hiddenByColumn(s.id)).map(s => stickerBounds(worldSticker(s))))
       const b = union(rects)
       if (!b) return setCamera({ x: -v.width / 2, y: -v.height / 3, zoom: 1 })
       // A phone screen would shrink a whole board to dots: start readable, at its top-left.
@@ -377,8 +379,10 @@ export function Canvas(props: { readOnly: boolean }) {
     let best: Card | null = null
     for (const c of doc.cardsOn(boardId())) {
       if (c.columnId) continue
-      const r = { x: c.x, y: c.y, w: c.w, h: cardHeight(c) }
-      if (p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h && (!best || (c.z ?? 0) > (best.z ?? 0))) best = c
+      const r = rectOf(c.id)
+      if (!r) continue
+      if (isArea(c) && p.y > r.y + AREA_HEADER && p.x > r.x + 8 && p.x < r.x + r.w - 8 && p.y < r.y + r.h - 8) continue
+      if (p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h && (!best || (isArea(best) && !isArea(c)) || (isArea(best) === isArea(c) && (c.z ?? 0) > (best.z ?? 0)))) best = c
     }
     if (best?.type === 'column' && !columnCollapsed(best)) {
       // A card inside the column, if the point is on one.
@@ -395,7 +399,7 @@ export function Canvas(props: { readOnly: boolean }) {
 
   function columnAt(p: Vec, exclude: Set<Id>): Card | null {
     for (const c of doc.cardsOn(boardId())) {
-      if (c.type !== 'column' || columnCollapsed(c) || c.columnId || exclude.has(c.id) || isPositionLocked(c.id)) continue
+      if (c.type !== 'column' || hiddenByColumn(c.id) || columnCollapsed(c) || c.columnId || exclude.has(c.id) || isPositionLocked(c.id)) continue
       const r = rectOf(c.id)
       if (r && p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h + 40) return c
     }
@@ -428,15 +432,15 @@ export function Canvas(props: { readOnly: boolean }) {
     const ring = handle ? selectionRing() ?? undefined : stickerRingAt(toWorld(e), e.pointerType === 'touch')
     if (ring && !ring.single) {
       // One ring around several stickers turns and scales them together about its center.
-      const originals = ring.ids.map((id) => JSON.parse(JSON.stringify(doc.get(id))) as Sticker).filter((s) => doc.canWriteObject(s))
+      const originals = ring.ids.map((id) => worldSticker(JSON.parse(JSON.stringify(doc.get(id))) as Sticker)).filter((s) => doc.canWriteObject(s) && !isPositionLocked(s.id))
       if (!originals.length) return false
-      endEdit(); doc.markBusy(originals.map((s) => s.id))
-      startGesture(e, { kind: 'sticker-group', originals, pivot: ring.center, start: toWorld(e), client: { x: e.clientX, y: e.clientY }, turn: groupTurn(), moved: false, snap: Object.fromEntries(originals.map((s) => [s.id, doc.snapshot(s.id, ['x', 'y', 'w', 'angle'])])) })
+      endEdit(); for (const s of originals) { const id = rootAreaId(s.id); if (id) freezeArea(id) } doc.markBusy(originals.map((s) => s.id))
+      startGesture(e, { kind: 'sticker-group', originals, pivot: ring.center, start: toWorld(e), client: { x: e.clientX, y: e.clientY }, turn: groupTurn(), moved: false, snap: Object.fromEntries(originals.map((s) => [s.id, doc.snapshot(s.id, ['x', 'y', 'w', 'angle', 'areaId'])])) })
       e.preventDefault()
       return true
     }
     const hit = ring?.single ?? stickerAt(toWorld(e), e.pointerType === 'touch')
-    if (!hit || !doc.canWriteObject(hit)) return false
+    if (!hit || !doc.canWriteObject(hit) || isPositionLocked(hit.id)) return false
     endEdit()
     // Shift-click adds or removes a sticker, like a card.
     if (!ring && e.pointerType !== 'touch' && e.shiftKey) { toggle(hit.id); e.preventDefault(); return true }
@@ -447,9 +451,9 @@ export function Canvas(props: { readOnly: boolean }) {
       return true
     }
     const canDrag = e.pointerType !== 'touch' || selection().has(hit.id) || !!ring
-    const original = JSON.parse(JSON.stringify(hit)) as Sticker
+    const original = ring?.single ? JSON.parse(JSON.stringify(hit)) as Sticker : worldSticker(JSON.parse(JSON.stringify(hit)) as Sticker)
     doc.markBusy([hit.id])
-    startGesture(e, { kind: 'sticker', original, action: ring ? 'transform' : 'move', start: toWorld(e), client: { x: e.clientX, y: e.clientY }, canDrag, moved: false, snap: { [hit.id]: doc.snapshot(hit.id, ['x', 'y', 'w', 'angle', 'z']) } })
+    startGesture(e, { kind: 'sticker', original, action: ring ? 'transform' : 'move', start: toWorld(e), client: { x: e.clientX, y: e.clientY }, canDrag, moved: false, snap: { [hit.id]: doc.snapshot(hit.id, ['x', 'y', 'w', 'angle', 'z', 'areaId']) } })
     if (e.pointerType !== 'touch' || ring) select([hit.id])
     e.preventDefault()
     return true
@@ -520,7 +524,8 @@ export function Canvas(props: { readOnly: boolean }) {
       const c = doc.getCard(id)!
       if (isPositionLocked(id)) return true
       doc.markBusy([id])
-      startGesture(e, { kind: 'resize', id, startX: e.clientX, w0: c.w, snap: { [id]: doc.snapshot(id, ['w']) } })
+      const frame = isArea(c) ? rectOf(id) : null
+      startGesture(e, { kind: 'resize', id, startX: e.clientX, startY: e.clientY, w0: frame ? frame.x + frame.w - c.x : c.w, h0: frame ? frame.y + frame.h - c.y : c.h, snap: { [id]: doc.snapshot(id, c.type === 'area' ? ['w', 'h'] : ['w']) } })
       return true
     }
     const handle = target.closest('[data-connect-handle]') as HTMLElement | null
@@ -592,27 +597,31 @@ export function Canvas(props: { readOnly: boolean }) {
     }
     // A selected column carries its members; locked cards stay where they are.
     const selectedColumns = new Set(candidates.filter((id) => doc.getCard(id)?.type === 'column'))
-    const cardIds = candidates.filter((id) => !isPositionLocked(id) && !selectedColumns.has(doc.getCard(id)?.columnId ?? ''))
+    const selectedAreas = new Set(candidates.filter(id => isArea(doc.getCard(id))))
+    const cardIds = candidates.filter(id => !isPositionLocked(id) && !selectedColumns.has(doc.getCard(id)?.columnId ?? '') && !selectedAreas.has(rootAreaId(id) ?? ''))
     if (cardIds.length < candidates.length) showToast('Locked positions stay in place. Columns move with their members.')
     const b = boardId()
     // Selected stickers come along, lifted above the others in their own stacking order.
-    const stickers = doc.stickersOn(b).filter((s) => selection().has(s.id) && doc.canWriteObject(s)).sort((p, q) => p.z - q.z)
+    const stickers = doc.stickersOn(b).filter((s) => selection().has(s.id) && doc.canWriteObject(s) && !isPositionLocked(s.id) && !selectedAreas.has(rootAreaId(s.id) ?? '')).sort((p, q) => p.z - q.z)
     const ids = [...cardIds, ...stickers.map((s) => s.id)]
     let z = doc.maxZ(b), top = Math.max(0, ...doc.stickersOn(b).map((s) => s.z))
     const snap: Record<Id, Partial<Obj>> = {}
     const origins = new Map<Id, Vec>()
     for (const s of stickers) {
-      snap[s.id] = doc.snapshot(s.id, ['x', 'y', 'z'])
-      origins.set(s.id, { x: s.x, y: s.y })
-      doc.transient(s.id, { z: ++top })
+      snap[s.id] = doc.snapshot(s.id, ['x', 'y', 'z', 'areaId'])
+      const areaId = rootAreaId(s.id); if (areaId) freezeArea(areaId)
+      const point = worldPosition(s)
+      origins.set(s.id, point)
+      doc.transient(s.id, { ...point, areaId: null, z: ++top })
     }
     for (const id of cardIds) {
       const c = doc.getCard(id)!
-      snap[id] = doc.snapshot(id, ['x', 'y', 'z', 'columnId', 'order'])
-      const r = rectOf(id) ?? { x: c.x, y: c.y, w: c.w, h: c.h }
+      snap[id] = doc.snapshot(id, ['x', 'y', 'z', 'columnId', 'areaId', 'order'])
+      const areaId = rootAreaId(id); if (areaId) freezeArea(areaId)
+      const r = isArea(c) ? { ...worldPosition(c), w: c.w, h: c.h } : rectOf(id) ?? { x: c.x, y: c.y, w: c.w, h: c.h }
       origins.set(id, { x: r.x, y: r.y })
       // Lift out of a column and onto the top of the stack.
-      doc.transient(id, { x: Math.round(r.x), y: Math.round(r.y), z: ++z, columnId: null } as Partial<Card>)
+      doc.transient(id, { x: Math.round(r.x), y: Math.round(r.y), z: ++z, columnId: null, areaId: null } as Partial<Card>)
     }
     setDraggingIds(new Set(ids))
     doc.markBusy(ids)
@@ -659,7 +668,7 @@ export function Canvas(props: { readOnly: boolean }) {
     let best = ''
     let bestD = Infinity
     for (const c of doc.cardsOn(boardId())) {
-      if (c.columnId) continue
+      if (c.columnId || hiddenByColumn(c.id)) continue
       const side = sideOf(c.id)
       if (!side) continue
       const r = rectOf(c.id)!
@@ -689,6 +698,7 @@ export function Canvas(props: { readOnly: boolean }) {
           gesture = { kind: 'pan', last: g.client, start: g.client, target: vp, samples: [] }
           setPanning(true); moveGesture(e); break
         }
+        if (!g.moved) { const areaId = rootAreaId(s.id); if (areaId) freezeArea(areaId) }
         if (!g.moved && g.action === 'move') {
           // Dragging a sticker lifts it to the front; the move's undo step restores its place.
           const others = doc.stickersOn(s.boardId).filter((o) => o.id !== s.id), top = Math.max(0, ...others.map((o) => o.z))
@@ -696,15 +706,16 @@ export function Canvas(props: { readOnly: boolean }) {
         }
         g.moved = true; select([s.id]); setManipulatingSticker(s.id)
         const point = toWorld(e)
-        if (g.action === 'move') doc.transient(s.id, { x: Math.max(-1e6, Math.min(1e6, s.x + point.x - g.start.x)), y: Math.max(-1e6, Math.min(1e6, s.y + point.y - g.start.y)) })
-        else doc.transient(s.id, transformSticker(s, g.start, point))
+        if (g.action === 'move') setAreaDropTarget(areaAt(point)?.id ?? null)
+        if (g.action === 'move') doc.transient(s.id, { x: Math.max(-1e6, Math.min(1e6, s.x + point.x - g.start.x)), y: Math.max(-1e6, Math.min(1e6, s.y + point.y - g.start.y)), areaId: null })
+        else doc.transient(s.id, { ...transformSticker(s, g.start, point), areaId: null })
         break
       }
       case 'sticker-group': {
         if (!g.moved && Math.hypot(e.clientX - g.client.x, e.clientY - g.client.y) < (lastPointerType === 'touch' ? 10 : 4)) break
         g.moved = true; setManipulatingSticker('group')
         const { scale, turn } = ringGesture(g.pivot, g.start, toWorld(e)), next = transformStickerGroup(g.originals, g.pivot, scale, turn)
-        for (const s of g.originals) doc.transient(s.id, next[s.id])
+        for (const s of g.originals) { const areaId = rootAreaId(s.id); if (!g.moved && areaId) freezeArea(areaId); doc.transient(s.id, { ...next[s.id], areaId: null }) }
         setGroupTurn(g.turn + turn)
         break
       }
@@ -723,9 +734,10 @@ export function Canvas(props: { readOnly: boolean }) {
         const ids = new Set(g.base)
         for (const c of doc.cardsOn(boardId())) {
           if (c.columnId) continue
-          if (intersects(r, { x: c.x, y: c.y, w: c.w, h: cardHeight(c) })) ids.add(c.id)
+          const box = rectOf(c.id)
+          if (box && (isArea(c) ? r.x <= box.x && r.y <= box.y && r.x + r.w >= box.x + box.w && r.y + r.h >= box.y + box.h : intersects(r, box))) ids.add(c.id)
         }
-        for (const s of doc.stickersOn(boardId())) if (intersects(r, stickerBounds(s))) ids.add(s.id)
+        for (const s of doc.stickersOn(boardId())) if (!hiddenByColumn(s.id) && intersects(r, stickerBounds(worldSticker(s)))) ids.add(s.id)
         setSelection(ids)
         break
       }
@@ -758,14 +770,15 @@ export function Canvas(props: { readOnly: boolean }) {
         }
         const set = new Set(g.ids)
         // Columns hold cards: a drag that carries a column, ink drawn on the board or stickers never drops into one.
-        const hasColumn = g.ids.some((id) => doc.getCard(id)?.type === 'column' || doc.getCard(id)?.type === 'ink' || !doc.getCard(id))
+        const hasColumn = g.ids.some((id) => doc.getCard(id)?.type === 'column' || doc.getCard(id)?.type === 'area' || doc.getCard(id)?.type === 'ink' || !doc.getCard(id))
         const col = hasColumn ? null : columnAt(w, set)
         setDropTarget(col ? { columnId: col.id, index: insertIndex(col.id, w.y, set) } : null)
+        setAreaDropTarget(!col && !g.ids.some(id => isArea(doc.getCard(id))) ? areaAt(w, set)?.id ?? null : null)
         break
       }
       case 'resize': {
         const c = doc.getCard(g.id)!
-        const min = c.type === 'ink' ? 8 : c.type === 'image' ? 80 : c.type === 'sketch' ? 120 : 160
+        const min = c.type === 'area' ? 320 : c.type === 'ink' ? 8 : c.type === 'image' ? 80 : c.type === 'sketch' ? 120 : 160
         let w = Math.max(min, Math.round(g.w0 + (e.clientX - g.startX) / camera().zoom))
         // Snapping puts the right edge on a grid line.
         const snapping = snapToGrid() && !e.altKey
@@ -776,7 +789,9 @@ export function Canvas(props: { readOnly: boolean }) {
           g.lastGrid = w
         }
         setResizingId(g.id)
-        doc.transient(g.id, { w } as Partial<Card>)
+        const areaResize = c.type === 'area'
+        const dx = Math.round((e.clientX - g.startX) / camera().zoom), dy = Math.round((e.clientY - (g.startY ?? e.clientY)) / camera().zoom)
+        doc.transient(g.id, { ...(!areaResize || dx ? { w } : {}), ...(areaResize && dy ? { h: Math.max(160, (g.h0 ?? c.h) + dy) } : {}) } as Partial<Card>)
         break
       }
       case 'connect': {
@@ -809,7 +824,7 @@ export function Canvas(props: { readOnly: boolean }) {
   function endGesture(g: Gesture, e: PointerEvent) {
     if (e.type === 'pointercancel' && (g.kind === 'drag' || g.kind === 'resize')) {
       for (const [id, snap] of Object.entries(g.snap)) doc.transient(id, snap)
-      doc.unmarkBusy(Object.keys(g.snap)); setDropTarget(null); setDraggingIds(new Set<Id>()); clearLivePreviews()
+      doc.unmarkBusy(Object.keys(g.snap)); thawAreas(); setAreaDropTarget(null); setDropTarget(null); setDraggingIds(new Set<Id>()); clearLivePreviews()
       return
     }
     switch (g.kind) {
@@ -821,14 +836,16 @@ export function Canvas(props: { readOnly: boolean }) {
       case 'sticker-group': {
         const ids = g.originals.map((s) => s.id)
         if (e.type === 'pointercancel') { for (const id of ids) doc.transient(id, g.snap[id]); setGroupTurn(g.turn) }
-        else doc.commitFrom(g.snap)
+        else { for (const item of g.originals) { const current = doc.get(item.id); if (current?.kind === 'sticker') doc.transient(item.id, areaPlacement({ x: current.x, y: current.y }, item.areaId ? doc.getCard(item.areaId) : undefined)) } doc.commitFrom(g.snap) }
+        thawAreas(); setAreaDropTarget(null)
         setManipulatingSticker(null); doc.unmarkBusy(ids)
         break
       }
       case 'sticker': {
         const id = g.original.id
         if (e.type === 'pointercancel') doc.transient(id, g.snap[id])
-        else { select([id]); doc.commitFrom(g.snap) }
+        else { const item = doc.get(id); if (g.moved && item?.kind === 'sticker') doc.transient(id, areaPlacement({ x: item.x, y: item.y }, g.action === 'move' ? areaAt(toWorld(e)) : g.original.areaId ? doc.getCard(g.original.areaId) : undefined)); select([id]); doc.commitFrom(g.snap) }
+        thawAreas(); setAreaDropTarget(null)
         setManipulatingSticker(null); doc.unmarkBusy([id])
         break
       }
@@ -871,7 +888,7 @@ export function Canvas(props: { readOnly: boolean }) {
         // The first click selects a card, so its toolbar is reachable; clicking the
         // selected card again (or double-clicking) edits it. For a column, that's its title.
         const again = selection().size === 1 && selection().has(g.id)
-        const renames = c.type === 'column' && !!g.target.closest('[data-edit-title]') && again
+        const renames = (c.type === 'column' || c.type === 'area') && !!g.target.closest('[data-edit-title]') && again
         // Zoomed out, cards are shapes on a canvas: a click selects, it can't edit.
         if (!lod() && (((c.type === 'note' || c.type === 'todo') && again) || renames)) {
           queueEditCaret(g.client)
@@ -888,9 +905,14 @@ export function Canvas(props: { readOnly: boolean }) {
           const kids = columnChildren(drop.columnId).filter((k) => !set.has(k.id))
           const orders = ordersBetween(kids[drop.index - 1]?.order, kids[drop.index]?.order, g.ids.length)
           const sorted = [...g.ids].sort((a, b) => doc.getCard(a)!.y - doc.getCard(b)!.y)
-          sorted.forEach((id, i) => doc.transient(id, { columnId: drop.columnId, order: orders[i] } as Partial<Card>))
+          sorted.forEach((id, i) => doc.transient(id, { columnId: drop.columnId, areaId: null, order: orders[i] } as Partial<Card>))
           haptic('drop')
         }
+        if (!drop && !g.ids.some(id => isArea(doc.getCard(id)))) {
+          const area = areaAt(toWorld(e), new Set(g.ids))
+          for (const id of g.ids) { const item = doc.get(id); if (item?.kind === 'card' || item?.kind === 'sticker') doc.transient(id, areaPlacement({ x: item.x, y: item.y }, area)) }
+        }
+        thawAreas(); setAreaDropTarget(null)
         const moved = doc.commitFrom(g.snap)
         doc.unmarkBusy(g.ids)
         // On touch the Undo button hides behind the selection bar: offer it here.
@@ -919,6 +941,7 @@ export function Canvas(props: { readOnly: boolean }) {
     gesture = null
     setPanning(false)
     setSnapping(false)
+    thawAreas(); setAreaDropTarget(null)
     if (!g) return
     switch (g.kind) {
       case 'sticker-place': setStickerGhost(null); break
@@ -1199,7 +1222,7 @@ export function Canvas(props: { readOnly: boolean }) {
     }
     if (c.type === 'board') return openBoard((c as Card<'board'>).content.boardId)
     const isTitle = !!g.target.closest('[data-edit-title]')
-    if (!lod() && (c.type === 'note' || c.type === 'todo' || (c.type === 'column' && isTitle) || (c.type === 'image' && double))) {
+    if (!lod() && (c.type === 'note' || c.type === 'todo' || ((c.type === 'column' || c.type === 'area') && isTitle) || (c.type === 'image' && double))) {
       // Synchronously, inside the touch: iOS only raises the keyboard for focus it can tie to a gesture.
       touchEdit(g.id, { x: e.clientX, y: e.clientY })
     }
@@ -1358,7 +1381,7 @@ export function Canvas(props: { readOnly: boolean }) {
     if (props.readOnly || (typing(e.target) && !isClipProxy(e.target)) || editingId()) return
     const stickers = [...selection()].map(doc.get).filter(usableSticker)
     if (!stickers.length || stickers.length !== selection().size || !e.clipboardData) return
-    e.clipboardData.setData('application/x-doggynote-stickers', JSON.stringify(stickers))
+    e.clipboardData.setData('application/x-doggynote-stickers', JSON.stringify(stickers.map(s => ({ ...worldSticker(s), areaId: null }))))
     e.clipboardData.setData('text/plain', stickers.map((s) => s.content.emoji).join(' '))
     e.preventDefault()
   }
@@ -1374,7 +1397,7 @@ export function Canvas(props: { readOnly: boolean }) {
         const values: unknown = JSON.parse(data)
         if (!Array.isArray(values) || values.length > 100 || !values.every(usableSticker)) return
         const top = Math.max(0, ...doc.stickersOn(boardId()).map((s) => s.z))
-        const copies: Sticker[] = values.map((s, i) => ({ ...s, id: newId(), boardId: boardId(), x: s.x + 20, y: s.y + 20, z: top + i + 1, purged: false, deletedAt: null, createdAt: Date.now() }))
+        const copies: Sticker[] = values.map((s, i) => ({ ...s, id: newId(), boardId: boardId(), ...areaPlacement({ x: s.x + 20, y: s.y + 20 }, areaAt({ x: s.x + s.w / 2 + 20, y: s.y + 20 })), z: top + i + 1, purged: false, deletedAt: null, createdAt: Date.now() }))
         doc.commit(copies.map(doc.createChange)); select(copies.map((s) => s.id))
       } catch { showToast('This sticker copy could not be pasted. Try copying it again.') }
       return
@@ -1670,8 +1693,8 @@ export function zoomTo(zoom: number) {
 
 export function zoomToFit() {
   const v = viewport()
-  const rects = doc.cardsOn(boardId()).filter((c) => !c.columnId).map((c) => ({ x: c.x, y: c.y, w: c.w, h: cardHeight(c) }))
-  rects.push(...doc.stickersOn(boardId()).map(stickerBounds))
+  const rects = doc.cardsOn(boardId()).filter(c => !c.columnId).flatMap(c => { const r = rectOf(c.id); return r ? [r] : [] })
+  rects.push(...doc.stickersOn(boardId()).filter(s => !hiddenByColumn(s.id)).map(s => stickerBounds(worldSticker(s))))
   const b = union(rects)
   if (b) animateCamera(fitCamera(b, v.width, v.height))
 }

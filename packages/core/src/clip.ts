@@ -6,6 +6,7 @@
 
 import type { Board, Card, Connection, Id, Obj, Sticker, Stroke } from './model.ts'
 import type { Rect, Vec } from './geometry.ts'
+import { areaFamily, itemArea } from './areas.ts'
 import { cardText } from './cardtext.ts'
 import { tmdbPage } from './movie.ts'
 import { boardLabels, cardLabelIds, parseLabels, type Label } from './labels.ts'
@@ -48,7 +49,7 @@ const alive = (o: Obj | undefined) => !!o && !o.purged && !o.deletedAt && !(o as
 export function collectClip(ids: Id[], src: ClipSource, opts: { allowBuried?: boolean; limit?: number } = {}): ClipPayload | 'too-big' | null {
   const limit = opts.limit ?? CLIP_LIMIT
   const ok = (o: Obj | undefined): o is Obj => (opts.allowBuried ? !!o && !o.purged : alive(o))
-  const picked = ids.map((id) => src.get(id)).filter((o): o is Card => ok(o) && o.kind === 'card')
+  const picked = ids.map((id) => src.get(id)).filter((o): o is Card => ok(o) && o.kind === 'card').filter(c => (!c.columnId || !ids.includes(c.columnId)) && !ids.includes(itemArea(c, src.get)?.id ?? ''))
   if (!picked.length) return null
   const all = [...src.all()].filter((o) => alive(o))
   const objects = new Map<Id, Obj>()
@@ -62,12 +63,13 @@ export function collectClip(ids: Id[], src: ClipSource, opts: { allowBuried?: bo
   // Roots, flattened to world positions.
   for (const c of picked) {
     const r = src.rect(c.id)
-    add({ ...c, ...(r && c.columnId && !ids.includes(c.columnId) ? { x: r.x, y: r.y, columnId: null } : {}) } as Card)
+    add({ ...c, ...(r && ((c.columnId && !ids.includes(c.columnId)) || (c.areaId && !ids.includes(c.areaId))) ? { x: r.x, y: r.y, columnId: null, areaId: null } : {}) } as Card)
   }
   const boardsToCopy: Id[] = []
   const queue = [...picked]
   while (queue.length) {
     const c = queue.shift()!
+    if (c.type === 'area') for (const k of areaFamily(c, all.filter((o): o is Card | Sticker => o.kind === 'card' || o.kind === 'sticker'))) if (!objects.has(k.id)) { add(k); if (k.kind === 'card') queue.push(k) }
     if (c.type === 'column') for (const k of all) if (k.kind === 'card' && k.columnId === c.id && !objects.has(k.id)) { add(k); queue.push(k as Card) }
     if (c.type === 'board') boardsToCopy.push((c as Card<'board'>).content.boardId)
   }
@@ -121,10 +123,10 @@ export function materialise(
   // Stacking keeps its order, above everything already there.
   const zRank = new Map([...roots].sort((a, b) => a.z - b.z).map((c, i) => [c.id, i + 1]))
   // Into a column: free cards (not columns) stack in reading order.
-  const intoColumn = opts.column ? [...roots].filter((c) => c.type !== 'column' && c.type !== 'ink').sort((a, b) => a.y - b.y || a.x - b.x) : []
+  const intoColumn = opts.column ? [...roots].filter((c) => c.type !== 'column' && c.type !== 'area' && c.type !== 'ink').sort((a, b) => a.y - b.y || a.x - b.x) : []
   const out: Obj[] = []
   for (const o of clip.objects) {
-    const base = { ...structuredClone(o), id: ids.get(o.id)!, createdAt: opts.now, deletedAt: null, purged: false } as Obj & { hidden?: unknown }
+    const base = { ...structuredClone(o), id: ids.get(o.id)!, createdAt: opts.now, deletedAt: null, burialId: null, purged: false } as Obj & { hidden?: unknown }
     delete base.hidden
     if (base.kind === 'board') {
       // Copied boards inside copied boards keep their nesting; the top ones hang under the paste board.
@@ -137,9 +139,10 @@ export function materialise(
       c.boardId = onSource ? opts.boardId : map(orig.boardId)!
       if (rootSet.has(o.id)) {
         const slot = intoColumn.findIndex((r) => r.id === o.id)
-        if (opts.column && slot >= 0) Object.assign(c, { columnId: opts.column.id, order: opts.column.orders[slot], x: 0, y: 0 })
-        else Object.assign(c, { columnId: null, x: orig.x + dx, y: orig.y + dy, z: opts.maxZ + zRank.get(o.id)! })
+        if (opts.column && slot >= 0) Object.assign(c, { columnId: opts.column.id, areaId: null, order: opts.column.orders[slot], x: 0, y: 0 })
+        else Object.assign(c, { columnId: null, areaId: null, x: orig.x + dx, y: orig.y + dy, z: opts.maxZ + zRank.get(o.id)! })
       } else if (orig.columnId) c.columnId = map(orig.columnId)
+      if (!rootSet.has(o.id) && orig.areaId) c.areaId = map(orig.areaId)
       if (c.type === 'board') (c as Card<'board'>).content = { ...(c as Card<'board'>).content, boardId: map((orig as Card<'board'>).content.boardId)! }
     } else if (base.kind === 'connection') {
       const c = base as Connection
@@ -151,6 +154,7 @@ export function materialise(
       // Stickers on a copied board go with it, never back onto the original.
       const orig = o as Sticker
       base.boardId = orig.boardId === clip.boardId ? opts.boardId : map(orig.boardId)!
+      base.areaId = map(orig.areaId)
     } else if (base.kind === 'stroke') {
       ;(base as Stroke).cardId = map((o as Stroke).cardId)!
     }
@@ -159,7 +163,7 @@ export function materialise(
   // Ink sits on whichever board its card landed on.
   const placed = new Map(out.filter((o): o is Card => o.kind === 'card').map((c) => [c.id, c.boardId]))
   for (const o of out) if (o.kind === 'stroke') o.boardId = placed.get(o.cardId) ?? o.boardId
-  const rank = (o: Obj) => (o.kind === 'board' ? 0 : o.kind === 'card' ? ((o as Card).type === 'column' ? 1 : 2) : 3)
+  const rank = (o: Obj) => (o.kind === 'board' ? 0 : o.kind === 'card' ? ((o as Card).type === 'area' ? 1 : (o as Card).type === 'column' ? 2 : 3) : 3)
   // Boards nest: a parent before its children.
   const boards = out.filter((o) => o.kind === 'board') as Board[]
   const depth = (b: Board): number => { const p = boards.find((x) => x.id === b.parentId); return p ? 1 + depth(p) : 0 }
@@ -240,7 +244,7 @@ export function parseClip(raw: string | null | undefined): ClipPayload | null {
     const c = JSON.parse(raw)
     if (c?.app !== 'doggynote' || c.v !== 1 || !Array.isArray(c.roots) || !Array.isArray(c.objects) || typeof c.boardId !== 'string') return null
     const strokes = c.objects.filter((o: Obj) => o?.kind === 'stroke')
-    if (c.objects.length - strokes.length > CLIP_LIMIT || strokes.length > CLIP_STROKE_LIMIT || !c.objects.every((o: Obj) => o && typeof o.id === 'string' && ['card', 'board', 'connection', 'stroke'].includes(o.kind))) return null
+    if (c.objects.length - strokes.length > CLIP_LIMIT || strokes.length > CLIP_STROKE_LIMIT || !c.objects.every((o: Obj) => o && typeof o.id === 'string' && ['card', 'board', 'connection', 'stroke', 'sticker'].includes(o.kind))) return null
     const clip = c as ClipPayload
     if ('labels' in c) clip.labels = parseLabels(c.labels)
     return clip

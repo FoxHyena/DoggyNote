@@ -105,7 +105,7 @@ async function friend(browser: Browser, owner: Page) {
   const id = owner.url().split('/b/')[1]!
   const grant = await owner.request.post(`/api/boards/${id}/members`, { data: { username: 'fido', permission: 'edit', includeChildren: true } })
   expect(grant.ok(), await grant.text()).toBe(true)
-  const context = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '3' } })
+  const context = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '4' } })
   contexts.add(context)
   expect((await context.request.post('/api/auth/login', { data: { username: 'fido', password: 'fetchfetch' } })).ok()).toBe(true)
   const page = await context.newPage()

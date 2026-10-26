@@ -6,6 +6,7 @@ import {
   UndoStack,
   changesPosition,
   positionLocks,
+  isAreaItem, isArea,
   diff,
   type Board,
   type Card,
@@ -152,6 +153,9 @@ const dirtyOutbox = new Set<Id>()
 let flushTimer: ReturnType<typeof setTimeout> | null = null
 const saves = new Set<Promise<void>>()
 const NOTE_JOURNAL = 'doggynote.note-reload'
+const DOCUMENT_JOURNAL = 'doggynote.document-reload'
+const outboxDeletes = new Map<Id, number>()
+let journalRevision = 0
 
 /** A per-tab crash cushion: browsers may cancel queued IDB writes on reload.
  * Store each full CRDT state once; projection and outbox are restored together. */
@@ -167,6 +171,21 @@ export function journalNotes() {
     })
     if (rows.length) sessionStorage.setItem(NOTE_JOURNAL, JSON.stringify(rows))
     else sessionStorage.removeItem(NOTE_JOURNAL)
+  } catch {
+    setLocalSaveError('The reload recovery copy could not be saved. Keep this window open until local saving finishes.')
+  }
+}
+
+/** Pagehide can cancel an in-flight IDB transaction. Capture the complete queue
+ * synchronously, including area detach dependencies, before that page disappears. */
+export function journalDocument() {
+  if (!persist) return
+  journalNotes()
+  try {
+    const rows = [...outbox].map(([id, patch]) => ({ id, object: unwrap(state.objs[id]), patch }))
+    const removed = [...outboxDeletes.keys()]
+    if (rows.length || removed.length) sessionStorage.setItem(DOCUMENT_JOURNAL, JSON.stringify({ rows, removed }))
+    else sessionStorage.removeItem(DOCUMENT_JOURNAL)
   } catch {
     setLocalSaveError('The reload recovery copy could not be saved. Keep this window open until local saving finishes.')
   }
@@ -206,8 +225,12 @@ function historyChanged() {
 
 /** Position locks guard explicit layout changes. Content edits and natural height reflow stay allowed. */
 function layoutAllowed(tx: Transaction): boolean {
-  if (tx.every((ch) => { const c = getCard(ch.id); return !c || !changesPosition(c, ch.after as Partial<Card>, true) })) return true
-  const cards = Object.values(state.objs).filter((o): o is Card => o.kind === 'card')
+  const affectsLayout = (ch: Transaction[number]) => {
+    const c = get(ch.id), patch = ch.after as Partial<Card>
+    return !!patch.columnId || !!patch.areaId || (isAreaItem(c) && (changesPosition(c, patch, true) || (isArea(c) && (patch.deletedAt || patch.purged))))
+  }
+  if (!tx.some(affectsLayout)) return true
+  const cards = Object.values(state.objs).filter(isAreaItem)
   const byId = new Map(tx.map((ch) => [ch.id, ch]))
   // An explicit unlock in this command is deliberate.
   const nextLocks = positionLocks(cards.map((c) => {
@@ -215,10 +238,10 @@ function layoutAllowed(tx: Transaction): boolean {
     return change && 'positionLocked' in change.after && (change.after as Partial<Card>).positionLocked !== true ? { ...c, positionLocked: false } : c
   }))
   return tx.every((ch) => {
-    const c = getCard(ch.id)
-    if (!c || !changesPosition(c, ch.after as Partial<Card>, true)) return true
-    const target = (ch.after as Partial<Card>).columnId
-    return !nextLocks.has(c.id) && (!target || !nextLocks.has(target))
+    const targets = [(ch.after as Partial<Card>).columnId, (ch.after as Partial<Card>).areaId]
+    if (targets.some(target => target && nextLocks.has(target))) return false
+    const c = get(ch.id)
+    return !isAreaItem(c) || !affectsLayout(ch) || !nextLocks.has(c.id)
   })
 }
 
@@ -245,6 +268,7 @@ function record(id: Id, patch: Partial<Obj>) {
   const previous = { ...(outbox.get(id) ?? {}) } as Partial<Obj> & { noteRestore?: boolean }
   if (patch.purged) delete previous.noteRestore
   outbox.set(id, { ...previous, ...structuredClone(unwrap(patch)) } as Partial<Obj>)
+  outboxDeletes.delete(id)
   dirtyOutbox.add(id)
   scheduleFlush()
 }
@@ -499,14 +523,16 @@ export async function flush() {
       const outIds = [...dirtyOutbox]
       const objects: [string, unknown][] = objIds.map((id) => [id, structuredClone(unwrap(state.objs[id]))])
       const patches: [string, unknown][] = outIds.map((id) => [id, structuredClone(outbox.get(id))])
+      const deletedVersions = patches.filter(([, patch]) => patch === undefined).map(([id]) => [id, outboxDeletes.get(id)] as const)
       dirtyObjs.clear()
       dirtyOutbox.clear()
       // Start the atomic IDB transaction now, even if an older save is pending.
       // IDB orders these transactions; a navigation need not run a continuation
       // in this page merely to start saving the newest input.
       const saving = idb.putDocument(objects, patches).then(() => {
+        for (const [id, version] of deletedVersions) if (outboxDeletes.get(id) === version) outboxDeletes.delete(id)
         if (!dirtyObjs.size && !dirtyOutbox.size) setLocalSaveError(null)
-        if (saves.size === 1 && !dirtyObjs.size && !dirtyOutbox.size) { try { sessionStorage.removeItem(NOTE_JOURNAL) } catch { /* IDB is already durable. */ } }
+        if (saves.size === 1 && !dirtyObjs.size && !dirtyOutbox.size) { try { sessionStorage.removeItem(NOTE_JOURNAL); sessionStorage.removeItem(DOCUMENT_JOURNAL) } catch { /* IDB is already durable. */ } }
         setLastLocalSave(Date.now())
       }).catch((error) => {
         objIds.forEach((id) => dirtyObjs.add(id))
@@ -545,7 +571,7 @@ export function ackOutbox(sent: { id: Id; patch: Partial<Obj> }[]) {
       if (!(k in s.patch) || JSON.stringify(v ?? null) !== JSON.stringify((s.patch as Record<string, unknown>)[k] ?? null)) rest[k] = v
     }
     if (Object.keys(rest).length) outbox.set(s.id, rest as Partial<Obj>)
-    else outbox.delete(s.id)
+    else { outbox.delete(s.id); outboxDeletes.set(s.id, ++journalRevision) }
     dirtyOutbox.add(s.id)
   }
   scheduleFlush()
@@ -592,7 +618,7 @@ export function receiveRemote(rows: Obj[]) {
         notes.get(row.id)?.destroy(); notes.delete(row.id)
         noteUndos.get(row.id)?.destroy(); noteUndos.delete(row.id)
         deferred.delete(row.id)
-        outbox.delete(row.id)
+        outbox.delete(row.id); outboxDeletes.set(row.id, ++journalRevision)
         if (state.objs[row.id]) setState('objs', row.id, undefined as never)
         if (persist) {
           dirtyObjs.add(row.id)
@@ -629,6 +655,19 @@ export async function load(opts: { persist: boolean; readOnly: boolean }) {
   const [all, out] = await Promise.all([idb.getAll<Obj>('objects'), idb.getAll<Partial<Obj>>('outbox')])
   const map: Record<Id, Obj> = {}
   for (const [id, o] of all) map[id] = o
+  try {
+    const journal = sessionStorage.getItem(DOCUMENT_JOURNAL)
+    if (journal) {
+      const saved = JSON.parse(journal) as { rows: { id: Id; object: Obj; patch: Partial<Obj> }[]; removed: Id[] }
+      const rows = Array.isArray(saved) ? saved as typeof saved.rows : saved.rows
+      const removed = Array.isArray(saved) ? [] : saved.removed
+      if (!Array.isArray(rows) || !Array.isArray(removed) || removed.some(id => typeof id !== 'string') || rows.some(row => typeof row.id !== 'string' || !row.object || row.object.id !== row.id || !row.patch || typeof row.patch !== 'object')) throw new Error('Invalid recovery data')
+      await idb.putDocument(rows.map(row => [row.id, row.object]), [...removed.map(id => [id, undefined] as [string, unknown]), ...rows.map(row => [row.id, row.patch] as [string, unknown])])
+      for (const id of removed) out.delete(id)
+      for (const row of rows) { map[row.id] = row.object; out.set(row.id, row.patch) }
+      sessionStorage.removeItem(DOCUMENT_JOURNAL)
+    }
+  } catch { setLocalSaveError('A reload recovery copy could not be restored. Keep this tab open and retry local saving.') }
   try {
     const journal = sessionStorage.getItem(NOTE_JOURNAL)
     if (journal) {
@@ -708,7 +747,7 @@ export function ensureHome(title: string) {
 export const outboxSize = () => outbox.size
 
 export async function resetLocal() {
-  try { sessionStorage.removeItem(NOTE_JOURNAL) } catch { /* No browser storage. */ }
+  try { sessionStorage.removeItem(NOTE_JOURNAL); sessionStorage.removeItem(DOCUMENT_JOURNAL) } catch { /* No browser storage. */ }
   for (const id of composingNotes) setNoteComposing(id, false)
   for (const manager of noteUndos.values()) manager.destroy()
   noteUndos.clear()
@@ -717,6 +756,7 @@ export async function resetLocal() {
   outbox.clear()
   localBoardCreations.clear()
   setState('objs', {})
+  outboxDeletes.clear()
   await idb.clearAll()
 }
 

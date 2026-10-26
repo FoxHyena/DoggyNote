@@ -10,7 +10,7 @@ import { showToast } from './toast.ts'
 // first-page preview. Unlike images, files need a connection to add.
 
 /** Add files as cards (on the current board, or `onBoard`, e.g. the Toy box). */
-export function addFiles(files: File[], at: Vec, onBoard?: Id): Id[] {
+export function addFiles(files: File[], at: Vec, onBoard?: Id, areaId?: Id): Id[] {
   const ids: Id[] = []
   let offset = 0
   for (const f of files) {
@@ -20,7 +20,7 @@ export function addFiles(files: File[], at: Vec, onBoard?: Id): Id[] {
     }
     const assetId = newId()
     const mime = f.type || 'application/octet-stream'
-    const id = createCard('file', { at: { x: at.x + offset, y: at.y + offset } }, {
+    const id = createCard('file', { at: { x: at.x + offset, y: at.y + offset }, areaId }, {
       content: { assetId, name: f.name, size: f.size, mime, status: 'uploading' },
       edit: false,
       boardId: onBoard,

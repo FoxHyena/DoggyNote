@@ -55,6 +55,7 @@ import lockSimpleSvg from '@phosphor-icons/core/regular/lock-simple.svg?raw'
 import lockSimpleOpenSvg from '@phosphor-icons/core/regular/lock-simple-open.svg?raw'
 import copySvg from '@phosphor-icons/core/regular/copy.svg?raw'
 import dotsThreeSvg from '@phosphor-icons/core/regular/dots-three.svg?raw'
+import dotsSixVerticalSvg from '@phosphor-icons/core/regular/dots-six-vertical.svg?raw'
 import layoutSvg from '@phosphor-icons/core/regular/layout.svg?raw'
 import filePlusSvg from '@phosphor-icons/core/regular/file-plus.svg?raw'
 import userCircleSvg from '@phosphor-icons/core/regular/user-circle.svg?raw'
@@ -141,6 +142,7 @@ export const ICONS = {
   unlock: body(lockSimpleOpenSvg),
   duplicate: body(copySvg),
   more: body(dotsThreeSvg),
+  grip: body(dotsSixVerticalSvg),
   template: body(layoutSvg),
   templateNew: body(filePlusSvg),
   user: body(userCircleSvg),

@@ -1,3 +1,4 @@
+import { AreaCard } from '../cards/AreaCard.tsx'
 import { ErrorBoundary, For, Match, Show, Switch, createSelector, onCleanup, onMount, type JSX } from 'solid-js'
 import { SIDES, cardSpokenName, type Card } from '@doggynote/core'
 import { COPY, boardDisplayTitle, cardColor, cardColorVars } from '@doggynote/theme'
@@ -7,7 +8,7 @@ import { isPositionLocked } from '../state/position.ts'
 const PREVIEW_CHIP: Record<Badge, string> = { added: 'New', changed: 'Edited', moved: 'Moved', removed: 'Buried' }
 import { camera, editingId, isSelected, nearHandle, selection } from '../state/ui.ts'
 import { touch } from '../state/device.ts'
-import { registerCardEl } from './layout.ts'
+import { rectOf, worldPosition, layoutTick, registerCardEl } from './layout.ts'
 import * as doc from '../state/doc.ts'
 import { isResolved } from '../state/comments.ts'
 import { openThread } from '../ui/CommentsPanel.tsx'
@@ -56,10 +57,14 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
     if (free()) {
       // left/top, not transform: a thousand per-card transforms make the
       // browser re-layerize every card on every pan frame (61 ms vs 9 ms).
-      s.left = `${c.x}px`
-      s.top = `${c.y}px`
-      s.width = `${c.w}px`
-      s['z-index'] = String(c.z ?? 0)
+      layoutTick()
+      const r = c.type === 'area' ? rectOf(c.id) : null
+      const point = worldPosition(c)
+      s.left = `${r?.x ?? point.x}px`
+      s.top = `${r?.y ?? point.y}px`
+      s.width = `${r?.w ?? c.w}px`
+      if (c.type === 'area') s.height = `${r?.h ?? c.h}px`
+      s['z-index'] = c.type === 'area' ? '-1' : String(c.z ?? 0)
     }
     if (touchHandles()) s['--hs'] = String(Math.round(Math.min(c.w / 3 / 18, 1 / camera().zoom) * 100) / 100)
     return s
@@ -136,11 +141,12 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         <Match when={props.card.type === 'ink'}>
           <InkCard {...(props2() as CardProps<'ink'>)} />
         </Match>
+        <Match when={props.card.type === 'area'}><AreaCard {...(props2() as CardProps<'area'>)} /></Match>
         <Match when={props.card.type === 'column'}>
           <ColumnCard {...(props2() as CardProps<'column'>)} />
         </Match>
       </Switch>
-      <Show when={!props.lod && props.card.type !== 'column'}>
+      <Show when={!props.lod && props.card.type !== 'column' && props.card.type !== 'area'}>
         <CardLabels card={props.card} />
       </Show>
       </ErrorBoundary>

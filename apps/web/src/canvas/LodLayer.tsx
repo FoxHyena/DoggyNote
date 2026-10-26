@@ -7,12 +7,12 @@ import { theme as themeSignal } from '../theme.ts'
 import * as doc from '../state/doc.ts'
 import { boardId, camera, selection, viewport } from '../state/ui.ts'
 import { columnChildren } from '../state/actions.ts'
-import { columnCollapsed } from '../state/columns.ts'
+import { columnCollapsed, hiddenByColumn } from '../state/columns.ts'
 import { assetUrl } from '../state/api.ts'
 import { acquireUrl, releaseUrl } from '../state/assets.ts'
 import { acquireStickerOutline } from '../state/stickerOutline.ts'
 import { user } from '../state/session.ts'
-import { COLUMN_HEADER, COLUMN_INSET, cardHeight } from './layout.ts'
+import { COLUMN_HEADER, COLUMN_INSET, cardHeight, rectOf, worldSticker } from './layout.ts'
 
 // Zoomed out, a board can put a thousand cards on screen. As DOM that costs
 // ~60 ms a frame (the browser re-layerizes every card); drawn into one canvas
@@ -193,12 +193,15 @@ export function LodLayer() {
     const sel = selection()
     const cards = doc
       .cardsOn(boardId())
-      .filter((c) => !c.columnId)
-      .sort((a, b) => (a.z ?? 0) - (b.z ?? 0))
+      .filter(c => !c.columnId && !hiddenByColumn(c.id))
+      .sort((a, b) => (a.type === 'area' ? -1 : b.type === 'area' ? 1 : (a.z ?? 0) - (b.z ?? 0)))
 
     const drawCard = (c: Card, x: number, y: number, w: number, h: number) => {
       const tint = tintOf(pal, c.color)
       const bg = tint?.bg ?? pal.card
+      if (c.type === 'area') {
+        ctx.fillStyle = pal.panel; roundRect(ctx, x, y, w, h, 12 * z); ctx.fill(); ctx.strokeStyle = pal.border; ctx.lineWidth = 1; ctx.stroke(); ctx.fillStyle = pal.muted; ctx.fillRect(x + 24 * z, y + 20 * z, Math.min(160, c.w / 3) * z, Math.max(1, 6 * z)); return
+      }
       if (c.type === 'board') {
         // Synced data: tolerate a card whose content is missing.
         const b = doc.getBoard((c as Card<'board'>).content?.boardId)
@@ -371,19 +374,19 @@ export function LodLayer() {
     }
 
     for (const c of cards) {
-      const h = cardHeight(c)
-      const r = { x: c.x, y: c.y, w: c.w, h }
-      if (!intersects(view, r)) continue
-      const p = worldToScreen(cam, { x: c.x, y: c.y })
-      drawCard(c, p.x, p.y, c.w * z, h * z)
+      const r = rectOf(c.id)
+      if (!r || !intersects(view, r)) continue
+      const h = r.h
+      const p = worldToScreen(cam, r)
+      drawCard(c, p.x, p.y, r.w * z, h * z)
       if (sel.has(c.id)) {
         ctx.strokeStyle = pal.selection
         ctx.lineWidth = 2
-        ctx.strokeRect(p.x - 3, p.y - 3, c.w * z + 6, h * z + 6)
+        ctx.strokeRect(p.x - 3, p.y - 3, r.w * z + 6, h * z + 6)
       }
     }
     // Stickers remain independent overlays above every ordinary card at overview.
-    for (const s of [...doc.stickersOn(boardId())].sort((a, b) => a.z - b.z || a.id.localeCompare(b.id))) {
+    for (const s of [...doc.stickersOn(boardId())].filter(s => !hiddenByColumn(s.id)).map(worldSticker).sort((a, b) => a.z - b.z || a.id.localeCompare(b.id))) {
       if (!intersects(view, stickerBounds(s))) continue
       const t = thumb(s.content.assetId, true, s.content.format === 'static')
       if (!t || !atlas) continue
@@ -401,8 +404,8 @@ export function LodLayer() {
     palette()
     selection()
     thumbTick()
-    for (const s of doc.stickersOn(boardId())) void (s.x, s.y, s.w, s.angle, s.z, s.content.assetId)
-    for (const c of doc.cardsOn(boardId())) void (c.x, c.y, c.w, c.h, c.z, c.color, c.columnId, c.order, columnCollapsed(c), c.type === 'swatch' && (c as Card<'swatch'>).content?.hex, c.type === 'sketch' && (c.content, c.sketchTitle, c.sketchPaper), (c.type === 'sketch' || c.type === 'ink') && doc.strokesOn(c.id))
+    for (const s of doc.stickersOn(boardId())) void (s.x, s.y, s.w, s.angle, s.z, s.areaId, s.content.assetId)
+    for (const c of doc.cardsOn(boardId())) void (c.x, c.y, c.w, c.h, c.z, c.color, c.columnId, c.areaId, c.order, columnCollapsed(c), c.type === 'swatch' && (c as Card<'swatch'>).content?.hex, c.type === 'sketch' && (c.content, c.sketchTitle, c.sketchPaper), (c.type === 'sketch' || c.type === 'ink') && doc.strokesOn(c.id))
     if (!frame) frame = requestAnimationFrame(draw)
   })
   onCleanup(() => {

@@ -1,12 +1,12 @@
 import { createMemo, createRoot } from 'solid-js'
-import { alignmentUnits, planAlignment, positionLocks, type Alignment, type Card, type Id, type Obj } from '@doggynote/core'
+import { alignmentUnits, planAlignment, positionLocks, isAreaItem, areaFamily, isArea, type Alignment, type Id, type Obj } from '@doggynote/core'
 import * as doc from './doc.ts'
 import { boardId, endEdit, selection } from './ui.ts'
 import { rectOf } from '../canvas/layout.ts'
 import { showToast } from './toast.ts'
 
 // Reads only lock/membership metadata, not geometry; pan/drag doesn't rebuild it.
-export const lockedPositions = createRoot(() => createMemo(() => positionLocks(Object.values(doc.objs).filter((o): o is Card => o.kind === 'card'))))
+export const lockedPositions = createRoot(() => createMemo(() => positionLocks(Object.values(doc.objs).filter(isAreaItem))))
 export const isPositionLocked = (id: Id) => lockedPositions().has(id)
 export const selectedAlignmentUnits = () => alignmentUnits(doc.cardsOn(boardId()), selection())
 export function lockSelection(locked: boolean) {
@@ -19,7 +19,7 @@ export function lockSelection(locked: boolean) {
 export function unlockSelectionLayouts() {
   const families = new Set([...selection()].flatMap((id) => {
     const c = doc.getCard(id)
-    return c ? [c.columnId || c.id] : []
+    return c ? [c.columnId || c.id, ...(isArea(c) ? areaFamily(c, doc.cardsOn(c.boardId)).map(item => item.id) : [])] : []
   }))
   const patches: Record<Id, Partial<Obj>> = {}
   for (const c of doc.cardsOn(boardId())) if (families.has(c.columnId || c.id) && c.positionLocked === true) patches[c.id] = { positionLocked: false }

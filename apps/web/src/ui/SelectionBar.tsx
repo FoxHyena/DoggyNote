@@ -3,6 +3,7 @@ import { For, Show, createEffect, createMemo, createSignal, onCleanup } from 'so
 import { ALIGNMENTS, DEFAULT_SWATCH_HEX, type Alignment, type BoardIcon, type Card } from '@doggynote/core'
 import { CARD_COLORS, COPY, cardColor, isPresetColor, normalizeHex, type CardColor } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
+import { canCreateAreaFromSelection, createAreaFromSelection } from '../state/areas.ts'
 import { burySelection, setColor } from '../state/actions.ts'
 import { alignSelection, isPositionLocked, lockSelection, selectedAlignmentUnits } from '../state/position.ts'
 import { beginEdit, camera, cardContextOpen, clearSelection, connectMode, editingId, openBoard, selectMore, selection, setConnectMode, setSelectMore, viewport } from '../state/ui.ts'
@@ -45,10 +46,10 @@ export function SelectionBar() {
   const sole = () => (cards().length === 1 && selection().size === 1 ? cards()[0] : undefined)
   const editable = () => {
     const c = sole()
-    return !!c && (c.type === 'note' || c.type === 'todo' || c.type === 'column' || c.type === 'image' || c.type === 'swatch' || c.type === 'link' || c.type === 'movie' || c.type === 'sketch') && doc.canWriteObject(c)
+    return !!c && (c.type === 'area' || c.type === 'note' || c.type === 'todo' || c.type === 'column' || c.type === 'image' || c.type === 'swatch' || c.type === 'link' || c.type === 'movie' || c.type === 'sketch') && doc.canWriteObject(c)
   }
   // Labels go on the cards of one board; a column is a container, so it has none.
-  const canLabel = () => cards().length > 0 && cards().every((c) => c.type !== 'column' && c.boardId === cards()[0].boardId && doc.canWriteObject(c))
+  const canLabel = () => cards().length > 0 && cards().every((c) => c.type !== 'area' && c.type !== 'column' && c.boardId === cards()[0].boardId && doc.canWriteObject(c))
   const canDuplicate = () => cards().length > 0 && cards().every((c) => doc.canWriteObject(c))
   const startConnect = () => {
     const c = sole()
@@ -192,6 +193,7 @@ export function SelectionBar() {
           </div>
           </Show>
         </Show>
+        <Show when={selection().size > 1 && canCreateAreaFromSelection()}><button class="bar-btn" data-testid="area-from-selection" onClick={() => createAreaFromSelection()}><Icon name="board" size={18} />Create area</button></Show>
         <Show when={tintable()}>
         <div class="bar-group bar-style">
         {/* A colour card is its colour, and ink on the board has no card to tint: the tints are for everything else. */}
@@ -244,7 +246,7 @@ export function SelectionBar() {
           </button>
         </Show>
         <Show when={docked() || connectionOnly()}>
-          <BarAction testid="bury" icon="bury" label={COPY.bury} title={`${COPY.bury}: move to ${COPY.trash} (Delete)`} labelled={docked()} onClick={burySelection} />
+          <BarAction testid="bury" icon="bury" label={sole()?.type === 'area' ? 'Remove area' : COPY.bury} title={`${COPY.bury}: move to ${COPY.trash} (Delete)`} labelled={docked()} onClick={burySelection} />
         </Show>
         </Show>
 
@@ -263,7 +265,7 @@ export function SelectionBar() {
               <button ref={colourTrigger} class="bar-btn" data-testid="selection-colour" aria-haspopup="dialog" aria-expanded={panel() === 'colour'} onClick={() => openPanel('colour')}><Icon name="droplet" size={20} /><span>Colour</span></button>
             </Show>
             <Show when={canLabel()}><LabelsButton cards={cards()} labelled /></Show>
-            <BarAction testid="bury" icon="bury" label={COPY.bury} labelled onClick={burySelection} />
+            <BarAction testid="bury" icon="bury" label={sole()?.type === 'area' ? 'Remove area' : COPY.bury} labelled onClick={burySelection} />
             <BarMenu triggerRef={(el) => { moreTrigger = el }} label="More" title="More card actions" testId="selection-more" menuTestId="selection-more-menu" icon={<Icon name="more" size={20} />}>
               {(close) => <>
                 <Show when={soleBoard()}>
@@ -275,6 +277,7 @@ export function SelectionBar() {
                 </Show>
                 <Show when={canAlign()}><div class="selection-sheet-align" role="group" aria-label="Align selection" data-testid="align-selection"><For each={ALIGNMENTS}>{(a) => <IconButton testid={`align-${a.value}`} icon={ALIGN_ICONS[a.value]} label={a.label} onClick={() => { close(); alignSelection(a.value) }} />}</For></div></Show>
                 <Show when={sole()?.type === 'todo' && writable()}><TodoMenuItems card={sole() as Card<'todo'>} close={close} /></Show>
+                <Show when={canCreateAreaFromSelection()}><button class="menu-item" role="menuitem" data-testid="area-from-selection" onClick={() => { close(); createAreaFromSelection() }}>Create area from selection</button></Show>
                 <Show when={canDuplicate()}><button class="menu-item" role="menuitem" data-testid="duplicate-selection" onClick={() => { close(); duplicateSelection() }}><Icon name="duplicate" />Duplicate</button></Show>
                 <Show when={sole() && sole()!.type !== 'board'}><button class="menu-item" role="menuitem" data-testid="comment-button" onClick={() => { close(); openThread(sole()!.id) }}><Icon name="comment" />Comment</button></Show>
                 <Show when={sole()}><button class="menu-item" role="menuitem" data-testid="connect-card" onClick={() => { close(); startConnect() }}><Icon name="line" />Connect to another card</button></Show>

@@ -1,6 +1,6 @@
 import { createSignal } from 'solid-js'
-import { COLUMN_HEADER, columnMembers, isKnownCardType, usableSticker, stickerBounds, type Card, type Id, type Rect } from '@doggynote/core'
-import { columnCollapsed } from '../state/columns.ts'
+import { areaFrame, areaMembers, isArea, isAreaItem, itemWorldPosition, type AreaItem, type Sticker, COLUMN_HEADER, columnMembers, isKnownCardType, usableSticker, stickerBounds, type Card, type Id, type Rect } from '@doggynote/core'
+import { columnCollapsed, hiddenByColumn } from '../state/columns.ts'
 import * as doc from '../state/doc.ts'
 
 // Measured card geometry. Cards report their rendered height through one shared
@@ -35,7 +35,7 @@ const ro = new ResizeObserver((entries) => {
     const el = e.target as HTMLElement
     const card = doc.getCard(id)
     // A collapsed header must never replace the retained expanded height.
-    if (card && columnCollapsed(card)) { delete pendingHeights[id]; continue }
+    if (card && (card.type === 'area' || columnCollapsed(card))) { delete pendingHeights[id]; continue }
     const h = el.offsetHeight
     // Hidden/detached cards have no rendered height. Keep their last geometry
     // until visible again rather than syncing a zero size.
@@ -58,7 +58,7 @@ function flushHeights() {
   heightTimer = null
   const p = pendingHeights
   pendingHeights = {}
-  for (const id of Object.keys(p)) if (columnCollapsed(doc.getCard(id))) delete p[id]
+  for (const id of Object.keys(p)) if (doc.getCard(id)?.type === 'area' || columnCollapsed(doc.getCard(id))) delete p[id]
   doc.silent(p)
 }
 
@@ -87,36 +87,52 @@ export function remeasure(el: HTMLElement | null | undefined) {
 
 export function cardHeight(c: Card): number {
   // On expansion a cached header measurement is never used.
+  if (c.type === 'area') return areaRect(c).h
   if (columnCollapsed(c)) return COLUMN_HEADER
   return measured.get(c.id) ?? c.h
 }
 
-/** World rect of a card, including cards stacked inside a column. */
+export const worldPosition = (item: AreaItem) => itemWorldPosition(item, doc.get)
+export const worldSticker = (sticker: Sticker): Sticker => ({ ...sticker, ...worldPosition(sticker) })
+const [frozenAreas, setFrozenAreas] = createSignal<ReadonlyMap<Id, Rect>>(new Map())
+export function freezeArea(id: Id) {
+  const area = doc.getCard(id)
+  if (isArea(area)) setFrozenAreas(old => new Map(old).set(id, areaRect(area)))
+}
+export const thawAreas = () => setFrozenAreas(new Map())
+
+export function areaRect(area: Card): Rect {
+  const frozen = frozenAreas().get(area.id)
+  if (frozen) return frozen
+  const members = areaMembers(area, [...doc.cardsOn(area.boardId), ...doc.stickersOn(area.boardId)])
+  const bounds = members.flatMap(item => {
+    if (item.kind === 'sticker') return [stickerBounds(worldSticker(item))]
+    return [{ ...worldPosition(item), w: item.w, h: cardHeight(item) }]
+  })
+  return areaFrame(area, bounds, columnCollapsed(area))
+}
+
+/** World rect, shared by DOM layout, overview, connectors, exports and hit testing. */
 export function rectOf(id: Id): Rect | null {
   const o = doc.get(id)
-  if (usableSticker(o)) return o.deletedAt || o.purged ? null : stickerBounds(o)
+  if (!isAreaItem(o) || o.deletedAt || o.purged || hiddenByColumn(id)) return null
+  if (usableSticker(o)) return stickerBounds(worldSticker(o))
   const c = doc.getCard(id)
-  if (!c || c.deletedAt || c.purged) return null
+  if (!c) return null
+  if (isArea(c)) return areaRect(c)
   if (c.columnId) {
     const col = doc.getCard(c.columnId)
     if (!col || col.deletedAt || col.purged || columnCollapsed(col)) return null
-    const colRect = { x: col.x, y: col.y, w: col.w, h: cardHeight(col) }
-    const el = els.get(id)
-    const colEl = els.get(col.id)
-    // Zoomed out, children aren't DOM: use the same stacking the overview draws.
+    const pos = worldPosition(col)
+    const colRect = { ...pos, w: col.w, h: cardHeight(col) }
+    const el = els.get(id), colEl = els.get(col.id)
     if (!el || !colEl) return stackedChildRect(col, id) ?? colRect
-    // offsetTop/Left are relative to the column (it's the offsetParent) and unscaled.
-    let x = 0
-    let y = 0
+    let x = 0, y = 0
     let n: HTMLElement | null = el
-    while (n && n !== colEl) {
-      x += n.offsetLeft
-      y += n.offsetTop
-      n = n.offsetParent as HTMLElement | null
-    }
-    return { x: col.x + x, y: col.y + y, w: el.offsetWidth, h: el.offsetHeight }
+    while (n && n !== colEl) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent as HTMLElement | null }
+    return { x: pos.x + x, y: pos.y + y, w: el.offsetWidth, h: el.offsetHeight }
   }
-  return { x: c.x, y: c.y, w: c.w, h: cardHeight(c) }
+  return { ...worldPosition(c), w: c.w, h: cardHeight(c) }
 }
 
 /** Column layout as drawn zoomed out: a header strip, then children stacked with an 8px inset and gap. */
@@ -126,10 +142,11 @@ export const COLUMN_INSET = 8
 export function stackedChildRect(col: Card, id: Id): Rect | null {
   if (columnCollapsed(col)) return null
   const kids = columnMembers(col, doc.cardsOn(col.boardId))
-  let y = col.y + COLUMN_HEADER + COLUMN_INSET - 1
+  const pos = worldPosition(col)
+  let y = pos.y + COLUMN_HEADER + COLUMN_INSET - 1
   for (const k of kids) {
     const h = cardHeight(k)
-    if (k.id === id) return { x: col.x + COLUMN_INSET + 1, y, w: col.w - (COLUMN_INSET + 1) * 2, h }
+    if (k.id === id) return { x: pos.x + COLUMN_INSET + 1, y, w: col.w - (COLUMN_INSET + 1) * 2, h }
     y += h + COLUMN_INSET
   }
   return null

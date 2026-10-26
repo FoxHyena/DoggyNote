@@ -122,7 +122,7 @@ function EditorApp() {
     // Don't lose an in-progress edit when the window goes away.
     const save = () => {
       endEdit()
-      doc.journalNotes()
+      doc.journalDocument()
       void doc.flush().catch(() => {})
     }
     const onVis = () => document.visibilityState === 'hidden' && save()

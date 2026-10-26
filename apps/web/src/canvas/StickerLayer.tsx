@@ -1,3 +1,6 @@
+import { worldSticker, worldPosition } from './layout.ts'
+import { hiddenByColumn } from '../state/columns.ts'
+import { isPositionLocked } from '../state/position.ts'
 import { For, Show, createEffect, createMemo, createSignal, on } from 'solid-js'
 import { LOD_ZOOM, STICKER_MAX, STICKER_MIN, defaultStickerWidth, normalizeAngle, cullRect, intersects, stickerBounds, stickerGroupRing, stickerHeight, stickerLocal, stickerRingRadius, transformStickerGroup, viewRect, type Sticker, type Vec } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
@@ -16,7 +19,7 @@ export const [groupTurn, setGroupTurn] = createSignal(0)
 /** The selected stickers share one ring: around the sticker itself, or around the whole group. */
 export type StickerRing = { ids: string[]; center: Vec; radius: number; grip: number; single: Sticker | null }
 export function selectionRing(): StickerRing | null {
-  const list = doc.stickersOn(boardId()).filter((s) => selection().has(s.id)), zoom = camera().zoom
+  const list = doc.stickersOn(boardId()).filter(s => selection().has(s.id) && !hiddenByColumn(s.id)).map(worldSticker), zoom = camera().zoom
   if (!list.length) return null
   if (list.length === 1) { const s = list[0]; return { ids: [s.id], center: stickerCenter(s), radius: stickerRingRadius(s, zoom), grip: s.angle, single: s } }
   const g = stickerGroupRing(list)
@@ -49,9 +52,9 @@ function ringKey(e: KeyboardEvent, ring: StickerRing) {
   const s = ring.single
   if (!s) {
     // A group turns about its center and grows its ring by the same steps.
-    const list = ring.ids.map((id) => doc.get(id) as Sticker), g = stickerGroupRing(list)
+    const list = ring.ids.map(id => worldSticker(doc.get(id) as Sticker)), g = stickerGroupRing(list)
     const next = transformStickerGroup(list, g.center, g.radius ? (g.radius + step) / g.radius : 1, degrees)
-    for (const id of ring.ids) doc.transient(id, next[id])
+    for (const id of ring.ids) doc.transient(id, localStickerPatch(id, next[id]))
     if (degrees) setGroupTurn(groupTurn() + degrees)
     return
   }
@@ -59,19 +62,26 @@ function ringKey(e: KeyboardEvent, ring: StickerRing) {
   const max = Math.min(STICKER_MAX, STICKER_MAX * s.content.width / s.content.height)
   const w = Math.max(STICKER_MIN, Math.min(max, s.w + step))
   const center = stickerCenter(s), h = w * s.content.height / s.content.width
-  doc.transient(s.id, { w, x: center.x - w / 2, y: center.y - h / 2 })
+  doc.transient(s.id, localStickerPatch(s.id, { w, x: center.x - w / 2, y: center.y - h / 2 }))
+}
+
+function localStickerPatch(id: string, patch: Partial<Sticker>): Partial<Sticker> {
+  const s = doc.get(id)
+  const area = s?.kind === 'sticker' && s.areaId ? doc.getCard(s.areaId) : undefined
+  return { ...patch, ...('x' in patch ? { x: patch.x! - (area?.x ?? 0) } : {}), ...('y' in patch ? { y: patch.y! - (area?.y ?? 0) } : {}) }
 }
 
 /** Straight and back to a fresh sticker's size, about the same center. */
 function resetSticker(s: Sticker) {
   const w = defaultStickerWidth(s), h = w * s.content.height / s.content.width, c = stickerCenter(s)
-  doc.update({ [s.id]: { angle: 0, w, x: c.x - w / 2, y: c.y - h / 2 } })
+  doc.update({ [s.id]: localStickerPatch(s.id, { angle: 0, w, x: c.x - w / 2, y: c.y - h / 2 }) })
 }
 const changed = (s: Sticker) => Math.round(s.angle) !== 0 || Math.abs(s.w - defaultStickerWidth(s)) >= 1
 
 export function stickerAt(point: Vec, touch = false): Sticker | undefined {
   return [...doc.stickersOn(boardId())].sort((a, b) => b.z - a.z || b.id.localeCompare(a.id)).find((s) => {
-    const local = stickerLocal(s, point)
+    if (hiddenByColumn(s.id)) return false
+    const local = stickerLocal(worldSticker(s), point)
     return stickerAlphaHit(s.content.assetId, local.x, local.y, touch ? 7 / (camera().zoom * s.w) : 0, touch ? 7 / (camera().zoom * stickerHeight(s)) : 0)
   })
 }
@@ -89,11 +99,11 @@ export function StickerLayer(props: { readOnly: boolean }) {
     const c = camera(), v = viewport(), step = 2 ** Math.round(Math.log2(256 / c.zoom))
     return cullRect(viewRect(c, v.width, v.height), 160 / c.zoom, step)
   }, undefined, { equals: (a, b) => a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h })
-  const ring = createMemo(selectionRing)
+  const ring = createMemo(() => { const r = selectionRing(); return r && !r.ids.some(isPositionLocked) ? r : null })
   createEffect(on(selection, () => setGroupTurn(0), { defer: true }))
-  const visible = createMemo(() => doc.stickersOn(boardId()).filter((s) => exporting() || intersects(stickerBounds(s), cull())).sort((a, b) => a.z - b.z || a.id.localeCompare(b.id)))
+  const visible = createMemo(() => doc.stickersOn(boardId()).filter(s => !hiddenByColumn(s.id) && (exporting() || intersects(stickerBounds(worldSticker(s)), cull()))).sort((a, b) => a.z - b.z || a.id.localeCompare(b.id)))
   return <div class="sticker-layer" data-testid="sticker-layer">
-    <For each={exporting() || camera().zoom >= LOD_ZOOM ? visible() : []}>{(s) => <div class="placed-sticker" data-sticker-id={s.id} data-testid="placed-sticker" classList={{ selected: selection().has(s.id) && !props.readOnly }} style={{ left: `${s.x}px`, top: `${s.y}px`, width: `${s.w}px`, height: `${stickerHeight(s)}px` }}>
+    <For each={exporting() || camera().zoom >= LOD_ZOOM ? visible() : []}>{(s) => <div class="placed-sticker" data-sticker-id={s.id} data-testid="placed-sticker" classList={{ selected: selection().has(s.id) && !props.readOnly }} style={{ left: `${worldPosition(s).x}px`, top: `${worldPosition(s).y}px`, width: `${s.w}px`, height: `${stickerHeight(s)}px` }}>
       <div class="sticker-rotation" style={{ transform: `rotate(${s.angle}deg)` }}>
         <div class="sticker-visual"><StickerImage sticker={s.content} animate={camera().zoom >= LOD_ZOOM && !exporting() && !playbackPaused(s.id)} /></div>
       </div>

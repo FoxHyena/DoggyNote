@@ -26,3 +26,7 @@ it('rejects permanent deletion and duplicate object operations', async () => {
   await expect(prepareAgentChanges(db, access, credential, { id: 'rex', username: 'rex', isAdmin: false }, { ...base, operations: [{ action: 'replace', object: { ...note, purged: true }, expectedRevision: 10 }] })).rejects.toThrow('Permanent deletion')
   await expect(prepareAgentChanges(db, access, credential, { id: 'rex', username: 'rex', isAdmin: false }, { ...base, operations: [{ action: 'trash', id: note.id, expectedRevision: 10 }, { action: 'restore', id: note.id, expectedRevision: 10 }] })).rejects.toThrow('Only one operation')
 })
+it('area height is a manually chosen dimension, not an ignorable measurement',()=>{
+  const area={...note,type:'area' as const,content:{title:'Project'}}
+  expect(sameAgentState(area,{...area,h:600})).toBe(false)
+})

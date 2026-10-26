@@ -1,3 +1,4 @@
+import { areaAt, areaPlacement, addingToArea, setAddingToArea } from '../state/areas.ts'
 import { Show, createEffect, createSignal, on, onCleanup, onMount, untrack } from 'solid-js'
 import {
   BOARD_INK_MAX_SPAN, HIGHLIGHTER, MAX_INK_POINTS, boardInkEnvelope, boardInkLocal, hitInkStroke, inkBounds, inkPath, isBoardInkSize, newId, readableInk,
@@ -16,6 +17,7 @@ import './ink.css'
 
 type Draft = {
   pointer: number
+  areaId?: Id
   board: Id
   tool: 'pen' | 'highlighter' | 'eraser'
   points: Vec[]
@@ -79,11 +81,12 @@ export function createBoardInk(readOnly: () => boolean, toWorld: (e: { clientX: 
     const width = inkWidth() * (tool === 'highlighter' ? HIGHLIGHTER.scale : 1)
     const board = boardId()
     draft = {
-      pointer: e.pointerId, board, tool, points: [p], width, color: inkColor(), opacity: tool === 'highlighter' ? HIGHLIGHTER.opacity : 1, full: false,
+      pointer: e.pointerId, areaId: addingToArea() ?? areaAt(p)?.id, board, tool, points: [p], width, color: inkColor(), opacity: tool === 'highlighter' ? HIGHLIGHTER.opacity : 1, full: false,
       targets: tool === 'eraser'
         ? doc.cardsOn(board).filter((c): c is Card<'ink'> => c.type === 'ink' && isBoardInkSize(c.content) && doc.canWriteObject(c)).map((card) => ({ card, strokes: [...doc.strokesOn(card.id)] }))
         : [],
     }
+    setAddingToArea(null)
     // Shift-click with the eraser: erase along the straight segment from the anchor.
     if (tool === 'eraser') erase(p, lineFrom ?? p)
     else setPreview({ points: [p], width, color: draft.color, opacity: draft.opacity })
@@ -150,6 +153,7 @@ export function createBoardInk(readOnly: () => boolean, toWorld: (e: { clientX: 
       x: box.rect.x, y: box.rect.y, w: box.rect.w, h: box.rect.h, z: doc.maxZ(d.board) + 1, color: 'none', columnId: null,
       content: { width: box.rect.w, height: box.rect.h },
     }
+    Object.assign(card, areaPlacement({ x: card.x, y: card.y }, d.areaId ? doc.getCard(d.areaId) : undefined))
     const stroke: Stroke = {
       id: newId(), kind: 'stroke', boardId: d.board, cardId: card.id, createdAt: now,
       tool: d.tool, color: d.color, width: d.width, opacity: d.opacity, order: now, points: box.points, bounds: inkBounds(box.points, d.width),

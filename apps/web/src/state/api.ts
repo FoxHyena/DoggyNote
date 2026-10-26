@@ -32,7 +32,7 @@ export function statusMessage(status: number): string {
 /** A checked request: throws ApiError with the server's message, else returns the response. */
 export async function apiRaw(path: string, init: RequestInit & { json?: unknown } = {}): Promise<Response> {
   const headers = new Headers(init.headers)
-  headers.set('x-doggynote-protocol', '3')
+  headers.set('x-doggynote-protocol', '4')
   if (bearer) headers.set('authorization', `Bearer ${bearer}`)
   let body = init.body
   if (init.json !== undefined) {

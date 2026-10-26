@@ -6,6 +6,8 @@ import { requireUser } from './auth.ts'
 import { randomToken, sha256Hex } from './crypto.ts'
 import { loadAccess, type Access } from './access.ts'
 import { deniedChanges, ownerFor, deletedCommentOwner, stampComment } from './sync.ts'
+import { checkPositionLocks, positionWriteGuards } from './position.ts'
+import { checkAreaRemovals } from './areas.ts'
 import { LABEL_FIELD } from '@doggynote/core'
 
 // Agents don't handle labels yet: they never see label fields, and a whole-object
@@ -68,7 +70,7 @@ function schemaError(result: { error: z.ZodError }) {
 export function sameAgentState(a: AgentObject, b: AgentObject): boolean {
   const normalize = (value: unknown): unknown => {
     if (Array.isArray(value)) return value.map(normalize)
-    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).filter(([key, v]) => !(key === 'h' && (value as { kind?: string }).kind === 'card') && v !== undefined).sort(([a], [b]) => a.localeCompare(b)).map(([key, v]) => [key, normalize(v)]))
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).filter(([key, v]) => !(key === 'h' && (value as { kind?: string; type?: string }).kind === 'card' && (value as { type?: string }).type !== 'area') && v !== undefined).sort(([a], [b]) => a.localeCompare(b)).map(([key, v]) => [key, normalize(v)]))
     return value
   }
   return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b))
@@ -102,8 +104,13 @@ export async function prepareAgentChanges(db: D1Database, access: Access, creden
     for (const row of all.values()) {
       if (!readable(access, credential, user.id, row)) continue
       const o = row.object
-      if (o.kind !== 'card' || !o.columnId || changes.has(o.id)) continue
-      const parent = changes.get(o.columnId)
+      if ((o.kind !== 'card' && o.kind !== 'sticker') || changes.has(o.id)) continue
+      const parent = changes.get((o.kind === 'card' && o.columnId) || o.areaId || '')
+      if (o.areaId && parent?.after.kind === 'card' && parent.after.type === 'area' && (parent.after.deletedAt || parent.after.purged)) {
+        const origin = parent.before?.kind === 'card' ? parent.before : parent.after
+        changes.set(o.id, { id: o.id, before: o, after: { ...o, x: o.x + origin.x, y: o.y + origin.y, areaId: null }, expectedRevision: row.revision })
+        added = true; continue
+      }
       if (parent?.after.kind === 'card' && parent.after.boardId !== o.boardId) {
         changes.set(o.id, { id: o.id, before: o, after: { ...o, boardId: parent.after.boardId }, expectedRevision: row.revision })
         added = true
@@ -176,6 +183,15 @@ async function validateChanges(db: D1Database, access: Access, credential: Crede
   })
   const denied = await deniedChanges(db, access, user.id, patches)
   if (denied.length) error('A related board, card, comment or asset is no longer editable')
+  const positions = await checkPositionLocks(db, patches)
+  if (positions.lockedIds.length || positions.lockedCreateIds.length) error('Unlock the affected area or card layout before applying this proposal')
+  const areas = await checkAreaRemovals(db, patches)
+  if (areas.conflicts.length) error('Move or detach area members before removing their area')
+  for (const [id, version] of areas.versions) {
+    if (positions.versions.has(id) && positions.versions.get(id) !== version) error('Area or layout changed; refresh the proposal')
+    positions.versions.set(id, version)
+  }
+  return positions.versions
 }
 
 export const agents = new Hono<AgentEnv>()
@@ -351,7 +367,7 @@ async function applyProposal(c: Context<AgentEnv>, reverse: boolean, attempt = 0
     const row = current.get(ch.id)
     if (!ch.before || !row || row.revision === ch.expectedRevision || !sameAgentState(row.object, ch.before)) return ch
     const live = row.object
-    const after = ch.after.kind === 'card' && live.kind === 'card' && ch.before.kind === 'card' && ch.after.h === ch.before.h ? { ...ch.after, h: live.h } : ch.after
+    const after = ch.after.kind === 'card' && live.kind === 'card' && ch.before.kind === 'card' && ch.after.type !== 'area' && ch.after.h === ch.before.h ? { ...ch.after, h: live.h } : ch.after
     return { ...ch, before: live, after, expectedRevision: row.revision }
   })
   if (changes.some((ch) => !SAFE_ID.test(ch.id) || !SAFE_ID.test(String(onBoard(ch.after))))) return c.json({ error: 'Invalid object identifier' }, 409)
@@ -364,7 +380,7 @@ async function applyProposal(c: Context<AgentEnv>, reverse: boolean, attempt = 0
     for (const row of current.values()) {
       const o = row.object
       if (ids.has(o.id) || !active(o)) continue
-      const references = o.kind === 'board' ? [o.parentId] : o.kind === 'comment' || o.kind === 'stroke' ? [o.cardId, o.boardId] : o.kind === 'connection' ? [o.from, o.to, o.boardId] : o.kind === 'sticker' ? [o.boardId] : [o.boardId, o.columnId, ...(o.type === 'board' ? [o.content.boardId] : [])]
+      const references = o.kind === 'board' ? [o.parentId] : o.kind === 'comment' || o.kind === 'stroke' ? [o.cardId, o.boardId] : o.kind === 'connection' ? [o.from, o.to, o.boardId] : o.kind === 'sticker' ? [o.boardId, o.areaId] : [o.boardId, o.columnId, o.areaId, ...(o.type === 'board' ? [o.content.boardId] : [])]
       if (references.some((id) => id && created.has(id))) return c.json({ error: 'New content depends on this proposal. Move or remove it before reversing.' }, 409)
       if (o.kind === 'comment' && changes.some((ch) => ch.after.kind === 'card' && ch.after.id === o.cardId && ch.after.boardId !== o.boardId)) return c.json({ error: 'New comments were added after this move. Prepare a new proposal to move the card safely.' }, 409)
     }
@@ -374,7 +390,7 @@ async function applyProposal(c: Context<AgentEnv>, reverse: boolean, attempt = 0
       // a created board/column cannot be stranded by this reversal.
       const createdIds = [...created].map((id) => `'${id}'`).join(',')
       const changedIds = [...ids].map((id) => `'${id}'`).join(',')
-      const references = ['parentId', 'boardId', 'columnId', 'cardId', 'from', 'to', 'content.boardId']
+      const references = ['parentId', 'boardId', 'columnId', 'areaId', 'cardId', 'from', 'to', 'content.boardId']
         .map((key) => `json_extract(data,'$.${key}') IN (${createdIds})`).join(' OR ')
       dependencyGuard = `NOT EXISTS(SELECT 1 FROM objects WHERE id NOT IN (${changedIds}) AND COALESCE(json_extract(data,'$.deletedAt'),0)=0 AND COALESCE(json_extract(data,'$.purged'),0)=0 AND (${references}))`
     }
@@ -386,13 +402,14 @@ async function applyProposal(c: Context<AgentEnv>, reverse: boolean, attempt = 0
     }
   }
   const a = await loadAccess(db, c.get('user'))
-  try { await validateChanges(db, a, credential, c.get('user'), changes) }
+  let versions: Map<string, number>
+  try { versions = await validateChanges(db, a, credential, c.get('user'), changes) }
   catch (e) { return c.json({ error: e instanceof Error ? e.message : 'Board access changed' }, 403) }
   const guard = changes.map((ch) => ch.expectedRevision === null ? `NOT EXISTS(SELECT 1 FROM objects WHERE id='${ch.id}')` : `EXISTS(SELECT 1 FROM objects WHERE id='${ch.id}' AND seq=${Number(ch.expectedRevision)})`).join(' AND ')
   const gate = `EXISTS(SELECT 1 FROM agent_proposals WHERE id=?1 AND status='${transitional}')`
   const credentialGuard = reverse ? '' : 'AND EXISTS(SELECT 1 FROM agent_credentials WHERE id=?3 AND revoked_at IS NULL AND expires_at>?4)'
   const gateStatement = db.prepare(`UPDATE agent_proposals SET status='${transitional}' WHERE id=?1 AND status='${previous}' AND ${guard} AND ${dependencyGuard} AND (SELECT value FROM counters WHERE name='access_revision')=?2 ${credentialGuard}`)
-  const stmts = [reverse ? gateStatement.bind(p.id, Number(a.revision)) : gateStatement.bind(p.id, Number(a.revision), credential.id, now)]
+  const stmts = [reverse ? gateStatement.bind(p.id, Number(a.revision)) : gateStatement.bind(p.id, Number(a.revision), credential.id, now), ...positionWriteGuards(db, a.revision, versions)]
   let accessChanged = false
   for (const ch of changes) {
     const o = ch.after
@@ -416,6 +433,10 @@ async function applyProposal(c: Context<AgentEnv>, reverse: boolean, attempt = 0
   stmts.push(db.prepare(`UPDATE agent_proposals SET status='${final}',applied_at=?2,applied_revisions=(SELECT json_group_object(id,seq) FROM objects WHERE id IN (${changes.map((ch) => `'${ch.id}'`).join(',')})) WHERE id=?1 AND status='${transitional}'`).bind(p.id, now))
   let result: D1Result[]
   try { result = await db.batch(stmts) } catch (error) {
+    if (String(error).includes('Access changed')) {
+      if (attempt < 2) return applyProposal(c, reverse, attempt + 1)
+      return c.json({ error: 'Area or layout changed. Refresh the proposal and retry.' }, 409)
+    }
     if (String(error).includes('Note changed')) return c.json({ error: 'Revision conflict: the note changed. Prepare a new proposal.' }, 409)
     throw error
   }

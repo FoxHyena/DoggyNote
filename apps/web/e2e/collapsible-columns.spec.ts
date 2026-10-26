@@ -227,7 +227,7 @@ test('authenticated view-only search reveals a hidden member locally and the ser
   const username = `column_view_${crypto.randomUUID().slice(0, 8)}`
   expect((await page.request.post('/api/users', { data: { username, password: 'columnview123' } })).status()).toBe(201)
   expect((await page.request.post(`/api/boards/${f.boardId}/members`, { data: { username, permission: 'view' } })).status()).toBe(201)
-  const context = await browser.newContext({ storageState: { cookies: [], origins: [] }, extraHTTPHeaders: { 'x-doggynote-protocol': '3' } })
+  const context = await browser.newContext({ storageState: { cookies: [], origins: [] }, extraHTTPHeaders: { 'x-doggynote-protocol': '4' } })
   expect((await context.request.post('/api/auth/login', { data: { username, password: 'columnview123' } })).ok()).toBe(true)
   const viewer = await context.newPage()
   await viewer.goto(page.url())

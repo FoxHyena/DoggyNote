@@ -89,7 +89,7 @@ export async function freshBoard(page: Page, name = `Test ${Math.random().toStri
   // otherwise fits below the DOM-detail threshold during the full suite.
   const id = crypto.randomUUID()
   const desktopToken = await page.evaluate(() => sessionStorage.getItem('fake-keychain')).catch(() => null)
-  const response = await postSync(page.request, { ...(desktopToken ? { headers: { authorization: `Bearer ${desktopToken}`, 'x-doggynote-protocol': '3' } } : {}), data: { changes: [{ id, patch: { id, kind: 'board', parentId: 'home', title: name, icon: 'paw', color: 'gold', createdAt: Date.now() } }] } }, desktopToken ? `http://localhost:${API_PORT}/api/sync` : '/api/sync')
+  const response = await postSync(page.request, { ...(desktopToken ? { headers: { authorization: `Bearer ${desktopToken}`, 'x-doggynote-protocol': '4' } } : {}), data: { changes: [{ id, patch: { id, kind: 'board', parentId: 'home', title: name, icon: 'paw', color: 'gold', createdAt: Date.now() } }] } }, desktopToken ? `http://localhost:${API_PORT}/api/sync` : '/api/sync')
   expect(response.ok(), await response.text()).toBe(true)
   await page.goto(`/#/b/${id}`)
   // Hash-only navigation reuses the app; reload establishes the seeded snapshot.

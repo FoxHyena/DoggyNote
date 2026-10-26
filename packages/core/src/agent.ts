@@ -10,17 +10,17 @@ const stamp = z.number().int().nonnegative()
 const text = z.string().max(200_000)
 // A named tint, or a custom `#RRGGBB` (stored normalised, as the picker writes it).
 const color = z.union([z.enum(CARD_COLORS), z.string().regex(/^#[\dA-Fa-f]{6}$/).transform((v) => v.toUpperCase() as `#${string}`)])
-const common = { id, createdAt: stamp, deletedAt: stamp.nullable().optional(), purged: z.boolean().optional() }
+const common = { id, createdAt: stamp, deletedAt: stamp.nullable().optional(), burialId: id.nullable().optional(), purged: z.boolean().optional() }
 const card = {
   ...common, kind: z.literal('card'), boardId: id,
   x: z.number().finite().min(-1_000_000).max(1_000_000), y: z.number().finite().min(-1_000_000).max(1_000_000),
   w: z.number().finite().positive().max(10_000), h: z.number().finite().positive().max(100_000),
-  z: z.number().finite(), color, columnId: id.nullable().optional(), order: z.number().finite().optional(),
+  z: z.number().finite(), color, columnId: id.nullable().optional(), areaId: id.nullable().optional(), order: z.number().finite().optional(),
 }
 const safeUrl = z.string().max(4096).refine((v) => { try { return ['https:', 'http:'].includes(new URL(v).protocol) } catch { return false } }, 'Use an http or https URL')
 const rendition = z.enum(['thumb', 'small', 'medium', 'full'])
 export const stickerObjectSchema = z.strictObject({
-  ...common, kind: z.literal('sticker'), boardId: id,
+  ...common, kind: z.literal('sticker'), boardId: id, areaId: id.nullable().optional(),
   x: z.number().finite().min(-1_000_000).max(1_000_000), y: z.number().finite().min(-1_000_000).max(1_000_000),
   w: z.number().finite().min(32).max(1024), angle: z.number().finite().min(-180).max(180), z: z.number().finite().min(-1e9).max(1e9),
   content: z.strictObject({ assetId: z.uuid(), stickerId: z.string().min(1).max(128), packName: z.string().regex(/^[a-zA-Z][a-zA-Z0-9_]{0,63}$/), emoji: z.string().max(64),
@@ -55,6 +55,7 @@ export const agentObjectSchema = z.discriminatedUnion('kind', [
     z.strictObject({ ...card, type: z.literal('note'), content: z.strictObject({ md: text }) }),
     z.strictObject({ ...card, type: z.literal('todo'), content: z.strictObject({ title: z.string().max(1000), items: z.array(z.strictObject({ id, text: z.string().max(10_000), done: z.boolean(), doneAt: stamp.nullable().optional() })).max(1000), sortDone: z.boolean().optional(), hideDone: z.boolean().optional() }) }),
     z.strictObject({ ...card, type: z.literal('board'), content: z.strictObject({ boardId: id }) }),
+    z.strictObject({ ...card, columnId: z.null().optional(), areaId: z.null().optional(), type: z.literal('area'), content: z.strictObject({ title: z.string().max(1000) }) }),
     z.strictObject({ ...card, columnId: z.null().optional(), type: z.literal('column'), content: z.strictObject({ title: z.string().max(1000) }) }),
     z.strictObject({ ...card, type: z.literal('link'), content: z.strictObject({ url: safeUrl, title: z.string().max(1000).optional(), description: z.string().max(10_000).optional(), image: safeUrl.optional(), siteName: z.string().max(1000).optional(), status: z.enum(['pending', 'ok', 'error']).optional() }) }),
     z.strictObject({ ...card, type: z.literal('image'), content: z.strictObject({ assetId: id, width: z.number().positive().finite(), height: z.number().positive().finite(), caption: z.string().max(10_000).optional(), sizes: z.array(rendition).max(4).optional() }) }),

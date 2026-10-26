@@ -10,7 +10,7 @@ async function friend(browser: Browser, owner: Page, permission = 'edit') {
   const id = owner.url().split('/b/')[1]!
   const grant = await owner.request.post(`/api/boards/${id}/members`, { data: { username: 'fido', permission, includeChildren: true } })
   expect(grant.ok(), await grant.text()).toBe(true)
-  const context = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '3' } })
+  const context = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '4' } })
   contexts.add(context)
   expect((await context.request.post('/api/auth/login', { data: { username: 'fido', password: 'fetchfetch' } })).ok()).toBe(true)
   const page = await context.newPage()
@@ -460,7 +460,7 @@ test('a shared card offers its actions and a location ping for the other partici
   await other.bringToFront()
   await cardByText(other, 'Point to this card').click({ button: 'right', position: { x: 30, y: 20 } })
   const menu = other.getByTestId('canvas-context-menu')
-  await expect(menu.getByRole('menuitem')).toHaveText(['Edit', 'Duplicate', 'Labels', 'Comment', 'Bury', 'Look here'])
+  await expect(menu.getByRole('menuitem')).toHaveText(['Edit', 'Duplicate', 'Labels', 'Comment', 'Create area from selection', 'Bury', 'Look here'])
   await other.keyboard.press('End')
   await expect(menu.getByRole('menuitem', { name: 'Look here', exact: true })).toBeFocused()
   await other.keyboard.press('Enter')

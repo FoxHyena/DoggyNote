@@ -62,7 +62,8 @@ export function clearLivePreviews() { previews.clear(); schedulePresence() }
 export function pingAt(point?: LivePoint) {
   if (socket?.readyState !== WebSocket.OPEN || !selfSession()) return
   const c = camera(), v = viewport(), selected = [...selection()][0], card = selected ? rectOf(selected) : null
-  const at = point ?? (card ? { x: card.x + card.w / 2, y: card.y + card.h / 2 } : { x: c.x + v.width / (2 * c.zoom), y: c.y + v.height / (2 * c.zoom) })
+  const box = card
+  const at = point ?? (box ? { x: box.x + box.w / 2, y: box.y + box.h / 2 } : { x: c.x + v.width / (2 * c.zoom), y: c.y + v.height / (2 * c.zoom) })
   // Keep pings outside the presence rate window on the server.
   const ws = socket
   setTimeout(() => { if (ws === socket && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'ping', point: at })) }, Math.max(0, 75 - (performance.now() - lastSend)))
@@ -167,7 +168,7 @@ export function installRealtime() {
     const transientOff = doc.onTransient((id, patch) => {
       const o = doc.base(id)
       if (o && o.kind === 'card' && o.boardId === activeBoard && ('x' in patch || 'y' in patch || 'w' in patch || 'h' in patch) && id !== editingId()) {
-        previews.set(id, { id, x: o.x, y: o.y, w: o.w, h: o.h }); schedulePresence()
+        const r = rectOf(id); if (r) previews.set(id, { id, ...r }); schedulePresence()
       }
     })
     const outOff = doc.onOutbox(() => {

@@ -1,12 +1,13 @@
+import { areaAddPoint, addingToArea } from '../state/areas.ts'
 import { suggestions, openStickers, stickerTrayOpen } from '../state/stickers.ts'
 import './canvas-entry.css'
 import { For, Show, createSignal } from 'solid-js'
 import { DEFAULT_SIZE, findFreeSpot, screenToWorld, type CardType, type Vec } from '@doggynote/core'
-import { cardHeight } from '../canvas/layout.ts'
+import { rectOf } from '../canvas/layout.ts'
 import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { appendOrder, createCard, type Placement } from '../state/actions.ts'
-import { boardId, camera, connectMode, setConnectMode, setTrashOpen, trashOpen, viewport } from '../state/ui.ts'
+import { boardId, selection, camera, connectMode, setConnectMode, setTrashOpen, trashOpen, viewport } from '../state/ui.ts'
 import { addAnyFiles, addImages } from '../canvas/paste.ts'
 import { beginBoardDrawing, boardDrawing, endBoardDrawing } from '../state/drawing.ts'
 import { Icon, type IconName } from './icons.tsx'
@@ -20,6 +21,7 @@ export const TOOLS: Tool[] = [
   { id: 'link', label: 'Link', icon: 'link' },
   { id: 'line', label: 'Line', icon: 'line' },
   { id: 'column', label: 'Column', icon: 'column' },
+  { id: 'area', label: 'Area', icon: 'multi' },
   { id: 'movie', label: 'Movie', icon: 'film' },
   { id: 'swatch', label: 'Colour', icon: 'swatch' },
   { id: 'sketch', label: 'Sketch', icon: 'sketch' },
@@ -43,10 +45,12 @@ export function useTool(id: Tool['id'], place: () => Placement | null) {
 
 /** A click on a tool drops the card near the viewport centre, in free space. */
 export function centrePlacement(type: CardType = 'note'): Placement {
+  const inside = areaAddPoint(type)
+  if (inside) return { at: inside, areaId: addingToArea() ?? [...selection()][0] }
   const v = viewport()
   const c = screenToWorld(camera(), { x: v.width / 2, y: v.height / 2.6 })
   const size = DEFAULT_SIZE[type]
-  const taken = doc.cardsOn(boardId()).filter((k) => !k.columnId).map((k) => ({ x: k.x, y: k.y, w: k.w, h: cardHeight(k) }))
+  const taken = doc.cardsOn(boardId()).filter((k) => !k.columnId).flatMap((k) => { const rect = rectOf(k.id); return rect ? [rect] : [] })
   const spot = findFreeSpot({ x: c.x - size.w / 2, y: c.y - 20, w: size.w, h: size.h }, taken)
   return { at: { x: spot.x + size.w / 2, y: spot.y + 20 } }
 }
@@ -83,7 +87,7 @@ export function Toolbar() {
       useTool(tool.id, () => {
         const place = dragging ? placementAt(ev.clientX, ev.clientY) : centrePlacement(tool.id as CardType)
         // Columns can't nest.
-        return place && tool.id === 'column' && 'columnId' in place ? null : place
+        return place && (tool.id === 'column' || tool.id === 'area') && 'columnId' in place ? null : place
       })
     }
     el.addEventListener('pointermove', move)
