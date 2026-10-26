@@ -227,14 +227,18 @@ describe('comment authorship', () => {
   const existing = { kind: 'comment', author_id: 'u-rex' }
 
   it('stamps the signed-in author on a new comment, whatever the client sent', () => {
-    const p: Record<string, unknown> = { kind: 'comment', text: 'hi', authorId: 'u-fido', author: 'fido' }
+    const p: Record<string, unknown> = { kind: 'comment', text: 'hi', authorId: 'u-fido', author: 'fido', postedAt: 1 }
+    const before = Date.now()
     expect(stampComment(p, undefined, 'comment', rex)).toBeNull()
     expect(p).toMatchObject({ authorId: 'u-rex', author: 'rex' })
+    // Server time, for unread: a device clock can't put a comment in the past or future.
+    expect(p.postedAt).toBeGreaterThanOrEqual(before)
   })
   it('lets the author edit and delete, and never re-assigns authorship', () => {
-    const p: Record<string, unknown> = { text: 'edited', editedAt: 1, deletedAt: 2, authorId: 'u-fido' }
+    const p: Record<string, unknown> = { text: 'edited', editedAt: 1, deletedAt: 2, authorId: 'u-fido', postedAt: 9 }
     expect(stampComment(p, existing, 'comment', rex)).toBeNull()
     expect(p).not.toHaveProperty('authorId')
+    expect(p).not.toHaveProperty('postedAt')
   })
   it("lets anyone resolve a thread or move it with its card, but not edit someone else's words", () => {
     expect(stampComment({ resolvedAt: 5 }, existing, 'comment', fido)).toBeNull()

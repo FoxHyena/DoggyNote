@@ -272,7 +272,8 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   .share-panel,
   .export-panel,
   .save-details,
-  .popover.labels-panel {
+  .popover.labels-panel,
+  .popover.unread-popover {
     position: fixed !important;
     inset: auto 0 var(--vv-bottom, 0px) 0 !important;
     width: auto !important;
@@ -401,7 +402,7 @@ html[data-input='touch'] .toybox-item { touch-action: pan-y; cursor: default; }
 .topbar, .mobile-dock, .selection-bar, .canvas-controls, .trash, .menu, .popover, .dialog, .edit-dock { touch-action: manipulation; }
 
 @media (prefers-reduced-motion: reduce) {
-  .menu, .nav-menu, .share-panel, .export-panel, .save-details, .popover.labels-panel, .trash, .dialog, .selection-bar.docked { animation: none !important; }
+  .menu, .nav-menu, .share-panel, .export-panel, .save-details, .popover.labels-panel, .popover.unread-popover, .trash, .dialog, .selection-bar.docked { animation: none !important; }
 }
 
 /* ---- round 1 visual fixes ---------------------------------------------------- */

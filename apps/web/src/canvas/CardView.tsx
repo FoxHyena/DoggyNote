@@ -11,6 +11,8 @@ import { touch } from '../state/device.ts'
 import { rectOf, worldPosition, layoutTick, registerCardEl } from './layout.ts'
 import * as doc from '../state/doc.ts'
 import { isResolved } from '../state/comments.ts'
+import { unreadLabel, unreadOn } from '../state/unread.ts'
+import '../ui/unread.css'
 import { openThread } from '../ui/CommentsPanel.tsx'
 import { Icon } from '../ui/icons.tsx'
 import { draggingIds, resizingId } from './dnd.ts'
@@ -164,6 +166,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
           classList={{ resolved: isResolved(props.card.id) }}
           data-testid="comment-badge"
           title={isResolved(props.card.id) ? 'Resolved thread' : 'Comments'}
+          aria-label={unreadOn(props.card.id) ? `${unreadLabel(unreadOn(props.card.id))}, ${comments()} in thread` : undefined}
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation()
@@ -172,6 +175,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         >
           <Icon size={13} name="comment" />
           {comments()}
+          <Show when={unreadOn(props.card.id)}><span class="unread-dot" data-testid="comment-unread" aria-hidden="true" /></Show>
         </button>
       </Show>
       <Show when={!props.readOnly && single() && free() && !isPositionLocked(props.card.id) && props.card.type !== 'board' && !props.lod}>

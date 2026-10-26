@@ -178,6 +178,8 @@ export type Comment = Base & {
   text: string
   editedAt?: number | null
   resolvedAt?: number | null
+  /** Server clock when it arrived (stamped like the author). Unread is measured on it, never on device clocks. */
+  postedAt?: number
 }
 
 /** Independent board overlay. Width is the only size field: intrinsic aspect is immutable. */

@@ -10,6 +10,13 @@ import * as doc from '../state/doc.ts'
 import { BoardIconSvg, Icon } from './icons.tsx'
 import './navigation.css'
 import { installMenu } from './menu.ts'
+import { unreadInside, unreadLabel } from '../state/unread.ts'
+import './unread.css'
+
+/** A dot on a board row when something inside it is unread. */
+function NavUnread(props: { boardId: string }) {
+  return <Show when={unreadInside(props.boardId)}>{(n) => <span class="unread-dot nav-unread" data-testid="nav-unread" role="img" aria-label={unreadLabel(n())} />}</Show>
+}
 
 /** Personal and shared roots are navigation, never synced fake board cards. */
 export function BoardNavigation(props: { renderTrigger?: (state: { open: Accessor<boolean>; toggle: () => void; menuId: string; ref: (el: HTMLButtonElement) => void }) => JSX.Element } = {}) {
@@ -39,14 +46,14 @@ export function BoardNavigation(props: { renderTrigger?: (state: { open: Accesso
         <Show when={phone() && recent().length}>
           <section class="nav-menu-recent" aria-labelledby={`${menuId}-recent-heading`}>
             <strong id={`${menuId}-recent-heading`} class="nav-menu-section-label">Recent</strong>
-            <For each={recent()}>{(id) => <button class="menu-item nav-menu-row" data-testid="recent-board" onClick={() => go(id)}><BoardIconSvg icon={doc.getBoard(id)?.icon ?? 'paw'} size={18} /><span class="nav-menu-label">{boardDisplayTitle(doc.getBoard(id), id.startsWith('home') ? `My ${COPY.home}` : 'Untitled board')}</span></button>}</For>
+            <For each={recent()}>{(id) => <button class="menu-item nav-menu-row" data-testid="recent-board" onClick={() => go(id)}><BoardIconSvg icon={doc.getBoard(id)?.icon ?? 'paw'} size={18} /><span class="nav-menu-label">{boardDisplayTitle(doc.getBoard(id), id.startsWith('home') ? `My ${COPY.home}` : 'Untitled board')}<NavUnread boardId={id} /></span></button>}</For>
           </section>
         </Show>
-        <button class="menu-item nav-menu-row" data-testid="personal-home" onClick={() => go(homeBoardId())}><BoardIconSvg icon="kennel" size={18} /><span class="nav-menu-label">My {COPY.home}</span></button>
-        <Show when={legacyShared()}><div class="nav-menu-group"><button class="menu-item nav-menu-row" data-testid="legacy-space" aria-describedby={`${menuId}-legacy-description`} onClick={() => go('home')}><BoardIconSvg icon="paw" size={18} /><span class="nav-menu-label">Shared space</span></button><p id={`${menuId}-legacy-description`} class="nav-menu-description">Boards everyone from the original group can open and edit.</p></div></Show>
+        <button class="menu-item nav-menu-row" data-testid="personal-home" onClick={() => go(homeBoardId())}><BoardIconSvg icon="kennel" size={18} /><span class="nav-menu-label">My {COPY.home}<NavUnread boardId={homeBoardId()} /></span></button>
+        <Show when={legacyShared()}><div class="nav-menu-group"><button class="menu-item nav-menu-row" data-testid="legacy-space" aria-describedby={`${menuId}-legacy-description`} onClick={() => go('home')}><BoardIconSvg icon="paw" size={18} /><span class="nav-menu-label">Shared space<NavUnread boardId="home" /></span></button><p id={`${menuId}-legacy-description`} class="nav-menu-description">Boards everyone from the original group can open and edit.</p></div></Show>
         <section class="nav-menu-section" aria-labelledby={`${menuId}-shared-heading`}>
           <strong id={`${menuId}-shared-heading`} class="nav-menu-section-label">Shared with me</strong>
-          <Show when={shared().length} fallback={<p class="nav-menu-description">Boards shared with your account will appear here.</p>}><For each={shared()}>{(b) => <button class="menu-item nav-menu-row" data-testid="shared-board-link" onClick={() => go(b.id)}><BoardIconSvg icon={doc.getBoard(b.id)?.icon ?? 'paw'} size={18} /><span class="nav-menu-label">{boardDisplayTitle(doc.getBoard(b.id) ?? { id: b.id }, 'Shared board')}</span><small class="nav-menu-meta">{b.canEdit ? 'Can edit' : 'View only'}</small></button>}</For></Show>
+          <Show when={shared().length} fallback={<p class="nav-menu-description">Boards shared with your account will appear here.</p>}><For each={shared()}>{(b) => <button class="menu-item nav-menu-row" data-testid="shared-board-link" onClick={() => go(b.id)}><BoardIconSvg icon={doc.getBoard(b.id)?.icon ?? 'paw'} size={18} /><span class="nav-menu-label">{boardDisplayTitle(doc.getBoard(b.id) ?? { id: b.id }, 'Shared board')}<NavUnread boardId={b.id} /></span><small class="nav-menu-meta">{b.canEdit ? 'Can edit' : 'View only'}</small></button>}</For></Show>
         </section>
       </div>
     </div></Show>

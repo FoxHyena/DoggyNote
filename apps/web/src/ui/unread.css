@@ -1,0 +1,147 @@
+/* Unread comments (state/unread.ts): one small dot, and the "New for you" list (ui/Unread.tsx). */
+
+/* The dot always wears a ring of the surface behind it, so it reads on the gold badge too. */
+.unread-dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--dn-unread);
+  box-shadow: 0 0 0 2px var(--dn-panel);
+  pointer-events: none;
+}
+
+.comment-badge .unread-dot { top: -4px; right: -4px; }
+
+.board-tile { position: relative; }
+.board-tile .board-unread {
+  top: -3px;
+  right: -3px;
+  width: 12px;
+  height: 12px;
+  box-shadow: 0 0 0 2.5px var(--dn-bg);
+}
+.in-column .board-tile .board-unread { width: 9px; height: 9px; box-shadow: 0 0 0 2px var(--dn-panel); }
+
+.nav-menu-row .nav-unread {
+  position: relative;
+  top: -1px;
+  right: auto;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 6px;
+  vertical-align: middle;
+  box-shadow: none;
+}
+
+/* ---- the top-bar bell ---- */
+
+.unread-bell {
+  position: relative;
+  display: inline-flex;
+}
+.unread-bell .unread-dot { top: -1px; right: -1px; width: 8px; height: 8px; }
+/* The board's name needs the room more: narrower windows keep only the bell and its dot. */
+@media (max-width: 1023px) {
+  .topbar .unread-trigger .icon-btn-label { display: none; }
+}
+
+/* ---- the list ---- */
+
+.popover.unread-popover {
+  width: 340px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+.unread-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 8px 8px;
+}
+html[data-input='touch'] .unread-head .link-btn { min-height: 44px; }
+.unread-head h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.unread-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: min(420px, calc(var(--vv-height, 100dvh) - 160px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.unread-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--dn-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+html[data-input='mouse'] .unread-row:hover,
+.unread-row:focus-visible {
+  background: var(--dn-card-hover);
+}
+
+.unread-row-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.unread-row-who,
+.unread-row-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.unread-row-who { font-size: 13px; line-height: 18px; }
+.unread-row-who strong { font-weight: 600; }
+.unread-row-on { color: var(--dn-text-muted); }
+.unread-row-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+.unread-row-meta { color: var(--dn-text-muted); font-size: 12px; line-height: 16px; }
+
+.unread-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  color: var(--dn-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+html[data-input='mouse'] .unread-row:hover .unread-go { color: var(--dn-text); }
+
+.unread-empty {
+  margin: 0;
+  padding: 4px 8px 10px;
+  color: var(--dn-text-muted);
+  font-size: 13px;
+}

@@ -16,6 +16,7 @@ export const SURFACE_TOKENS = [
   'accent',
   'accentText', // text drawn on top of `accent`
   'selection',
+  'unread', // the small dot on things someone else said that you haven't seen
   'gridDot', // background dots: quiet, but visible
   'scrim', // dims the app behind a phone sheet (translucent)
   'stickerShadow', // hard, offset shadow under placed stickers (translucent)
@@ -43,6 +44,7 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     accent: '#e8a849', // golden retriever
     accentText: '#1c1b1a',
     selection: '#e8a849',
+    unread: '#ee7f6f', // collar coral
     gridDot: '#3d3934',
     scrim: '#0b0a0999',
     stickerShadow: '#00000099',
@@ -66,6 +68,7 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     accent: '#9a5f0c',
     accentText: '#ffffff',
     selection: '#b06c10',
+    unread: '#b0392b',
     gridDot: '#d3cabe',
     scrim: '#2a252159',
     stickerShadow: '#2a252129',
