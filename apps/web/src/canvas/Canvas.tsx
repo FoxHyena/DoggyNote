@@ -280,7 +280,14 @@ export function Canvas(props: { readOnly: boolean }) {
   createEffect(() => {
     const id = touchEditing()
     if (!id) return
-    const onSelection = () => requestAnimationFrame(revealCaret)
+    let selectionFrame = 0
+    const onSelection = () => {
+      cancelAnimationFrame(selectionFrame)
+      // Moving the native selection out from under its handles/menu makes the
+      // browser anchor that menu to stale geometry (often the screen's top).
+      if (hasEditSelection()) { cancelCameraAnimation(); return }
+      selectionFrame = requestAnimationFrame(() => { if (editingId() === id) revealCaret() })
+    }
     document.addEventListener('selectionchange', onSelection)
     // The app never scrolls; iOS scrolling the page to a field slides the grid away.
     const onScroll = () => resetPageScroll()
@@ -332,6 +339,7 @@ export function Canvas(props: { readOnly: boolean }) {
     document.addEventListener('focusout', onFocusOut)
     onCleanup(() => {
       cancelAnimationFrame(blurFrame)
+      cancelAnimationFrame(selectionFrame)
       document.removeEventListener('selectionchange', onSelection)
       window.removeEventListener('scroll', onScroll)
       document.removeEventListener('focusout', onFocusOut)
@@ -344,7 +352,7 @@ export function Canvas(props: { readOnly: boolean }) {
       visibleArea,
       () => {
         const id = editingId()
-        if (!id || !focusEdits()) return
+        if (!id || !focusEdits() || hasEditSelection()) return
         const r = rectOf(id)
         if (movedWhileEditing || !r || doc.getCard(id)?.type === 'swatch') return void requestAnimationFrame(revealCaret)
         const aim = editCamera(r, editRoom(), camera())
@@ -1457,9 +1465,10 @@ export function Canvas(props: { readOnly: boolean }) {
       onDblClick={onDblClick}
       onContextMenu={(e) => {
         // Long-press lifts cards on touch; editing fields keep their native menu.
-        if (lastPointerType === 'touch') { e.preventDefault(); return }
         const target = e.target as Element
-        if (target.closest('input,textarea,[contenteditable="true"],a')) return
+        if (target.closest('input,textarea,[contenteditable="true"],.cm-editor')) return
+        if (lastPointerType === 'touch') { e.preventDefault(); return }
+        if (target.closest('a')) return
         const id = cardIdAt(target, e)
         const card = id ? doc.getCard(id) : undefined
         if (!card && target.closest('button,[data-nodrag]')) return
@@ -1593,6 +1602,12 @@ function caretRect(within: HTMLElement): DOMRect | null {
   return node?.getBoundingClientRect() ?? null
 }
 
+/** A native text range owns its screen position until it collapses again. */
+function hasEditSelection(): boolean {
+  const id = editingId(), el = id ? cardEl(id) : null, range = document.getSelection()
+  return !!el && !!range && !range.isCollapsed && el.contains(range.anchorNode) && el.contains(range.focusNode)
+}
+
 /**
  * How far (screen px, + is down) the caret sits outside the room between the top
  * of the screen and the keyboard, were the camera at `at`. 0 when it's in view.
@@ -1617,6 +1632,7 @@ function caretShift(at: Camera): number {
 
 /** Pan just enough to keep the caret between the top of the screen and the keyboard. */
 function revealCaret() {
+  if (hasEditSelection()) return
   // The edit glide checks again when it lands.
   if (anim) return
   const dy = -caretShift(camera())
