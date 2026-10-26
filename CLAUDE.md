@@ -88,3 +88,15 @@ The version is `0.<minor in version.json>.<run number>`; bump `minor` by hand fo
    - Every touch feature gets a spec in `e2e/mobile-*.spec.ts` (iPhone + Pixel projects) or `tablet-*.spec.ts`; `e2e/touch.ts` drives real taps and multi-finger gestures.
 13. **A deleted comment is private to its author** (the server sets `owner_id`, so others get stubs) until it's restored. Emptying Buried bones wipes its text. Comment authorship is stamped by the server (`stampComment`).
 14. **Admins manage accounts, not other people's boards.** In `loadAccess`, admins own only *ownerless* boards (legacy shared space, boards of removed accounts). Anything else needs a grant, as for anyone. Sign-ins are throttled (`login_failures`). Synced field values are unchecked, so anything rendered from them must survive the wrong type: cards render inside an `ErrorBoundary`, and colours go through `cardColor()`. Review record: `docs/security-review-2026-10.md`.
+15. **Edit in place, not in pop-up dialogs.** Double-clicking a card edits it right there (note text, image caption, sketch), with no separate "Edit" button and no dialog.
+    - Show a control only when it can do something. For example, the align icons appear only when 2+ items are selected.
+    - Prefer standard icons with tooltips over text buttons, dropdowns or groups of buttons: align, theme toggle, Draw vs Sketch.
+    - Keep the selection bar on one line, and put rarely used actions in an overflow menu.
+    - The note editor must space and style text the same as the rendered note.
+
+## Delivery flow
+
+One batch → one agent, one branch, one PR → CI green (`pnpm test` + `pnpm test:e2e`) → a preview for the user → a 10-minute manual check → merge.
+- CI is the test gate. Don't build parallel QA campaigns, evidence fingerprints, leases or heartbeats.
+- UI PRs carry dark/light, desktop/phone screenshots in the PR body (`docs/qa/<feature>/`). Don't run separate per-feature approval rounds or native computer-use runs unless asked.
+- Write status updates in plain sentences.
