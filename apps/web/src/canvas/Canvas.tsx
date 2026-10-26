@@ -68,7 +68,7 @@ import { columnCollapsed, connectionEndpoint, hiddenByColumn } from '../state/co
 import { columnChildren, connect, createCard } from '../state/actions.ts'
 import { CardView } from './CardView.tsx'
 import { LodLayer } from './LodLayer.tsx'
-import { Connections } from './Connections.tsx'
+import { Connections, createConnectionGeometry } from './Connections.tsx'
 import { cardEl, cardHeight, rectOf, setMeasuring } from './layout.ts'
 import { setDropTarget, dropTarget, connectPreview, setConnectPreview, draggingIds, setDraggingIds, resizingId, setResizingId } from './dnd.ts'
 import { snapTick, snapToGrid } from '../state/grid.ts'
@@ -114,6 +114,7 @@ const EDIT_DOCK = 56
 type Client = { clientX: number; clientY: number; altKey?: boolean }
 
 export function Canvas(props: { readOnly: boolean }) {
+  const connectionGeometry = createConnectionGeometry()
   const [contextPoint, setContextPoint] = createSignal<ContextPoint | null>(null)
   let vp!: HTMLDivElement
   const [marquee, setMarquee] = createSignal<Rect | null>(null)
@@ -1549,11 +1550,12 @@ export function Canvas(props: { readOnly: boolean }) {
           <GridGlow />
         </Show>
         <div class="card-layer">
-        <Connections />
+        <Connections geometry={connectionGeometry} />
         <Show when={!lod()}>
           <For each={visible()}>{(c) => <CardView card={c} lod={false} readOnly={props.readOnly} />}</For>
         </Show>
         </div>
+        <Connections geometry={connectionGeometry} foreground />
         <StickerLayer readOnly={props.readOnly} />
       </div>
       <Show when={lod()}>

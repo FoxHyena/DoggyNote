@@ -155,14 +155,21 @@ export function connectorPath(
   to: { rect: Rect; side: Side } | Vec,
   gap = 4,
   arrowGap = 8,
-): { d: string; start: Vec; end: Vec } {
+): { d: string; tail: string; start: Vec; end: Vec } {
   const start = push(sideAnchor(a, sideA), sideA, gap)
   const end = 'rect' in to ? push(sideAnchor(to.rect, to.side), to.side, arrowGap) : to
   const k = Math.max(24, Math.min(160, Math.hypot(end.x - start.x, end.y - start.y) * 0.4))
   const c1 = push(start, sideA, k)
   const c2 = 'rect' in to ? push(end, to.side, k) : end
   const r = (n: number) => Math.round(n * 10) / 10
-  return { d: `M${r(start.x)},${r(start.y)} C${r(c1.x)},${r(c1.y)} ${r(c2.x)},${r(c2.y)} ${r(end.x)},${r(end.y)}`, start, end }
+  const path = (a: Vec, b: Vec, c: Vec, d: Vec) => `M${r(a.x)},${r(a.y)} C${r(b.x)},${r(b.y)} ${r(c.x)},${r(c.y)} ${r(d.x)},${r(d.y)}`
+  // Split the same cubic near its destination, preserving its tangent exactly.
+  // Only this short tail needs to paint above a containing column's background.
+  const t = 'rect' in to ? Math.max(0, 1 - 12 / (3 * k)) : 0.75
+  const mix = (a: Vec, b: Vec): Vec => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t })
+  const ab = mix(start, c1), bc = mix(c1, c2), cd = mix(c2, end)
+  const abc = mix(ab, bc), bcd = mix(bc, cd)
+  return { d: path(start, c1, c2, end), tail: path(mix(abc, bcd), bcd, cd, end), start, end }
 }
 
 // ---- grid ---------------------------------------------------------------------

@@ -1333,6 +1333,9 @@ html[data-input="mouse"] .link-title:hover {
   pointer-events: none;
 }
 
+/* Same stacking level as stickers, inserted before them in the world. */
+.connection-ends { z-index: 1; }
+
 .conn-hit {
   fill: none;
   stroke: transparent;
@@ -1352,7 +1355,7 @@ html[data-input="mouse"] .link-title:hover {
   stroke-linecap: round;
 }
 
-.conn.selected .conn-line {
+.conn.selected .conn-line, .conn-end.selected .conn-line {
   stroke: var(--dn-selection);
   stroke-width: 2.5;
 }
@@ -1375,6 +1378,7 @@ html[data-input="mouse"] .link-title:hover {
 .connections marker path {
   fill: var(--dn-text-muted);
 }
+.connections .conn-arrow-selected path { fill: var(--dn-selection); }
 
 /* ---- floating UI ---------------------------------------------------------- */
 
