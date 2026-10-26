@@ -38,6 +38,7 @@ import downloadSimpleSvg from '@phosphor-icons/core/regular/download-simple.svg?
 import uploadSimpleSvg from '@phosphor-icons/core/regular/upload-simple.svg?raw'
 import arrowCounterClockwiseSvg from '@phosphor-icons/core/regular/arrow-counter-clockwise.svg?raw'
 import infoSvg from '@phosphor-icons/core/regular/info.svg?raw'
+import bookOpenTextSvg from '@phosphor-icons/core/regular/book-open-text.svg?raw'
 import filmStripSvg from '@phosphor-icons/core/regular/film-strip.svg?raw'
 import xCircleSvg from '@phosphor-icons/core/regular/x-circle.svg?raw'
 import dropSvg from '@phosphor-icons/core/regular/drop.svg?raw'
@@ -124,6 +125,7 @@ export const ICONS = {
   upload: body(uploadSimpleSvg),
   restore: body(arrowCounterClockwiseSvg),
   info: body(infoSvg),
+  guides: body(bookOpenTextSvg),
   film: body(filmStripSvg),
   labelOff: body(xCircleSvg),
   droplet: body(dropSvg),

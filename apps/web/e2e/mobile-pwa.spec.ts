@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { setAccountAppearance } from './helpers.ts'
 import { surfaces } from '../../../packages/theme/src/tokens.ts'
 
 // Add to Home Screen: a manifest with icons, a share target and theme colours.
@@ -26,9 +27,7 @@ test('the status bar colour follows the app theme', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByTestId('canvas')).toBeVisible()
   for (const mode of ['Light', 'Dark'] as const) {
-    await page.getByTestId('account').tap()
-    await page.getByRole('radio', { name: mode, exact: true }).tap()
-    await page.keyboard.press('Escape')
+    await setAccountAppearance(page, mode, { tap: true })
     const colours = await page.locator('meta[name=theme-color]').evaluateAll((els) => els.map((e) => e.getAttribute('content')))
     expect(colours.every((c) => c === surfaces[mode === 'Light' ? 'light' : 'dark'].panel)).toBe(true)
   }

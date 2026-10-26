@@ -1,0 +1,91 @@
+{
+  "slug": "collapse-columns",
+  "category": "working-on-boards",
+  "kind": "task",
+  "title": "Collapse columns",
+  "summary": "Make room on your board while keeping a collection of references together.",
+  "status": "draft",
+  "order": 20,
+  "benefit": "Keep nearby work easy to reach without taking apart a reference collection.",
+  "outcome": "A compact heading shows the column title and card count; expanding restores the same cards in the same order.",
+  "prerequisites": [
+    "A board containing a column."
+  ],
+  "sections": [
+    {
+      "id": "make-room",
+      "title": "Make room for nearby work",
+      "paragraphs": [
+        "Collapse a column when you want its contents out of the way. For example, keep twenty scene references together while arranging a few notes beside them. Collapsing does not delete cards or move them out of the column."
+      ],
+      "flow": {
+        "entry": "Find the arrow at the left of the column heading.",
+        "steps": [
+          {
+            "action": "Click the arrow to collapse the column.",
+            "result": "The cards disappear from the canvas. The title and card count remain in place."
+          },
+          {
+            "action": "Arrange nearby material as usual.",
+            "result": "Nearby cards move independently. Hidden members cannot be picked or dragged accidentally."
+          },
+          {
+            "action": "Click the arrow again to expand the column.",
+            "result": "The same cards return in their previous order."
+          }
+        ],
+        "completion": "On an editable board, the last collapsed or expanded state saves with the board and syncs to your other authorized sessions.",
+        "correction": "Use Undo to reverse a collapse or expansion. Redo reapplies it. On Mac, use Command-Z and Shift-Command-Z; in other browsers, use Control-Z and Shift-Control-Z."
+      },
+      "callout": {
+        "title": "Working in the overview",
+        "text": "When zoomed out, select the column and choose Collapse column or Expand column in the selection toolbar. Selecting a single card inside a column also offers Collapse column. With keyboard focus on the heading's arrow, press Space or Enter."
+      }
+    },
+    {
+      "id": "find-hidden-reference",
+      "title": "Find a reference inside a collapsed column",
+      "flow": {
+        "entry": "Open Fetch in the signed-in board interface, or press Command-K on Mac or Control-K in other browsers.",
+        "steps": [
+          {
+            "action": "Search for text in the reference.",
+            "result": "Matching cards appear with their board context."
+          },
+          {
+            "action": "Choose the result for the intended board.",
+            "result": "DoggyNote opens the board, expands the containing column and selects the actual reference among its neighboring cards."
+          }
+        ],
+        "completion": "The column stays expanded so you can continue working in context.",
+        "correction": "Undo reverses the expansion. If the reference was deep in the stack, the collapsed heading comes back into view."
+      }
+    },
+    {
+      "id": "count-and-connections",
+      "title": "Understand the count and connections",
+      "paragraphs": [
+        "The count includes live cards directly inside the column. A nested board counts as one card; its contents belong to that board and are not added to the count. Trashed cards are excluded.",
+        "A dashed connection leading to a collapsed heading points to a hidden member. Expanding restores the connection to its original card. Connections between members of the same collapsed column stay hidden until expansion."
+      ]
+    },
+    {
+      "id": "reopen-and-correct",
+      "title": "Reopen your work",
+      "paragraphs": [
+        "In an editable board, reopening restores the saved collapsed or expanded state. If you work offline, the change waits on this device until reconnection. Check Save status if it has not synced.",
+        "A position lock still allows the column to expand or collapse. Its layout lock continues to protect its position."
+      ]
+    },
+    {
+      "id": "view-and-export",
+      "title": "View and export columns",
+      "paragraphs": [
+        "In a view-only board or public share, expand and collapse columns to explore. Those presentation changes apply only to your current session and do not change the owner's saved state. Public share viewers use the heading's arrow; Fetch is available in the signed-in board interface.",
+        "PNG export follows the current visible view. A collapsed column exports its heading and count. Expand it before exporting to include the cards. Hidden cards remain in the board document."
+      ]
+    }
+  ],
+  "related": [],
+  "links": []
+}

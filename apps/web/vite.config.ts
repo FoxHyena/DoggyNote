@@ -3,6 +3,7 @@ import solid from 'vite-plugin-solid'
 // Relative, so the config bundler compiles it (the workspace package is TS source).
 import { surfaces } from '../../packages/theme/src/tokens.ts'
 import { COPY } from '../../packages/theme/src/copy.ts'
+import { docsContentPlugin } from './scripts/docs-content.mjs'
 
 // e2e runs its own Worker on another port (see playwright.config.ts), so it never
 // talks to a dev Worker that happens to be running.
@@ -59,7 +60,7 @@ function homeScreen(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [solid(), homeScreen()],
+  plugins: [solid(), homeScreen(), docsContentPlugin()],
   // The Worker (wrangler dev) serves /api in development and e2e.
   server: { proxy: { '/api': { target: api, ws: true } } },
   preview: { proxy: { '/api': { target: api, ws: true } } },

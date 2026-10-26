@@ -312,6 +312,9 @@ html[data-input="mouse"] .trash-item:hover {
 /* Sign-in problems read as a note under the fields, not a red slab. */
 .login-card .form-error { padding: 0; background: none; color: var(--dn-error-text); font-size: 13px; line-height: 1.5; }
 .login-hint { margin: -8px 0 0; color: var(--dn-text-muted); font-size: 13px; line-height: 1.5; }
+.login-guides { margin: 0; text-align: center; font-size: 13px; line-height: 1.5; }
+.login-guides a { display: inline-block; padding: 4px 8px; color: var(--dn-text-muted); text-underline-offset: 3px; }
+html[data-input="mouse"] .login-guides a:hover, .login-guides a:focus-visible { color: var(--dn-text); }
 
 .login-card input:focus {
   outline: 2px solid var(--dn-selection);

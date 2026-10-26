@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test'
-import { freshBoard } from './helpers.ts'
+import { freshBoard, setAccountAppearance } from './helpers.ts'
 
 const widths = [1440, 1024, 720, 600, 360]
 const now = Date.now()
@@ -49,9 +49,7 @@ async function shot(page: Page, info: TestInfo, name: string) {
   await page.screenshot({ path: info.outputPath(name), fullPage: true })
 }
 async function appearance(page: Page, theme: 'light' | 'dark') {
-  await page.getByTestId('account').click()
-  await page.getByRole('dialog', { name: 'Account', exact: true }).getByRole('radio', { name: theme === 'light' ? 'Light' : 'Dark', exact: true }).click()
-  await page.keyboard.press('Escape')
+  await setAccountAppearance(page, theme === 'light' ? 'Light' : 'Dark')
 }
 async function openAccountPanel(page: Page, testId: string) {
   await page.getByTestId('account').click()

@@ -1,5 +1,5 @@
 import { expect, test, type Locator } from '@playwright/test'
-import { cardByText, freshBoard, postSync, pullAllObjects, waitForSync } from './helpers.ts'
+import { cardByText, freshBoard, postSync, pullAllObjects, setAccountAppearance, waitForSync } from './helpers.ts'
 
 export function iconChecks() {
   test('board icon choices keep their saved IDs and unknown icons fall back safely', async ({ page }, info) => {
@@ -40,10 +40,8 @@ export function iconChecks() {
   test('theme-aware icons retain their names and geometry offline', async ({ page, context }, info) => {
     await freshBoard(page)
     const press = (el: Locator) => info.project.use.hasTouch ? el.tap() : el.click()
-    for (const appearance of ['Light', 'Dark']) {
-      await press(page.getByTestId('account'))
-      await press(page.getByRole('radio', { name: appearance, exact: true }))
-      await page.keyboard.press('Escape')
+    for (const appearance of ['Light', 'Dark'] as const) {
+      await setAccountAppearance(page, appearance, { tap: !!info.project.use.hasTouch })
       const account = page.getByTestId('account')
       await expect(account).toHaveAccessibleName('Account')
       await expect(account.locator('svg')).toHaveAttribute('aria-hidden', 'true')
