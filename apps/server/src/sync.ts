@@ -5,7 +5,7 @@ import { accessGuard, bumpAccess, loadAccess, newBoardAccess, type Access } from
 import { prepareNote } from './notes.ts'
 import { checkPositionLocks, dropLockedLayout, positionWriteGuards } from './position.ts'
 import { notifyRooms } from './realtime.ts'
-import { LABEL_FIELD, validLabelField, decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
+import { CARD_TYPES, LABEL_FIELD, validLabelField, decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
 import * as Y from 'yjs'
 
 // Push: field patches, merged per top-level field (last write to arrive wins).
@@ -326,7 +326,7 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
       if (typeof board !== 'string' || next.get(board)?.kind !== 'board' || !editable(board)) ok = false
       if (prev && (typeof prev.data.boardId !== 'string' || !editable(prev.data.boardId))) ok = false
       if (o.kind === 'card') {
-        if (!['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie', 'swatch'].includes(o.type as string)) ok = false
+        if (!(CARD_TYPES as readonly unknown[]).includes(o.type)) ok = false
         // A colour card's HEX goes straight into CSS on every device: only canonical #RRGGBB.
         if (o.type === 'swatch' && !o.purged) { const hex = (o.content as { hex?: unknown } | undefined)?.hex; if (normalizeSwatchHex(hex) !== hex) ok = false }
         if (o.type === 'column' && o.columnId != null) ok = false

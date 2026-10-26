@@ -80,6 +80,8 @@ export async function acceptSession(res: { user: User; token?: string }): Promis
 }
 
 export async function logout() {
+  const { finishChatRunsBeforeLogout } = await import('./chats.ts')
+  await finishChatRunsBeforeLogout()
   try {
     await api('/api/auth/logout', { method: 'POST', json: {} })
   } catch {

@@ -1,3 +1,5 @@
+import { ChatPanel } from './ui/ChatPanel.tsx'
+import { openChatFromLocation, startChatRuntime } from './state/chats.ts'
 import { StickerTray } from './ui/StickerTray.tsx'
 import { Collaborators } from './ui/Collaboration.tsx'
 import { StickerControls } from './ui/StickerControls.tsx'
@@ -91,6 +93,7 @@ function EditorApp() {
       if (isTauri) void import('@tauri-apps/api/event').then(({ listen }) => listen('toybox-captured', () => void syncNow()))
       // Permissions and the personal home are established before showing cached content.
       await first
+      void startChatRuntime().catch(() => {})
       doc.setWriteGuard((object) => canEditBoard(object.kind === 'board' ? object.id : object.boardId))
       if (!location.hash && boardId() === 'home' && !localStorage.getItem('doggynote.lastBoard')) openBoard(homeBoardId())
       // The remembered board may have been deleted. Only decide once the first
@@ -100,6 +103,7 @@ function EditorApp() {
         migrateNotesToMarkdown()
         ensureToybox()
         openLaunchIntent()
+        openChatFromLocation()
       })
     }
     setSignedOut(false)
@@ -182,6 +186,7 @@ function EditorApp() {
         <Show when={paletteOpen()}>
           <FetchPalette />
         </Show>
+        <ChatPanel />
         <EditDock />
         <ExitSaveDialog />
         <Diagnostics />

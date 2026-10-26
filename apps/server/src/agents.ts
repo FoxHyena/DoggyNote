@@ -199,7 +199,7 @@ agents.get('/agent-connection-boards', requireUser, async (c) => {
 })
 
 agents.get('/agent-connections', requireUser, async (c) => {
-  const { results } = await c.env.DB.prepare('SELECT id,name,mode,board_ids,created_at,expires_at,revoked_at,last_used_at FROM agent_credentials WHERE user_id=?1 ORDER BY created_at DESC').bind(c.get('user').id).all<Record<string, unknown>>()
+  const { results } = await c.env.DB.prepare('SELECT id,name,mode,board_ids,created_at,expires_at,revoked_at,last_used_at FROM agent_credentials WHERE user_id=?1 AND origin IS NULL ORDER BY created_at DESC').bind(c.get('user').id).all<Record<string, unknown>>()
   return c.json({ connections: results.map((r) => ({ id: r.id, name: r.name, mode: r.mode, boardIds: JSON.parse(r.board_ids as string), createdAt: r.created_at, expiresAt: r.expires_at, revokedAt: r.revoked_at, lastUsedAt: r.last_used_at })) })
 })
 agents.post('/agent-connections', requireUser, async (c) => {

@@ -31,6 +31,9 @@ test.beforeEach(async ({ page }) => {
         if (cmd === 'plugin:updater|download') return 2
         if (cmd === 'plugin:updater|install' || cmd === 'plugin:process|restart' || cmd === 'plugin:resources|close' || cmd === 'haptic') return null
         if (cmd === 'get_token') return keychain.token
+        // This fixture has no provider children; session lifecycle still calls
+        // the native execution barrier before removing or replacing credentials.
+        if (cmd === 'chat_stop_all' || cmd === 'chat_begin_session') return null
         if (cmd === 'set_token') {
           keychain.token = String(args?.token)
           sessionStorage.setItem('fake-keychain', keychain.token)

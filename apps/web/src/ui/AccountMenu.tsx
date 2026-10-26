@@ -1,6 +1,7 @@
 import { SheetGrip } from './SheetGrip.tsx'
 import './navigation.css'
 import { Show, createEffect, createSignal, createUniqueId, onCleanup } from 'solid-js'
+import { showToast } from '../state/toast.ts'
 import { logout, user } from '../state/session.ts'
 import { Icon } from './icons.tsx'
 import { AdminDashboard } from './AdminDashboard.tsx'
@@ -111,7 +112,7 @@ export function AccountMenu(props: ThemeChoicesProps) {
           </Show>
           <button class="menu-item" data-testid="manage-agents" onClick={() => { close(); setAgents(true) }}>Agent connections</button>
           <button class="menu-item" data-testid="about" onClick={() => { close(); setAbout(true) }}>About &amp; credits</button>
-          <button class="menu-item" data-testid="sign-out" onClick={() => { close(); void logout() }}>
+          <button class="menu-item" data-testid="sign-out" onClick={() => { close(); void logout().catch((error) => showToast(error instanceof Error ? error.message : 'Could not stop local work. Try signing out again.')) }}>
             Sign out
           </button>
         </div>

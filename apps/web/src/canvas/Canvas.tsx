@@ -1029,6 +1029,7 @@ export function Canvas(props: { readOnly: boolean }) {
     const g = gesture
     // A second tap held still is a slide-zoom waiting to happen, not a lift.
     if (g?.kind !== 'tpress' || props.readOnly || zoomArm) return
+    if (g.nodrag && g.target.closest('.chat-note, .chat-preview')) return
     capture(g.pointerId)
     haptic('lift')
     pawAt(g.last)
@@ -1073,6 +1074,15 @@ export function Canvas(props: { readOnly: boolean }) {
       return
     }
     if (g.kind === 'tpress') {
+      const scroller = g.nodrag ? g.target.closest<HTMLElement>('.chat-messages, .chat-context, .chat-task-draft, .chat-preview') : null
+      if (scroller) {
+        if (Math.hypot(e.clientX - g.start.x, e.clientY - g.start.y) > TOUCH_SLOP) {
+          clearTimeout(g.timer)
+          scroller.scrollTop -= e.clientY - g.last.y
+        }
+        g.last = { x: e.clientX, y: e.clientY }
+        return
+      }
       g.last = { x: e.clientX, y: e.clientY }
       if (Math.hypot(e.clientX - g.start.x, e.clientY - g.start.y) <= TOUCH_SLOP) return
       clearTimeout(g.timer)
@@ -1266,6 +1276,8 @@ export function Canvas(props: { readOnly: boolean }) {
   let wheelAcc = { dx: 0, dy: 0, zoom: 1, anchor: { x: 0, y: 0 } }
   let wheelFrame = 0
   function onWheel(e: WheelEvent) {
+    // The conversation is a scrollable note. Modified wheel gestures still zoom the board.
+    if (!e.ctrlKey && !e.metaKey && (e.target as Element)?.closest('.chat-messages, .chat-context, .chat-task-draft, .chat-preview, .chat-composer textarea')) return
     e.preventDefault()
     cancelCameraAnimation()
     stopMomentum()

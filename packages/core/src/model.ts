@@ -8,7 +8,7 @@ import type { Side } from './geometry.ts'
 export type Id = string
 
 /** Every card type this build can draw. Anything else came from a newer app (see cardtext.ts). */
-export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie', 'swatch'] as const
+export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie', 'swatch', 'chat'] as const
 export type CardType = (typeof CARD_TYPES)[number]
 export const isKnownCardType = (t: unknown): t is CardType => (CARD_TYPES as readonly unknown[]).includes(t)
 
@@ -26,6 +26,8 @@ export type RichNode = {
 export type TodoItem = { id: Id; text: string; done: boolean; doneAt?: number | null }
 
 export type CardContent = {
+  /** Conversation bodies live behind the chat API, never in syncable card fields. */
+  chat: { title: string; provider: 'claude' | 'codex' }
   /** Markdown source. `doc` is the pre-markdown format, migrated on load (see noteMarkdown). */
   note: { md: string; doc?: RichDoc }
   /**
@@ -135,6 +137,8 @@ export type Connection = Base & {
   fromSide?: Side | null
   toSide?: Side | null
   arrow: 'end' | 'none'
+  /** Explicit, directional source → chat link. Ordinary lines never supply context. */
+  purpose?: 'context' | null
 }
 
 /**
@@ -190,6 +194,7 @@ export const DEFAULT_SIZE: Record<CardType, { w: number; h: number }> = {
   file: { w: 260, h: 72 },
   movie: { w: 220, h: 370 },
   swatch: { w: 200, h: 190 },
+  chat: { w: 380, h: 520 },
 }
 
 export const isAlive = (o: Obj | undefined): boolean => !!o && !o.purged && !o.deletedAt

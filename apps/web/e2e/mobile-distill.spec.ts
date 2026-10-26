@@ -9,10 +9,12 @@ test('Add uses one aligned compact button grid with three leading cards', async 
   await sheet.evaluate(el => Promise.all(el.getAnimations().map(a => a.finished.catch(() => undefined))))
   await expect(sheet.locator('.add-primary button')).toHaveText(['Note', 'To-do', 'Board'])
   await expect(sheet.locator('.add-primary-note')).toHaveCount(1)
-  await expect(sheet.getByRole('menuitem')).toHaveCount(12)
+  await expect(sheet.getByRole('menuitem')).toHaveCount(13)
+  await expect(sheet.getByTestId('add-chat')).toBeVisible()
   for (const width of [page.viewportSize()!.width, 320]) {
     await page.setViewportSize({ width, height: page.viewportSize()!.height })
-    expect((await sheet.boundingBox())!.height).toBeLessThanOrEqual(290)
+    // Chat adds a fifth 44px row plus the existing 4px inter-row gap.
+    expect((await sheet.boundingBox())!.height).toBeLessThanOrEqual(338)
     const boxes = []
     for (const button of await sheet.getByRole('menuitem').all()) {
       const box = (await button.boundingBox())!

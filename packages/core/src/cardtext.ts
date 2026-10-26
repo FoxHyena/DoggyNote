@@ -23,7 +23,7 @@ export const cardText = (c: Card): string => guarded(() => rawCardText(c), '')
 /** A one-line name for a card. `boardTitle` names the board a board card opens. */
 export const cardLabel = (c: Card, boardTitle: (boardId: Id) => string): string => guarded(() => rawCardLabel(c, boardTitle), 'Card')
 
-const KIND: Record<string, string> = { note: 'Note', todo: 'To-do list', board: 'Board', image: 'Image', link: 'Link', column: 'Column', file: 'File', movie: 'Movie', swatch: 'Colour' }
+const KIND: Record<string, string> = { chat: 'Chat', note: 'Note', todo: 'To-do list', board: 'Board', image: 'Image', link: 'Link', column: 'Column', file: 'File', movie: 'Movie', swatch: 'Colour' }
 
 /** What a screen reader says for a card: its kind, then its name ("Note: Trip to the coast"). */
 export const cardSpokenName = (c: Card, boardTitle: (boardId: Id) => string): string => guarded(() => {
@@ -34,6 +34,8 @@ export const cardSpokenName = (c: Card, boardTitle: (boardId: Id) => string): st
 
 function rawCardText(c: Card): string {
   switch (c.type) {
+    case 'chat':
+      return (c as Card<'chat'>).content.title
     case 'note':
       return mdToText(noteMarkdown(c as Card<'note'>))
     case 'todo': {
@@ -63,6 +65,8 @@ function rawCardText(c: Card): string {
 
 function rawCardLabel(c: Card, boardTitle: (boardId: Id) => string): string {
   switch (c.type) {
+    case 'chat':
+      return (c as Card<'chat'>).content.title || 'Conversation'
     case 'note':
       return mdToText(noteMarkdown(c as Card<'note'>)).split('\n')[0] || 'Empty note'
     case 'todo': {

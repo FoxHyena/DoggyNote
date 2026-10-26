@@ -6,6 +6,7 @@ import { sync } from './sync.ts'
 import { assets } from './assets.ts'
 import { shares } from './shares.ts'
 import { agents } from './agents.ts'
+import { chats } from './chats.ts'
 import { accessRoutes } from './access.ts'
 import { desktop } from './desktop.ts'
 import { isFetchableUrl, proxyImage, unfurl } from './unfurl.ts'
@@ -80,6 +81,7 @@ app.route('/', assets)
 app.route('/', shares)
 app.route('/', accessRoutes)
 app.route('/', agents)
+app.route('/', chats)
 app.route('/', realtime)
 app.route('/', desktop)
 

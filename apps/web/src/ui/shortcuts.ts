@@ -1,3 +1,4 @@
+import { openChat } from '../state/chats.ts'
 import type { Card } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
 import { nudgeSelection } from '../state/position.ts'
@@ -106,7 +107,8 @@ export function installShortcuts(opts: { readOnly: boolean }) {
       if (c) {
         e.preventDefault()
         // Enter does what a double-click does: edit a card, open a board. Rename is in the bar.
-        if (c.type === 'board') openBoard((c as Card<'board'>).content.boardId)
+        if (c.type === 'chat') openChat(c.id)
+        else if (c.type === 'board') openBoard((c as Card<'board'>).content.boardId)
         else beginEdit(id)
       }
     }

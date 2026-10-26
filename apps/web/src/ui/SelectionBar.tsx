@@ -1,3 +1,5 @@
+import { askSelection } from './chatActions.ts'
+import { openChatId } from '../state/chats.ts'
 import './canvas-entry.css'
 import { For, Show, createEffect, createMemo, createSignal, onCleanup } from 'solid-js'
 import { ALIGNMENTS, DEFAULT_SWATCH_HEX, type Alignment, type BoardIcon, type Card } from '@doggynote/core'
@@ -37,7 +39,7 @@ export function SelectionBar() {
   // While typing in a to-do list, its colour and list options stay within reach
   // above it (touch has the docked bar instead).
   const editingList = () => !docked() && doc.getCard(editingId() ?? '')?.type === 'todo'
-  const show = () => !cardContextOpen() && (cards().length || conns().length) && !draggingIds().size && (!editingId() || editingList()) && !connectMode()
+  const show = () => !(selection().size === 1 && selection().has(openChatId() ?? '')) && !cardContextOpen() && (cards().length || conns().length) && !draggingIds().size && (!editingId() || editingList()) && !connectMode()
   createEffect(() => { if (!show() || !phone()) setPanel(null) })
   const sole = () => (cards().length === 1 && selection().size === 1 ? cards()[0] : undefined)
   const editable = () => {
@@ -190,6 +192,9 @@ export function SelectionBar() {
         style={docked() ? undefined : { left: `${pos().left}px`, top: `${pos().top}px` }}
         onPointerDown={(e) => e.stopPropagation()}
       >
+        <Show when={cards().length && cards().every((c) => ['note','todo'].includes(c.type)) && writable()}>
+          <button class="bar-btn" data-testid="ask-selection" onClick={() => askSelection(cards().map((c) => c.id))}>Ask about selection</button>
+        </Show>
         <Show when={phone()} fallback={<>
         <Show when={cards().length && !editingList()}>
           <Show when={writable() && positionRow()}>

@@ -3,6 +3,7 @@ import './canvas-entry.css'
 import { For, Show, createSignal } from 'solid-js'
 import { DEFAULT_SIZE, findFreeSpot, screenToWorld, type CardType, type Vec } from '@doggynote/core'
 import { cardHeight } from '../canvas/layout.ts'
+import { frameChat } from '../canvas/chatViewport.ts'
 import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { appendOrder, createCard, type Placement } from '../state/actions.ts'
@@ -16,6 +17,7 @@ export const TOOLS: Tool[] = [
   { id: 'note', label: 'Note', icon: 'note' },
   { id: 'todo', label: 'To-do', icon: 'todo' },
   { id: 'board', label: 'Board', icon: 'board' },
+  { id: 'chat', label: 'Chat', icon: 'comment' },
   { id: 'link', label: 'Link', icon: 'link' },
   { id: 'line', label: 'Line', icon: 'line' },
   { id: 'column', label: 'Column', icon: 'column' },
@@ -32,7 +34,7 @@ export function centrePlacement(type: CardType = 'note'): Placement {
   const c = screenToWorld(camera(), { x: v.width / 2, y: v.height / 2.6 })
   const size = DEFAULT_SIZE[type]
   const taken = doc.cardsOn(boardId()).filter((k) => !k.columnId).map((k) => ({ x: k.x, y: k.y, w: k.w, h: cardHeight(k) }))
-  const spot = findFreeSpot({ x: c.x - size.w / 2, y: c.y - 20, w: size.w, h: size.h }, taken)
+  const spot = findFreeSpot({ x: c.x - size.w / 2, y: c.y - (type === 'chat' ? size.h / 2 : 20), w: size.w, h: size.h }, taken)
   return { at: { x: spot.x + size.w / 2, y: spot.y + 20 } }
 }
 
@@ -73,7 +75,8 @@ export function Toolbar() {
       if (!place) return
       // Columns can't nest.
       if (tool.id === 'column' && 'columnId' in place) return
-      createCard(tool.id, place)
+      const id = createCard(tool.id, place)
+      if (tool.id === 'chat' && !dragging) frameChat(id)
     }
     el.addEventListener('pointermove', move)
     el.addEventListener('pointerup', up)
@@ -95,7 +98,10 @@ export function Toolbar() {
                   onClick={(e) => {
                     if (e.detail !== 0) return
                     if (t.id === 'line') setConnectMode(connectMode() ? null : { from: null })
-                    else createCard(t.id, centrePlacement(t.id))
+                    else {
+                      const id = createCard(t.id, centrePlacement(t.id))
+                      if (t.id === 'chat') frameChat(id)
+                    }
                   }}
                   title={t.id === 'line' ? 'Line: click two cards to connect them' : `${t.label}: click to add, or drag onto the board`}
                   onPointerDown={(e) => onToolPointerDown(e, t)}
