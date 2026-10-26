@@ -8,7 +8,8 @@ export const categories = {
   reference: 'Reference',
 } as const
 export type DocLink = { label: string; href: string }
-export type Figure = { src: string; alt: string; caption: string; width: number; height: number }
+/** `darkSrc` is the same shot in the dark theme, at the same size; readers see the one matching their appearance. */
+export type Figure = { src: string; darkSrc?: string; alt: string; caption: string; width: number; height: number }
 export type Section = {
   id: string; title: string; paragraphs?: string[]; links?: DocLink[]
   callout?: { title: string; text: string }
@@ -18,7 +19,7 @@ export type Section = {
 export type Article = {
   slug: string; category: keyof typeof categories; kind: 'task' | 'explanation' | 'reference'
   title: string; summary: string; status: 'draft' | 'published'; order: number
-  benefit: string; outcome: string; prerequisites?: string[]; sections: Section[]; related: string[]; links?: DocLink[]
+  benefit: string; outcome: string; prerequisites?: string[]; keywords?: string[]; sections: Section[]; related: string[]; links?: DocLink[]
 }
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -29,7 +30,7 @@ const list = (value: unknown): value is unknown[] => Array.isArray(value) && val
 export function validateArticle(value: unknown): asserts value is Article {
   function require(ok: unknown, message: string): asserts ok { if (!ok) throw new Error(message) }
   require(record(value), 'Article must be an object')
-  const fields = ['slug', 'category', 'kind', 'title', 'summary', 'status', 'order', 'benefit', 'outcome', 'prerequisites', 'sections', 'related', 'links']
+  const fields = ['slug', 'category', 'kind', 'title', 'summary', 'status', 'order', 'benefit', 'outcome', 'prerequisites', 'keywords', 'sections', 'related', 'links']
   require(Object.keys(value).every(k => fields.includes(k)), 'Unknown article field')
   for (const key of ['slug', 'title', 'summary', 'benefit', 'outcome']) require(text(value[key]), `${key} is required`)
   require(slugPattern.test(value.slug as string), 'Invalid slug')
@@ -40,6 +41,8 @@ export function validateArticle(value: unknown): asserts value is Article {
   require((value.title as string).length <= 120 && (value.summary as string).length <= 240, 'Title/summary too long')
   const strings = (v: unknown) => list(v) && v.every(text)
   if (value.prerequisites !== undefined) require(strings(value.prerequisites), 'prerequisites must contain text')
+  // Other words people search with, such as "color" or "photo"; never shown.
+  if (value.keywords !== undefined) require(strings(value.keywords), 'keywords must contain text')
   const links = (v: unknown) => Array.isArray(v) && v.every(l => record(l) && text(l.label) && text(l.href) && (/^https:\/\/[^\s]+$/.test(l.href) || /^\/docs(?:\/[a-z0-9-]+)?(?:#[a-z0-9-]+)?$/.test(l.href)))
   if (value.links !== undefined) require(links(value.links), 'Invalid links (use /docs links or https)')
   require(Array.isArray(value.related) && value.related.every(s => text(s) && slugPattern.test(s)), 'related must contain slugs')
@@ -63,7 +66,10 @@ export function validateArticle(value: unknown): asserts value is Article {
     if (section.figures !== undefined) {
       require(list(section.figures), 'figures must not be empty')
       for (const f of section.figures) {
-        require(record(f) && text(f.src) && new RegExp(`^/docs/assets/${value.slug}/[a-z0-9-]+\\.(png|webp)$`).test(f.src), 'Figure must use canonical article asset path')
+        const asset = new RegExp(`^/docs/assets/${value.slug}/[a-z0-9-]+\\.(png|webp)$`)
+        require(record(f) && text(f.src) && asset.test(f.src), 'Figure must use canonical article asset path')
+        require(Object.keys(f).every(k => ['src','darkSrc','alt','caption','width','height'].includes(k)), 'Unknown figure field')
+        if (f.darkSrc !== undefined) require(text(f.darkSrc) && asset.test(f.darkSrc) && f.darkSrc !== f.src, 'darkSrc must be a separate canonical article asset')
         require(text(f.alt) && text(f.caption), 'Figure alt/caption required')
         require(Number.isInteger(f.width) && Number.isInteger(f.height) && (f.width as number) > 0 && (f.height as number) > 0 && (f.width as number) <= 1600, 'Figure dimensions required; max width 1600'); figures++
       }

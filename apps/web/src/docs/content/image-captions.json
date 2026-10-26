@@ -1,0 +1,55 @@
+{
+  "slug": "image-captions",
+  "category": "research-media",
+  "kind": "task",
+  "title": "Caption a picture",
+  "summary": "Type a caption right under a picture, so you remember why you saved it.",
+  "status": "published",
+  "order": 210,
+  "benefit": "A board full of pictures still makes sense when you come back to it weeks later.",
+  "outcome": "Your picture has a caption underneath it that travels with it around the board and turns up in Fetch.",
+  "prerequisites": ["A picture on a board you can edit."],
+  "keywords": ["image", "photo", "picture", "alt text", "description"],
+  "sections": [
+    {
+      "id": "why-captions",
+      "title": "Keep the note with the picture",
+      "paragraphs": [
+        "A caption sits under the picture, on the same card. Move or resize the picture and the caption comes with it.",
+        "For example, caption a photo of a harbour café with Harbour café: water bowls outside, dogs welcome on the terrace, then drop it next to your other ideas for the weekend."
+      ]
+    },
+    {
+      "id": "add-a-caption",
+      "title": "Add a caption",
+      "flow": {
+        "entry": "Find the picture on your board.",
+        "steps": [
+          { "action": "Double-click the picture. On a touch screen, tap it once to select it, then double-tap it.", "result": "A text box opens under the picture, saying “Add a caption…”." },
+          { "action": "Type the caption. Press Enter to start a new line if you want more than one.", "result": "The text appears under the picture as you type, in the same size it will have on the card." },
+          { "action": "Press Escape, press ⌘Enter (Ctrl+Enter on Windows), or click anywhere else on the board.", "result": "The caption is saved under the picture." }
+        ],
+        "completion": "The caption saves as you type and syncs to everyone on the board. It stays with the picture when you move it, copy it or reopen the board.",
+        "correction": "Double-click the picture again to change the caption. Delete all the text to remove it. Undo after you finish puts the caption back how it was."
+      },
+      "figures": [{
+        "src": "/docs/assets/image-captions/typing-a-caption.png",
+        "darkSrc": "/docs/assets/image-captions/typing-a-caption-dark.png",
+        "alt": "Two photos side by side. The first, a beach at sunset, is captioned Dog-friendly beach north of the pier. The second, a harbour with sailing boats, is selected and its caption reads Harbour café: water bowls outside, dogs welcome on the terrace.",
+        "caption": "Typing a caption under the harbour photo. The beach photo already has one.",
+        "width": 1312,
+        "height": 598
+      }]
+    },
+    {
+      "id": "find-and-share",
+      "title": "Find pictures by their captions",
+      "paragraphs": [
+        "Fetch searches captions, so typing café finds the harbour photo on any board you can open. The caption is also what screen readers announce for the picture.",
+        "People with view-only access, including anyone with a share link, see captions but can't change them. Export PNG in the board's … menu includes captions in the picture."
+      ]
+    }
+  ],
+  "related": ["colour-cards", "draw-on-a-board"],
+  "links": []
+}

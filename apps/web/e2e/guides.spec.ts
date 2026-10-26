@@ -1,5 +1,10 @@
-import { expect, test } from '@playwright/test'
+import { readdirSync, readFileSync } from 'node:fs'
+import { expect, test, type Page } from '@playwright/test'
 import { chooseAppearance } from './helpers.ts'
+
+type Guide = { slug: string; title: string; status: string; sections: { id: string; figures?: unknown[] }[] }
+const CONTENT = 'src/docs/content'
+const published = readdirSync(CONTENT).filter((f) => f.endsWith('.json')).map((f) => JSON.parse(readFileSync(`${CONTENT}/${f}`, 'utf8')) as Guide).filter((g) => g.status === 'published')
 
 // The guides are public: every test here reads them signed out.
 test.use({ storageState: { cookies: [], origins: [] } })
@@ -24,7 +29,7 @@ test('search, open a guide, jump to a section, follow a related guide and go bac
   await expect(page.getByRole('heading', { name: 'No scent of that one.' })).toBeVisible()
   await expect(page.getByRole('status')).toHaveText('0 guides')
   await page.getByRole('button', { name: 'Clear search' }).click()
-  await expect(page.getByRole('status')).toHaveText('2 guides')
+  await expect(page.getByRole('status')).toHaveText(`${published.length} guides`)
   await search.fill('Find your way')
   await expect(page.locator('.docs-guide-row')).toHaveCount(1)
   await page.locator('.docs-guide-row').click()
@@ -40,6 +45,53 @@ test('search, open a guide, jump to a section, follow a related guide and go bac
   await page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', { name: 'Guides' }).click()
   await expect(page.getByRole('heading', { name: 'All guides' })).toBeVisible()
 })
+
+test('browsing groups the guides by topic; a search ranks title matches first and matches word starts', async ({ page }) => {
+  await page.goto('/docs')
+  const main = page.locator('#docs-main')
+  for (const topic of ['Getting started', 'Working on boards', 'Research & media', 'Writing & drawing', 'Reference']) await expect(main.getByRole('heading', { name: topic, level: 3 })).toBeVisible()
+  await expect(main.locator('.docs-guide-row')).toHaveCount(published.length)
+  const search = page.getByRole('searchbox', { name: 'Sniff out a guide' })
+  // Other words for the same thing, and words from the steps, find guides too.
+  await search.fill('color')
+  await expect(main.locator('.docs-guide-row').first()).toContainText('Keep exact colours on your board')
+  await search.fill('undo')
+  await expect(main.locator('.docs-guide-row')).not.toHaveCount(0)
+  await search.fill('sketch')
+  await expect(main.locator('.docs-guide-row').first()).toContainText('Draw a sketch card')
+  await expect(main.getByRole('heading', { name: 'Search results' })).toBeVisible()
+  // A word start, not any substring: "pen" isn't in "open".
+  await search.fill('pen')
+  await expect(main.locator('.docs-guide-row', { hasText: 'Fold a column away' })).toHaveCount(0)
+})
+
+/** Scroll each screenshot into view (they load lazily) and check the one shown has really loaded. */
+async function expectFiguresLoaded(page: Page, guide: Guide) {
+  const figures = page.locator('.docs-section figure')
+  await expect(figures).toHaveCount(guide.sections.reduce((n, s) => n + (s.figures?.length ?? 0), 0))
+  for (const figure of await figures.all()) {
+    await figure.scrollIntoViewIfNeeded()
+    const shown = figure.locator('img:visible')
+    await expect(shown).toHaveCount(1)
+    await expect.poll(() => shown.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0), { message: `${guide.slug}: ${await shown.getAttribute('src')}` }).toBe(true)
+  }
+}
+
+for (const theme of ['light', 'dark'] as const) {
+  test(`every published guide renders and its ${theme} screenshots load`, async ({ page }) => {
+    test.setTimeout(90_000)
+    await page.addInitScript((t) => localStorage.setItem('doggynote.theme', t), theme)
+    for (const guide of published) {
+      await page.goto(`/docs/${guide.slug}`)
+      await expect(page.getByRole('heading', { name: guide.title, exact: true, level: 1 })).toBeVisible()
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
+      for (const section of guide.sections) await expect(page.locator(`#${section.id}`)).toBeAttached()
+      await expectFiguresLoaded(page, guide)
+      // The other appearance's copies stay hidden, so they're never fetched.
+      for (const img of await page.locator(`.docs-section img.docs-figure-${theme === 'dark' ? 'light' : 'dark'}`).all()) await expect(img).toBeHidden()
+    }
+  })
+}
 
 test('the appearance icon cycles from the keyboard, persists, and the app shares the choice', async ({ page, browserName }) => {
   await page.emulateMedia({ colorScheme: 'light' })

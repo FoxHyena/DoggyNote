@@ -3,92 +3,81 @@
   "category": "writing-drawing",
   "kind": "task",
   "title": "Draw a sketch card",
-  "summary": "Sketch a storyboard frame or rough interface beside your notes and keep every mark editable.",
-  "status": "draft",
-  "order": 30,
-  "benefit": "Explore visual ideas without leaving their written context.",
-  "outcome": "Create storyboard frames, arrange them on your board, and make an independent alternative.",
-  "prerequisites": [
-    "Edit access to the board"
-  ],
+  "summary": "Sketch an idea on its own sheet of paper, give it a name, and keep it beside your notes.",
+  "status": "published",
+  "order": 320,
+  "benefit": "Try out a visual idea right next to the notes it belongs with.",
+  "outcome": "A named sketch card sits on your board, and you can open it again to keep drawing.",
+  "prerequisites": ["A board you can edit."],
+  "keywords": ["drawing", "doodle", "pen", "paper"],
   "sections": [
     {
       "id": "how-sketches-work",
       "title": "How sketches work",
       "paragraphs": [
-        "A sketch is a bounded drawing card that lives on your board. Use one for a storyboard frame, a rough interface, or a diagram beside your requirements. You can move and resize the card, then reopen its drawing tools to change the marks.",
-        "The paper keeps a clear boundary in both themes. Resizing fits the complete drawing inside that boundary. Changing the card's shape can leave empty space, but does not stretch or cut off its marks."
-      ]
-    },
-    {
-      "id": "draw-and-finish",
-      "title": "Draw and return to your board",
-      "flow": {
-        "entry": "Open an editable board and choose Sketch in the board tools. On a phone, open Add to this board, then choose Sketch.",
-        "steps": [
-          {
-            "action": "Choose Pen, a colour and a stroke width, then drag on the paper.",
-            "result": "An editable stroke follows your gesture."
-          },
-          {
-            "action": "Choose Highlighter to mark a useful area.",
-            "result": "A translucent stroke leaves the drawing underneath visible."
-          },
-          {
-            "action": "Choose Done.",
-            "result": "You return to the board with the completed sketch card selected."
-          },
-          {
-            "action": "Give the card a title in the field below its paper, then press Enter.",
-            "result": "The title appears beneath the drawing."
-          },
-          {
-            "action": "Choose Edit on the sketch card.",
-            "result": "The drawing tools reopen with your existing marks ready to change."
-          }
-        ],
-        "completion": "Completed marks save as you draw. You can finish, reopen the sketch, or reload the board and continue working.",
-        "correction": "Use Undo and Redo in the drawing tools. Eraser removes whole strokes rather than painting over them; one continuous erasing gesture is one Undo action. Escape cancels an unfinished stroke, then exits when pressed again while idle."
-      }
-    },
-    {
-      "id": "arrange-and-reuse",
-      "title": "Arrange frames and explore alternatives",
-      "paragraphs": [
-        "Drag a sketch card beside its requirements or into a column. Select it and drag the resize handle to change its width and height. Use the drawing zoom controls and Fit when you need a closer view; while drawing, hold Space and drag to pan temporarily.",
-        "Select a sketch and choose Duplicate, or use Command+D on Mac or Ctrl+D elsewhere. The new card has its own editable marks. Change that copy to explore an alternative while preserving the original.",
-        "For a reusable storyboard layout, choose More board actions, then Save as template. Later, open Templates from the same menu, select the personal layout and create a new board. The new sketches remain editable and independent of the saved layout and source board."
+        "A sketch is a card with a sheet of paper in it. Draw on the paper with a pen, highlighter and eraser, give it a name, and the drawing stays inside the card when you move or resize it.",
+        "For example, draw the side view of a garden kennel next to your notes on what it needs. To mark up the board itself instead, use Draw."
       ],
-      "callout": {
-        "title": "Keep a reference in place",
-        "text": "Lock position protects the card's layout while keeping its drawing and title editable. Choose Unlock position before moving or resizing it again."
-      }
+      "links": [{ "label": "Draw straight on the board", "href": "/docs/draw-on-a-board" }]
     },
     {
-      "id": "correct-and-recover",
-      "title": "Correct mistakes and recover a sketch",
-      "paragraphs": [
-        "Use Undo to reverse your last completed drawing action, resize, move or duplication. Redo reapplies it. An empty sketch stays available to reopen.",
-        "If you delete a sketch, open Buried bones and choose Restore to bring back the card with its editable marks."
+      "id": "draw-a-sketch",
+      "title": "Draw and name a sketch",
+      "flow": {
+        "entry": "In the tools on the left, choose Sketch under More, or drag it to the spot you want. On a phone, tap + at the bottom of the screen, then Sketch.",
+        "steps": [
+          { "action": "Draw on the paper. Pick Pen or Highlighter, a colour and a line width in the bar at the top.", "result": "Each stroke appears as you draw. Click, then Shift-click somewhere else, for a straight line." },
+          { "action": "Click the title field (it says “Name this doodle”) and type a name, for example Kennel, side view.", "result": "The name shows at the top of the sketch." },
+          { "action": "Optionally, choose the paper icon at the far left to change the paper colour.", "result": "The paper changes colour. The pen switches to white or charcoal if your ink would be hard to see on it." },
+          { "action": "Choose Done, the tick at the top right, press Escape, or click outside the sketch.", "result": "You're back on the board. The card shows your drawing with its name underneath." }
+        ],
+        "completion": "Every stroke saves as soon as you finish it, and the sketch syncs to everyone on the board.",
+        "correction": "Use Undo and Redo, the curved arrows just before the pen, or ⌘Z and ⇧⌘Z (Ctrl+Z and Ctrl+Shift+Z on Windows). The Eraser removes whole strokes, and one sweep is one Undo."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/sketch-cards/sketch-editor.png",
+          "darkSrc": "/docs/assets/sketch-cards/sketch-editor-dark.png",
+          "alt": "The sketch editor titled Kennel, side view. Across the top are the paper icon, the title, a zoom menu at 82% and a tick; below them Undo, Redo, pen, highlighter, eraser, ink colours and line widths. The paper shows a kennel outline with a red roof and a yellow highlighted ground line.",
+          "caption": "Drawing a kennel in the sketch editor.",
+          "width": 1404,
+          "height": 1272
+        },
+        {
+          "src": "/docs/assets/sketch-cards/sketch-on-board.png",
+          "darkSrc": "/docs/assets/sketch-cards/sketch-on-board-dark.png",
+          "alt": "On the board, a yellow note titled Kennel brief sits beside a sketch card showing the kennel drawing, named Kennel, side view.",
+          "caption": "The finished sketch on the board, beside the brief it illustrates.",
+          "width": 952,
+          "height": 894
+        }
       ]
     },
     {
-      "id": "save-and-export",
-      "title": "Save and export your work",
+      "id": "edit-again",
+      "title": "Open a sketch again",
       "paragraphs": [
-        "When you go offline, completed marks wait to sync when you reconnect. If the editor reports a save problem, keep the window open and choose Retry saving.",
-        "Choose More board actions, then Export PNG, for a picture of the board or selected cards. The picture includes sketch marks and their boundary, without drawing tools or selection handles. Keep the sketch card itself when you want to edit the marks later."
+        "Double-click the sketch card, or select it and press Enter, to reopen it with all its strokes ready to change. You can also right-click it and choose Edit. On a touch screen, tap the card once, then double-tap it.",
+        "To look closer, open the zoom menu at the top right of the sketch: Zoom in, Zoom out, Fit to window and Full screen."
+      ]
+    },
+    {
+      "id": "arrange-and-copy",
+      "title": "Arrange and copy sketches",
+      "paragraphs": [
+        "Drag a sketch card wherever you like or drop it into a column. Drag its corner to resize it: the whole drawing scales with the card.",
+        "To try a variation, right-click the sketch and choose Duplicate, or press ⌘D (Ctrl+D on Windows). The copy has its own strokes, so changing it leaves the original alone. If you delete a sketch, find it in Buried bones, DoggyNote's bin in the tools on the left, and restore it with its drawing intact."
       ]
     },
     {
       "id": "availability",
-      "title": "Availability",
+      "title": "Good to know",
       "paragraphs": [
-        "People with view access can see sketches but cannot edit their drawings or titles. Use a mouse or trackpad for drawing.",
-        "Sketch marks follow their sketch card. They do not attach to nearby cards when those cards move."
+        "Mouse, trackpad, finger and stylus all draw. On a phone the sketch opens full screen.",
+        "People with view-only access see sketches on the board but can't change them. Sketches are included when you export the board with Export PNG."
       ]
     }
   ],
-  "related": [],
+  "related": ["draw-on-a-board", "markdown-notes"],
   "links": []
 }

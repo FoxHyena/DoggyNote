@@ -59,6 +59,17 @@ describe('public docs boundary', () => {
       a.sections[0].figures[0].width = 2
       writeFileSync(`${content}/test-guide.json`, JSON.stringify(a))
       expect(() => readArticles(content, root)).toThrow(/Wrong dimensions/)
+      // A dark variant must exist, and match the light one's size.
+      a.sections[0].figures[0].width = 1
+      a.sections[0].figures[0].darkSrc = '/docs/assets/test-guide/example-dark.png'
+      writeFileSync(`${content}/test-guide.json`, JSON.stringify(a))
+      expect(() => readArticles(content, root)).toThrow(/ENOENT/)
+      writeFileSync(`${root}/docs/assets/test-guide/example-dark.png`, png)
+      expect(readArticles(content, root)).toHaveLength(1)
+      a.sections[0].figures[0].darkSrc = a.sections[0].figures[0].src
+      expect(() => validateArticle(a)).toThrow(/darkSrc/)
+      a.sections[0].figures[0].darkSrc = 'https://example.com/x.png'
+      expect(() => validateArticle(a)).toThrow(/darkSrc/)
     } finally { rmSync(root, { recursive: true, force: true }) }
   })
   it('filters drafts before returning article source to the public bundler', () => {
