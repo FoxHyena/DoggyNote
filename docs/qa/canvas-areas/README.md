@@ -2,6 +2,8 @@
 
 The feature was merged in PR #79 at `7a0ceaec2a401c3319a8e42a5e279fa30ffed27d`. The public article is `apps/web/src/docs/content/canvas-areas.json`, at `/docs/canvas-areas`.
 
+The final capture round uses `fd9d60d6d55b6a4e05dfd99ff717f5a832dfd582`, including the user's requested Tidy refinement: four neatly arranged blocks from the existing Phosphor pack, shared by the header, area actions, context menu and development playground.
+
 ## Capture provenance
 
 Captured on macOS with Playwright Chromium at a 1440×900 viewport, against the merged web app through local Vite on port 5499 and an isolated real Worker/D1 fixture on port 9088. This is development-build screenshot evidence; the production browser suites separately verify the same delivered feature and public renderer.
@@ -22,4 +24,4 @@ The synthetic Tracking Collars project contains Doing and Ready columns, a proto
 
 ## Publication gate
 
-The guide is complete with publication-ready metadata and evidence, but its merge waits for the explicit screenshot approval required by `docs/authoring/README.md`. This record does not authorize merging or deploying the guide. The feature's already-authorized coordinated release proceeds independently.
+The user explicitly approved the screenshot examples and instructed merge and release, then requested the Tidy icon refinement and selected “Neatly arranged blocks.” The examples were refreshed with that approved icon and the same synthetic content and crops. This records the user authorization required by `docs/authoring/README.md`; it is not an independent source of release authorization.

@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 const require = createRequire(new URL('../../../apps/web/package.json', import.meta.url))
 const { chromium } = require('@playwright/test')
 import { mkdir } from 'node:fs/promises'
+import { execFileSync } from 'node:child_process'
 const base=process.env.CAPTURE_BASE_URL ?? 'http://localhost:5499'
 if (!['localhost','127.0.0.1','[::1]'].includes(new URL(base).hostname)) throw Error('Use an isolated local fixture server')
 const browser=await chromium.launch()
@@ -47,5 +48,5 @@ try {
   await frame.getByRole('button',{name:'Expand area',exact:true}).click()
   await page.waitForFunction(()=>document.querySelector('[data-testid=sync-status]')?.getAttribute('data-pending')==='0')
  }
- process.stdout.write(JSON.stringify({board,revision:'7a0ceaec2a401c3319a8e42a5e279fa30ffed27d',directory,width:1320,heights:[600,320]})+'\n')
+ process.stdout.write(JSON.stringify({board,revision:execFileSync('git',['rev-parse','HEAD'],{cwd:fileURLToPath(new URL('../../../',import.meta.url)),encoding:'utf8'}).trim(),directory,width:1320,heights:[600,320]})+'\n')
 }finally{await context.close();await browser.close()}
