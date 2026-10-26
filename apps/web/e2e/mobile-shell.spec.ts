@@ -36,6 +36,51 @@ test('the dock replaces the tool rail and everything fits across the screen', as
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })
 
+test('the mobile title opens Your spaces; renaming is an explicit action in either entry point', async ({ page }) => {
+  const title = page.getByTestId('board-name')
+  await title.tap()
+  const menu = page.getByTestId('board-navigation-menu')
+  await isSheet(page, menu)
+  await expect(title).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.getByTestId('board-name-input')).toHaveCount(0)
+  await menu.getByRole('button', { name: 'Rename current board', exact: true }).tap()
+  const input = page.getByTestId('board-name-input')
+  await expect(input).toBeFocused()
+  await input.fill('Renamed through Your spaces')
+  await page.keyboard.press('Enter')
+  await expect(title).toHaveText('Renamed through Your spaces')
+  await page.getByTestId('board-navigation').tap()
+  await expect(menu.getByRole('button', { name: 'Rename current board', exact: true })).toBeVisible()
+  await menu.getByRole('button', { name: 'Close boards', exact: true }).tap()
+  await title.tap()
+  await menu.getByTestId('personal-home').tap()
+  await expect(menu).toHaveCount(0)
+  await title.tap()
+  await expect(menu.getByTestId('recent-board').filter({ hasText: 'Renamed through Your spaces' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(title).toBeFocused()
+})
+
+test('a signed-in view-only member can navigate from the title without a rename action', async ({ page, browser }) => {
+  const board = page.url().split('/b/')[1]!
+  // fido is a legacy member with inherited edit access to this shared root.
+  const username = `title_view_${crypto.randomUUID().slice(0, 8)}`, password = 'titleview123'
+  expect((await page.request.post('/api/users', { data: { username, password } })).status()).toBe(201)
+  expect((await page.request.post(`/api/boards/${board}/members`, { data: { username, permission: 'view', includeChildren: false } })).ok()).toBe(true)
+  const context = await browser.newContext({ ...test.info().project.use, storageState: { cookies: [], origins: [] } })
+  try {
+    expect((await context.request.post('/api/auth/login', { data: { username, password } })).ok()).toBe(true)
+    const viewer = await context.newPage()
+    await viewer.goto(page.url())
+    await expect(viewer.getByTestId('canvas')).toBeVisible()
+    await expect(viewer.getByTestId('board-permission')).toHaveText('View only')
+    await viewer.getByTestId('board-name').tap()
+    await expect(viewer.getByTestId('board-navigation-menu')).toBeVisible()
+    await expect(viewer.getByTestId('rename-current-board')).toHaveCount(0)
+    await expect(viewer.getByTestId('board-name-input')).toHaveCount(0)
+  } finally { await context.close() }
+})
+
 test('the Add sheet makes each kind of card', async ({ page }) => {
   for (const [kind, ready] of [
     ['add-note', page.getByTestId('note-editor')],

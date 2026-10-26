@@ -64,7 +64,7 @@ It's designed to stay fast on big boards. The Mac app is a small native app (abo
 
 ## Getting it
 
-- **Mac app:** [download the latest version](https://notepad.dog/api/desktop/download), open the disk image and drag DoggyNote to Applications. It's signed with our own certificate rather than an Apple one, so the first launch needs right-click → **Open**. After that it updates itself.
+- **Mac app:** [download the latest version](https://notepad.dog/api/desktop/download), open the disk image and drag DoggyNote to Applications. The app updates itself after installation. Older releases used a self-signed certificate and may need right-click → **Open** on first launch.
 - **Browser:** sign in at [notepad.dog](https://notepad.dog).
 - **Accounts:** ask an admin for a signup invitation. Admins create and revoke invitations under **Account → Manage people**; public signup is disabled.
 

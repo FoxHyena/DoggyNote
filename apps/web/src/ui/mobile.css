@@ -76,7 +76,6 @@ html[data-input='touch'] .card > .resize-handle::before {
   scrollbar-width: none;
 }
 .selection-bar.docked .bar-style { gap: 6px; padding-bottom: 2px; }
-.selection-bar.docked .swatches { gap: 6px; }
 .selection-bar.docked .bar-actions .bar-btn {
   flex: 1 1 0;
   min-width: 56px;
@@ -490,7 +489,7 @@ html[data-touch-editing] .mobile-dock { visibility: hidden; }
   .trash { box-shadow: 0 -2px 0 var(--dn-border), 0 -14px 40px rgb(0 0 0 / 0.32); }
   /* V2-15: a tidy three-column Add grid; a lone last tile takes the whole row. */
   /* V2-14: colours centred in their row; Done lines up with the actions. */
-  .selection-bar.docked .swatches { margin-inline: auto; }
+  .selection-bar.docked .tint-dots { margin-inline: auto; }
   .selection-bar.docked .bar-done { align-self: flex-start; margin-top: 5px; }
 }
 
@@ -498,7 +497,7 @@ html[data-touch-editing] .mobile-dock { visibility: hidden; }
 @media (pointer: coarse) and (max-height: 500px) {
   .selection-bar.docked { flex-direction: row; align-items: center; padding-block: 6px calc(6px + env(safe-area-inset-bottom)); }
   .selection-bar.docked .bar-style { flex: 0 1 auto; min-width: 0; }
-  .selection-bar.docked .swatches { margin-inline: 0; }
+  .selection-bar.docked .tint-dots { margin-inline: 0; }
   .selection-bar.docked .bar-actions .bar-btn { min-height: 48px; min-width: 52px; }
   .trash { width: min(420px, 60vw) !important; }
   /* V2-02: the thread keeps room; the reply box shrinks to one line. */
@@ -616,7 +615,6 @@ html[data-input='touch'] :is(.icon-btn, .bar-btn, .menu-item, .tool, .toast-acti
 
 /* V3-01: on tablets the bar fits the canvas: smaller swatches, compact actions. */
 @media (min-width: 600px) and (min-height: 501px) {
-  .selection-bar.docked .swatch { width: 44px; height: 44px; --dot: 32px; }
   .selection-bar.docked .bar-actions .bar-btn { min-width: 56px; padding-inline: 6px; flex-direction: column; gap: 2px; font-size: 11px; }
 }
 
@@ -658,14 +656,6 @@ html[data-input='touch'] .share-panel .bar-btn { padding-inline: 12px; border-ra
 /* Mixed lock actions must not push the alignment picker off a phone screen. */
 .selection-bar.docked .bar-position { flex-wrap: wrap; overflow: visible; }
 
-/* Appearance choices in phone sheets sit in one
-   shared track, so the unpicked options read as options rather than loose text. */
-@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
-  .theme-choices { gap: 0; margin: 0 12px 12px; padding: 3px; border: 1px solid var(--dn-border); border-radius: 12px; }
-  .viewer-menu .theme-choices { padding-bottom: 3px; border-bottom: 1px solid var(--dn-border); }
-  .theme-choice { border-radius: 9px; }
-}
-
 /* A field in a phone sheet scrolls into view inside the sheet (state/viewport.ts),
    with a little room so its confirm button on the same row clears the keyboard too. */
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
@@ -687,8 +677,9 @@ html[data-input='touch'] .selection-phone-actions > .selection-primary:active:no
 .selection-sheet-head { display: flex; align-items: center; justify-content: space-between; min-height: 44px; margin-bottom: 12px; gap: 12px; }
 .selection-sheet-head strong { font-size: 16px; font-weight: 600; }
 .selection-sheet-head .bar-btn { min-width: 64px; min-height: 44px; }
-.selection-style-sheet .swatches, .selection-style-sheet .icon-picker { display: grid; width: min(212px, 100%); margin-inline: auto; grid-template-columns: repeat(4, minmax(44px, 1fr)); gap: 4px 12px; justify-items: center; padding: 0; }
-.selection-style-sheet .swatch { width: 44px; height: 44px; --dot: 32px; }
+.selection-style-sheet .icon-picker { display: grid; width: min(212px, 100%); margin-inline: auto; grid-template-columns: repeat(4, minmax(44px, 1fr)); gap: 4px 12px; justify-items: center; padding: 0; }
+/* The same four-by-two tiles for colours: 32px dots centred in 44px targets (ui/ColorDots.tsx). */
+.selection-style-sheet .color-dots.tint-dots { --cd-dot: 32px; display: grid; width: min(212px, 100%); margin-inline: auto; grid-template-columns: repeat(4, minmax(44px, 1fr)); grid-auto-rows: 44px; gap: 4px 12px; place-items: center; padding: 0; }
 .selection-style-sheet .icon-choice { width: 44px; height: 44px; }
 .selection-style-sheet .icon-choice.on { outline: 2px solid var(--dn-selection); outline-offset: -2px; }
 .selection-style-sheet .icon-choice > svg { width: 24px; height: 24px; }

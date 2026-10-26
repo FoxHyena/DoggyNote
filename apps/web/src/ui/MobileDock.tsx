@@ -3,13 +3,12 @@ import { armedSticker, suggestions, openStickers, setStickerTrayOpen, stickerTra
 import { For, Show, createSignal } from 'solid-js'
 import { COPY } from '@doggynote/theme'
 import { LOD_ZOOM, zoomAt, type CardType } from '@doggynote/core'
-import { createCard } from '../state/actions.ts'
 import { openChat } from '../state/chats.ts'
-import { camera, connectMode, setCamera, setConnectMode, setPaletteOpen, setTrashOpen, trashOpen, viewport } from '../state/ui.ts'
+import { camera, setCamera, setPaletteOpen, setTrashOpen, trashOpen, viewport } from '../state/ui.ts'
 import { addAnyFiles, addImages } from '../canvas/paste.ts'
 import { BoardNavigation } from './BoardNavigation.tsx'
 import { ToyboxButton } from './ToyboxPanel.tsx'
-import { PRIMARY_TOOLS, MORE_TOOLS, centrePlacement } from './Toolbar.tsx'
+import { PRIMARY_TOOLS, MORE_TOOLS, centrePlacement, modeTool, useTool, type Tool } from './Toolbar.tsx'
 import { Icon } from './icons.tsx'
 import { installMenu } from './menu.ts'
 
@@ -53,13 +52,12 @@ function AddButton() {
     const v = viewport()
     setCamera(zoomAt(camera(), { x: v.width / 2, y: v.height / 2.6 }, 1))
   }
-  const add = (type: CardType | 'line') => {
+  const add = (type: Tool['id']) => {
     setOpen(false)
-    if (type === 'line') return setConnectMode(connectMode() ? null : { from: null })
-    comeClose()
+    if (!modeTool(type)) comeClose()
     // Synchronous, inside the tap, so a new note's editor gets the keyboard on iOS.
-    const id = createCard(type, centrePlacement(type))
-    if (type === 'chat') openChat(id)
+    const id = useTool(type, () => centrePlacement(type as CardType))
+    if (id && type === 'chat') openChat(id)
   }
   const pick = (input: HTMLInputElement) => {
     setOpen(false)

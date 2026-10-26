@@ -88,11 +88,11 @@ app.route('/', desktop)
 const authed = new Hono<AppEnv>()
 authed.use('*', requireUser)
 authed.use('/sync', async (c, next) => {
-  if (c.req.header('x-doggynote-protocol') !== '3') return c.json({ error: 'Update DoggyNote to edit together. Your local changes are preserved.', updateRequired: true }, 426)
+  if (c.req.header('x-doggynote-protocol') !== '4') return c.json({ error: 'Update DoggyNote to edit together. Your local changes are preserved.', updateRequired: true }, 426)
   await next()
 })
 authed.use('/notes/*', async (c, next) => {
-  if (c.req.header('x-doggynote-protocol') !== '3') return c.json({ error: 'Update DoggyNote to edit together', updateRequired: true }, 426)
+  if (c.req.header('x-doggynote-protocol') !== '4') return c.json({ error: 'Update DoggyNote to edit together', updateRequired: true }, 426)
   await next()
 })
 authed.route('/', users)

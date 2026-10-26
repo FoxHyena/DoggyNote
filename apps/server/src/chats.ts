@@ -226,7 +226,15 @@ chats.post('/chats/:chatId/task-proposal', async (c) => {
   const now = Date.now(), credentialId = crypto.randomUUID(), proposalId = crypto.randomUUID()
   const credential = { id: credentialId, user_id: auth.me.id, name: 'Chat task proposal', mode: 'propose' as const, board_ids: JSON.stringify([auth.card.boardId]), expires_at: now + 90 * 86_400_000, revoked_at: null }
   const todoId = `tasks-${hash.slice(0, 48)}`
-  const object = { id: todoId, kind: 'card' as const, type: 'todo' as const, boardId: auth.card.boardId, createdAt: now, x: auth.card.x + auth.card.w + 40, y: auth.card.y, w: 260, h: 110, z: auth.card.z + 1, color: 'none' as const, content: { title: body.title, items: body.tasks.map((text, i) => ({ id: `task-${i}`, text, done: false })) } }
+  let origin: Card = auth.card
+  if (auth.card.columnId) {
+    const row = await auth.db.prepare('SELECT data,owner_id,board_id FROM objects WHERE id=?1').bind(auth.card.columnId).first<Pick<ObjectRow, 'data' | 'owner_id' | 'board_id'>>()
+    if (!row || row.board_id !== auth.card.boardId || row.owner_id && row.owner_id !== auth.me.id) fail(403, 'The conversation column is unavailable')
+    const column = JSON.parse(row.data) as Card
+    if (column.kind !== 'card' || column.type !== 'column' || column.purged || column.deletedAt) fail(409, 'The conversation column changed. Refresh before saving tasks.')
+    origin = column
+  }
+  const object = { id: todoId, kind: 'card' as const, type: 'todo' as const, boardId: auth.card.boardId, areaId: origin.areaId ?? null, createdAt: now, x: origin.x + origin.w + 40, y: origin.y, w: 260, h: 110, z: auth.card.z + 1, color: 'none' as const, content: { title: body.title, items: body.tasks.map((text, i) => ({ id: `task-${i}`, text, done: false })) } }
   const input = { idempotencyKey: body.operationId, label: `Tasks from conversation: ${body.title}`.slice(0, 160), operations: [{ action: 'create' as const, object }] }
   const changes = await prepareAgentChanges(auth.db, auth.access, credential, auth.me, input)
   await commit(auth.db, [guard(auth.db, auth, current.revision),

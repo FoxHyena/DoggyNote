@@ -1,5 +1,7 @@
 import {
   DEFAULT_SIZE,
+  isArea, isAreaItem, itemArea, areaFamily, areaBurialFamily,
+  DEFAULT_SKETCH,
   DEFAULT_SWATCH_HEX,
   newId,
   orderBetween,
@@ -15,6 +17,9 @@ import {
   type Side,
   type Vec,
 } from '@doggynote/core'
+import { areaAt, areaPlacement } from './areas.ts'
+import { worldPosition } from '../canvas/layout.ts'
+import { isPositionLocked } from './position.ts'
 import { COPY, type CardColor } from '@doggynote/theme'
 import * as doc from './doc.ts'
 import { prepareBuryMotion } from '../canvas/buryMotion.ts'
@@ -31,13 +36,16 @@ export const EMPTY_CONTENT: { [T in CardType]: () => CardContent[T] } = {
   image: () => ({ assetId: '', width: 1, height: 1 }),
   link: () => ({ url: '', status: 'pending' }),
   column: () => ({ title: '' }),
+  area: () => ({ title: '' }),
   file: () => ({ assetId: '', name: '', size: 0, mime: '' }),
   movie: () => ({ kind: 'movie', title: '' }),
   swatch: () => ({ hex: DEFAULT_SWATCH_HEX }),
+  sketch: () => ({ ...DEFAULT_SKETCH }),
+  ink: () => ({ width: 1, height: 1 }),
 }
 
 /** Where a new card goes: a world point (card's top-centre lands there) or a column slot. */
-export type Placement = { at: Vec } | { columnId: Id; order: number }
+export type Placement = { at: Vec; areaId?: Id } | { columnId: Id; order: number }
 
 export function columnChildren(columnId: Id): Card[] {
   const col = doc.getCard(columnId)
@@ -60,13 +68,14 @@ function baseCard<T extends CardType>(type: T, place: Placement, content: CardCo
   const b = onBoard ?? boardId()
   const size = DEFAULT_SIZE[type]
   const inColumn = 'columnId' in place
+  const point = inColumn ? { x: 0, y: 0 } : { x: onGrid(place.at.x - size.w / 2), y: onGrid(place.at.y - 20) }
+  const area = !inColumn && type !== 'area' && b === boardId() ? (place.areaId ? doc.getCard(place.areaId) : areaAt(place.at)) : undefined
   return {
     id: newId(),
     kind: 'card',
     type,
     boardId: b,
-    x: inColumn ? 0 : onGrid(place.at.x - size.w / 2),
-    y: inColumn ? 0 : onGrid(place.at.y - 20),
+    ...areaPlacement(point, area),
     w: size.w,
     h: size.h,
     z: doc.maxZ(b) + 1,
@@ -106,7 +115,7 @@ export function createCard(
   doc.commit(tx)
   // Created somewhere else (e.g. straight into the Toy box): don't select or edit it here.
   if (opts.boardId && opts.boardId !== boardId()) return card.id
-  const editable = type === 'note' || type === 'todo' || type === 'column' || type === 'board' || type === 'link' || type === 'movie' || type === 'swatch'
+  const editable = type === 'area' || type === 'note' || type === 'todo' || type === 'column' || type === 'board' || type === 'link' || type === 'movie' || type === 'swatch' || type === 'sketch'
   if (opts.edit ?? editable) beginEdit(card.id, { isNew: true })
   else select([card.id])
   return card.id
@@ -119,17 +128,25 @@ export function createNoteWithText(text: string, place: Placement): Id {
 }
 
 /** Bury the selection. `now` stamps the burial (a cut remembers it to bring the cards back). */
-export function trashSelection(now = Date.now()) {
+export function trashSelection(now = Date.now(), buryAreas = false) {
   const ids = [...selection()]
   if (!ids.length) return
   if (editingId()) endEdit()
   const patches: Record<Id, Partial<Obj>> = {}
+  const burialId = newId()
   for (const id of ids) {
     const o = doc.get(id)
     if (!o) continue
+    if (isArea(o)) {
+      if (isPositionLocked(id)) continue
+      const family = areaFamily(o, Object.values(doc.objs).filter(isAreaItem), !buryAreas)
+      if (buryAreas) for (const member of family) patches[member.id] = { deletedAt: now, burialId }
+      else for (const member of family) if (member.areaId === id) patches[member.id] = { ...areaPlacement(worldPosition(member)), ...(ids.includes(member.id) ? { deletedAt: now, burialId } : {}) }
+      patches[id] = { deletedAt: now, burialId }; continue
+    }
     // Connections have no trash view; they're simply removed (undo brings them back).
     if (o.kind === 'connection') patches[id] = { purged: true }
-    else if (o.kind === 'card' || o.kind === 'sticker') patches[id] = { deletedAt: now }
+    else if (o.kind === 'card' || o.kind === 'sticker') patches[id] = { deletedAt: now, burialId }
   }
   doc.update(patches)
   clearSelection()
@@ -149,7 +166,14 @@ export function burySelection() {
 }
 
 export function restoreCard(id: Id) {
-  doc.update({ [id]: { deletedAt: null } })
+  const area = doc.get(id)
+  const patches: Record<Id, Partial<Obj>> = { [id]: { deletedAt: null, burialId: null } }
+  if (isAreaItem(area)) {
+    const parent = itemArea(area, doc.get)
+    if (parent?.deletedAt || parent?.purged) patches[id] = { ...patches[id], ...areaPlacement(worldPosition(area)) }
+  }
+  if (isArea(area)) for (const member of areaBurialFamily(area, Object.values(doc.objs).filter(isAreaItem))) patches[member.id] = { deletedAt: null, burialId: null }
+  doc.update(patches)
 }
 
 export function emptyTrash(cards: Obj[]) {
@@ -215,15 +239,21 @@ export function moveCardTo(id: Id, toBoard: Id, place: Placement) {
   const size = { w: c.w, h: c.h }
   const patch: Partial<Card> =
     'columnId' in place
-      ? { boardId: toBoard, columnId: place.columnId, order: place.order }
-      : { boardId: toBoard, columnId: null, x: onGrid(place.at.x - size.w / 2), y: onGrid(place.at.y - 20), z: doc.maxZ(toBoard) + 1 }
-  // Connections can't span boards, so ones touching the moved card are removed.
-  // All of it is one undo step.
+      ? { boardId: toBoard, areaId: null, columnId: place.columnId, order: place.order }
+      : { boardId: toBoard, areaId: null, columnId: null, x: onGrid(place.at.x - size.w / 2), y: onGrid(place.at.y - 20), z: doc.maxZ(toBoard) + 1 }
+  // Parent moves carry their family, preserving local offsets and owned ink/comments.
+  const family = isArea(c) ? areaFamily(c, [...doc.cardsOn(c.boardId), ...doc.stickersOn(c.boardId)]) : c.type === 'column' ? columnChildren(c.id) : []
+  const moved = [c, ...family], movedIds = new Set(moved.map(item => item.id))
   const patches: Record<Id, Partial<Obj>> = { [id]: patch }
-  for (const conn of doc.connectionsOn(c.boardId)) if (conn.from === id || conn.to === id) patches[conn.id] = { purged: true }
-  // Its comments go with it, so the new board's sharing (or Toy box privacy) covers them.
-  for (const m of doc.commentsOn(id)) patches[m.id] = { boardId: toBoard }
-  // Its labels map by name onto the new board's.
-  if (toBoard !== c.boardId) for (const [key, p] of Object.entries(moveLabels([c], labelsOn(c.boardId), toBoard))) patches[key] = { ...patches[key], ...p } as Partial<Obj>
+  for (const item of family) patches[item.id] = { boardId: toBoard }
+  for (const conn of doc.connectionsOn(c.boardId)) {
+    if (movedIds.has(conn.from) && movedIds.has(conn.to)) patches[conn.id] = { boardId: toBoard }
+    else if (movedIds.has(conn.from) || movedIds.has(conn.to)) patches[conn.id] = { purged: true }
+  }
+  for (const item of moved) if (item.kind === 'card') {
+    for (const m of doc.commentsOn(item.id)) patches[m.id] = { boardId: toBoard }
+    for (const stroke of doc.strokesOn(item.id)) patches[stroke.id] = { boardId: toBoard }
+  }
+  if (toBoard !== c.boardId) for (const [key, p] of Object.entries(moveLabels(moved.filter((item): item is Card => item.kind === 'card'), labelsOn(c.boardId), toBoard))) patches[key] = { ...patches[key], ...p } as Partial<Obj>
   doc.update(patches)
 }

@@ -1,9 +1,9 @@
 import { SheetGrip } from './SheetGrip.tsx'
-import { For, Show, createSignal, createUniqueId } from 'solid-js'
+import { For, Show, createSignal, createUniqueId, type Accessor, type JSX } from 'solid-js'
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import { boardPermissions, homeBoardId, legacyShared } from '../state/access.ts'
 import { user } from '../state/session.ts'
-import { boardId, openBoard, recentBoards } from '../state/ui.ts'
+import { boardId, openBoard, recentBoards, setRenamingBoardId } from '../state/ui.ts'
 import { phone } from '../state/device.ts'
 import { canReadBoard } from '../state/access.ts'
 import * as doc from '../state/doc.ts'
@@ -12,20 +12,30 @@ import './navigation.css'
 import { installMenu } from './menu.ts'
 
 /** Personal and shared roots are navigation, never synced fake board cards. */
-export function BoardNavigation() {
+export function BoardNavigation(props: { renderTrigger?: (state: { open: Accessor<boolean>; toggle: () => void; menuId: string; ref: (el: HTMLButtonElement) => void }) => JSX.Element } = {}) {
   const [open, setOpen] = createSignal(false)
   const menuId = createUniqueId()
   let root!: HTMLDivElement, trigger!: HTMLButtonElement
   installMenu(open, () => setOpen(false), () => root, () => trigger)
   const shared = () => boardPermissions().filter((b) => b.ownerId !== user()?.id && !b.legacy && !b.id.startsWith('toybox:') && !b.id.startsWith('home:') && (!b.parentId || !boardPermissions().some((p) => p.id === b.parentId && p.ownerId !== user()?.id && !p.legacy)))
   function go(id: string) { openBoard(id); setOpen(false); trigger.focus() }
+  const canRename = () => phone() && !boardId().startsWith('toybox:') && doc.canWriteObject(doc.getBoard(boardId()))
+  const rename = () => {
+    setOpen(false)
+    setRenamingBoardId(boardId())
+    // Remain in the tap so installed iOS can raise its keyboard.
+    document.querySelector<HTMLInputElement>('[data-testid="board-name-input"]')?.focus({ preventScroll: true })
+  }
   // Phones have no breadcrumbs to hop back with: the last few boards, one tap away.
   const recent = () => recentBoards().filter((id) => id !== boardId() && !id.startsWith('toybox:') && doc.getBoard(id) && canReadBoard(id)).slice(0, 5)
   return <div class="zoom board-navigation" ref={root}>
+    <Show when={props.renderTrigger} fallback={
     <button ref={trigger} class="icon-btn" data-testid="board-navigation" data-tooltip="My boards and shared boards" title="My boards and shared boards" aria-label="My boards and shared boards" aria-haspopup="dialog" aria-controls={open() ? menuId : undefined} aria-expanded={open()} onClick={() => setOpen(!open())}><BoardIconSvg icon="kennel" size={19} /><span class="icon-btn-label">Boards</span><span class="boards-caret" aria-hidden="true"><Icon size={14} name="chevronDown" /></span></button>
+    }>{(render) => render()({ open, toggle: () => setOpen(!open()), menuId, ref: (el) => { trigger = el } })}</Show>
     <Show when={open()}><div id={menuId} class="menu nav-menu board-nav-menu" role="dialog" aria-label="Your spaces" data-testid="board-navigation-menu"><SheetGrip onDismiss={() => { setOpen(false); trigger.focus() }} />
       <div class="nav-menu-head"><strong>Your spaces</strong><button class="icon-btn" aria-label="Close boards" onClick={() => { setOpen(false); trigger.focus() }}><Icon size={16} name="close" /></button></div>
       <div class="board-nav-scroll" data-testid="board-navigation-list">
+        <Show when={canRename()}><button class="menu-item nav-menu-row" data-testid="rename-current-board" onClick={rename}><Icon name="edit" size={18} /><span class="nav-menu-label">Rename current board</span></button><div class="menu-sep" role="separator" /></Show>
         <Show when={phone() && recent().length}>
           <section class="nav-menu-recent" aria-labelledby={`${menuId}-recent-heading`}>
             <strong id={`${menuId}-recent-heading`} class="nav-menu-section-label">Recent</strong>

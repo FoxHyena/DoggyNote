@@ -1,3 +1,4 @@
+import { AreaCard } from '../cards/AreaCard.tsx'
 import { ErrorBoundary, For, Match, Show, Switch, createSelector, onCleanup, onMount, type JSX } from 'solid-js'
 import { SIDES, cardSpokenName, type Card } from '@doggynote/core'
 import { COPY, boardDisplayTitle, cardColor, cardColorVars } from '@doggynote/theme'
@@ -7,7 +8,7 @@ import { isPositionLocked } from '../state/position.ts'
 const PREVIEW_CHIP: Record<Badge, string> = { added: 'New', changed: 'Edited', moved: 'Moved', removed: 'Buried' }
 import { camera, editingId, isSelected, nearHandle, selection } from '../state/ui.ts'
 import { touch } from '../state/device.ts'
-import { registerCardEl } from './layout.ts'
+import { rectOf, worldPosition, layoutTick, registerCardEl } from './layout.ts'
 import * as doc from '../state/doc.ts'
 import { isResolved } from '../state/comments.ts'
 import { openThread } from '../ui/CommentsPanel.tsx'
@@ -23,7 +24,11 @@ import { ColumnCard } from '../cards/ColumnCard.tsx'
 import { FileCard } from '../cards/FileCard.tsx'
 import { MovieCard } from '../cards/MovieCard.tsx'
 import { SwatchCard } from '../cards/SwatchCard.tsx'
+import { SketchCard } from '../cards/SketchCard.tsx'
+import { InkCard } from '../cards/InkCard.tsx'
 import { CardLabels } from '../ui/Labels.tsx'
+import { SyncedMarker } from '../ui/SyncedCopies.tsx'
+import { copiesOf } from '../state/synced.ts'
 
 export type CardProps<T extends Card['type'] = Card['type']> = {
   card: Card<T>
@@ -55,10 +60,14 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
     if (free()) {
       // left/top, not transform: a thousand per-card transforms make the
       // browser re-layerize every card on every pan frame (61 ms vs 9 ms).
-      s.left = `${c.x}px`
-      s.top = `${c.y}px`
-      s.width = `${c.w}px`
-      s['z-index'] = String(c.z ?? 0)
+      layoutTick()
+      const r = c.type === 'area' ? rectOf(c.id) : null
+      const point = worldPosition(c)
+      s.left = `${r?.x ?? point.x}px`
+      s.top = `${r?.y ?? point.y}px`
+      s.width = `${r?.w ?? c.w}px`
+      if (c.type === 'area') s.height = `${r?.h ?? c.h}px`
+      s['z-index'] = c.type === 'area' ? '-1' : String(c.z ?? 0)
     }
     // A streamed answer scrolls inside the note, never resizes the board per token.
     if (c.type === 'chat') s.height = `${Math.max(400, c.h || 520)}px`
@@ -132,16 +141,26 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         <Match when={props.card.type === 'swatch'}>
           <SwatchCard {...(props2() as CardProps<'swatch'>)} />
         </Match>
+        <Match when={props.card.type === 'sketch'}>
+          <SketchCard {...(props2() as CardProps<'sketch'>)} />
+        </Match>
+        <Match when={props.card.type === 'ink'}>
+          <InkCard {...(props2() as CardProps<'ink'>)} />
+        </Match>
+        <Match when={props.card.type === 'area'}><AreaCard {...(props2() as CardProps<'area'>)} /></Match>
         <Match when={props.card.type === 'column'}>
           <ColumnCard {...(props2() as CardProps<'column'>)} />
         </Match>
       </Switch>
-      <Show when={!props.lod && props.card.type !== 'column'}>
+      <Show when={!props.lod && props.card.type !== 'column' && props.card.type !== 'area'}>
         <CardLabels card={props.card} />
       </Show>
       </ErrorBoundary>
       <Show when={isPositionLocked(props.card.id) && !props.readOnly && !props.lod}>
         <span class="position-lock-badge" data-testid="position-lock-badge" title={props.card.positionLocked === true ? 'Position locked — select to unlock' : 'Column layout locked — unlock the column or its locked member'} aria-label="Position locked"><Icon name="lock" size={12} /></span>
+      </Show>
+      <Show when={!props.lod && props.card.type === 'note' && copiesOf(props.card.id).length}>
+        <SyncedMarker card={props.card} />
       </Show>
       <Show when={comments() && !props.lod}>
         <button
@@ -162,7 +181,8 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
       <Show when={!props.readOnly && single() && free() && !isPositionLocked(props.card.id) && props.card.type !== 'board' && !props.lod}>
         <div class="resize-handle" data-resize data-testid="resize-handle" title="Resize" />
       </Show>
-      <Show when={!props.readOnly && !props.lod && (!touch() || touchHandles())}>
+      {/* Lines join cards; a mark drawn on the board isn't one. */}
+      <Show when={!props.readOnly && !props.lod && props.card.type !== 'ink' && (!touch() || touchHandles())}>
         <For each={SIDES}>
           {(side) => <div class={`connect-handle ${side}`} classList={{ near: isNear(`${props.card.id}:${side}`) }} data-connect-handle={side} data-testid={`connect-handle-${side}`} title="Drag to connect" />}
         </For>

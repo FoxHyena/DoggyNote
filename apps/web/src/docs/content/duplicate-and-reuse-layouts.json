@@ -1,0 +1,97 @@
+{
+  "slug": "duplicate-and-reuse-layouts",
+  "category": "working-on-boards",
+  "kind": "task",
+  "title": "Duplicate cards, boards and templates",
+  "summary": "Copy a few cards or a whole board, or save a board as a template to start new ones from.",
+  "status": "published",
+  "order": 140,
+  "benefit": "Reuse a layout that works instead of building it again.",
+  "outcome": "You have a copy you can change freely, while the original stays exactly as it was.",
+  "keywords": ["copy", "paste", "template", "clone", "reuse"],
+  "sections": [
+    {
+      "id": "how-copies-work",
+      "title": "What a copy includes",
+      "paragraphs": [
+        "A copy is independent: change it and the original stays the same, and the other way round. Cards keep their text, pictures, colours, labels and drawings. Lines between cards come along when both ends are copied, and a copied column brings its cards.",
+        "Copying a board also copies every board inside it. Comments stay on the original, so the copy starts without old conversations."
+      ]
+    },
+    {
+      "id": "duplicate-cards",
+      "title": "Duplicate cards",
+      "flow": {
+        "entry": "Select the cards you want to copy: click one, or Shift-click several.",
+        "steps": [
+          { "action": "Right-click one of them and choose Duplicate, or press ⌘D (Ctrl+D on Windows). On a phone, tap More in the bar at the bottom, then Duplicate.", "result": "The copies appear just below and to the right of the originals, already selected so you can drag them into place." },
+          { "action": "Change a copy, for example edit its text.", "result": "The original card keeps its own text." }
+        ],
+        "completion": "The copies save straight away like any other new card.",
+        "correction": "Undo removes all the copies in one step."
+      },
+      "figures": [{
+        "src": "/docs/assets/duplicate-and-reuse-layouts/card-menu-duplicate.png",
+        "darkSrc": "/docs/assets/duplicate-and-reuse-layouts/card-menu-duplicate-dark.png",
+        "alt": "A selected blue note titled Before the vet, with its right-click menu open: Edit, Duplicate (highlighted), Labels, Comment and Bury.",
+        "caption": "Duplicate is in the right-click menu, alongside Edit, Labels, Comment and Bury.",
+        "width": 792,
+        "height": 570
+      }],
+      "paragraphs": ["To put cards on a different board, copy them with ⌘C (Ctrl+C), open the other board and paste with ⌘V (Ctrl+V)."]
+    },
+    {
+      "id": "duplicate-a-board",
+      "title": "Duplicate a whole board",
+      "flow": {
+        "entry": "Open the board you want to copy and choose the … button at the right of the top bar.",
+        "steps": [
+          { "action": "Choose Duplicate board.", "result": "A copy called, for example, Vet visit checklist copy appears next to the original's board card, and DoggyNote opens it." },
+          { "action": "Rename the copy by clicking its name in the top bar, then change whatever you like.", "result": "The original board and everything inside it stay as they were." }
+        ],
+        "completion": "The copy sits next to the original, inside the same board. If you can't add cards there, it goes in your Doghouse, your home board, instead.",
+        "correction": "Choose Undo in the message that appears. Undo removes the copy and takes you back to the original."
+      },
+      "figures": [{
+        "src": "/docs/assets/duplicate-and-reuse-layouts/board-menu.png",
+        "darkSrc": "/docs/assets/duplicate-and-reuse-layouts/board-menu-dark.png",
+        "alt": "The board's … menu open under the top bar, listing Duplicate board, Save as template, New from template, Export PNG and Agent proposals.",
+        "caption": "The board's … menu holds Duplicate board, Save as template and New from template.",
+        "width": 560,
+        "height": 510
+      }],
+      "paragraphs": ["Your Doghouse (your home board) and your Inbox can't be duplicated, but you can save either one as a template."]
+    },
+    {
+      "id": "save-a-template",
+      "title": "Save a board as a template",
+      "flow": {
+        "entry": "Open a board whose layout you'd like to reuse, such as a checklist you fill in before every vet visit.",
+        "steps": [
+          { "action": "Choose the … button, then Save as template.", "result": "A message says “Saved as a template. Good trick!” You stay on the board." },
+          { "action": "Later, on any board, choose the … button, then New from template.", "result": "Templates lists your templates by name, with the date you saved each one." },
+          { "action": "Choose a template.", "result": "A new board with that name and layout appears on the board you're on, and DoggyNote opens it." }
+        ],
+        "completion": "Templates are yours alone: they don't appear in Fetch or on any board, and other people don't see them. A template is a snapshot, so later changes to the original board don't change it, and boards made from it are independent too.",
+        "correction": "Undo in the message removes the template or the new board you just made. To delete a template, choose the × beside it in Templates. A message says “Template removed.” and offers Undo."
+      },
+      "figures": [{
+        "src": "/docs/assets/duplicate-and-reuse-layouts/templates-popover.png",
+        "darkSrc": "/docs/assets/duplicate-and-reuse-layouts/templates-popover-dark.png",
+        "alt": "The Templates list under the … button, with one template, Vet visit checklist, its save date and an × to remove it.",
+        "caption": "New from template lists your saved templates. The × removes one.",
+        "width": 576,
+        "height": 332
+      }]
+    },
+    {
+      "id": "access",
+      "title": "Who can copy what",
+      "paragraphs": [
+        "Duplicating cards needs edit access to the board you're on. A board you duplicate or make from a template needs somewhere to go: if you can't add to the current board, it goes in your Doghouse. Your list of templates only ever shows the ones you saved yourself."
+      ]
+    }
+  ],
+  "related": ["align-and-lock-cards", "labels-and-search"],
+  "links": []
+}

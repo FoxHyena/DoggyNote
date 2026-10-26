@@ -16,6 +16,8 @@ export const [connectMode, setConnectMode] = createSignal<{ from: Id | null } | 
 export const [nearHandle, setNearHandle] = createSignal('')
 export const [trashOpen, setTrashOpen] = createSignal(false)
 export const [paletteOpen, setPaletteOpen] = createSignal(false)
+/** Explicit title editing, shared by the phone's two board-navigation triggers. */
+export const [renamingBoardId, setRenamingBoardId] = createSignal<Id | null>(null)
 
 /** Touch: taps add cards to the selection (or take them out) instead of replacing it. */
 export const [selectMore, setSelectMore] = createSignal(false)
@@ -44,9 +46,13 @@ export function checkpointEdit() {
   if (!editSnapshot) return
   for (const [id, initial] of Object.entries(editSnapshot)) {
     const current = doc.snapshot(id, Object.keys(initial))
-    if (JSON.stringify(current) === JSON.stringify(checkpointSnapshot[id])) continue
+    const last = (checkpointSnapshot[id] ?? {}) as Record<string, unknown>
+    // Only the fields that changed since the last checkpoint: re-sending an
+    // untouched one would overwrite someone else's newer edit to it.
+    const changed = Object.fromEntries(Object.entries(current).filter(([k, v]) => JSON.stringify(v) !== JSON.stringify(last[k])))
+    if (!Object.keys(changed).length) continue
     checkpointSnapshot[id] = current
-    doc.checkpoint(id, current)
+    doc.checkpoint(id, changed as Partial<Obj>)
   }
 }
 
@@ -62,7 +68,9 @@ export function beginEdit(id: Id, opts: { isNew?: boolean } = {}) {
   if (editingId() === id) return
   endEdit()
   // Notes have author-local CRDT undo; a whole-content snapshot would undo peers too.
-  editSnapshot = { [id]: doc.getCard(id)?.type === 'note' ? {} : doc.snapshot(id, ['content']) }
+  // A sketch's title and paper are fields of their own, so a rename never carries a stale paper colour.
+  const type = doc.getCard(id)?.type
+  editSnapshot = { [id]: type === 'note' ? {} : doc.snapshot(id, type === 'sketch' ? ['sketchTitle', 'sketchPaper'] : ['content']) }
   doc.markBusy([id])
   // A board card's title lives on the board object.
   const card = doc.getCard(id)
@@ -177,6 +185,7 @@ export function openBoard(id: Id) {
   // A proposal preview keeps you on its boards until you leave it.
   if (doc.previewing()) return
   endEdit()
+  setRenamingBoardId(null)
   clearSelection()
   // Switch now; hashchange fires later and would let a fast click land on the old board.
   setBoardIdSignal(id)
@@ -188,6 +197,7 @@ window.addEventListener('hashchange', () => {
   const id = boardFromHash()
   if (id === boardId()) return
   endEdit()
+  setRenamingBoardId(null)
   clearSelection()
   setBoardIdSignal(id)
   rememberBoard(id)

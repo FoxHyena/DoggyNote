@@ -246,6 +246,10 @@ Spacing runs on small steps: 2, 4, 6, 8, 12, 16 and 24px. Gaps inside controls a
 
 **Phone layout** (max-width 599px, or a phone on its side): the toolbar becomes a bottom dock with a raised round amber add button. The selection bar docks to the bottom edge as a sheet with an 18px top radius. Panels become sheets over a scrim. Touch-only CSS keys off `html[data-input='touch']`, and every touch target gets a 44px hit area, invisible if necessary.
 
+For signed-in phone users, the board title and the dock's Boards button open the same Your spaces sheet. Rename current board is an explicit action for editable boards. Desktop title clicks still rename; anonymous share viewers have no personal-board navigation.
+
+Connector bodies remain behind cards. Their arrowheads and a short matching end segment paint above column backgrounds, below stickers, without receiving pointer input. Multiplayer cursors occupy a separate screen-space layer above board content through pan, zoom and overview transitions.
+
 ## Elevation & Depth
 
 The den is flat where you work and lifted where you reach. Cards rest flat on the floor. In the dark theme they are separated by tone alone. In the light theme they get a hairline paper edge so white cards don't dissolve into oat. Anything that floats above the board (menus, the selection bar, dialogs, the sticker tray, the fetch palette) casts a soft, dark, diffuse shadow. A card being dragged lifts with a deep shadow and returns flat when dropped.

@@ -101,12 +101,13 @@ test('slow outgoing changes show progress then settle without hiding failures', 
 test('Sync now says it is syncing while busy, then confirms, never a greyed-out button', async ({ page }) => {
   await freshBoard(page)
   await waitForSync(page)
-  // Delay one request per explicit run. Delaying every snapshot page can
-  // perpetually restart paging while parallel tests change access revisions.
-  let delayNextRequest = true
+  // Hold one request per action, rather than every page of a permission-reset
+  // snapshot. Parallel fixtures continually change access; delaying every page
+  // can keep restarting a large snapshot until this presentation test times out.
+  let delayNext = true
   await page.route('**/api/sync*', async (route) => {
-    if (delayNextRequest) {
-      delayNextRequest = false
+    if (delayNext) {
+      delayNext = false
       await new Promise((resolve) => setTimeout(resolve, 400))
     }
     await route.continue()
@@ -121,7 +122,7 @@ test('Sync now says it is syncing while busy, then confirms, never a greyed-out 
   await expect(button).toHaveText('Sync now')
   await expect(button).toHaveAttribute('aria-disabled', 'false')
   // A manual run goes through the same states.
-  delayNextRequest = true
+  delayNext = true
   await button.click()
   await expect(button).toHaveText('Syncing…')
   await expect(button).toHaveText('Synced', { timeout: 10_000 })

@@ -4,6 +4,9 @@
 
 export const API_BASE: string = (import.meta.env.VITE_API_BASE as string | undefined) ?? ''
 
+/** The public guides. The desktop app opens them on the site, in the browser. */
+export const GUIDES_URL = `${API_BASE}/docs`
+
 let bearer: string | null = null
 export const setBearer = (t: string | null) => (bearer = t)
 export const hasBearer = () => !!bearer
@@ -32,7 +35,7 @@ export function statusMessage(status: number): string {
 /** A checked request: throws ApiError with the server's message, else returns the response. */
 export async function apiRaw(path: string, init: RequestInit & { json?: unknown } = {}): Promise<Response> {
   const headers = new Headers(init.headers)
-  headers.set('x-doggynote-protocol', '3')
+  headers.set('x-doggynote-protocol', '4')
   if (bearer) headers.set('authorization', `Bearer ${bearer}`)
   let body = init.body
   if (init.json !== undefined) {

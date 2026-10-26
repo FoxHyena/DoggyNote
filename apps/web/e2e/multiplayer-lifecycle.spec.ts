@@ -22,7 +22,7 @@ test('background tabs suspend presence; returning restores current state and a c
     await expect.poll(() => { try { port = Number(readFileSync(join(profile, 'DevToolsActivePort'), 'utf8').split('\n')[0]); return port } catch { return 0 } }).not.toBe(0)
     native = await chromium.connectOverCDP(`http://localhost:${port}`, { noDefaults: true })
     const context = native.contexts()[0]!
-    await context.setExtraHTTPHeaders({ 'x-doggynote-protocol': '3' })
+    await context.setExtraHTTPHeaders({ 'x-doggynote-protocol': '4' })
     expect((await context.request.post(`${origin}/api/auth/login`, { data: { username: 'fido', password: 'fetchfetch' } })).ok()).toBe(true)
     const friend = await context.newPage(); await friend.goto(page.url())
     await expect(cardByText(friend, 'Lifecycle board')).toBeVisible()

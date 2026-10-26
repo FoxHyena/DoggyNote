@@ -4,11 +4,12 @@
 
 import type { CardColor } from '@doggynote/theme'
 import type { Side } from './geometry.ts'
+import type { InkMark } from './ink.ts'
 
 export type Id = string
 
 /** Every card type this build can draw. Anything else came from a newer app (see cardtext.ts). */
-export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie', 'swatch', 'chat'] as const
+export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'area', 'file', 'movie', 'swatch', 'sketch', 'ink', 'chat'] as const
 export type CardType = (typeof CARD_TYPES)[number]
 export const isKnownCardType = (t: unknown): t is CardType => (CARD_TYPES as readonly unknown[]).includes(t)
 
@@ -40,6 +41,7 @@ export type CardContent = {
   image: { assetId: Id; width: number; height: number; caption?: string; sizes?: ('thumb' | 'small' | 'medium' | 'full')[] }
   link: { url: string; title?: string; description?: string; image?: string; siteName?: string; status?: 'pending' | 'ok' | 'error' }
   column: { title: string }
+  area: { title: string }
   /**
    * An uploaded file, stored in R2 as "<assetId>/file". PDFs also get a
    * first-page preview stored as the image rendition "<assetId>/thumb".
@@ -48,6 +50,14 @@ export type CardContent = {
   movie: MovieContent
   /** A colour card: `hex` is canonical `#RRGGBB` (see swatch.ts); the name is optional. */
   swatch: { hex: string; name?: string }
+  /**
+   * A drawing on paper. `width`/`height` are the paper's fixed logical size
+   * (the card scales it); `background` is the paper colour as `#RRGGBB`. The
+   * strokes are separate `stroke` objects, so drawing never overwrites a title.
+   */
+  sketch: { title: string; width: number; height: number; background: string }
+  /** One mark drawn straight on the board. Logical size of its box; the stroke is a `stroke` object. */
+  ink: { width: number; height: number }
 }
 
 /**
@@ -89,9 +99,13 @@ type Base = {
   noteUpdate?: string
   /** Explicit user redo intent; consumed by sync, never stored on the server. */
   noteRestore?: true
+  /** Explicit intent to join a note's sync group; consumed by sync, never stored. */
+  syncJoin?: true
   id: Id
   /** Soft delete (trash). Restorable. */
   deletedAt?: number | null
+  /** Identifies a single burial operation for exact family restoration. */
+  burialId?: Id | null
   /** Hard delete. Purged objects are kept as tombstones so deletes sync. */
   purged?: boolean
   createdAt: number
@@ -110,11 +124,22 @@ export type Card<T extends CardType = CardType> = Base & {
   color: CardColor
   /** Set when the card sits inside a column; x/y are then ignored. */
   columnId?: Id | null
+  /** Direct area membership; x/y are relative to its stable origin. Column children inherit it. */
+  areaId?: Id | null
   /** Column presentation only. Null/absent means expanded; member geometry is retained. */
   collapsed?: boolean | null
   order?: number
   /** Persistent editor layout lock. Content edits and natural height reflow remain allowed. */
   positionLocked?: boolean
+  /**
+   * A sketch's title and paper colour, each its own field so a rename and a
+   * recolour by two people both survive. Missing on sketches made before them:
+   * read through `sketchOf`, which falls back to `content.title`/`background`.
+   */
+  sketchTitle?: string | null
+  sketchPaper?: string | null
+  /** Notes only: copies with the same id keep the same text (packages/core/src/synced.ts). */
+  syncId?: string | null
   content: CardContent[T]
 }
 
@@ -176,11 +201,24 @@ export type Sticker = Base & {
   y: number
   w: number
   angle: number
+  /** Direct membership; geometry is relative to the area origin. */
+  areaId?: Id | null
   z: number
   content: StickerAsset
 }
 
-export type Obj = Card | Board | Connection | Comment | Sticker
+/**
+ * One mark of ink on a sketch or board ink card (`cardId`). Each stroke is its
+ * own object, so concurrent drawing merges. Points are in the card's logical
+ * space. Follows its card between boards, like comments.
+ */
+export type Stroke = Base & InkMark & {
+  kind: 'stroke'
+  boardId: Id
+  cardId: Id
+}
+
+export type Obj = Card | Board | Connection | Comment | Sticker | Stroke
 
 export const HOME_BOARD_ID = 'home'
 
@@ -191,9 +229,12 @@ export const DEFAULT_SIZE: Record<CardType, { w: number; h: number }> = {
   image: { w: 260, h: 200 },
   link: { w: 260, h: 220 },
   column: { w: 280, h: 120 },
+  area: { w: 800, h: 480 },
   file: { w: 260, h: 72 },
   movie: { w: 220, h: 370 },
   swatch: { w: 200, h: 190 },
+  sketch: { w: 320, h: 240 },
+  ink: { w: 80, h: 80 },
   chat: { w: 380, h: 520 },
 }
 

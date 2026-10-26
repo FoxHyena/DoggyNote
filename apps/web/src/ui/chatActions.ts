@@ -10,7 +10,8 @@ import { rectOf } from '../canvas/layout.ts'
 
 function beside(rect: Rect) {
   const size = DEFAULT_SIZE.chat
-  const spot = findFreeSpot({ x: rect.x + rect.w + 48, y: rect.y, ...size }, doc.cardsOn(boardId()).filter((c) => !c.columnId))
+  const taken = doc.cardsOn(boardId()).filter((c) => !c.columnId).flatMap((c) => { const rect = rectOf(c.id); return rect ? [rect] : [] })
+  const spot = findFreeSpot({ x: rect.x + rect.w + 48, y: rect.y, ...size }, taken)
   return { at: { x: spot.x + size.w / 2, y: spot.y + 20 } }
 }
 
@@ -49,7 +50,9 @@ export async function saveChatAnswer(chat: Card<'chat'>, turn: ChatTurn, text: s
   if (existing) { doc.update({ [id]: { purged: false, deletedAt: null } }); return id }
   if (!doc.canWriteObject(chat)) throw new Error('You need edit access to save this answer.')
   const size = DEFAULT_SIZE.note
-  const at = findFreeSpot({ x: chat.x + chat.w + 40, y: chat.y, ...size }, doc.cardsOn(chat.boardId).filter((c) => !c.columnId))
+  const origin = rectOf(chat.id) ?? chat
+  const taken = doc.cardsOn(chat.boardId).filter((c) => !c.columnId).flatMap((c) => { const rect = rectOf(c.id); return rect ? [rect] : [] })
+  const at = findFreeSpot({ x: origin.x + origin.w + 40, y: origin.y, ...size }, taken)
   const note: Card<'note'> = { id, kind: 'card', type: 'note', boardId: chat.boardId, x: at.x, y: at.y, ...size, z: doc.maxZ(chat.boardId) + 1, color: 'none', createdAt: Date.now(), content: { md: `${text}\n\n---\n[From conversation](${API_BASE || location.origin}/#/b/${encodeURIComponent(chat.boardId)}?chat=${encodeURIComponent(chat.id)}&message=${encodeURIComponent(turn.id)}) · ${turn.provider === 'claude' ? 'Claude' : 'Codex'}` } }
   const conn: Connection = { id: newId(), kind: 'connection', boardId: chat.boardId, from: chat.id, to: id, arrow: 'end', createdAt: Date.now() }
   const tx: Change[] = [doc.createChange(note), doc.createChange(conn)]

@@ -5,6 +5,7 @@
 import type { Card, Id } from './model.ts'
 import { mdToText, noteMarkdown } from './markdown.ts'
 import { swatchHex, swatchName } from './swatch.ts'
+import { sketchOf } from './sketch.ts'
 
 // Cards are synced from everyone's devices: a malformed one must not break search
 // or the trash list for the whole workspace, so it degrades to a generic answer.
@@ -23,7 +24,7 @@ export const cardText = (c: Card): string => guarded(() => rawCardText(c), '')
 /** A one-line name for a card. `boardTitle` names the board a board card opens. */
 export const cardLabel = (c: Card, boardTitle: (boardId: Id) => string): string => guarded(() => rawCardLabel(c, boardTitle), 'Card')
 
-const KIND: Record<string, string> = { chat: 'Chat', note: 'Note', todo: 'To-do list', board: 'Board', image: 'Image', link: 'Link', column: 'Column', file: 'File', movie: 'Movie', swatch: 'Colour' }
+const KIND: Record<string, string> = { chat: 'Chat', note: 'Note', todo: 'To-do list', board: 'Board', image: 'Image', link: 'Link', column: 'Column', area: 'Area', file: 'File', movie: 'Movie', swatch: 'Colour' }
 
 /** What a screen reader says for a card: its kind, then its name ("Note: Trip to the coast"). */
 export const cardSpokenName = (c: Card, boardTitle: (boardId: Id) => string): string => guarded(() => {
@@ -46,6 +47,7 @@ function rawCardText(c: Card): string {
       const l = (c as Card<'link'>).content
       return [l.title, l.description, l.url].filter(Boolean).join('\n')
     }
+    case 'area':
     case 'column':
       return (c as Card<'column'>).content.title
     case 'image':
@@ -58,6 +60,8 @@ function rawCardText(c: Card): string {
     }
     case 'swatch':
       return [swatchName(c as Card<'swatch'>), swatchHex(c as Card<'swatch'>)].filter(Boolean).join('\n')
+    case 'sketch':
+      return sketchOf(c).title
     default:
       return ''
   }
@@ -81,6 +85,8 @@ function rawCardLabel(c: Card, boardTitle: (boardId: Id) => string): string {
       const l = (c as Card<'link'>).content
       return l.title || l.url
     }
+    case 'area':
+      return (c as Card<'area'>).content.title || 'Area'
     case 'column':
       return (c as Card<'column'>).content.title || 'Column'
     case 'file':
@@ -91,6 +97,10 @@ function rawCardLabel(c: Card, boardTitle: (boardId: Id) => string): string {
     }
     case 'swatch':
       return swatchName(c as Card<'swatch'>) || swatchHex(c as Card<'swatch'>)
+    case 'sketch':
+      return sketchOf(c).title || 'Sketch'
+    case 'ink':
+      return 'Drawing'
     default:
       return 'Card'
   }

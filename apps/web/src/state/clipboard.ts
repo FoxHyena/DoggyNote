@@ -1,3 +1,4 @@
+import { areaAt, areaPlacement } from './areas.ts'
 import {
   CLIP_MIME,
   GRID,
@@ -131,6 +132,8 @@ export function pasteClip(clip: ClipPayload, at: Vec, opts: { columnId?: Id } = 
     return
   }
   const { objects, roots } = materialise(clip, { at: point, boardId: target, maxZ: doc.maxZ(target), now: Date.now(), newId, column })
+  const area = !column ? areaAt(point) : undefined
+  if (area) for (const object of objects) if (object.kind === 'card' && roots.includes(object.id) && object.type !== 'area') Object.assign(object, areaPlacement({ x: object.x, y: object.y }, area))
   const blocked = new Set(objects.filter((o) => !assetReachable(o)).map((o) => o.id))
   if (blocked.size) showToast(`${blocked.size} ${blocked.size === 1 ? 'picture or file' : 'pictures or files'} couldn’t come along: they belong to someone else.`)
   let kept = objects.filter((o) => !blocked.has(o.id) && !(o.kind === 'connection' && (blocked.has(o.from) || blocked.has(o.to))))
@@ -164,9 +167,10 @@ function moveBack(clip: ClipPayload, at: Vec, column?: { id: Id; orders: number[
   for (const o of placed.objects) {
     if (o.kind === 'card' && o.boardId === target) {
       const c = o as Card
-      patches[c.id] = { boardId: c.boardId, x: c.x, y: c.y, z: c.z, columnId: c.columnId ?? null, order: c.order, ...(clip.roots.includes(c.id) ? { deletedAt: null } : {}) }
+      patches[c.id] = { boardId: c.boardId, x: c.x, y: c.y, z: c.z, columnId: c.columnId ?? null, areaId: c.areaId ?? null, order: c.order, ...(doc.get(c.id)?.deletedAt === clip.cut!.at ? { deletedAt: null, burialId: null } : {}) }
     }
-    if (o.kind === 'connection') patches[o.id] = { boardId: o.boardId }
+    if (o.kind === 'sticker' && o.boardId === target) patches[o.id] = { boardId: target, x: o.x, y: o.y, areaId: o.areaId ?? null, deletedAt: null, burialId: null }
+    if (o.kind === 'connection' || o.kind === 'stroke') patches[o.id] = { boardId: o.boardId }
   }
   if (target !== clip.boardId) {
     const moved = new Set(Object.keys(patches))
@@ -256,7 +260,7 @@ export function installClipboard(opts: { readOnly: boolean }) {
       const at = Date.now()
       const cutClip = { ...clip, cut: { at } }
       writeClip(e.clipboardData, cutClip)
-      trashSelection(at)
+      trashSelection(at, true)
       showToast(`Cut ${clip.roots.length} ${clip.roots.length === 1 ? 'card' : 'cards'}. Paste to put ${clip.roots.length === 1 ? 'it' : 'them'} somewhere else.`, 4000)
     } else writeClip(e.clipboardData, clip)
   }

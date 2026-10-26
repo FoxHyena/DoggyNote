@@ -4,8 +4,10 @@ import { COPY } from '@doggynote/theme'
 import type { Card, Vec } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
 import { beginEdit, selection, setCardContextOpen } from '../state/ui.ts'
+import { canCreateAreaFromSelection, createAreaFromSelection, buryArea, tidyArea } from '../state/areas.ts'
 import { burySelection } from '../state/actions.ts'
 import { duplicateSelection } from '../state/clipboard.ts'
+import { canMakeSyncedCopy, makeSyncedCopy } from '../state/synced.ts'
 import { liveState, peers, pingAt } from '../state/realtime.ts'
 import { LabelsPopover } from './Labels.tsx'
 import { openThread } from './CommentsPanel.tsx'
@@ -25,8 +27,8 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
   const cards = createMemo(() => [...selection()].map((id) => doc.getCard(id)).filter((c): c is Card => !!c))
   const sole = () => selection().size === 1 ? card() : undefined
   const writable = () => selection().size > 0 && [...selection()].every((id) => doc.canWriteObject(doc.get(id)))
-  const canEdit = () => !!sole() && writable() && ['note', 'todo', 'column', 'image', 'swatch', 'board', 'link', 'movie'].includes(sole()!.type)
-  const canLabel = () => writable() && cards().length > 0 && cards().every((c) => c.type !== 'column' && c.boardId === cards()[0].boardId)
+  const canEdit = () => !!sole() && writable() && ['area', 'note', 'todo', 'column', 'image', 'swatch', 'board', 'link', 'movie', 'sketch'].includes(sole()!.type)
+  const canLabel = () => writable() && cards().length > 0 && cards().every((c) => c.type !== 'column' && c.type !== 'area' && c.boardId === cards()[0].boardId)
   const canPing = () => liveState() === 'live' && peers().length > 0
   const close = () => { props.close(); props.point.returnTo.focus({ preventScroll: true }) }
   const run = (action: () => void) => { close(); action() }
@@ -51,10 +53,15 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
           <Show when={card()}>
             <button class="menu-item" role="menuitem" disabled={!canEdit()} onClick={() => run(() => beginEdit(card()!.id))}><Icon name="edit" size={18} />{card()?.type === 'board' ? 'Rename' : 'Edit'}</button>
             <button class="menu-item" role="menuitem" disabled={!writable()} onClick={() => run(duplicateSelection)}><Icon name="duplicate" size={18} />Duplicate</button>
+            <Show when={canMakeSyncedCopy(sole())}>
+              <button class="menu-item" role="menuitem" data-testid="make-synced-copy" onClick={() => run(() => makeSyncedCopy(card()!.id))}><Icon name="synced" size={18} />{COPY.synced.make}</button>
+            </Show>
             <button class="menu-item" role="menuitem" disabled={!canLabel()} onClick={() => setLabels(true)}><Icon name="label" size={18} />Labels</button>
             <button class="menu-item" role="menuitem" disabled={!sole() || sole()?.type === 'board'} onClick={() => run(() => openThread(card()!.id))}><Icon name="comment" size={18} />Comment</button>
+            <Show when={canCreateAreaFromSelection()}><button class="menu-item" role="menuitem" data-testid="area-from-selection" onClick={() => run(() => { createAreaFromSelection() })}><Icon name="board" size={18} />Create area from selection</button></Show>
+            <Show when={sole()?.type === 'area'}><button class="menu-item" role="menuitem" onClick={() => run(() => tidyArea(sole()!.id))}><Icon name="tidy" size={18} />Tidy area</button><button class="menu-item" role="menuitem" onClick={() => run(() => buryArea(sole()!.id))}>Bury area and contents</button></Show>
             <div class="menu-sep" role="separator" />
-            <button class="menu-item" role="menuitem" disabled={!writable()} onClick={() => run(burySelection)}><Icon name="bury" size={18} />{COPY.bury}</button>
+            <button class="menu-item" role="menuitem" disabled={!writable()} onClick={() => run(burySelection)}><Icon name="bury" size={18} />{sole()?.type === 'area' ? 'Remove area (keep contents)' : COPY.bury}</button>
           </Show>
           <Show when={canPing()}>
             <Show when={card()}><div class="menu-sep" role="separator" /></Show>

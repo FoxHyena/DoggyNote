@@ -1,0 +1,30 @@
+.card.card-area { background: color-mix(in srgb, var(--dn-panel) 72%, transparent); border: 1px solid var(--dn-border); border-radius: 12px; box-shadow: none; pointer-events: none; z-index: -1; container-type: inline-size; }
+:root[data-theme='light'] .card.card-area { box-shadow: none; }
+.card.card-area.colored { background: color-mix(in srgb, var(--c-bg) 12%, var(--dn-bg)); color: var(--dn-text); }
+.area { height: 100%; }
+.area-head { container-type: inline-size; display: flex; align-items: center; gap: 8px; min-height: var(--area-header); padding: 2px 10px; border-radius: 12px 12px 0 0; pointer-events: auto; cursor: grab; }
+.area-head:active { cursor: grabbing; }
+.area-grip { display: flex; color: var(--dn-text-muted); }
+.area-title { flex: 1; min-width: 60px; }
+.area-title strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; font-weight: 600; }
+.area-title .column-title-input { width: 100%; }
+.area-actions { display: flex; align-items: center; gap: 4px; cursor: default; }
+.area-actions .bar-btn { min-height: 32px; font-size: 12px; }
+.area-file-input { display: none; }
+.area-edge { position: absolute; pointer-events: auto; }
+.area-edge-left { left: -4px; top: var(--area-header); bottom: 0; width: 8px; }
+.area-edge-right { right: -4px; top: var(--area-header); bottom: 0; width: 8px; }
+.area-edge-bottom { left: 0; right: 0; bottom: -4px; height: 8px; }
+.area-drop-active { outline: 2px solid var(--dn-selection); outline-offset: 2px; border-radius: inherit; }
+.area-empty-hint { position: absolute; left: 24px; bottom: 12px; color: var(--dn-text-muted); font-size: 12px; pointer-events: none; }
+.card-area .connect-handle, .card-area .resize-handle { pointer-events: auto; }
+@media (max-width: 599px), (pointer: coarse) {
+  .area-actions .bar-btn { min-height: 44px; }
+  .area-head { min-height: var(--area-header); }
+}
+
+@container (max-width: 500px) { .area-actions [data-testid="area-tidy"] { display: none; } }
+
+.area-head .column-toggle { position: static; flex: 0 0 28px; width: 28px; height: 40px; }
+.area-title .column-title-input { text-align: left; }
+@media (pointer: coarse) { .area-head .column-toggle { flex-basis: 44px; width: 44px; height: 44px; } }

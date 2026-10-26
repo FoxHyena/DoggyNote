@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { installAgentBridge } from './agent-bridge.ts'
 import { DESKTOP_PORT } from './ports.ts'
-import { addNote, canvasBox, freshBoard, waitForSync } from './helpers.ts'
+import { addNote, canvasBox, freshBoard, setAccountAppearance, waitForSync } from './helpers.ts'
 
 test.use({ baseURL: `http://localhost:${DESKTOP_PORT}`, storageState: { cookies: [], origins: [] } })
 test.beforeEach(async ({ page }) => {
@@ -47,14 +47,10 @@ test('browser fixture: inspect → stream → close → follow-up → Stop, with
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(dialog.getByRole('button', { name: 'Save answer / selection as note' })).toBeInViewport({ ratio: 1 })
   for (const appearance of ['dark', 'light']) {
-    await page.getByTestId('account').click()
-    await page.getByRole('radio', { name: appearance === 'dark' ? 'Dark' : 'Light', exact: true }).click()
-    await page.keyboard.press('Escape')
+    await setAccountAppearance(page, appearance === 'dark' ? 'Dark' : 'Light')
     await page.screenshot({ path: `../../docs/qa/agent-canvas/screenshots/on-board-thread-${testInfo.project.name}-${appearance}.png` })
   }
-  await page.getByTestId('account').click()
-  await page.getByRole('radio', { name: 'Dark', exact: true }).click()
-  await page.keyboard.press('Escape')
+  await setAccountAppearance(page, 'Dark')
   await expect.poll(() => page.evaluate(() => (window as any).__chatFixture.started.length)).toBe(1)
   await dialog.getByLabel('Message', { exact: true }).fill('Which task comes first?')
   await dialog.getByRole('button', { name: 'Send', exact: true }).click()
@@ -192,9 +188,7 @@ test('browser fixture: Codex questions wait for scoped answers, survive closing,
   expect(await page.evaluate(() => (window as any).__chatFixture.answered.length)).toBe(0)
   await questions.getByLabel('Tone: suggestions').selectOption('Playful')
   for (const appearance of ['Dark', 'Light']) {
-    await page.getByTestId('account').click()
-    await page.getByRole('radio', { name: appearance, exact: true }).click()
-    await page.keyboard.press('Escape')
+    await setAccountAppearance(page, appearance === 'Dark' ? 'Dark' : 'Light')
     await questions.scrollIntoViewIfNeeded()
     await page.screenshot({ path: `../../docs/qa/agent-canvas/screenshots/questions-${testInfo.project.name}-${appearance.toLowerCase()}.png` })
   }
@@ -343,7 +337,7 @@ test('saved-answer navigation reveals its originating turn in a long thread with
   const { API_PORT } = await import('./ports.ts')
   const token = await page.evaluate(() => sessionStorage.getItem('fake-keychain'))
   const url = `http://localhost:${API_PORT}/api/chats/${id}`
-  const headers = { authorization: `Bearer ${token}`, 'x-doggynote-protocol': '3' }
+  const headers = { authorization: `Bearer ${token}`, 'x-doggynote-protocol': '4' }
   const capture = await (await page.request.get(`${url}/context`, { headers })).json()
   const turns: string[] = []
   for (let n = 0; n < 5; n++) {
@@ -376,7 +370,7 @@ test('logout stops local work and saves its partial answer before revoking the s
     expect(await page.evaluate(() => Object.values((window as any).__chatFixture.runs).every((run: any) => run.status !== 'running'))).toBe(true)
     const { API_PORT } = await import('./ports.ts')
     const token = await page.evaluate(() => sessionStorage.getItem('fake-keychain'))
-    const saved = await page.request.get(`http://localhost:${API_PORT}/api/chats/${run.chatId}`, { headers: { authorization: `Bearer ${token}`, 'x-doggynote-protocol': '3' } })
+    const saved = await page.request.get(`http://localhost:${API_PORT}/api/chats/${run.chatId}`, { headers: { authorization: `Bearer ${token}`, 'x-doggynote-protocol': '4' } })
     expect((await saved.json()).turns[0]).toMatchObject({ status: 'interrupted', answer: 'Keep this partial answer.' })
     revoked = true
     await route.continue()

@@ -209,8 +209,25 @@ it('stages a narrow task proposal idempotently and reuses existing approval, rej
     expect((await f.request(`/agent-proposals/${rejected.id}/approve`, {})).status).toBe(409)
     const conflict = await (await f.request('/chats/chat/task-proposal', { ...body, operationId: 'task-output-3' })).json() as { id: string }
     const conflictDetail = await (await f.request(`/agent-proposals/${conflict.id}`)).json() as typeof detail
-    f.put({ ...f.card(conflictDetail.proposal.changes[0]!.id, 'An intervening creation') })
+    f.put({ ...f.card(conflictDetail.proposal.changes[0]!.id, ''), type: 'todo', content: { title: 'An intervening creation', items: [] } })
     expect((await f.request(`/agent-proposals/${conflict.id}/approve`, {})).status).toBe(409)
+  } finally { f.sql.close() }
+})
+
+it('places task proposals beside a containing column in its inherited area', async () => {
+  const f = await fixture()
+  try {
+    f.put({ ...f.card('area', ''), type: 'area', x: 800, y: 600, w: 900, h: 700, content: { title: 'Project' } })
+    f.put({ ...f.card('column', ''), type: 'column', areaId: 'area', x: 40, y: 90, w: 280, content: { title: 'Work' } })
+    f.put({ ...f.chat('chat'), columnId: 'column', areaId: null, x: -900, y: -900 })
+    expect((await f.request('/chats/chat/turns', await f.beginBody())).status).toBe(201)
+    expect((await f.request('/chats/chat/turns/run-1/finish', { ...f.finish, answer: '- Book the park' })).status).toBe(200)
+    const staged = await f.request('/chats/chat/task-proposal', { operationId: 'column-tasks', messageId: 'run-1', selectedText: '- Book the park', title: 'Kickoff', tasks: ['Book the park'] })
+    expect(staged.status, await staged.clone().text()).toBe(201)
+    const { id } = await staged.json() as { id: string }
+    const detail = await (await f.request(`/agent-proposals/${id}`)).json() as { proposal: { changes: { after: Record<string, unknown> }[] } }
+    expect(detail.proposal.changes[0]!.after).toMatchObject({ type: 'todo', areaId: 'area', x: 360, y: 90 })
+    expect((await f.request(`/agent-proposals/${id}/approve`, {})).status).toBe(200)
   } finally { f.sql.close() }
 })
 
@@ -277,7 +294,7 @@ it('upgrades existing chat rows without losing content or the active-run uniquen
     sql.exec('PRAGMA foreign_keys=ON')
     const dir = new URL('../migrations/', import.meta.url)
     for (const file of readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) {
-      if (file === '0016_retain_chat_authorship.sql') {
+      if (file === '0017_retain_chat_authorship.sql') {
         sql.exec(`INSERT INTO users(id,username,pw_hash,created_at) VALUES('former','former','unused',1);
           INSERT INTO objects(id,kind,data,seq,updated_at) VALUES('saved-chat','card','{}',1,1);
           INSERT INTO chat_threads(id) VALUES('saved-chat');

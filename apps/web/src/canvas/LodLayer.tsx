@@ -1,17 +1,18 @@
 import { cacheStickerAlpha } from '../ui/StickerImage.tsx'
 import { createEffect, createSignal, onCleanup, onMount } from 'solid-js'
-import { intersects, swatchHex, stickerBounds, stickerHeight, worldToScreen, type Card, type Rect } from '@doggynote/core'
+import { intersects, isBoardInkSize, sketchOf, swatchHex, stickerBounds, stickerHeight, worldToScreen, type Card, type Rect } from '@doggynote/core'
 import { CARD_COLORS, cardColor, customText, isPresetColor, type CardColor } from '@doggynote/theme'
+import { drawInkStroke } from '../drawing/InkLayer.tsx'
 import { theme as themeSignal } from '../theme.ts'
 import * as doc from '../state/doc.ts'
 import { boardId, camera, selection, viewport } from '../state/ui.ts'
 import { columnChildren } from '../state/actions.ts'
-import { columnCollapsed } from '../state/columns.ts'
+import { columnCollapsed, hiddenByColumn } from '../state/columns.ts'
 import { assetUrl } from '../state/api.ts'
 import { acquireUrl, releaseUrl } from '../state/assets.ts'
 import { acquireStickerOutline } from '../state/stickerOutline.ts'
 import { user } from '../state/session.ts'
-import { COLUMN_HEADER, COLUMN_INSET, cardHeight } from './layout.ts'
+import { COLUMN_HEADER, COLUMN_INSET, cardHeight, rectOf, worldSticker } from './layout.ts'
 
 // Zoomed out, a board can put a thousand cards on screen. As DOM that costs
 // ~60 ms a frame (the browser re-layerizes every card); drawn into one canvas
@@ -192,12 +193,15 @@ export function LodLayer() {
     const sel = selection()
     const cards = doc
       .cardsOn(boardId())
-      .filter((c) => !c.columnId)
-      .sort((a, b) => (a.z ?? 0) - (b.z ?? 0))
+      .filter(c => !c.columnId && !hiddenByColumn(c.id))
+      .sort((a, b) => (a.type === 'area' ? -1 : b.type === 'area' ? 1 : (a.z ?? 0) - (b.z ?? 0)))
 
     const drawCard = (c: Card, x: number, y: number, w: number, h: number) => {
       const tint = tintOf(pal, c.color)
       const bg = tint?.bg ?? pal.card
+      if (c.type === 'area') {
+        ctx.fillStyle = pal.panel; roundRect(ctx, x, y, w, h, 12 * z); ctx.fill(); ctx.strokeStyle = pal.border; ctx.lineWidth = 1; ctx.stroke(); ctx.fillStyle = pal.muted; ctx.fillRect(x + 24 * z, y + 20 * z, Math.min(160, c.w / 3) * z, Math.max(1, 6 * z)); return
+      }
       if (c.type === 'board') {
         // Synced data: tolerate a card whose content is missing.
         const b = doc.getBoard((c as Card<'board'>).content?.boardId)
@@ -238,6 +242,36 @@ export function LodLayer() {
           ctx.fillRect(x + w * 0.08, y + ph + (h - ph) * 0.4, w * 0.6, Math.max(1, Math.min(h - ph, 8 * z) * 0.4))
           ctx.globalAlpha = 1
         }
+        return
+      }
+      if (c.type === 'sketch' || c.type === 'ink') {
+        // The paper (sketches), then the ink itself, scaled from the card's logical space.
+        const sketch = c.type === 'sketch' ? sketchOf(c) : null
+        const logical = sketch ?? (isBoardInkSize(c.content) ? c.content : null)
+        if (!logical) return
+        const ph = sketch ? Math.min(h, (w * sketch.height) / sketch.width) : h
+        if (sketch) {
+          ctx.fillStyle = sketch.background
+          roundRect(ctx, x, y, w, ph, 3 * z * 2)
+          ctx.fill()
+          if (h - ph >= 1) {
+            ctx.fillStyle = bg
+            ctx.fillRect(x, y + ph, w, h - ph)
+            ctx.fillStyle = pal.muted
+            ctx.fillRect(x + 12 * z, y + ph + (h - ph) * 0.4, w * 0.45, Math.max(1, 7 * z))
+          }
+        }
+        const strokes = doc.strokesOn(c.id)
+        if (!strokes.length) return
+        const k = Math.min(w / logical.width, ph / logical.height)
+        ctx.save()
+        ctx.beginPath()
+        ctx.rect(x, y, w, ph)
+        ctx.clip()
+        ctx.translate(x + (w - logical.width * k) / 2, y + (ph - logical.height * k) / 2)
+        ctx.scale(k, k)
+        for (const s of strokes) drawInkStroke(ctx, s)
+        ctx.restore()
         return
       }
       if (c.type === 'swatch') {
@@ -340,19 +374,19 @@ export function LodLayer() {
     }
 
     for (const c of cards) {
-      const h = cardHeight(c)
-      const r = { x: c.x, y: c.y, w: c.w, h }
-      if (!intersects(view, r)) continue
-      const p = worldToScreen(cam, { x: c.x, y: c.y })
-      drawCard(c, p.x, p.y, c.w * z, h * z)
+      const r = rectOf(c.id)
+      if (!r || !intersects(view, r)) continue
+      const h = r.h
+      const p = worldToScreen(cam, r)
+      drawCard(c, p.x, p.y, r.w * z, h * z)
       if (sel.has(c.id)) {
         ctx.strokeStyle = pal.selection
         ctx.lineWidth = 2
-        ctx.strokeRect(p.x - 3, p.y - 3, c.w * z + 6, h * z + 6)
+        ctx.strokeRect(p.x - 3, p.y - 3, r.w * z + 6, h * z + 6)
       }
     }
     // Stickers remain independent overlays above every ordinary card at overview.
-    for (const s of [...doc.stickersOn(boardId())].sort((a, b) => a.z - b.z || a.id.localeCompare(b.id))) {
+    for (const s of [...doc.stickersOn(boardId())].filter(s => !hiddenByColumn(s.id)).map(worldSticker).sort((a, b) => a.z - b.z || a.id.localeCompare(b.id))) {
       if (!intersects(view, stickerBounds(s))) continue
       const t = thumb(s.content.assetId, true, s.content.format === 'static')
       if (!t || !atlas) continue
@@ -370,8 +404,8 @@ export function LodLayer() {
     palette()
     selection()
     thumbTick()
-    for (const s of doc.stickersOn(boardId())) void (s.x, s.y, s.w, s.angle, s.z, s.content.assetId)
-    for (const c of doc.cardsOn(boardId())) void (c.x, c.y, c.w, c.h, c.z, c.color, c.columnId, c.order, columnCollapsed(c), c.type === 'swatch' && (c as Card<'swatch'>).content?.hex)
+    for (const s of doc.stickersOn(boardId())) void (s.x, s.y, s.w, s.angle, s.z, s.areaId, s.content.assetId)
+    for (const c of doc.cardsOn(boardId())) void (c.x, c.y, c.w, c.h, c.z, c.color, c.columnId, c.areaId, c.order, columnCollapsed(c), c.type === 'swatch' && (c as Card<'swatch'>).content?.hex, c.type === 'sketch' && (c.content, c.sketchTitle, c.sketchPaper), (c.type === 'sketch' || c.type === 'ink') && doc.strokesOn(c.id))
     if (!frame) frame = requestAnimationFrame(draw)
   })
   onCleanup(() => {

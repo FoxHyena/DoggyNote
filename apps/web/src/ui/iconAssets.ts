@@ -1,5 +1,7 @@
 // Official Phosphor SVGs only. Static imports keep unused icons out of the bundle.
 import traySvg from '@phosphor-icons/core/regular/tray.svg?raw'
+import arrowsLeftRightSvg from '@phosphor-icons/core/regular/arrows-left-right.svg?raw'
+import linkSimpleHorizontalBreakSvg from '@phosphor-icons/core/regular/link-simple-horizontal-break.svg?raw'
 import gridNineSvg from '@phosphor-icons/core/regular/grid-nine.svg?raw'
 import noteSvg from '@phosphor-icons/core/regular/note.svg?raw'
 import linkSvg from '@phosphor-icons/core/regular/link.svg?raw'
@@ -38,6 +40,7 @@ import downloadSimpleSvg from '@phosphor-icons/core/regular/download-simple.svg?
 import uploadSimpleSvg from '@phosphor-icons/core/regular/upload-simple.svg?raw'
 import arrowCounterClockwiseSvg from '@phosphor-icons/core/regular/arrow-counter-clockwise.svg?raw'
 import infoSvg from '@phosphor-icons/core/regular/info.svg?raw'
+import bookOpenTextSvg from '@phosphor-icons/core/regular/book-open-text.svg?raw'
 import filmStripSvg from '@phosphor-icons/core/regular/film-strip.svg?raw'
 import xCircleSvg from '@phosphor-icons/core/regular/x-circle.svg?raw'
 import dropSvg from '@phosphor-icons/core/regular/drop.svg?raw'
@@ -55,6 +58,7 @@ import lockSimpleSvg from '@phosphor-icons/core/regular/lock-simple.svg?raw'
 import lockSimpleOpenSvg from '@phosphor-icons/core/regular/lock-simple-open.svg?raw'
 import copySvg from '@phosphor-icons/core/regular/copy.svg?raw'
 import dotsThreeSvg from '@phosphor-icons/core/regular/dots-three.svg?raw'
+import dotsSixVerticalSvg from '@phosphor-icons/core/regular/dots-six-vertical.svg?raw'
 import layoutSvg from '@phosphor-icons/core/regular/layout.svg?raw'
 import filePlusSvg from '@phosphor-icons/core/regular/file-plus.svg?raw'
 import userCircleSvg from '@phosphor-icons/core/regular/user-circle.svg?raw'
@@ -71,6 +75,11 @@ import houseLineSvg from '@phosphor-icons/core/regular/house-line.svg?raw'
 import bowlFoodSvg from '@phosphor-icons/core/regular/bowl-food.svg?raw'
 import starSvg from '@phosphor-icons/core/regular/star.svg?raw'
 import heartSvg from '@phosphor-icons/core/regular/heart.svg?raw'
+import scribbleSvg from '@phosphor-icons/core/regular/scribble.svg?raw'
+import pencilSimpleLineSvg from '@phosphor-icons/core/regular/pencil-simple-line.svg?raw'
+import penSvg from '@phosphor-icons/core/regular/pen.svg?raw'
+import highlighterSvg from '@phosphor-icons/core/regular/highlighter.svg?raw'
+import eraserSvg from '@phosphor-icons/core/regular/eraser.svg?raw'
 import pawPrintFillSvg from '@phosphor-icons/core/fill/paw-print-fill.svg?raw'
 import starFillSvg from '@phosphor-icons/core/fill/star-fill.svg?raw'
 import pushPinFillSvg from '@phosphor-icons/core/fill/push-pin-fill.svg?raw'
@@ -119,6 +128,7 @@ export const ICONS = {
   upload: body(uploadSimpleSvg),
   restore: body(arrowCounterClockwiseSvg),
   info: body(infoSvg),
+  guides: body(bookOpenTextSvg),
   film: body(filmStripSvg),
   labelOff: body(xCircleSvg),
   droplet: body(dropSvg),
@@ -132,10 +142,12 @@ export const ICONS = {
   alignTop: body(alignTopSvg),
   alignMiddleV: body(alignCenterVerticalSvg),
   alignBottom: body(alignBottomSvg),
+  tidy: body(squaresFourSvg),
   lock: body(lockSimpleSvg),
   unlock: body(lockSimpleOpenSvg),
   duplicate: body(copySvg),
   more: body(dotsThreeSvg),
+  grip: body(dotsSixVerticalSvg),
   template: body(layoutSvg),
   templateNew: body(filePlusSvg),
   user: body(userCircleSvg),
@@ -146,6 +158,9 @@ export const ICONS = {
   system: body(desktopSvg),
   warning: body(warningSvg),
   sync: body(arrowsClockwiseSvg),
+  /** A synced copy of a note (edits flow both ways), and making one independent again. */
+  synced: body(arrowsLeftRightSvg),
+  unsync: body(linkSimpleHorizontalBreakSvg),
   dog: body(dogSvg),
   bone: body(boneSvg),
   ball: body(tennisBallSvg),
@@ -154,6 +169,13 @@ export const ICONS = {
   bowl: body(bowlFoodSvg),
   star: body(starSvg),
   heart: body(heartSvg),
+  /** A sketch card: a doodle on its own sheet. */
+  sketch: body(scribbleSvg),
+  /** Drawing straight on the board: a pencil and the line it left. */
+  draw: body(pencilSimpleLineSvg),
+  pen: body(penSvg),
+  highlighter: body(highlighterSvg),
+  eraser: body(eraserSvg),
   paw: body(pawPrintFillSvg),
   starFilled: body(starFillSvg),
   pinFilled: body(pushPinFillSvg),

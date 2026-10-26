@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { expect, test, type Page } from '@playwright/test'
-import { camera, canvasBox, postSync, waitForSync } from './helpers.ts'
+import { camera, canvasBox, postSync, setAccountAppearance, waitForSync } from './helpers.ts'
 import { importFixturePack, previewSticker, openStickerTray, stickerBoard, adjustSticker } from './sticker-helpers.ts'
 
 const round = process.env.STICKER_VISUAL_ROUND ?? '1'
@@ -13,7 +13,7 @@ async function capture(page: Page, engine: string, name: string) {
   await page.screenshot({ path: resolve(dir, `${engine}-${name}.png`), animations: 'disabled' })
 }
 async function theme(page: Page, name: 'Light' | 'Dark') {
-  await page.getByTestId('account').click(); await page.getByRole('radio', { name, exact: true }).click(); await page.keyboard.press('Escape')
+  await setAccountAppearance(page, name)
 }
 async function inViewport(page: Page) {
   const r = (await page.getByTestId('sticker-tray').boundingBox())!, v = page.viewportSize()!

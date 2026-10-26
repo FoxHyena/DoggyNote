@@ -40,3 +40,10 @@ it('takes movie cards that name their title, with or without fetched details', (
   for (const content of [{ kind: 'movie', title: 'Something good' }, { kind: 'movie', title: 'x', imdbId: 'nm0000190' }, { ...full, info: { ...full.info, providers: { region: 'US', link: 'javascript:alert(1)' } } }, { ...full, poster: 'https://example.com/p.jpg' }])
     expect(agentObjectSchema.safeParse({ ...card, content }).success).toBe(false)
 })
+it('accepts one-level area objects and rejects a nested area or conflicting column parent',()=>{
+  const area={...note,type:'area',columnId:null,areaId:null,content:{title:'Project'}}
+  expect(agentObjectSchema.safeParse(area).success).toBe(true)
+  expect(agentObjectSchema.safeParse({...area,areaId:'other'}).success).toBe(false)
+  expect(agentObjectSchema.safeParse({...area,columnId:'col'}).success).toBe(false)
+  expect(agentObjectSchema.safeParse({...note,areaId:'area',x:24,y:72}).success).toBe(true)
+})

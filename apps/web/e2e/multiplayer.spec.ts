@@ -10,7 +10,7 @@ async function friend(browser: Browser, owner: Page, permission = 'edit') {
   const id = owner.url().split('/b/')[1]!
   const grant = await owner.request.post(`/api/boards/${id}/members`, { data: { username: 'fido', permission, includeChildren: true } })
   expect(grant.ok(), await grant.text()).toBe(true)
-  const context = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '3' } })
+  const context = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '4' } })
   contexts.add(context)
   expect((await context.request.post('/api/auth/login', { data: { username: 'fido', password: 'fetchfetch' } })).ok()).toBe(true)
   const page = await context.newPage()
@@ -23,6 +23,73 @@ async function live(page: Page) {
   await expect(page.getByTestId('live-status')).toHaveText('Live')
   await page.keyboard.press('Escape')
 }
+
+test('window blur hides a cursor without leaving the room; focus requires a fresh canvas move', async ({ page, browser }) => {
+  await freshBoard(page)
+  const other = await friend(browser, page)
+  await live(page); await live(other)
+  const box = (await other.getByTestId('canvas').boundingBox())!
+  await other.bringToFront()
+  await other.mouse.move(box.x + 120, box.y + 120)
+  await expect(page.getByTestId('remote-cursor')).toBeVisible()
+
+  // Dispatch lifecycle events explicitly: Playwright keeps background pages
+  // visible. Native tab visibility is covered by multiplayer-lifecycle.spec.
+  await other.evaluate(() => window.dispatchEvent(new Event('blur')))
+  await expect(page.getByTestId('remote-cursor')).toHaveCount(0)
+  await other.mouse.move(box.x + 140, box.y + 140)
+  await expect(page.getByTestId('remote-cursor')).toHaveCount(0)
+  await other.evaluate(() => window.dispatchEvent(new Event('focus')))
+  await expect(page.getByTestId('remote-cursor')).toHaveCount(0)
+  await other.mouse.move(box.x + 160, box.y + 160)
+  await expect(page.getByTestId('remote-cursor')).toBeVisible()
+  await page.getByTestId('collaborators').click()
+  await expect(page.getByTestId('participant')).toHaveCount(2)
+})
+
+test('a stationary remote cursor stays painted while the observer pans, zooms and crosses overview', async ({ page, browser }, info) => {
+  await freshBoard(page)
+  const other = await friend(browser, page)
+  await live(page); await live(other)
+  const box = (await other.getByTestId('canvas').boundingBox())!
+  await other.bringToFront()
+  await other.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  const cursor = page.getByTestId('remote-cursor')
+  await expect(cursor).toBeVisible()
+  const start = (await cursor.boundingBox())!
+  const painted = async (name: string) => {
+    await expect(cursor).toBeVisible()
+    const b = (await cursor.boundingBox())!
+    const clip = { x: Math.floor(b.x), y: Math.floor(b.y), width: Math.ceil(b.width), height: Math.ceil(b.height) }
+    const visible = await page.screenshot({ clip, path: info.outputPath(`${name}.png`) })
+    const hidden = await page.screenshot({ clip, style: '.remote-cursor { visibility: hidden !important; }' })
+    expect(visible.equals(hidden), 'cursor must change actual painted pixels').toBe(false)
+  }
+  await painted('before')
+  const canvas = page.getByTestId('canvas')
+  const observer = (await canvas.boundingBox())!
+  const wheel = (deltaY: number, ctrlKey = false) => canvas.dispatchEvent('wheel', {
+    deltaX: 0, deltaY, ctrlKey, clientX: observer.x + observer.width / 2, clientY: observer.y + observer.height / 2,
+  })
+  // The sender's camera also changes the world point under a stationary mouse.
+  await other.getByTestId('canvas').dispatchEvent('wheel', { deltaY: 40 })
+  await expect.poll(async () => (await cursor.boundingBox())!.y).toBeCloseTo(start.y + 40, 0)
+  await other.getByTestId('canvas').dispatchEvent('wheel', { deltaY: -40 })
+  await expect.poll(async () => (await cursor.boundingBox())!.y).toBeCloseTo(start.y, 0)
+  await wheel(60)
+  await expect.poll(async () => (await cursor.boundingBox())!.y).toBeCloseTo(start.y - 60, 0)
+  await painted('panning')
+  await wheel(150, true)
+  await expect(page.getByTestId('lod-layer')).toBeVisible()
+  await painted('overview')
+  await wheel(-150, true)
+  await expect(page.getByTestId('lod-layer')).toHaveCount(0)
+  await painted('zooming-back')
+  await wheel(2000)
+  await expect(cursor).toHaveCount(0)
+  await wheel(-2000)
+  await painted('returned')
+})
 
 test('members, live cursors, selections, pings and following work without manual refresh', async ({ page, browser }) => {
   await freshBoard(page, 'Multiplayer studio')
@@ -460,7 +527,7 @@ test('a shared card offers its actions and a location ping for the other partici
   await other.bringToFront()
   await cardByText(other, 'Point to this card').click({ button: 'right', position: { x: 30, y: 20 } })
   const menu = other.getByTestId('canvas-context-menu')
-  await expect(menu.getByRole('menuitem')).toHaveText(['Edit', 'Duplicate', 'Labels', 'Comment', 'Bury', 'Look here'])
+  await expect(menu.getByRole('menuitem')).toHaveText(['Edit', 'Duplicate', 'Make a synced copy', 'Labels', 'Comment', 'Create area from selection', 'Bury', 'Look here'])
   await other.keyboard.press('End')
   await expect(menu.getByRole('menuitem', { name: 'Look here', exact: true })).toBeFocused()
   await other.keyboard.press('Enter')

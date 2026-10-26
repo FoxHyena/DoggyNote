@@ -131,7 +131,7 @@ export function ExportButton(props: { renderTrigger?: (controls: ExportTrigger) 
               { value: 'transparent', label: 'Transparent' },
             ]}
           />
-          <p class="export-label">Columns export as currently shown. Expand them first to include hidden cards.</p>
+          <p class="export-label">Columns export as currently shown. Areas do too. Expand them first to include hidden contents.</p>
           <Show when={error()}>
             <p class="export-error" data-testid="export-error">
               {error()}

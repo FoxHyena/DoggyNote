@@ -6,7 +6,7 @@ import { ApiError, api, setShareToken } from './state/api.ts'
 import * as doc from './state/doc.ts'
 import { boardId, setRootBoard } from './state/ui.ts'
 import { createTheme } from './theme.ts'
-import { ViewerMenu } from './ui/ViewerMenu.tsx'
+import { ThemeToggle } from './ThemeToggle.tsx'
 import { CanvasControls } from './ui/CanvasControls.tsx'
 import { Canvas } from './canvas/Canvas.tsx'
 import { TopBar } from './ui/TopBar.tsx'
@@ -58,7 +58,7 @@ export function Viewer(props: { token: string }) {
       </Match>
       <Match when={data.latest}>
         <div class="app viewer" data-testid="viewer">
-          <TopBar readOnly root={data.latest!.rootBoardId} right={<ViewerMenu mode={theme.mode()} onThemeChange={theme.setMode} />} />
+          <TopBar readOnly root={data.latest!.rootBoardId} right={<ThemeToggle mode={theme.mode()} onThemeChange={theme.setMode} />} />
           <main class="stage">
             <Switch>
               <Match when={data.latest!.sharedBoards.includes(boardId()) && doc.getBoard(boardId())}>

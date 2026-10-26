@@ -11,8 +11,9 @@ export function cardObstacles(selected: readonly string[], windowCoordinates = f
   const cam = camera(), v = viewport()
   return doc.cardsOn(boardId()).flatMap((c) => {
     if (parents.has(c.id)) return []
-    const r = rectOf(c.id)
+    let r = rectOf(c.id)
     if (!r) return []
+    if (c.type === 'area') r = { ...r, h: 48 }
     const p = worldToScreen(cam, r)
     const screen = { x: p.x, y: p.y, w: r.w * cam.zoom, h: r.h * cam.zoom }
     if (screen.x + screen.w < 0 || screen.y + screen.h < 0 || screen.x > v.width || screen.y > v.height) return []

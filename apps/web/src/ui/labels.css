@@ -153,39 +153,20 @@ html[data-input='mouse'] .label-action:hover { color: var(--dn-text); background
 .label-rename-error { flex: 1 1 100%; padding: 4px 0 4px 32px; }
 .labels-empty { margin: 0; padding: 0 8px; color: var(--dn-text-muted); font-size: 13px; line-height: var(--lb-row); }
 
-/* Colour choice: six theme presets and the colour wheel, one row. */
-.label-dots {
+/* Colour choice: six theme presets and the colour wheel, one row (ui/ColorDots.tsx). */
+.color-dots.label-dots {
+  --cd-dot: var(--lb-dot);
+  --cd-gap: var(--lb-gap);
   display: grid;
   grid-template-columns: repeat(7, var(--lb-dot));
-  gap: var(--lb-gap);
   flex: 1 1 100%;
   padding: 4px 8px 8px;
 }
-.labels-panel > .label-dots { padding: 0 8px; }
-.label-dot {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: var(--lb-dot);
-  height: var(--lb-dot);
-  padding: 0;
-  border: 1px solid var(--dn-border);
-  border-radius: 50%;
-  color: var(--dn-text-muted);
-  background: var(--label-dot, transparent);
-  cursor: pointer;
-}
-.label-dot.on { box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-selection); }
-.label-dot:focus-visible, .label-custom:has(input:focus-visible) { outline: none; box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-text); }
-html[data-input='mouse'] .label-dot:not(.on):hover { box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-border); }
-.label-custom { border-style: dashed; }
-.label-custom.on { border-style: solid; }
-.label-custom input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+.labels-panel > .color-dots.label-dots { padding: 0 8px; }
 
 /* Fingers: 32px dots with a 44px hit area, 44px rows and tools, and 16px text so iOS doesn't zoom. */
 @media (pointer: coarse) {
   .labels-panel { --lb-dot: 32px; --lb-row: 44px; width: 304px; }
-  .label-dot::after { content: ''; position: absolute; inset: -6px; }
   .labels-input, .label-toggle { font-size: 16px; }
   .label-actions { gap: 0; padding-right: 0; opacity: 1; }
   .label-action { width: 44px; height: 44px; border-radius: 6px; }

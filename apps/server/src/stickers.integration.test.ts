@@ -47,7 +47,7 @@ async function fixture() {
     get: async (key: string) => { const o = objects.get(key); return o ? { body: o.bytes, httpEtag: 'fixture', writeHttpMetadata: (h: Headers) => h.set('content-type', o.type) } : null },
   } as unknown as R2Bucket
   const env: Env = { DB: db, BUCKET: bucket, TELEGRAM_BOT_TOKEN: 'never-expose-test-token', TELEGRAM_BOT_USERNAME: 'DoggyNoteTestBot', TELEGRAM_WEBHOOK_SECRET: 'fixture-webhook-secret' }
-  const request = (path: string, body?: unknown, user = 'rex', method = body === undefined ? 'GET' : 'POST') => app.request(`/api${path}`, { method, headers: { authorization: `Bearer ${user}`, 'content-type': 'application/json', 'x-doggynote-protocol': '3' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }, env)
+  const request = (path: string, body?: unknown, user = 'rex', method = body === undefined ? 'GET' : 'POST') => app.request(`/api${path}`, { method, headers: { authorization: `Bearer ${user}`, 'content-type': 'application/json', 'x-doggynote-protocol': '4' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }, env)
   const hook = (body: unknown, secret = 'fixture-webhook-secret') => app.request('/api/telegram/webhook', { method: 'POST', headers: { 'content-type': 'application/json', 'x-telegram-bot-api-secret-token': secret }, body: JSON.stringify(body) }, env)
   const png = new Uint8Array(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==', 'base64'))
   const calls = vi.fn(async (url: string | URL | Request) => {

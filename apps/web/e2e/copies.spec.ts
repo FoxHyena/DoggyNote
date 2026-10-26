@@ -76,7 +76,7 @@ test('save a board as a template, then make a new board from it with its cards a
   const template = objects.find((o: Obj) => o.kind === 'board' && o.template === true && o.title === name) as Obj
   expect(template.parentId).toBeNull()
   // Templates are private: a friend's pull never includes it or its cards.
-  const friend = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '3' } })
+  const friend = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '4' } })
   try {
     expect((await friend.request.post('/api/auth/login', { data: { username: 'fido', password: 'fetchfetch' } })).ok()).toBe(true)
     const seen = (await pullAllObjects(friend.request)).objects
@@ -174,7 +174,7 @@ test('your home board saved as a template copies everything, and nothing lands b
   const username = `tpl${Math.random().toString(36).slice(2, 8)}`
   const created = await page.request.post('/api/users', { data: { username, password: 'template-pass-1' } })
   expect(created.ok(), await created.text()).toBe(true)
-  const context = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '3' } })
+  const context = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '4' } })
   try {
     const login = await context.request.post('/api/auth/login', { data: { username, password: 'template-pass-1' } })
     expect(login.ok()).toBe(true)

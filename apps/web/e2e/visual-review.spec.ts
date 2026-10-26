@@ -1,12 +1,10 @@
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test'
-import { freshBoard, postSync } from './helpers.ts'
+import { freshBoard, postSync, setAccountAppearance } from './helpers.ts'
 
 const widths = [1440, 1024, 720, 600, 360]
 const now = Date.now()
 async function appearance(page: Page, theme: 'Light' | 'Dark') {
-  await page.getByTestId('account').click()
-  await page.getByRole('radio', { name: theme, exact: true }).click()
-  await page.keyboard.press('Escape')
+  await setAccountAppearance(page, theme)
 }
 async function shot(page: Page, info: TestInfo, name: string, surface: Locator) {
   await expect(surface).toBeVisible()
@@ -198,8 +196,8 @@ for (const theme of ['Light', 'Dark'] as const) {
         await expect(viewer).toBeVisible()
         await expect(entry.getByTestId('card')).toContainText('Shared weekend plans')
         await shot(entry, info, `public-viewer-${theme.toLowerCase()}-${width}`, viewer)
-        await entry.getByTestId('viewer-more').click()
-        await shot(entry, info, `public-appearance-${theme.toLowerCase()}-${width}`, entry.locator('.viewer-menu'))
+        // Appearance is one icon in the viewer's top bar, at every width.
+        await expect(entry.getByTestId('theme-toggle')).toBeInViewport()
       }
     } finally { await context.close() }
   })

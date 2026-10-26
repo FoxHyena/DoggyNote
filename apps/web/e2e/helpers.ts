@@ -4,6 +4,32 @@ import { noteDocument, noteState, replaceText } from '@doggynote/core'
 
 export const MOD = 'ControlOrMeta'
 
+const APPEARANCE_ORDER = ['system', 'light', 'dark']
+
+/**
+ * Press the Appearance icon until it shows `mode`. It cycles System → Light → Dark.
+ * `scope` is where the toggle lives: the account menu, the viewer, or the guides page.
+ */
+export async function chooseAppearance(scope: Page | Locator, mode: 'System' | 'Light' | 'Dark', options: { tap?: boolean } = {}) {
+  const toggle = scope.getByTestId('theme-toggle')
+  const want = mode.toLowerCase()
+  for (let i = 0; i < APPEARANCE_ORDER.length; i++) {
+    const now = await toggle.getAttribute('data-mode')
+    if (now === want) break
+    await (options.tap ? toggle.tap() : toggle.click())
+    await expect(toggle).toHaveAttribute('data-mode', APPEARANCE_ORDER[(APPEARANCE_ORDER.indexOf(now!) + 1) % APPEARANCE_ORDER.length]!)
+  }
+  await expect(toggle).toHaveAttribute('data-mode', want)
+}
+
+/** Open the account menu, set the appearance, and close the menu again. */
+export async function setAccountAppearance(page: Page, mode: 'System' | 'Light' | 'Dark', options: { tap?: boolean } = {}) {
+  const account = page.getByTestId('account')
+  await (options.tap ? account.tap() : account.click())
+  await chooseAppearance(page.getByRole('dialog', { name: 'Account', exact: true }), mode, options)
+  await page.keyboard.press('Escape')
+}
+
 /**
  * Select all text in the focused editor. ControlOrMeta follows the machine running
  * the tests, but CodeMirror follows the emulated device: an iPhone or iPad means
@@ -89,7 +115,7 @@ export async function freshBoard(page: Page, name = `Test ${Math.random().toStri
   // otherwise fits below the DOM-detail threshold during the full suite.
   const id = crypto.randomUUID()
   const desktopToken = await page.evaluate(() => sessionStorage.getItem('fake-keychain')).catch(() => null)
-  const response = await postSync(page.request, { ...(desktopToken ? { headers: { authorization: `Bearer ${desktopToken}`, 'x-doggynote-protocol': '3' } } : {}), data: { changes: [{ id, patch: { id, kind: 'board', parentId: 'home', title: name, icon: 'paw', color: 'gold', createdAt: Date.now() } }] } }, desktopToken ? `http://localhost:${API_PORT}/api/sync` : '/api/sync')
+  const response = await postSync(page.request, { ...(desktopToken ? { headers: { authorization: `Bearer ${desktopToken}`, 'x-doggynote-protocol': '4' } } : {}), data: { changes: [{ id, patch: { id, kind: 'board', parentId: 'home', title: name, icon: 'paw', color: 'gold', createdAt: Date.now() } }] } }, desktopToken ? `http://localhost:${API_PORT}/api/sync` : '/api/sync')
   expect(response.ok(), await response.text()).toBe(true)
   await page.goto(`/#/b/${id}`)
   // Hash-only navigation reuses the app; reload establishes the seeded snapshot.

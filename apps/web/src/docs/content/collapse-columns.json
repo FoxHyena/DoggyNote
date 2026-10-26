@@ -1,0 +1,70 @@
+{
+  "slug": "collapse-columns",
+  "category": "working-on-boards",
+  "kind": "task",
+  "title": "Fold a column away",
+  "summary": "Collapse a column to its heading to make room on the board, and open it again when you need it.",
+  "status": "published",
+  "order": 120,
+  "benefit": "Keep a long list together without it taking over the board.",
+  "outcome": "A collapsed column shows only its title and how many cards it holds. Opening it brings the same cards back in the same order.",
+  "keywords": ["column", "hide", "fold", "collapse", "expand"],
+  "sections": [
+    {
+      "id": "collapse",
+      "title": "Collapse and expand a column",
+      "paragraphs": [
+        "Collapsing hides a column's cards. It doesn't delete them or take them out of the column. For example, fold away a Kit checklist while you compare walking routes in the column next to it."
+      ],
+      "flow": {
+        "entry": "Find the arrow at the left of the column's heading.",
+        "steps": [
+          { "action": "Click the arrow at the left of the heading (Collapse column).", "result": "The cards slide away. The heading stays, with the title and a count such as 4 cards." },
+          { "action": "Carry on working around it.", "result": "The column takes up only its heading, so the cards nearby have room. You can still drag the column by its heading." },
+          { "action": "Click the arrow again (Expand column).", "result": "The same cards come back in the same order." }
+        ],
+        "completion": "On a board you can edit, the column stays collapsed or expanded for everyone, including after a reload.",
+        "correction": "Undo reverses a collapse or an expand. You can also click the arrow again."
+      },
+      "figures": [{
+        "src": "/docs/assets/collapse-columns/collapsed-column.png",
+        "darkSrc": "/docs/assets/collapse-columns/collapsed-column-dark.png",
+        "alt": "Two columns side by side. Routes to try is open and shows three route notes. Kit checklist is collapsed to its heading, with a right-pointing arrow and the count 4 cards.",
+        "caption": "Kit checklist is collapsed to its heading and card count. Routes to try is still open.",
+        "width": 1600,
+        "height": 680
+      }]
+    },
+    {
+      "id": "find-a-hidden-card",
+      "title": "Find a card in a collapsed column",
+      "flow": {
+        "entry": "Open Fetch, DoggyNote's search, from the magnifying glass in the top bar, or press ⌘K (Ctrl+K on Windows).",
+        "steps": [
+          { "action": "Type a word from the card, for example towel.", "result": "Matching cards appear with the board they're on." },
+          { "action": "Choose the result, or use the arrow keys and press Enter.", "result": "DoggyNote opens that board, expands the column and selects the card." }
+        ],
+        "completion": "The column stays open so you can keep working in it.",
+        "correction": "Click the column's arrow to collapse it again, or press Escape to close Fetch without going anywhere."
+      }
+    },
+    {
+      "id": "count-and-connections",
+      "title": "The count and connections",
+      "paragraphs": [
+        "The count includes every card directly inside the column. A board card counts as one, however much is inside that board. Cards in Buried bones, DoggyNote's bin, aren't counted.",
+        "A line connected to a card inside a collapsed column ends at the column's heading and is drawn dashed. Expand the column and the line goes back to its card."
+      ]
+    },
+    {
+      "id": "view-only-and-export",
+      "title": "View-only boards and exports",
+      "paragraphs": [
+        "On a board shared with you as view only, you can still collapse and expand columns to look around. That only changes your own view; everyone else sees the board as its owner left it.",
+        "Export PNG in the board's … menu shows columns as they are on screen. Expand a column first if you want its cards in the picture."
+      ]
+    }
+  ],
+  "related": ["labels-and-search", "align-and-lock-cards"],
+  "links": []
+}

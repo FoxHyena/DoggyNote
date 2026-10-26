@@ -190,7 +190,7 @@ test('a poster can’t be borrowed by someone who can’t see it', async ({ page
   ] } })
   expect(mine.ok(), await mine.text()).toBe(true)
 
-  const ctx = await browser.newContext({ storageState: { cookies: [], origins: [] }, extraHTTPHeaders: { 'x-doggynote-protocol': '3' } })
+  const ctx = await browser.newContext({ storageState: { cookies: [], origins: [] }, extraHTTPHeaders: { 'x-doggynote-protocol': '4' } })
   expect((await ctx.request.post('/api/auth/login', { data: { username: 'fido', password: 'fetchfetch' } })).ok()).toBe(true)
   expect((await ctx.request.get(`/api/assets/${resolved.assetId}/thumb`)).status()).toBe(403)
   const fidoBoard = crypto.randomUUID(), steal = crypto.randomUUID()

@@ -126,7 +126,7 @@ function EditorApp() {
     // Don't lose an in-progress edit when the window goes away.
     const save = () => {
       endEdit()
-      doc.journalNotes()
+      doc.journalDocument()
       void doc.flush().catch(() => {})
     }
     const onVis = () => document.visibilityState === 'hidden' && save()
@@ -153,6 +153,7 @@ function EditorApp() {
       <Match when={phase() === 'ready'}>
         <div class="app" classList={{ 'read-only': !editable(), phone: phone() }}>
           <TopBar
+            navigation
             readOnly={!editable()}
             left={<Show when={!phone()}><BoardNavigation /></Show>}
             status={<SyncStatus />}

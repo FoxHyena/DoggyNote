@@ -318,7 +318,7 @@ test('signed-in view-only collaborator cannot move, align or unlock references',
   expect(created.status(),await created.text()).toBe(201)
   const granted=await page.request.post(`/api/boards/${boardOf(page)}/members`,{data:{username,permission:'view'}})
   expect(granted.status(),await granted.text()).toBe(201)
-  const context=await browser.newContext({baseURL:origin,storageState:{cookies:[],origins:[]},extraHTTPHeaders:{'x-doggynote-protocol':'3'}})
+  const context=await browser.newContext({baseURL:origin,storageState:{cookies:[],origins:[]},extraHTTPHeaders:{'x-doggynote-protocol':'4'}})
   try {
     const login=await context.request.post('/api/auth/login',{data:{username,password:'isolated-layout-qa'}})
     expect(login.ok(),await login.text()).toBe(true)

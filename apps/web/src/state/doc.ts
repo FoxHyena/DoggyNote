@@ -6,6 +6,7 @@ import {
   UndoStack,
   changesPosition,
   positionLocks,
+  isAreaItem, isArea,
   diff,
   type Board,
   type Card,
@@ -16,12 +17,15 @@ import {
   type Obj,
   type Transaction,
   type Sticker,
+  type Stroke,
+  isInkMark,
+  sortedInkStrokes,
   usableSticker,
 } from '@doggynote/core'
 import * as idb from './idb.ts'
 import { setToastAction, showToast } from './toast.ts'
 import * as Y from 'yjs'
-import { decodeUpdate, noteDocument, noteMarkdown, noteState, replaceText, REMOTE_ORIGIN } from '@doggynote/core'
+import { decodeUpdate, isLiveSynced, noteDocument, noteMarkdown, noteState, replaceText, syncIdOf, REMOTE_ORIGIN } from '@doggynote/core'
 
 // The document store. Every edit goes through `commit` (undoable) or `silent`
 // (not undoable, e.g. measured heights, unfurled link titles). Both apply the
@@ -138,6 +142,27 @@ export function noteDoc(id: Id): Y.Doc {
   })
   return document
 }
+// ---- synced copies ----------------------------------------------------------
+// Synced notes (packages/core/src/synced.ts). The server merges an edit into
+// every copy, and the copies arrive with the pull right after the push. There is
+// no local shortcut: the server alone decides whether you may edit every copy.
+
+/** syncId → the live synced notes on this device. Tracks only the fields it reads. */
+const syncGroups = createRoot(() => createMemo(() => {
+  const groups = new Map<string, Id[]>()
+  for (const o of Object.values(state.objs)) {
+    const group = syncIdOf(o)
+    if (group && isLiveSynced(o)) groups.set(group, [...(groups.get(group) ?? []), o.id])
+  }
+  return groups
+}))
+/** The other live copies of a synced note, as far as this device can see. */
+export function syncedCopies(id: Id): Card<'note'>[] {
+  const o = get(id), group = syncIdOf(o)
+  if (!group) return []
+  return (syncGroups().get(group) ?? []).filter((other) => other !== id).map((other) => getCard(other) as Card<'note'>).filter(Boolean)
+}
+
 /** Retain creation ownership across the gap between push acknowledgement and access refresh. */
 export const localBoardCreations = new Set<Id>()
 const outboxListeners = new Set<() => void>()
@@ -149,6 +174,9 @@ const dirtyOutbox = new Set<Id>()
 let flushTimer: ReturnType<typeof setTimeout> | null = null
 const saves = new Set<Promise<void>>()
 const NOTE_JOURNAL = 'doggynote.note-reload'
+const DOCUMENT_JOURNAL = 'doggynote.document-reload'
+const outboxDeletes = new Map<Id, number>()
+let journalRevision = 0
 
 /** A per-tab crash cushion: browsers may cancel queued IDB writes on reload.
  * Store each full CRDT state once; projection and outbox are restored together. */
@@ -164,6 +192,21 @@ export function journalNotes() {
     })
     if (rows.length) sessionStorage.setItem(NOTE_JOURNAL, JSON.stringify(rows))
     else sessionStorage.removeItem(NOTE_JOURNAL)
+  } catch {
+    setLocalSaveError('The reload recovery copy could not be saved. Keep this window open until local saving finishes.')
+  }
+}
+
+/** Pagehide can cancel an in-flight IDB transaction. Capture the complete queue
+ * synchronously, including area detach dependencies, before that page disappears. */
+export function journalDocument() {
+  if (!persist) return
+  journalNotes()
+  try {
+    const rows = [...outbox].map(([id, patch]) => ({ id, object: unwrap(state.objs[id]), patch }))
+    const removed = [...outboxDeletes.keys()]
+    if (rows.length || removed.length) sessionStorage.setItem(DOCUMENT_JOURNAL, JSON.stringify({ rows, removed }))
+    else sessionStorage.removeItem(DOCUMENT_JOURNAL)
   } catch {
     setLocalSaveError('The reload recovery copy could not be saved. Keep this window open until local saving finishes.')
   }
@@ -186,6 +229,13 @@ export const getBoard = (id: Id | null | undefined) => {
 export const isReadOnly = () => readOnly
 export const canUndo = () => (undoTick(), undoStack.canUndo)
 export const canRedo = () => (undoTick(), undoStack.canRedo)
+/** Is the next undo (or redo) only ink on this card? The sketch editor's Undo touches nothing else. */
+const drawingStep = (tx: Transaction | undefined, cardId: Id) => !!tx?.length && tx.every((c) => {
+  const o = state.objs[c.id]
+  return o?.kind === 'stroke' && o.cardId === cardId
+})
+export const canUndoDrawing = (cardId: Id) => (undoTick(), drawingStep(undoStack.peek(), cardId))
+export const canRedoDrawing = (cardId: Id) => (undoTick(), drawingStep(undoStack.peekRedo(), cardId))
 
 function historyChanged() {
   // An Undo offer describes the previous command. Once history changes, its
@@ -196,8 +246,12 @@ function historyChanged() {
 
 /** Position locks guard explicit layout changes. Content edits and natural height reflow stay allowed. */
 function layoutAllowed(tx: Transaction): boolean {
-  if (tx.every((ch) => { const c = getCard(ch.id); return !c || !changesPosition(c, ch.after as Partial<Card>, true) })) return true
-  const cards = Object.values(state.objs).filter((o): o is Card => o.kind === 'card')
+  const affectsLayout = (ch: Transaction[number]) => {
+    const c = get(ch.id), patch = ch.after as Partial<Card>
+    return !!patch.columnId || !!patch.areaId || (isAreaItem(c) && (changesPosition(c, patch, true) || (isArea(c) && (patch.deletedAt || patch.purged))))
+  }
+  if (!tx.some(affectsLayout)) return true
+  const cards = Object.values(state.objs).filter(isAreaItem)
   const byId = new Map(tx.map((ch) => [ch.id, ch]))
   // An explicit unlock in this command is deliberate.
   const nextLocks = positionLocks(cards.map((c) => {
@@ -205,10 +259,10 @@ function layoutAllowed(tx: Transaction): boolean {
     return change && 'positionLocked' in change.after && (change.after as Partial<Card>).positionLocked !== true ? { ...c, positionLocked: false } : c
   }))
   return tx.every((ch) => {
-    const c = getCard(ch.id)
-    if (!c || !changesPosition(c, ch.after as Partial<Card>, true)) return true
-    const target = (ch.after as Partial<Card>).columnId
-    return !nextLocks.has(c.id) && (!target || !nextLocks.has(target))
+    const targets = [(ch.after as Partial<Card>).columnId, (ch.after as Partial<Card>).areaId]
+    if (targets.some(target => target && nextLocks.has(target))) return false
+    const c = get(ch.id)
+    return !isAreaItem(c) || !affectsLayout(ch) || !nextLocks.has(c.id)
   })
 }
 
@@ -230,11 +284,14 @@ function record(id: Id, patch: Partial<Obj>) {
     delete (patch as Partial<Card>).content
   }
   if ('noteState' in patch) { patch = { ...patch }; delete patch.noteState }
+  // Joining a note's sync group is explicit, so stale copies of `syncId` can't join.
+  if ((patch as Partial<Card>).syncId) patch = { ...patch, syncJoin: true }
   if (patch.kind === 'board') localBoardCreations.add(id)
   dirtyObjs.add(id)
   const previous = { ...(outbox.get(id) ?? {}) } as Partial<Obj> & { noteRestore?: boolean }
   if (patch.purged) delete previous.noteRestore
   outbox.set(id, { ...previous, ...structuredClone(unwrap(patch)) } as Partial<Obj>)
+  outboxDeletes.delete(id)
   dirtyOutbox.add(id)
   scheduleFlush()
 }
@@ -489,14 +546,16 @@ export async function flush() {
       const outIds = [...dirtyOutbox]
       const objects: [string, unknown][] = objIds.map((id) => [id, structuredClone(unwrap(state.objs[id]))])
       const patches: [string, unknown][] = outIds.map((id) => [id, structuredClone(outbox.get(id))])
+      const deletedVersions = patches.filter(([, patch]) => patch === undefined).map(([id]) => [id, outboxDeletes.get(id)] as const)
       dirtyObjs.clear()
       dirtyOutbox.clear()
       // Start the atomic IDB transaction now, even if an older save is pending.
       // IDB orders these transactions; a navigation need not run a continuation
       // in this page merely to start saving the newest input.
       const saving = idb.putDocument(objects, patches).then(() => {
+        for (const [id, version] of deletedVersions) if (outboxDeletes.get(id) === version) outboxDeletes.delete(id)
         if (!dirtyObjs.size && !dirtyOutbox.size) setLocalSaveError(null)
-        if (saves.size === 1 && !dirtyObjs.size && !dirtyOutbox.size) { try { sessionStorage.removeItem(NOTE_JOURNAL) } catch { /* IDB is already durable. */ } }
+        if (saves.size === 1 && !dirtyObjs.size && !dirtyOutbox.size) { try { sessionStorage.removeItem(NOTE_JOURNAL); sessionStorage.removeItem(DOCUMENT_JOURNAL) } catch { /* IDB is already durable. */ } }
         setLastLocalSave(Date.now())
       }).catch((error) => {
         objIds.forEach((id) => dirtyObjs.add(id))
@@ -535,7 +594,7 @@ export function ackOutbox(sent: { id: Id; patch: Partial<Obj> }[]) {
       if (!(k in s.patch) || JSON.stringify(v ?? null) !== JSON.stringify((s.patch as Record<string, unknown>)[k] ?? null)) rest[k] = v
     }
     if (Object.keys(rest).length) outbox.set(s.id, rest as Partial<Obj>)
-    else outbox.delete(s.id)
+    else { outbox.delete(s.id); outboxDeletes.set(s.id, ++journalRevision) }
     dirtyOutbox.add(s.id)
   }
   scheduleFlush()
@@ -582,7 +641,7 @@ export function receiveRemote(rows: Obj[]) {
         notes.get(row.id)?.destroy(); notes.delete(row.id)
         noteUndos.get(row.id)?.destroy(); noteUndos.delete(row.id)
         deferred.delete(row.id)
-        outbox.delete(row.id)
+        outbox.delete(row.id); outboxDeletes.set(row.id, ++journalRevision)
         if (state.objs[row.id]) setState('objs', row.id, undefined as never)
         if (persist) {
           dirtyObjs.add(row.id)
@@ -619,6 +678,19 @@ export async function load(opts: { persist: boolean; readOnly: boolean }) {
   const [all, out] = await Promise.all([idb.getAll<Obj>('objects'), idb.getAll<Partial<Obj>>('outbox')])
   const map: Record<Id, Obj> = {}
   for (const [id, o] of all) map[id] = o
+  try {
+    const journal = sessionStorage.getItem(DOCUMENT_JOURNAL)
+    if (journal) {
+      const saved = JSON.parse(journal) as { rows: { id: Id; object: Obj; patch: Partial<Obj> }[]; removed: Id[] }
+      const rows = Array.isArray(saved) ? saved as typeof saved.rows : saved.rows
+      const removed = Array.isArray(saved) ? [] : saved.removed
+      if (!Array.isArray(rows) || !Array.isArray(removed) || removed.some(id => typeof id !== 'string') || rows.some(row => typeof row.id !== 'string' || !row.object || row.object.id !== row.id || !row.patch || typeof row.patch !== 'object')) throw new Error('Invalid recovery data')
+      await idb.putDocument(rows.map(row => [row.id, row.object]), [...removed.map(id => [id, undefined] as [string, unknown]), ...rows.map(row => [row.id, row.patch] as [string, unknown])])
+      for (const id of removed) out.delete(id)
+      for (const row of rows) { map[row.id] = row.object; out.set(row.id, row.patch) }
+      sessionStorage.removeItem(DOCUMENT_JOURNAL)
+    }
+  } catch { setLocalSaveError('A reload recovery copy could not be restored. Keep this tab open and retry local saving.') }
   try {
     const journal = sessionStorage.getItem(NOTE_JOURNAL)
     if (journal) {
@@ -698,7 +770,7 @@ export function ensureHome(title: string) {
 export const outboxSize = () => outbox.size
 
 export async function resetLocal() {
-  try { sessionStorage.removeItem(NOTE_JOURNAL) } catch { /* No browser storage. */ }
+  try { sessionStorage.removeItem(NOTE_JOURNAL); sessionStorage.removeItem(DOCUMENT_JOURNAL) } catch { /* No browser storage. */ }
   for (const id of composingNotes) setNoteComposing(id, false)
   for (const manager of noteUndos.values()) manager.destroy()
   noteUndos.clear()
@@ -707,6 +779,7 @@ export async function resetLocal() {
   outbox.clear()
   localBoardCreations.clear()
   setState('objs', {})
+  outboxDeletes.clear()
   await idb.clearAll()
 }
 
@@ -719,6 +792,8 @@ type Index = {
   boards: Board[]
   /** cardId → live messages, oldest first. */
   comments: Map<Id, Comment[]>
+  /** cardId → live ink, in paint order. */
+  strokes: Map<Id, Stroke[]>
 }
 
 /**
@@ -732,6 +807,7 @@ export const index = createRoot(() =>
     const connections = new Map<Id, Connection[]>()
     const boards: Board[] = []
     const comments = new Map<Id, Comment[]>()
+    const strokes = new Map<Id, Stroke[]>()
     const shown = overlay.objs
     const all = shown ? [...Object.values(state.objs).filter((o) => !(o.id in shown)), ...Object.values(shown)] : Object.values(state.objs)
     for (const o of all) {
@@ -753,16 +829,26 @@ export const index = createRoot(() =>
         const list = comments.get(o.cardId)
         if (list) list.push(o)
         else comments.set(o.cardId, [o])
+      } else if (o.kind === 'stroke') {
+        // Malformed synced geometry never reaches SVG or canvas.
+        if (!isInkMark(o)) continue
+        const list = strokes.get(o.cardId)
+        if (list) list.push(o)
+        else strokes.set(o.cardId, [o])
       }
     }
     for (const list of comments.values()) list.sort((a, b) => a.createdAt - b.createdAt)
-    return { cards, stickers, connections, boards, comments }
+    for (const [id, list] of strokes) strokes.set(id, sortedInkStrokes(list))
+    return { cards, stickers, connections, boards, comments, strokes }
   }),
 )
 
 export const cardsOn = (boardId: Id): Card[] => index().cards.get(boardId) ?? []
 export const connectionsOn = (boardId: Id): Connection[] => index().connections.get(boardId) ?? []
 export const commentsOn = (cardId: Id): Comment[] => index().comments.get(cardId) ?? []
+const NO_STROKES: Stroke[] = []
+/** A sketch's or board ink card's live strokes, in paint order. */
+export const strokesOn = (cardId: Id): Stroke[] => index().strokes.get(cardId) ?? NO_STROKES
 
 /** Trashed (soft-deleted, not purged) cards on a board. Not memoised; read when the panel opens. */
 export function trashedOn(boardId: Id): (Card | Sticker)[] {

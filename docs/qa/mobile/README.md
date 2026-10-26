@@ -156,6 +156,23 @@ Before pushing, test the candidate from Safari **and** a Home Screen icon on iOS
 
 For a phone-accessible local build, use the local test Worker and run Vite preview with `--host 0.0.0.0`. Open the Mac's LAN address and preview port on the same network, then sign in with the disposable local test account. This check must pass before deployment; the automated CSS tests alone cannot confirm the iOS 27 rendering result.
 
+## Interaction regression fixes (October 2026)
+
+- Background cursors clear on window blur without disconnecting a visible room; focus alone does not restore a stale cursor.
+- Presence reprojects a stationary mouse after camera changes. Cursor paint is checked with screenshot comparisons through pan, zoom, overview, offscreen departure and return.
+- Editable fields keep their native context menus. Noncollapsed note selections stop automatic camera movement so selection handles and menus retain their screen anchor. Synthetic clipboard events exercise copy, cut and paste without leaving the note.
+- Keyboard dismissal clears editor-owned touches. Window releases, pointer cancellation, lost capture, blur and backgrounding clean up interrupted canvas gestures without changing the second-finger-to-pinch path. Repeated edit/dismiss/select cycles preserve saved text and allow subsequent pan and pinch.
+- The signed-in phone title opens Your spaces. Explicit Rename is shared with the dock navigation; view-only members and anonymous share viewers cannot rename from it.
+- Arrowhead screenshots cover all four sides of column members in both themes. Shared endpoint geometry follows column movement and collapse/expand; foreground ends ignore pointer events.
+
+Coverage uses Playwright's desktop WebKit/Chromium, iPhone WebKit, Pixel Chromium and iPad WebKit projects. Chromium multitouch uses CDP; WebKit multitouch uses synthesized pointer events. Keyboard viewport changes are simulated. These checks do not verify native menu placement or the installed application's keyboard on physical phones.
+
+The maintainer explicitly authorized release with physical iPhone/Android verification deferred until after deployment. Native menu placement and keyboard-dismissal recovery remain unverified on hardware; the maintainer will perform those checks post-release.
+
+Validation passed workspace typechecking, the web production build and all 321 unit tests. The full non-performance browser run completed 1,053 passes and eight skips, with one timeout in the existing Sync now presentation fixture. Traces showed that its artificial 400ms delay compounded across paginated permission resets while other tests changed access. The fixture now delays one request per action; it passed three Chromium rechecks against that same accumulated database and a fresh WebKit/Chromium pair. All 1,054 non-skipped browser cases were therefore verified across these runs. Visual captures, traces and generated screenshots are preserved under `/tmp/doggynote-bugfix-qa` on the QA Mac rather than committed to source.
+
+Physical follow-up remains required: the paired iPhone 16 Pro was unavailable during this run, and no Android hardware was exercised. In an installed home-screen app, select and copy/cut/paste text after zooming; then repeat keyboard dismissal, tapping another note, panning and pinching without reloading. Also compare browser-tab behavior. Sticker-deletion autofocus was explicitly deferred and is outside these fixes.
+
 ## Reproducing
 
 ```bash

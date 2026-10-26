@@ -1,0 +1,58 @@
+/* Synced notes: the quiet marker on a card and its copies dropdown (ui/SyncedCopies.tsx). */
+
+/* Sits on the card's top-left corner, outside the measured text, so no card moves. */
+.synced-marker {
+  position: absolute;
+  top: -9px;
+  left: -9px;
+  z-index: 2;
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--dn-border);
+  border-radius: 999px;
+  background: var(--dn-panel);
+  color: var(--dn-text-muted);
+  cursor: pointer;
+  transition: color 120ms ease-out, background-color 120ms ease-out;
+}
+html[data-input='mouse'] .synced-marker:hover,
+.synced-marker[aria-expanded='true'] {
+  color: var(--dn-text);
+  background: var(--dn-card-hover);
+}
+.synced-marker:focus-visible {
+  outline: 2px solid var(--dn-selection);
+  outline-offset: 2px;
+}
+/* A fingertip-sized target, invisible around the small chip. */
+html[data-input='touch'] .synced-marker::before {
+  content: '';
+  position: absolute;
+  inset: -12px;
+}
+
+.synced-menu { width: 260px; }
+.synced-menu-head { padding: 4px 4px 4px 12px; }
+.synced-copy-board {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.synced-copy-action {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--dn-text-muted);
+  font-size: 12px;
+}
+/* The copy you're on is a fact, not an action: full-strength text, no hover. */
+.synced-here { cursor: default; }
+html[data-input='mouse'] .synced-here:hover { background: transparent; }
+.synced-copy-note { color: var(--dn-text-muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .synced-marker { transition: none; }
+}

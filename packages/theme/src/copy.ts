@@ -27,6 +27,10 @@ export const COPY = {
   inboxEmpty: 'Nothing to chew on yet. Jot something down, or share a link here from another app.',
   buriedEmpty: 'No bones buried. Good dog.',
   installTitle: 'Keep DoggyNote on your phone',
+  /** The sketch editor's title field while the sketch has no name. */
+  sketchTitlePlaceholder: 'Name this doodle',
+  /** A mark drawn on the board grew past its size limit. */
+  inkTooLong: 'That line ran out of leash. Lift, then keep drawing.',
   /** A card made by a newer DoggyNote than this one. */
   unknownCard: 'This card needs a newer DoggyNote. Update to see it.',
   fetchHint: 'Sniff out any board, note, to-do or link by a word in it or a label on it.',
@@ -74,6 +78,35 @@ export const COPY = {
   /** Movie cards. */
   movieSearch: 'Sniff out a movie or show…',
   movieNoMatch: 'No scent of that one. Try another title?',
+  /** Synced copies of a note: one text on several cards. */
+  synced: {
+    /** Right-click and phone More menu action, next to Duplicate. */
+    make: 'Make a synced copy',
+    made: 'Synced copy made. To move it to another board, cut and paste it.',
+    /** The marker on a synced card, and its dropdown's heading. */
+    marker: 'Synced copies',
+    markerHint: 'Synced note: edits update every copy. See where the copies are.',
+    sameBoard: 'this board',
+    close: 'Close synced copies',
+    here: 'This copy',
+    goTo: 'Go to',
+    independent: 'Make an independent copy',
+    independentHint: 'This card keeps its text and stops following the others.',
+    madeIndependent: 'This copy goes its own way now. The others stay in sync.',
+    gone: 'That copy has wandered off.',
+    /** The server unsynced your copy: you can't edit every copy. */
+    detached: "This note stopped syncing: you can't edit every copy. Your edit is kept here.",
+  },
+  /** The public guides at /docs. */
+  guides: {
+    /** Account menu and sign-in link. */
+    open: 'Guides',
+    signIn: 'New here? Read the guides',
+    heading: 'Learn a few new tricks.',
+    search: 'Sniff out a guide',
+    noMatch: 'No scent of that one.',
+    notFound: 'This guide has gone walkies.',
+  },
 } as const
 
 /** Reserved personal inboxes keep their IDs and legacy stored titles across upgrades. */

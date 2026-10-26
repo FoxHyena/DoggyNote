@@ -1,19 +1,23 @@
-import type { Card, Id } from './model.ts'
+import type { Card, Id, Sticker } from './model.ts'
+import { areaFamily, isArea, itemArea } from './areas.ts'
 import { union, type Rect } from './geometry.ts'
 
 /** Editor position locks protect explicit layout operations, not content reflow. */
-export const POSITION_FIELDS = ['x', 'y', 'w', 'z', 'columnId', 'order', 'boardId'] as const
+export const POSITION_FIELDS = ['x', 'y', 'w', 'z', 'columnId', 'areaId', 'order', 'boardId', 'angle'] as const
 
 /** A column is one layout family. A locked member also pins its parent/siblings. */
-export function positionLocks(cards: readonly Card[]): Set<Id> {
+export function positionLocks(cards: readonly (Card | Sticker)[]): Set<Id> {
   const families = new Set<Id>()
   const locked = new Set<Id>()
   for (const c of cards) {
-    if (c.deletedAt || c.purged || c.positionLocked !== true) continue
+    if (c.deletedAt || c.purged || c.kind !== 'card' || c.positionLocked !== true) continue
     locked.add(c.id)
     families.add(c.columnId || c.id)
+    if (isArea(c)) for (const member of areaFamily(c, cards)) locked.add(member.id)
   }
-  for (const c of cards) if (families.has(c.columnId || c.id)) locked.add(c.id)
+  for (const c of cards) if (families.has((c.kind === 'card' && c.columnId) || c.id)) locked.add(c.id)
+  const byId = new Map(cards.map(c => [c.id, c]))
+  for (const c of cards) if (locked.has(c.id)) { const area = itemArea(c, id => byId.get(id)); if (area) locked.add(area.id) }
   return locked
 }
 
@@ -27,7 +31,7 @@ export function alignmentUnits(cards: readonly Card[], selected: Iterable<Id>): 
     const unit = (c.columnId && byId.get(c.columnId)) || c
     units.set(unit.id, unit)
   }
-  return [...units.values()]
+  return [...units.values()].filter(c => !c.areaId || !units.has(c.areaId))
 }
 
 export type Alignment = 'left' | 'center-x' | 'right' | 'top' | 'center-y' | 'bottom'
@@ -64,6 +68,7 @@ export function planAlignment(cards: readonly Card[], selected: Iterable<Id>, re
   return { patches, units: units.length, locked: units.filter((u) => locked.has(u.card.id)).length }
 }
 
-export function changesPosition(current: Card, patch: Partial<Card>, includeHeight = false): boolean {
-  return (includeHeight && 'h' in patch && patch.h !== current.h) || POSITION_FIELDS.some((key) => key in patch && (patch[key] ?? null) !== (current[key] ?? null))
+export function changesPosition(current: Card | Sticker, patch: Partial<Card | Sticker>, includeHeight = false): boolean {
+  const before = current as unknown as Record<string, unknown>, after = patch as Record<string, unknown>
+  return ((includeHeight || isArea(current)) && 'h' in after && after.h !== before.h) || POSITION_FIELDS.some((key) => key in after && (after[key] ?? null) !== (before[key] ?? null))
 }

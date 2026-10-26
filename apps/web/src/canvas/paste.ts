@@ -1,3 +1,4 @@
+import { areaAt } from '../state/areas.ts'
 import { DEFAULT_SIZE, movieRefFromUrl, safeHref, type Id, type MovieRef, type Vec } from '@doggynote/core'
 import { createCard, createNoteWithText, type Placement } from '../state/actions.ts'
 import { importImage } from '../state/assets.ts'
@@ -14,7 +15,8 @@ import { pasteClip, readClip, takePlainPaste } from '../state/clipboard.ts'
 export const IMAGE_TYPES = /^image\/(png|jpe?g|gif|webp|heic|heif|avif|bmp)$/i
 
 /** Add images as cards (on the current board, or `onBoard`, e.g. the Toy box). */
-export async function addImages(files: File[], at: Vec, onBoard?: Id): Promise<Id[]> {
+export async function addImages(files: File[], at: Vec, onBoard?: Id, areaId?: Id): Promise<Id[]> {
+  areaId ??= !onBoard ? areaAt(at)?.id : undefined
   const ids: Id[] = []
   let offset = 0
   for (const f of files) {
@@ -22,7 +24,7 @@ export async function addImages(files: File[], at: Vec, onBoard?: Id): Promise<I
       const img = await importImage(f)
       const w = Math.min(DEFAULT_SIZE.image.w, img.width)
       ids.push(
-        createCard('image', { at: { x: at.x + offset, y: at.y + offset } }, {
+        createCard('image', { at: { x: at.x + offset, y: at.y + offset }, areaId }, {
           content: { assetId: img.assetId, width: img.width, height: img.height, sizes: img.sizes },
           edit: false,
           extra: { w, h: Math.round((w * img.height) / img.width) },
@@ -67,12 +69,12 @@ export function addText(text: string, at: Vec, onBoard?: Id, title?: string) {
 }
 
 /** Images become image cards, anything else a file card. Returns false if there were no files. */
-export function addAnyFiles(files: File[], at: Vec, onBoard?: Id): boolean {
+export function addAnyFiles(files: File[], at: Vec, onBoard?: Id, areaId?: Id): boolean {
   if (!files.length) return false
   const images = files.filter((f) => IMAGE_TYPES.test(f.type))
   const others = files.filter((f) => !IMAGE_TYPES.test(f.type))
-  if (images.length) void addImages(images, at, onBoard)
-  if (others.length) addFiles(others, { x: at.x + images.length * 24, y: at.y + images.length * 24 }, onBoard)
+  if (images.length) void addImages(images, at, onBoard, areaId)
+  if (others.length) addFiles(others, { x: at.x + images.length * 24, y: at.y + images.length * 24 }, onBoard, areaId)
   return true
 }
 

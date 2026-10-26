@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { freshBoard, cardByText, addNote, MOD, waitForSync, postSync, pullAllObjects } from './helpers.ts'
+import { freshBoard, cardByText, addNote, MOD, waitForSync, postSync, pullAllObjects, setAccountAppearance } from './helpers.ts'
 const appRoot = fileURLToPath(new URL('../../../', import.meta.url))
 async function openProposals(page: Page) {
   await page.getByTestId('board-more').click()
@@ -76,9 +76,7 @@ test('a real stdio MCP client stages a board layout, a person previews/approves 
   await expect(cardByText(page, built)).toHaveCount(0)
   await expect(page.getByTestId('tool-note')).toBeVisible()
   // Phone-ish width, light: the banner fits.
-  await page.getByTestId('account').click()
-  await page.getByRole('dialog', { name: 'Account', exact: true }).getByRole('radio', { name: 'Light', exact: true }).click()
-  await page.keyboard.press('Escape')
+  await setAccountAppearance(page, 'Light')
   await page.setViewportSize({ width: 600, height: 900 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await openProposals(page)

@@ -1,0 +1,72 @@
+{
+  "slug": "colour-cards",
+  "category": "research-media",
+  "kind": "task",
+  "title": "Keep exact colours on your board",
+  "summary": "Add colour cards with a name and HEX value, and line up a palette beside your pictures.",
+  "status": "published",
+  "order": 220,
+  "benefit": "Keep the colours you've chosen next to the pictures and notes they belong with.",
+  "outcome": "A colour card called Forest shows its colour and #2F5D50, ready to sit beside your other references.",
+  "prerequisites": ["A board you can edit."],
+  "keywords": ["color", "hex", "palette", "swatch", "shade"],
+  "sections": [
+    {
+      "id": "how-it-works",
+      "title": "How colour cards work",
+      "paragraphs": [
+        "A colour card is a block of one colour with its name and HEX value underneath. The colour is exactly what you chose: switching DoggyNote between light and dark doesn't change it.",
+        "For example, pick fabric colours for a new dog bed: Pumpkin, Brick and Mustard next to a photo of the throw you love, and a Forest green to try against them."
+      ],
+      "figures": [{
+        "src": "/docs/assets/colour-cards/palette-beside-photo.png",
+        "darkSrc": "/docs/assets/colour-cards/palette-beside-photo-dark.png",
+        "alt": "A photo of autumn leaves captioned Autumn leaves throw, followed by four colour cards: Pumpkin #D9822B, Brick #B5442A, Mustard #E2B33C and Forest #2F5D50.",
+        "caption": "A small palette lined up beside the photo it came from.",
+        "width": 1570,
+        "height": 448
+      }]
+    },
+    {
+      "id": "make-a-colour-card",
+      "title": "Make a Forest colour card",
+      "flow": {
+        "entry": "Open the board where you're collecting colours. In the tools on the left, Colour is under More.",
+        "steps": [
+          { "action": "Choose Colour, or drag it to the spot you want. On a phone, tap + at the bottom of the screen, then Colour.", "result": "A new colour card appears with its colour panel open beside it." },
+          { "action": "Pick a colour from the dots, or type #2F5D50 in the HEX field.", "result": "The card changes as you go. The last dot, +, opens your device's colour picker for any other colour." },
+          { "action": "Type Forest in the name field (it says “Name this shade…” while it's empty).", "result": "The name appears on the card above the HEX value." },
+          { "action": "Press Enter, or click anywhere on the board.", "result": "The panel closes and the card keeps its colour and name." }
+        ],
+        "completion": "The card saves as you type and syncs to everyone on the board.",
+        "correction": "Double-click the card to open its panel again and change it. Undo after closing the panel puts back the colour and name from before you opened it. A HEX value that isn't complete yet doesn't change the card: it keeps the last valid colour."
+      },
+      "figures": [{
+        "src": "/docs/assets/colour-cards/edit-colour-panel.png",
+        "darkSrc": "/docs/assets/colour-cards/edit-colour-panel-dark.png",
+        "alt": "The Forest colour card, selected, with its panel open underneath: two rows of colour dots with dark green picked, a + for a custom colour, a HEX field showing #2F5D50 and a name field showing Forest.",
+        "caption": "The colour panel opens right beside the card. Double-click a colour card to open it again.",
+        "width": 580,
+        "height": 728
+      }]
+    },
+    {
+      "id": "arrange-and-find",
+      "title": "Arrange, copy and find colours",
+      "paragraphs": [
+        "Drag a colour card like any other card, resize it from its corner, or drop it into a column with the rest of a palette. To try a variation without losing the original, right-click the card and choose Duplicate, or press ⌘D (Ctrl+D on Windows).",
+        "Fetch finds colour cards by name or HEX value, so typing Forest or 2F5D50 takes you back to the card."
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Good to know",
+      "paragraphs": [
+        "HEX values can be typed with or without the #, and three-digit values such as #FA0 are expanded to six digits.",
+        "People with view-only access can see colour cards and read their values, but can't change them. Colour cards don't take a card tint: the colour is the card."
+      ]
+    }
+  ],
+  "related": ["image-captions", "labels-and-search"],
+  "links": []
+}

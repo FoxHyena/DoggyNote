@@ -1,0 +1,54 @@
+{
+  "slug": "explore-the-docs",
+  "category": "getting-started",
+  "kind": "reference",
+  "title": "Find your way around",
+  "summary": "Go from a question to the right guide, and get back to where you left off.",
+  "status": "published",
+  "order": 10,
+  "benefit": "Keep the instructions close while you work.",
+  "outcome": "You can find a guide, jump to a section and share a direct link to it.",
+  "keywords": ["help", "search the guides", "link"],
+  "sections": [
+    {
+      "id": "choose-a-guide",
+      "title": "Choose a guide",
+      "paragraphs": [
+        "Start on the guides home page. Guides are grouped by topic, such as Working on boards or Writing & drawing. Each one shows a title, a short summary and the kind of guide: how-to, explanation or reference.",
+        "Type in Sniff out a guide to search titles, summaries and headings. Results that match the title come first. Clear the search to see every guide again."
+      ],
+      "links": [{ "label": "Browse all guides", "href": "/docs" }]
+    },
+    {
+      "id": "jump-to-a-section",
+      "title": "Jump to a section",
+      "flow": {
+        "entry": "Open a guide from the guides home page.",
+        "steps": [
+          { "action": "Choose a heading under On this page.", "result": "The guide scrolls to that section, and the address now points to that section." },
+          { "action": "Copy the page address from your browser.", "result": "The link opens the same guide at the same section. Nobody needs to sign in to read it." }
+        ],
+        "completion": "The section link still works after a refresh. Your browser's Back and Forward buttons retrace your steps.",
+        "correction": "Choose another section, press Back, or return to all guides through the breadcrumb."
+      }
+    },
+    {
+      "id": "browse-on-a-phone",
+      "title": "Browse on a phone",
+      "paragraphs": [
+        "On a narrow screen, choose Browse guides in the header to open the list of guides. Choose a guide to open it. Close guides, or Escape on a keyboard, closes the list and puts focus back on its button.",
+        "The guide itself scrolls like a normal page. On this page sits above the instructions on smaller screens."
+      ]
+    },
+    {
+      "id": "keep-your-place",
+      "title": "Get back to your boards",
+      "callout": { "title": "Your boards stay private", "text": "The guides are public. Reading them doesn't open a board or need an account." },
+      "paragraphs": [
+        "Choose Open DoggyNote in the header or at the bottom of the page when you're ready to work. Your usual sign-in and board permissions apply there. From the app, Guides in your account menu brings you back here."
+      ]
+    }
+  ],
+  "related": ["reading-and-appearance"],
+  "links": []
+}

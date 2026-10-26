@@ -1,7 +1,7 @@
 import { mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { expect, test } from '@playwright/test'
-import { at, camera, cardByText, waitForSync } from './helpers.ts'
+import { at, camera, cardByText, setAccountAppearance, waitForSync } from './helpers.ts'
 import { Fingers, center, longPress, note, seedCards, tap, tapHoldSlide, tapOn, touchDrag } from './touch.ts'
 import { importFixturePack, openStickerTray, seedStickers, stickerBoard, stickerRingPoint, stickerState } from './sticker-helpers.ts'
 
@@ -118,7 +118,7 @@ test('bottom-right sticker shelf browses sideways and lifts one sticker onto the
   const dir = resolve(`../../docs/qa/stickers/round-${process.env.STICKER_VISUAL_ROUND ?? '21'}`); mkdirSync(dir, { recursive: true })
   for (const name of ['Light', 'Dark']) {
     await tray.getByRole('button', { name: 'Close stickers' }).tap()
-    await page.getByTestId('account').tap(); await page.getByRole('radio', { name, exact: true }).tap(); await page.keyboard.press('Escape')
+    await setAccountAppearance(page, name, { tap: true })
     await openStickerTray(page)
     await page.screenshot({ path: resolve(dir, `${test.info().project.name}-${name.toLowerCase()}-sticker-shelf.png`) })
   }

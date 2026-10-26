@@ -1,17 +1,19 @@
 import { Hono, type Context } from 'hono'
-import { stickerObjectSchema, isReservedId } from '@doggynote/core/agent'
+import { stickerObjectSchema, strokeObjectSchema, isReservedId } from '@doggynote/core/agent'
 import type { AppEnv } from './env.ts'
 import { accessGuard, bumpAccess, loadAccess, newBoardAccess, type Access } from './access.ts'
 import { prepareNote } from './notes.ts'
 import { checkPositionLocks, dropLockedLayout, positionWriteGuards } from './position.ts'
+import { checkAreaRemovals } from './areas.ts'
 import { notifyRooms } from './realtime.ts'
-import { CARD_TYPES, LABEL_FIELD, validLabelField, decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
+import { planSyncedNotes } from './synced.ts'
+import { CARD_TYPES, LABEL_FIELD, isBoardInkSize, isSketchContent, isSketchPaper, isSketchTitle, validLabelField, decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
 import * as Y from 'yjs'
 
 // Push: field patches, merged per top-level field (last write to arrive wins).
 // Pull: every object whose seq is above the client's cursor.
 
-export const KINDS = new Set(['board', 'card', 'connection', 'comment', 'sticker'])
+export const KINDS = new Set(['board', 'card', 'connection', 'comment', 'sticker', 'stroke'])
 const KEY = /^[a-zA-Z][a-zA-Z0-9]{0,31}$/
 // ':' is for namespaced ids like "toybox:<userId>".
 const ID = /^[a-zA-Z0-9_:-]{1,64}$/
@@ -44,6 +46,7 @@ export function parseChanges(body: unknown): IncomingChange[] | string {
       if (label && !validLabelField(label[1] === 'label' ? 'card' : 'board', key, p[key])) return `bad label field for ${id}`
     }
     if ('id' in p && p.id !== id) return `id mismatch for ${id}`
+    if ('burialId' in p && p.burialId !== null && (typeof p.burialId !== 'string' || !ID.test(p.burialId) || isReservedId(p.burialId))) return `bad burial operation for ${id}`
     if ('positionLocked' in p && p.positionLocked !== null && typeof p.positionLocked !== 'boolean') return `bad position lock for ${id}`
     if ('kind' in p && !KINDS.has(p.kind as string)) return `bad kind for ${id}`
     if (JSON.stringify({ ...p, noteUpdate: undefined }).length > MAX_OBJECT_BYTES) return `object ${id} too large`
@@ -176,8 +179,20 @@ async function pushSync(c: Context<AppEnv>) {
   const deniedIds = await deniedChanges(db, access, me.id, parsed)
   if (deniedIds.length) return c.json({ error: 'You no longer have permission to change these objects', deniedIds }, 403)
   const positions = await checkPositionLocks(db, parsed)
+  if (positions.lockedCreateIds.length) return c.json({ error: 'The parent layout was locked; keep new items at their world positions', lockedCreateIds: positions.lockedCreateIds }, 409)
   // Additive for older apps: never an error. Locked layout is dropped, the rest saved.
   parsed = dropLockedLayout(parsed, positions.lockedIds)
+  const areas = await checkAreaRemovals(db, parsed)
+  if (areas.conflicts.length) return c.json({ error: 'Area membership changed; refresh and retry', areaConflictIds: areas.conflicts }, 409)
+  for (const [id, version] of areas.versions) {
+    if (positions.versions.has(id) && positions.versions.get(id) !== version) return c.json({ error: 'Area or layout changed; refresh and retry' }, 409)
+    positions.versions.set(id, version)
+  }
+  // Synced notes: validate joins, then write the merged text to every copy.
+  const synced = await planSyncedNotes(db, access, parsed, existing)
+  if (synced.error) return c.json({ error: synced.error, ...(synced.deniedIds ? { deniedIds: synced.deniedIds } : {}) }, synced.deniedIds ? 403 : 400)
+  for (const row of synced.extraRows) existing.set(row.id, row)
+  parsed = [...parsed, ...synced.extra]
   const stmts: D1PreparedStatement[] = [accessGuard(db, access.revision), ...positionWriteGuards(db, access.revision, positions.versions)]
   const newIds = parsed.filter((ch) => !existing.has(ch.id)).map((ch) => ch.id)
   for (let i = 0; i < newIds.length; i += 90) stmts.push(accessGuard(db, access.revision, newIds.slice(i, i + 90)))
@@ -191,7 +206,7 @@ async function pushSync(c: Context<AppEnv>) {
     delete patch.noteRestore
     let note: Awaited<ReturnType<typeof prepareNote>> | undefined
     if (prospective.kind === 'card' && prospective.type === 'note' && ('content' in patch || 'noteUpdate' in patch)) {
-      if (prev && (prev.deleted_at || prev.purged) && 'noteUpdate' in patch && !restoring) return c.json({ error: 'This note was removed', deniedIds: [id] }, 403)
+      if (prev && (prev.deleted_at || prev.purged) && 'noteUpdate' in patch && !restoring && !synced.fanned.has(id)) return c.json({ error: 'This note was removed', deniedIds: [id] }, 403)
       if (prev && 'content' in patch && !('noteUpdate' in patch)) return c.json({ error: 'Notes require collaborative updates', deniedIds: [id] }, 403)
       try {
         note = await prepareNote(db, id, noteMarkdown(prospective as Card<'note'>), patch.noteUpdate as string | undefined, prev?.seq ?? 0, prev?.note_state ? { state: prev.note_state, revision: prev.note_revision! } : null)
@@ -221,12 +236,14 @@ async function pushSync(c: Context<AppEnv>) {
     throw e
   }
   await notifyRooms(c.env, parsed.flatMap(({ id, patch }) => [String(patch.boardId ?? existing.get(id)?.board_id ?? (patch.kind === 'board' ? id : '')), existing.get(id)?.board_id ?? '']))
+  // Additive: older apps ignore it, and the next pull shows the copy unsynced anyway.
+  const detached = synced.detached.length ? { detachedIds: synced.detached } : {}
   if (noteId) {
     const row = await db.prepare('SELECT state FROM note_states WHERE id=?1').bind(noteId).first<{ state: string }>()
     const document = noteDocument(row?.state)
-    try { return c.json({ ok: true, update: encodeUpdate(Y.encodeStateAsUpdate(document, vector)) }) } finally { document.destroy() }
+    try { return c.json({ ok: true, update: encodeUpdate(Y.encodeStateAsUpdate(document, vector)), ...detached }) } finally { document.destroy() }
   }
-  return c.json({ ok: true, count: parsed.length, ...(positions.lockedIds.length ? { lockedIds: positions.lockedIds } : {}) })
+  return c.json({ ok: true, count: parsed.length, ...(positions.lockedIds.length ? { lockedIds: positions.lockedIds } : {}), ...detached })
 }
 sync.post('/sync', pushSync)
 sync.post('/notes/:noteId/sync', pushSync)
@@ -288,7 +305,7 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
   const references: string[] = []
   for (const c of changes) {
     const o = { ...old.get(c.id)?.data, ...c.patch }
-    for (const ref of [o.boardId, o.parentId, o.columnId, o.cardId, o.from, o.to, (o.content as { boardId?: string } | undefined)?.boardId]) if (typeof ref === 'string') references.push(ref)
+    for (const ref of [o.boardId, o.parentId, o.columnId, o.areaId, o.cardId, o.from, o.to, (o.content as { boardId?: string } | undefined)?.boardId]) if (typeof ref === 'string') references.push(ref)
   }
   await load(references)
   const next = new Map<string, Record<string, unknown>>([...access.boards.values()].map((b) => [b.id, { id: b.id, kind: 'board', parentId: b.parentId }]))
@@ -326,11 +343,20 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
       if (typeof board !== 'string' || next.get(board)?.kind !== 'board' || !editable(board)) ok = false
       if (prev && (typeof prev.data.boardId !== 'string' || !editable(prev.data.boardId))) ok = false
       if (o.kind === 'card') {
+        if (prev && prev.data.type !== o.type) ok = false
         if (!(CARD_TYPES as readonly unknown[]).includes(o.type)) ok = false
+        // A sketch's paper colour goes straight into CSS on every device: only canonical #RRGGBB.
+        if (o.type === 'sketch' && !o.purged && (!isSketchContent(o.content) || (o.sketchPaper != null && !isSketchPaper(o.sketchPaper)) || (o.sketchTitle != null && !isSketchTitle(o.sketchTitle)))) ok = false
+        // Only sketches carry a sketch title or paper.
+        if (o.type !== 'sketch' && ('sketchTitle' in patch || 'sketchPaper' in patch)) ok = false
+        // Ink drawn on the board sits on the board, never in a column.
+        if (o.type === 'ink' && !o.purged && (!isBoardInkSize(o.content) || o.columnId != null)) ok = false
         // A colour card's HEX goes straight into CSS on every device: only canonical #RRGGBB.
         if (o.type === 'swatch' && !o.purged) { const hex = (o.content as { hex?: unknown } | undefined)?.hex; if (normalizeSwatchHex(hex) !== hex) ok = false }
-        if (o.type === 'column' && o.columnId != null) ok = false
+        if ((o.type === 'column' || o.type === 'area') && o.columnId != null) ok = false
+        if (o.type === 'area' && (o.areaId != null || (!o.purged && (typeof (o.content as { title?: unknown })?.title !== 'string' || ![o.x, o.y, o.w, o.h].every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= 10000000) || Number(o.w) < 0 || Number(o.h) < 0)))) ok = false
         if (o.columnId) {
+          if (o.areaId != null) ok = false
           const col = next.get(o.columnId as string)
           if (col?.kind !== 'card' || col.type !== 'column' || col.boardId !== board || col.id === id) ok = false
         }
@@ -351,6 +377,10 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
           }
         }
       }
+      if ((o.kind === 'card' || o.kind === 'sticker') && o.areaId != null) {
+        const area = typeof o.areaId === 'string' ? next.get(o.areaId) : undefined
+        if (area?.kind !== 'card' || area.type !== 'area' || area.boardId !== board || area.id === id || (!o.deletedAt && !o.purged && (area.deletedAt || area.purged))) ok = false
+      }
       if (o.kind === 'sticker') {
         if (!stickerObjectSchema.safeParse(o).success) ok = false
         const content = o.content as { assetId?: string } | undefined
@@ -367,6 +397,16 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
               if (!refs.some((r) => (!r.owner_id || r.owner_id === userId) && readable(r.board_id))) ok = false
             }
           }
+        }
+      }
+      if (o.kind === 'stroke') {
+        // Its geometry is drawn as SVG and canvas paths on every device.
+        if (!o.purged && !strokeObjectSchema.safeParse(o).success) ok = false
+        // Ink belongs to a sketch or board ink card on the same board.
+        if (prev && o.cardId !== prev.data.cardId) ok = false
+        if (!prev || 'boardId' in patch) {
+          const card = next.get(o.cardId as string)
+          if (card?.kind !== 'card' || (card.type !== 'sketch' && card.type !== 'ink') || card.boardId !== board || (!prev && (card.deletedAt || card.purged))) ok = false
         }
       }
       if (o.kind === 'comment') {
