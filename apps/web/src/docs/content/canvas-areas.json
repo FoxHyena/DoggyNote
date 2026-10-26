@@ -1,0 +1,178 @@
+{
+  "slug": "canvas-areas",
+  "category": "working-on-boards",
+  "kind": "task",
+  "title": "Organize a project in an area",
+  "summary": "Keep workflow columns, project notes and visual references together, with arrows to show how the work connects.",
+  "status": "published",
+  "order": 125,
+  "benefit": "Give each project a place on the board without losing the freedom to arrange its contents.",
+  "outcome": "An area holds related columns and supporting items, moves them together, and can fold away while you work elsewhere.",
+  "prerequisites": [
+    "You need editing access to create or change an area."
+  ],
+  "keywords": [
+    "area",
+    "group",
+    "grouping",
+    "columns",
+    "project",
+    "planning",
+    "arrows",
+    "frame",
+    "notes"
+  ],
+  "sections": [
+    {
+      "id": "project-and-workflow",
+      "title": "Give the project a place",
+      "paragraphs": [
+        "Use an area for the whole project and columns for its workflow. For example, Tracking Collars can contain Doing and Ready columns, a note about testing the fit, and arrows toward a launch checklist.",
+        "Notes, images, files, links, board cards, movies, colour cards, sketches, stickers and drawings can sit alongside the columns. A board card still opens its own board. Areas cannot contain other areas."
+      ],
+      "figures": [
+        {
+          "src": "/docs/assets/canvas-areas/planning-area.png",
+          "darkSrc": "/docs/assets/canvas-areas/planning-area-dark.png",
+          "alt": "An area titled Tracking Collars contains Doing and Ready columns, a supporting note about testing the collar fit, and arrows toward a launch checklist.",
+          "caption": "Keep workflow columns and project context together in one movable area.",
+          "width": 1320,
+          "height": 600
+        }
+      ]
+    },
+    {
+      "id": "create-and-add",
+      "title": "Create an area and add context",
+      "flow": {
+        "entry": "On a board you can edit, find Area beside Column in the tools. On a phone, open Add to this board in the bottom dock.",
+        "steps": [
+          {
+            "action": "Choose Area, type its name, and press Enter.",
+            "result": "A named frame appears on the canvas, with Add to area and Area actions in its heading."
+          },
+          {
+            "action": "Choose Add to area, then Column or Note.",
+            "result": "The usual editor opens inside the area. Add more columns for your stages and notes for supporting context."
+          },
+          {
+            "action": "Use Add to area for the other things you need. Choose Image or file to upload, Stickers to open your collection, or Draw to use the drawing tool.",
+            "result": "The new item joins the area and keeps its usual editing controls."
+          }
+        ],
+        "completion": "The area and its contents save with the board. Reopening shows their saved positions.",
+        "correction": "Undo reverses a creation. To keep the items but take away the frame, use Remove area, keep contents in Area actions."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/canvas-areas/add-context.png",
+          "darkSrc": "/docs/assets/canvas-areas/add-context-dark.png",
+          "alt": "The Add to area menu lists Column, Note, To-do, Board, Link, Movie, Colour, Sketch, Image or file, Stickers and Draw beside the project.",
+          "caption": "Add to area opens the existing tools for the kinds of context you need.",
+          "width": 1320,
+          "height": 600
+        }
+      ]
+    },
+    {
+      "id": "wrap-existing-items",
+      "title": "Wrap things already on the board",
+      "flow": {
+        "entry": "Select the columns and supporting items you want to keep together. Shift-click adds items on a computer; on a phone, use Pick more cards in More.",
+        "steps": [
+          {
+            "action": "Select whole columns if you want to include their cards.",
+            "result": "The column brings its cards with it. A card inside a column cannot join a separate area on its own: select its column or drag the card out first."
+          },
+          {
+            "action": "Right-click the selection and choose Create area from selection. On a phone, choose it from More.",
+            "result": "A new frame wraps the selection without rearranging it. With several items selected, the desktop selection bar also offers Create area."
+          },
+          {
+            "action": "Name the new area and press Enter.",
+            "result": "The project has a heading, while its contents keep the layout you chose."
+          }
+        ],
+        "completion": "The items now move with their area. Nothing nearby joins just because the new frame overlaps it.",
+        "correction": "Undo unwraps the selection and returns it to its previous grouping."
+      }
+    },
+    {
+      "id": "move-resize-and-tidy",
+      "title": "Arrange the area",
+      "paragraphs": [
+        "Drag the heading to move the area and its contents together. Drag an item into a highlighted area to join it, or outside the boundary to leave. An eligible column takes precedence when you drop a card over it.",
+        "Select the area and drag its lower-right resize handle to set its minimum size. Contents keep their sizes and positions. The boundary expands when it needs more room for a member; resizing the frame never gathers unrelated things underneath it.",
+        "Choose Tidy when you want an orderly layout. It lines columns up in their existing left-to-right order and places supporting cards below. Stickers and board drawings stay where you put them. Ordinary editing does not tidy automatically. On a narrow screen, Tidy area is in Area actions.",
+        "Undo restores the layout after moving, resizing or tidying. Empty space inside an area still works as canvas space for panning, selecting and creating things."
+      ]
+    },
+    {
+      "id": "arrows-and-collapse",
+      "title": "Connect the plan and fold it away",
+      "flow": {
+        "entry": "Use Line in the board tools, or a connection handle on a card, column or area boundary.",
+        "steps": [
+          {
+            "action": "Choose the start and end of the connection.",
+            "result": "A manual arrow connects the two items. Moving them keeps the arrow attached. Use its existing controls to change or remove it."
+          },
+          {
+            "action": "Choose Collapse area at the left of its heading.",
+            "result": "The contents and internal arrows disappear from view. Arrows to things outside the area end at its collapsed boundary."
+          },
+          {
+            "action": "Choose Expand area to return to the project.",
+            "result": "The contents reappear in their saved layout, with arrows attached to their original items."
+          }
+        ],
+        "completion": "Editors share the saved collapse state. On a view-only board, expanding or collapsing changes only your own view.",
+        "correction": "Undo reverses an editor’s collapse or expand. Choosing a hidden card in Fetch opens its area and any containing column for you."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/canvas-areas/collapsed-area.png",
+          "darkSrc": "/docs/assets/canvas-areas/collapsed-area-dark.png",
+          "alt": "Tracking Collars is folded to its heading. Its columns and note are hidden, and a dashed arrow connects its boundary to Launch checklist.",
+          "caption": "Collapsing hides the contents and keeps external connections visible.",
+          "width": 1320,
+          "height": 320
+        }
+      ]
+    },
+    {
+      "id": "remove-or-bury",
+      "title": "Remove the frame or bury the project",
+      "flow": {
+        "entry": "Open Area actions, the … button in the area heading.",
+        "steps": [
+          {
+            "action": "Choose Remove area, keep contents to take away only the frame.",
+            "result": "The columns and supporting items stay at the same places on the board."
+          }
+        ],
+        "completion": "The items remain on the board at their saved positions, without the area frame.",
+        "correction": "Undo reverses either action, including the grouping and positions."
+      },
+      "paragraphs": [
+        "Choose Bury area and contents in Area actions when you want the whole project put away. The area and its members go to Buried bones, DoggyNote’s bin. Restoring the area restores only the members buried with it; items buried earlier stay buried."
+      ]
+    },
+    {
+      "id": "reuse-export-and-lock",
+      "title": "Reuse, export and protect a layout",
+      "paragraphs": [
+        "Copying or duplicating an area brings its members and internal connections. Copying a member alone makes an independent item at its board position.",
+        "For Export PNG, select the area to include its visible contents and the lines between them. Expand it first if you want the contents in the picture.",
+        "Locking an area protects the family’s layout while its content can still be edited. A locked member also prevents moving, removing or tidying the whole area. Other unlocked members remain individually movable; unlock the affected items before changing the whole layout."
+      ]
+    }
+  ],
+  "related": [
+    "collapse-columns",
+    "align-and-lock-cards",
+    "duplicate-and-reuse-layouts",
+    "labels-and-search"
+  ],
+  "links": []
+}
