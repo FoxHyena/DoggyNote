@@ -8,6 +8,7 @@ import { inTemplate } from '../state/copies.ts'
 import { moveSelectionTo } from '../state/actions.ts'
 import { revealCard } from '../state/columns.ts'
 import { boardId, openBoard, recentBoards, select } from '../state/ui.ts'
+import { touch } from '../state/device.ts'
 import { BoardIconSvg } from './icons.tsx'
 import { Popover } from './Popover.tsx'
 
@@ -44,7 +45,7 @@ export function MoveToBoardPopover(props: { anchor: () => HTMLElement; close: ()
   let list: HTMLUListElement | undefined
   const q = () => query().trim().toLowerCase()
   const parentTitle = (b: Board) => (b.parentId && !b.id.startsWith('toybox:') ? moveBoardTitle(doc.getBoard(b.parentId)) : '')
-  const shown = createMemo(() => moveTargets().filter((b) => !q() || moveBoardTitle(b).toLowerCase().includes(q()) || parentTitle(b).toLowerCase().includes(q())).slice(0, 50))
+  const shown = createMemo(() => moveTargets().filter((b) => !q() || moveBoardTitle(b).toLowerCase().includes(q()) || parentTitle(b).toLowerCase().includes(q())))
   const active = () => Math.min(picked(), Math.max(0, shown().length - 1))
   createEffect(() => {
     const i = active()
@@ -71,7 +72,8 @@ export function MoveToBoardPopover(props: { anchor: () => HTMLElement; close: ()
       <input
         class="move-board-input"
         data-testid="move-board-input"
-        data-autofocus
+        // On touch the list comes first: focusing the field would raise the keyboard over it.
+        data-autofocus={touch() ? undefined : true}
         role="combobox"
         aria-label="Find a board"
         aria-expanded={shown().length > 0}
@@ -85,7 +87,7 @@ export function MoveToBoardPopover(props: { anchor: () => HTMLElement; close: ()
         onKeyDown={onKeyDown}
       />
       <Show when={shown().length} fallback={<p class="move-board-empty" role="status">{moveTargets().length ? 'No board by that name.' : 'No other boards you can edit.'}</p>}>
-        <ul ref={list} id="move-board-list" class="move-board-list" role="listbox" aria-label="Boards you can edit">
+        <ul ref={list} id="move-board-list" class="move-board-list" role="listbox" aria-label="Boards you can edit" tabIndex={-1} data-autofocus={touch() ? true : undefined}>
           <For each={shown()}>
             {(b, i) => (
               <li

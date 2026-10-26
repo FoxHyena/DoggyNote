@@ -8,7 +8,7 @@
   overflow: auto;
   overscroll-behavior: contain;
 }
-.shortcut-sheet-inner { display: grid; gap: 12px; padding: 12px 16px 16px; }
+.shortcut-sheet-inner { display: grid; gap: 12px; padding: 12px 16px 16px; outline: none; }
 
 .shortcut-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-right: -8px; }
 .shortcut-sheet-head h2 { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.3; }

@@ -27,6 +27,8 @@ test('Move to board on a phone: More → a bottom sheet of boards, then Go to', 
   await expect(option).toBeVisible()
   expect((await option.boundingBox())!.height).toBeGreaterThanOrEqual(44)
   expect(await page.getByTestId('move-board-input').evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16)
+  // The list comes first: no keyboard rising over it until you tap the field.
+  await expect(page.getByTestId('move-board-input')).not.toBeFocused()
   await option.tap()
   await expect(sheet).toHaveCount(0)
   await expect(page.getByTestId('toast')).toContainText(`Moved 1 card to ${title}`)

@@ -33,6 +33,7 @@
   overflow: auto;
   overscroll-behavior: contain;
   list-style: none;
+  outline: none;
 }
 
 .move-board-option {

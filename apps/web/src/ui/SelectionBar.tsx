@@ -197,7 +197,7 @@ export function SelectionBar() {
             <Show when={canDistribute()}>
               <div class="bar-sep" />
               <div class="bar-align bar-distribute" role="group" aria-label="Distribute selection" data-testid="distribute-selection">
-                <For each={DISTRIBUTIONS}>{(d) => <IconButton testid={`distribute-${d.value}`} icon={DISTRIBUTE_ICONS[d.value]} label={d.label} title={`${d.label}: equal gaps between cards`} onClick={() => distributeSelection(d.value)} />}</For>
+                <For each={DISTRIBUTIONS}>{(d) => <IconButton testid={`distribute-${d.value}`} icon={DISTRIBUTE_ICONS[d.value]} label={d.label} onClick={() => distributeSelection(d.value)} />}</For>
               </div>
             </Show>
             <Show when={cards().some((c) => isPositionLocked(c.id))}>

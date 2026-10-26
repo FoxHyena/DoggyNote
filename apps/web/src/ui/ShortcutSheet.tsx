@@ -13,7 +13,8 @@ export function ShortcutSheet() {
   const anchor = () => document.querySelector<HTMLElement>('[data-testid="account"]') ?? document.body
   return (
     <Popover anchor={anchor} label="Keyboard shortcuts" testid="shortcut-sheet" class="shortcut-sheet" close={close}>
-      <div class="shortcut-sheet-inner" onKeyDown={(e) => { if (e.key === '?') { e.preventDefault(); close() } }}>
+      {/* Focus lands on the sheet itself: nothing here needs a ring the moment it opens. */}
+      <div class="shortcut-sheet-inner" tabIndex={-1} data-autofocus onKeyDown={(e) => { if (e.key === '?') { e.preventDefault(); close() } }}>
         <div class="shortcut-sheet-head">
           <h2 id="shortcut-sheet-title">Keyboard shortcuts</h2>
           <IconButton testid="shortcut-sheet-close" icon="close" label="Close" title="Close (Esc)" onClick={close} />
