@@ -18,6 +18,9 @@
 .people-hint { margin: 8px 12px; color: var(--dn-text-muted); font-size: 12px; line-height: 1.5; }
 .people-menu .menu-item { display: flex; align-items: center; gap: 10px; }
 .collaboration-overlay { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 8; contain: strict; }
+/* Keep this viewport-sized surface separate from WebKit's changing world
+   compositor layer during pan/zoom, including the overview handoff. */
+.collaboration-overlay { isolation: isolate; transform: translateZ(0); }
 .remote-cursor, .remote-ping, .remote-outline { position: absolute; color: var(--person-color); pointer-events: none; }
 .remote-cursor { transition: left 75ms linear, top 75ms linear; }
 .remote-cursor svg { fill: var(--person-color); stroke: var(--dn-panel); stroke-width: 1.2; }

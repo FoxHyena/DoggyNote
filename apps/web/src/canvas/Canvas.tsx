@@ -68,7 +68,7 @@ import { columnCollapsed, connectionEndpoint, hiddenByColumn } from '../state/co
 import { columnChildren, connect, createCard } from '../state/actions.ts'
 import { CardView } from './CardView.tsx'
 import { LodLayer } from './LodLayer.tsx'
-import { Connections } from './Connections.tsx'
+import { Connections, createConnectionGeometry } from './Connections.tsx'
 import { cardEl, cardHeight, rectOf, setMeasuring } from './layout.ts'
 import { setDropTarget, dropTarget, connectPreview, setConnectPreview, draggingIds, setDraggingIds, resizingId, setResizingId } from './dnd.ts'
 import { snapTick, snapToGrid } from '../state/grid.ts'
@@ -116,6 +116,7 @@ const EDIT_DOCK = 56
 type Client = { clientX: number; clientY: number; altKey?: boolean }
 
 export function Canvas(props: { readOnly: boolean }) {
+  const connectionGeometry = createConnectionGeometry()
   const [contextPoint, setContextPoint] = createSignal<ContextPoint | null>(null)
   let vp!: HTMLDivElement
   const [marquee, setMarquee] = createSignal<Rect | null>(null)
@@ -247,7 +248,7 @@ export function Canvas(props: { readOnly: boolean }) {
   )
   createEffect(
     on(boardId, () => {
-      stopMomentum(); cancelGesture(); cancelStickerPlacement()
+      resetInteraction(); cancelStickerPlacement()
       // A thread belongs to a card on the board you left.
       setThreadCardId(null)
     }, { defer: true }),
@@ -269,6 +270,12 @@ export function Canvas(props: { readOnly: boolean }) {
           const r = rectOf(id)
           if (r) animateCamera(editCamera(r, editRoom(), camera()), 260, () => requestAnimationFrame(revealCaret))
         } else if (!id && prev) {
+          // Native text handles do not capture their pointer to the canvas.
+          // Their editor may disappear before the release reaches us.
+          for (const pointerId of editorFingers) fingers.delete(pointerId)
+          editorFingers.clear()
+          stopKeepingEditFocus()
+          if (!fingers.size && !gesture) clearTouchHistory()
           if (editReturn && !movedWhileEditing) animateCamera(editReturn, 260)
           editReturn = null
           resetPageScroll()
@@ -282,7 +289,14 @@ export function Canvas(props: { readOnly: boolean }) {
   createEffect(() => {
     const id = touchEditing()
     if (!id) return
-    const onSelection = () => requestAnimationFrame(revealCaret)
+    let selectionFrame = 0
+    const onSelection = () => {
+      cancelAnimationFrame(selectionFrame)
+      // Moving the native selection out from under its handles/menu makes the
+      // browser anchor that menu to stale geometry (often the screen's top).
+      if (hasEditSelection()) { cancelCameraAnimation(); return }
+      selectionFrame = requestAnimationFrame(() => { if (editingId() === id) revealCaret() })
+    }
     document.addEventListener('selectionchange', onSelection)
     // The app never scrolls; iOS scrolling the page to a field slides the grid away.
     const onScroll = () => resetPageScroll()
@@ -334,6 +348,7 @@ export function Canvas(props: { readOnly: boolean }) {
     document.addEventListener('focusout', onFocusOut)
     onCleanup(() => {
       cancelAnimationFrame(blurFrame)
+      cancelAnimationFrame(selectionFrame)
       document.removeEventListener('selectionchange', onSelection)
       window.removeEventListener('scroll', onScroll)
       document.removeEventListener('focusout', onFocusOut)
@@ -346,7 +361,7 @@ export function Canvas(props: { readOnly: boolean }) {
       visibleArea,
       () => {
         const id = editingId()
-        if (!id || !focusEdits()) return
+        if (!id || !focusEdits() || hasEditSelection()) return
         const r = rectOf(id)
         if (movedWhileEditing || !r || panelEdit(id)) return void requestAnimationFrame(revealCaret)
         const aim = editCamera(r, editRoom(), camera())
@@ -557,9 +572,11 @@ export function Canvas(props: { readOnly: boolean }) {
     return true
   }
 
+  const capturedPointers = new Set<number>()
   function capture(pointerId: number) {
     try {
       vp.setPointerCapture(pointerId)
+      capturedPointers.add(pointerId)
     } catch {
       // The pointer is already gone (or synthetic); events still bubble here.
     }
@@ -796,6 +813,7 @@ export function Canvas(props: { readOnly: boolean }) {
   }
 
   function onPointerUp(e: PointerEvent) {
+    capturedPointers.delete(e.pointerId)
     if (e.pointerType === 'touch') return touchUp(e)
     if (ink.up(e)) return
     const g = gesture
@@ -958,6 +976,7 @@ export function Canvas(props: { readOnly: boolean }) {
   // selection box on empty canvas). Two fingers pinch and pan. Tap selects;
   // tapping the selected card again edits or opens it.
   const fingers = new Map<number, Vec>()
+  const editorFingers = new Set<number>()
   let lastTap: Tap | null = null
   // A quick tap anywhere (card, sticker or canvas): a finger coming back down
   // right after one, near it, is ready to slide-zoom.
@@ -966,6 +985,27 @@ export function Canvas(props: { readOnly: boolean }) {
   let zoomArm: Vec | null = null
   // The finger is on a sticker: nothing it does may select text.
   let stickerTouch = false
+  function clearTouchHistory() {
+    lastTap = quickTap = fingerDown = zoomArm = null
+    stickerTouch = false
+  }
+  /** A system interruption abandons all input; a second finger only cancels
+   * the current gesture, preserving both live fingers for the pinch. */
+  function resetInteraction() {
+    stopMomentum()
+    cancelCameraAnimation()
+    cancelGesture()
+    fingers.clear()
+    editorFingers.clear()
+    clearTouchHistory()
+    setSpaceHeld(false)
+    stopKeepingEditFocus()
+    const captured = [...capturedPointers]
+    capturedPointers.clear()
+    for (const id of captured) {
+      try { if (vp.hasPointerCapture(id)) vp.releasePointerCapture(id) } catch { /* Already released by the browser. */ }
+    }
+  }
   // A paw print where the finger asked for something.
   const [paw, setPaw] = createSignal<{ x: number; y: number; n: number } | null>(null)
   let pawTimer: ReturnType<typeof setTimeout> | undefined
@@ -993,6 +1033,7 @@ export function Canvas(props: { readOnly: boolean }) {
     } else if (fingerDown) fingerDown.moved = true
     quickTap = null
     if (fingers.size === 2) {
+      editorFingers.clear()
       zoomArm = null
       // A second finger means pinch and pan, never a line.
       ink.cancel()
@@ -1014,6 +1055,7 @@ export function Canvas(props: { readOnly: boolean }) {
     const target = e.target as HTMLElement
     // The editor owns single touches inside the card being edited (caret, selection).
     if (insideEditor(e, editingId())) {
+      editorFingers.add(e.pointerId)
       // A touch on the rest of the card (an image above its caption) would blur
       // the field, and focus leaving the card ends the edit.
       if (!target.closest('textarea, input, select, label, a, button, [contenteditable], .cm-editor')) e.preventDefault()
@@ -1106,6 +1148,7 @@ export function Canvas(props: { readOnly: boolean }) {
 
   function touchUp(e: PointerEvent) {
     fingers.delete(e.pointerId)
+    editorFingers.delete(e.pointerId)
     if (!fingers.size) {
       const t = performance.now()
       // A tap that placed a sticker is done: dragging the new sticker straight away moves it.
@@ -1389,12 +1432,26 @@ export function Canvas(props: { readOnly: boolean }) {
   const onSelectStart = (e: Event) => { if (gesture && lastPointerType === 'touch') e.preventDefault() }
   const onTouchMoveNative = (e: TouchEvent) => { if (stickerTouch || gesture?.kind === 'tzoom') e.preventDefault() }
 
-  onCleanup(() => { cancelGesture(); cancelStickerPlacement() })
+  onCleanup(() => { resetInteraction(); cancelStickerPlacement() })
   onMount(() => {
+    const finishOutside = (e: PointerEvent) => {
+      if (!e.composedPath().includes(vp) && (fingers.has(e.pointerId) || capturedPointers.has(e.pointerId))) onPointerUp(e)
+    }
+    const lostCapture = (e: PointerEvent) => {
+      // Implicit capture loss follows a normal pointerup as well. Only reset
+      // when this pointer is still active, not a new gesture started by the up.
+      if (capturedPointers.has(e.pointerId) || fingers.has(e.pointerId)) resetInteraction()
+    }
+    const hidden = () => { if (document.hidden) resetInteraction() }
     const ro = new ResizeObserver(measure)
     ro.observe(vp)
     vp.addEventListener('wheel', onWheel, { passive: false })
     vp.addEventListener('touchmove', onTouchMoveNative, { passive: false })
+    vp.addEventListener('lostpointercapture', lostCapture)
+    window.addEventListener('pointerup', finishOutside, true)
+    window.addEventListener('pointercancel', finishOutside, true)
+    window.addEventListener('blur', resetInteraction)
+    document.addEventListener('visibilitychange', hidden)
     document.addEventListener('selectstart', onSelectStart)
     vp.addEventListener('gesturestart', onGestureStart)
     vp.addEventListener('gesturechange', onGestureChange)
@@ -1413,6 +1470,11 @@ export function Canvas(props: { readOnly: boolean }) {
       ro.disconnect()
       vp.removeEventListener('wheel', onWheel)
       vp.removeEventListener('touchmove', onTouchMoveNative)
+      vp.removeEventListener('lostpointercapture', lostCapture)
+      window.removeEventListener('pointerup', finishOutside, true)
+      window.removeEventListener('pointercancel', finishOutside, true)
+      window.removeEventListener('blur', resetInteraction)
+      document.removeEventListener('visibilitychange', hidden)
       document.removeEventListener('selectstart', onSelectStart)
       vp.removeEventListener('gesturestart', onGestureStart)
       vp.removeEventListener('gesturechange', onGestureChange)
@@ -1471,9 +1533,10 @@ export function Canvas(props: { readOnly: boolean }) {
       onDblClick={onDblClick}
       onContextMenu={(e) => {
         // Long-press lifts cards on touch; editing fields keep their native menu.
-        if (lastPointerType === 'touch') { e.preventDefault(); return }
         const target = e.target as Element
-        if (target.closest('input,textarea,[contenteditable="true"],a')) return
+        if (target.closest('input,textarea,[contenteditable="true"],.cm-editor')) return
+        if (lastPointerType === 'touch') { e.preventDefault(); return }
+        if (target.closest('a')) return
         const id = cardIdAt(target, e)
         const card = id ? doc.getCard(id) : undefined
         if (!card && target.closest('button,[data-nodrag]')) return
@@ -1501,11 +1564,12 @@ export function Canvas(props: { readOnly: boolean }) {
           <GridGlow />
         </Show>
         <div class="card-layer">
-        <Connections />
+        <Connections geometry={connectionGeometry} />
         <Show when={!lod()}>
           <For each={visible()}>{(c) => <CardView card={c} lod={false} readOnly={props.readOnly} />}</For>
         </Show>
         </div>
+        <Connections geometry={connectionGeometry} foreground />
         <StickerLayer readOnly={props.readOnly} />
         <BoardInkPreview mark={ink.preview()} />
       </div>
@@ -1613,6 +1677,12 @@ function caretRect(within: HTMLElement): DOMRect | null {
   return node?.getBoundingClientRect() ?? null
 }
 
+/** A native text range owns its screen position until it collapses again. */
+function hasEditSelection(): boolean {
+  const id = editingId(), el = id ? cardEl(id) : null, range = document.getSelection()
+  return !!el && !!range && !range.isCollapsed && el.contains(range.anchorNode) && el.contains(range.focusNode)
+}
+
 /**
  * How far (screen px, + is down) the caret sits outside the room between the top
  * of the screen and the keyboard, were the camera at `at`. 0 when it's in view.
@@ -1637,6 +1707,7 @@ function caretShift(at: Camera): number {
 
 /** Pan just enough to keep the caret between the top of the screen and the keyboard. */
 function revealCaret() {
+  if (hasEditSelection()) return
   // The edit glide checks again when it lands.
   if (anim) return
   const dy = -caretShift(camera())

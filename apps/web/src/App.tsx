@@ -149,6 +149,7 @@ function EditorApp() {
       <Match when={phase() === 'ready'}>
         <div class="app" classList={{ 'read-only': !editable(), phone: phone() }}>
           <TopBar
+            navigation
             readOnly={!editable()}
             left={<Show when={!phone()}><BoardNavigation /></Show>}
             status={<SyncStatus />}

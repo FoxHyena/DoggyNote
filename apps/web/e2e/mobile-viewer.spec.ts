@@ -18,6 +18,9 @@ test('a share link pans, pinches and opens inner boards by touch', async ({ page
   await v.goto(`/s/${share.token}`)
   await expect(cardByText(v, 'Shared hello')).toBeVisible()
   await expect(v.getByTestId('mobile-dock')).toHaveCount(0)
+  await v.getByTestId('board-name').tap()
+  await expect(v.getByTestId('board-navigation-menu')).toHaveCount(0)
+  await expect(v.getByTestId('board-name-input')).toHaveCount(0)
 
   const before = await camera(v)
   const c = await center(v.getByTestId('canvas'))
