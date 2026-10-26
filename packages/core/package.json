@@ -4,7 +4,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./agent": "./src/agent.ts"
+    "./agent": "./src/agent.ts",
+    "./chat": "./src/chat.ts"
   },
   "scripts": {
     "typecheck": "tsc -p ."

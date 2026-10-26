@@ -29,6 +29,7 @@ import { showToast } from './toast.ts'
 import { beginEdit, boardId, clearSelection, editingId, endEdit, select, selection } from './ui.ts'
 
 export const EMPTY_CONTENT: { [T in CardType]: () => CardContent[T] } = {
+  chat: () => ({ title: 'Conversation', provider: 'claude' }),
   note: () => ({ md: '' }),
   todo: () => ({ title: '', items: [{ id: newId(), text: '', done: false }] }),
   board: () => ({ boardId: '' }),
@@ -197,7 +198,8 @@ export function setColor(ids: Iterable<Id>, color: CardColor) {
 /** Connect two cards. Sides pin each end to a side midpoint; leave them out for facing sides. */
 export function connect(from: Id, to: Id, sides: { fromSide?: Side; toSide?: Side } = {}): Id | null {
   if (from === to) return null
-  const existing = doc.connectionsOn(boardId()).find((c) => (c.from === from && c.to === to) || (c.from === to && c.to === from))
+  const purpose = doc.getCard(to)?.type === 'chat' && doc.getCard(from)?.type !== 'chat' ? 'context' as const : null
+  const existing = doc.connectionsOn(boardId()).find((c) => (c.purpose ?? null) === purpose && (purpose ? c.from === from && c.to === to : (c.from === from && c.to === to) || (c.from === to && c.to === from)))
   if (existing) {
     // Re-dragging the same pair just re-pins its ends.
     if (sides.fromSide || sides.toSide) {
@@ -213,6 +215,7 @@ export function connect(from: Id, to: Id, sides: { fromSide?: Side; toSide?: Sid
   const conn: Connection = {
     id: newId(),
     kind: 'connection',
+    purpose,
     boardId: boardId(),
     from,
     to,

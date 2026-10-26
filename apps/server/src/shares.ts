@@ -3,6 +3,7 @@ import type { AppEnv } from './env.ts'
 import { requireUser } from './auth.ts'
 import { randomToken } from './crypto.ts'
 import { bumpAccess, isToyboxTree, loadAccess } from './access.ts'
+import { publicChatCard } from '@doggynote/core/chat'
 
 type Obj = { id: string; kind: string; cardId?: string; from?: string; to?: string; boardId?: string; parentId?: string | null; type?: string; content?: { boardId?: string }; deletedAt?: number | null; purged?: boolean }
 type ShareRow = { token: string; board_id: string; include_children: number; permission: 'view' | 'edit'; created_by: string; created_at: number; revoked_at: number | null; expires_at: number | null; allow_signup: number; scope_version: number }
@@ -189,5 +190,5 @@ shares.get('/share/:token', async (c) => {
   }
   const res = await resolveShare(c.env.DB, c.req.param('token'))
   if (!res) return c.json({ error: 'This link has been turned off or expired' }, 404)
-  return c.json({ permission: 'view', rootBoardId: res.root.id, sharedBoards: [...res.sharedBoards], objects: res.objects })
+  return c.json({ permission: 'view', rootBoardId: res.root.id, sharedBoards: [...res.sharedBoards], objects: res.objects.map((o) => publicChatCard(o)) })
 })

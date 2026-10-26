@@ -3,6 +3,7 @@ import { suggestions, openStickers, stickerTrayOpen } from '../state/stickers.ts
 import './canvas-entry.css'
 import { For, Show, createSignal } from 'solid-js'
 import { DEFAULT_SIZE, findFreeSpot, screenToWorld, type CardType, type Vec } from '@doggynote/core'
+import { frameChat } from '../canvas/chatViewport.ts'
 import { rectOf } from '../canvas/layout.ts'
 import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
@@ -18,6 +19,7 @@ export const TOOLS: Tool[] = [
   { id: 'note', label: 'Note', icon: 'note' },
   { id: 'todo', label: 'To-do', icon: 'todo' },
   { id: 'board', label: 'Board', icon: 'board' },
+  { id: 'chat', label: 'Chat', icon: 'comment' },
   { id: 'link', label: 'Link', icon: 'link' },
   { id: 'line', label: 'Line', icon: 'line' },
   { id: 'column', label: 'Column', icon: 'column' },
@@ -35,12 +37,12 @@ export const MORE_TOOLS = TOOLS.slice(3)
 export const modeTool = (id: Tool['id']): id is 'line' | 'draw' => id === 'line' || id === 'draw'
 
 /** The Line and Draw tools toggle their mode; any other tool ends draw mode and adds a card. */
-export function useTool(id: Tool['id'], place: () => Placement | null) {
-  if (id === 'draw') return boardDrawing() ? endBoardDrawing() : beginBoardDrawing()
+export function useTool(id: Tool['id'], place: () => Placement | null): string | undefined {
+  if (id === 'draw') { boardDrawing() ? endBoardDrawing() : beginBoardDrawing(); return }
   endBoardDrawing()
-  if (id === 'line') return setConnectMode(connectMode() ? null : { from: null })
+  if (id === 'line') { setConnectMode(connectMode() ? null : { from: null }); return }
   const at = place()
-  if (at) createCard(id, at)
+  if (at) return createCard(id, at)
 }
 
 /** A click on a tool drops the card near the viewport centre, in free space. */
@@ -51,7 +53,7 @@ export function centrePlacement(type: CardType = 'note'): Placement {
   const c = screenToWorld(camera(), { x: v.width / 2, y: v.height / 2.6 })
   const size = DEFAULT_SIZE[type]
   const taken = doc.cardsOn(boardId()).filter((k) => !k.columnId).flatMap((k) => { const rect = rectOf(k.id); return rect ? [rect] : [] })
-  const spot = findFreeSpot({ x: c.x - size.w / 2, y: c.y - 20, w: size.w, h: size.h }, taken)
+  const spot = findFreeSpot({ x: c.x - size.w / 2, y: c.y - (type === 'chat' ? size.h / 2 : 20), w: size.w, h: size.h }, taken)
   return { at: { x: spot.x + size.w / 2, y: spot.y + 20 } }
 }
 
@@ -84,11 +86,12 @@ export function Toolbar() {
       el.removeEventListener('pointermove', move)
       el.removeEventListener('pointerup', up)
       setGhost(null)
-      useTool(tool.id, () => {
+      const id = useTool(tool.id, () => {
         const place = dragging ? placementAt(ev.clientX, ev.clientY) : centrePlacement(tool.id as CardType)
         // Columns can't nest.
         return place && (tool.id === 'column' || tool.id === 'area') && 'columnId' in place ? null : place
       })
+      if (id && tool.id === 'chat' && !dragging) frameChat(id)
     }
     el.addEventListener('pointermove', move)
     el.addEventListener('pointerup', up)
@@ -110,7 +113,8 @@ export function Toolbar() {
                   aria-pressed={t.id === 'draw' ? boardDrawing() : undefined}
                   onClick={(e) => {
                     if (e.detail !== 0) return
-                    useTool(t.id, () => centrePlacement(t.id as CardType))
+                    const id = useTool(t.id, () => centrePlacement(t.id as CardType))
+                    if (id && t.id === 'chat') frameChat(id)
                   }}
                   title={t.id === 'line' ? 'Line: click two cards to connect them' : t.id === 'draw' ? 'Draw: ink straight on the board' : `${t.label}: click to add, or drag onto the board`}
                   onPointerDown={(e) => onToolPointerDown(e, t)}

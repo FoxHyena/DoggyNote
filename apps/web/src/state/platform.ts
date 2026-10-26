@@ -20,9 +20,11 @@ const webTokenStore = {
     }
   },
   async set(token: string) {
+    if (isTauri) await invoke('chat_begin_session')
     localStorage.setItem('doggynote.token', token)
   },
   async clear() {
+    if (isTauri) await invoke('chat_stop_all')
     localStorage.removeItem('doggynote.token')
   },
 }

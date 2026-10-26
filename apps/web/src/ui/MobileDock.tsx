@@ -3,6 +3,7 @@ import { armedSticker, suggestions, openStickers, setStickerTrayOpen, stickerTra
 import { For, Show, createSignal } from 'solid-js'
 import { COPY } from '@doggynote/theme'
 import { LOD_ZOOM, zoomAt, type CardType } from '@doggynote/core'
+import { openChat } from '../state/chats.ts'
 import { camera, setCamera, setPaletteOpen, setTrashOpen, trashOpen, viewport } from '../state/ui.ts'
 import { addAnyFiles, addImages } from '../canvas/paste.ts'
 import { BoardNavigation } from './BoardNavigation.tsx'
@@ -55,7 +56,8 @@ function AddButton() {
     setOpen(false)
     if (!modeTool(type)) comeClose()
     // Synchronous, inside the tap, so a new note's editor gets the keyboard on iOS.
-    useTool(type, () => centrePlacement(type as CardType))
+    const id = useTool(type, () => centrePlacement(type as CardType))
+    if (id && type === 'chat') openChat(id)
   }
   const pick = (input: HTMLInputElement) => {
     setOpen(false)

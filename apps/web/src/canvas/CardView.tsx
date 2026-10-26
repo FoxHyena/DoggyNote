@@ -14,6 +14,7 @@ import { isResolved } from '../state/comments.ts'
 import { openThread } from '../ui/CommentsPanel.tsx'
 import { Icon } from '../ui/icons.tsx'
 import { draggingIds, resizingId } from './dnd.ts'
+import { ChatCard } from '../cards/ChatCard.tsx'
 import { NoteCard } from '../cards/NoteCard.tsx'
 import { TodoCard } from '../cards/TodoCard.tsx'
 import { BoardCard } from '../cards/BoardCard.tsx'
@@ -68,6 +69,8 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
       if (c.type === 'area') s.height = `${r?.h ?? c.h}px`
       s['z-index'] = c.type === 'area' ? '-1' : String(c.z ?? 0)
     }
+    // A streamed answer scrolls inside the note, never resizes the board per token.
+    if (c.type === 'chat') s.height = `${Math.max(400, c.h || 520)}px`
     if (touchHandles()) s['--hs'] = String(Math.round(Math.min(c.w / 3 / 18, 1 / camera().zoom) * 100) / 100)
     return s
   }
@@ -113,6 +116,7 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
           </div>
         }
       >
+        <Match when={props.card.type === 'chat'}><ChatCard {...(props2() as CardProps<'chat'>)} /></Match>
         <Match when={props.card.type === 'note'}>
           <NoteCard {...(props2() as CardProps<'note'>)} />
         </Match>

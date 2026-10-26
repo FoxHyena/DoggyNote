@@ -7,7 +7,7 @@ import { checkPositionLocks, dropLockedLayout, positionWriteGuards } from './pos
 import { checkAreaRemovals } from './areas.ts'
 import { notifyRooms } from './realtime.ts'
 import { planSyncedNotes } from './synced.ts'
-import { LABEL_FIELD, isBoardInkSize, isSketchContent, isSketchPaper, isSketchTitle, validLabelField, decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
+import { CARD_TYPES, LABEL_FIELD, isBoardInkSize, isSketchContent, isSketchPaper, isSketchTitle, validLabelField, decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
 import * as Y from 'yjs'
 
 // Push: field patches, merged per top-level field (last write to arrive wins).
@@ -344,7 +344,7 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
       if (prev && (typeof prev.data.boardId !== 'string' || !editable(prev.data.boardId))) ok = false
       if (o.kind === 'card') {
         if (prev && prev.data.type !== o.type) ok = false
-        if (!['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie', 'swatch', 'sketch', 'ink', 'area'].includes(o.type as string)) ok = false
+        if (!(CARD_TYPES as readonly unknown[]).includes(o.type)) ok = false
         // A sketch's paper colour goes straight into CSS on every device: only canonical #RRGGBB.
         if (o.type === 'sketch' && !o.purged && (!isSketchContent(o.content) || (o.sketchPaper != null && !isSketchPaper(o.sketchPaper)) || (o.sketchTitle != null && !isSketchTitle(o.sketchTitle)))) ok = false
         // Only sketches carry a sketch title or paper.

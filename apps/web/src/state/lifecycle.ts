@@ -1,3 +1,4 @@
+import { finishChatRunsBeforeExit } from './chats.ts'
 import { createSignal } from 'solid-js'
 import * as doc from './doc.ts'
 import { endEdit } from './ui.ts'
@@ -8,6 +9,7 @@ export const [exitSaveProblem, setExitSaveProblem] = createSignal(false)
 let finishing = false
 
 export async function saveBeforeLeaving() {
+  await finishChatRunsBeforeExit()
   endEdit()
   await doc.flush()
   await Promise.race([syncNow(), new Promise<void>((resolve) => setTimeout(resolve, 3000))])

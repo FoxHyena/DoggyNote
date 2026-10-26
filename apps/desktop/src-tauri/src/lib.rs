@@ -4,6 +4,8 @@
 // exported PNGs through the native Save dialog. Updates come
 // from tauri-plugin-updater, checked against the server's /api/desktop/latest.json.
 
+mod chat;
+
 const SERVICE: &str = "dog.doggynote.app";
 const ACCOUNT: &str = "session";
 
@@ -59,12 +61,15 @@ fn get_token() -> Result<Option<String>, String> {
 }
 
 #[tauri::command]
-fn set_token(token: String) -> Result<(), String> {
-  entry()?.set_password(&token).map_err(|e| e.to_string())
+fn set_token(runtime: tauri::State<'_, chat::ChatRuntime>, token: String) -> Result<(), String> {
+  entry()?.set_password(&token).map_err(|e| e.to_string())?;
+  runtime.begin_session();
+  Ok(())
 }
 
 #[tauri::command]
-fn clear_token() -> Result<(), String> {
+fn clear_token(runtime: tauri::State<'_, chat::ChatRuntime>) -> Result<(), String> {
+  runtime.shutdown();
   match entry()?.delete_credential() {
     Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
     Err(e) => Err(e.to_string()),
@@ -119,11 +124,12 @@ async fn save_recovery(app: tauri::AppHandle, json: String) -> Result<Option<Str
 pub fn run() {
   tauri::Builder::default()
     .manage(SaveBeforeExit::default())
+    .manage(chat::ChatRuntime::default())
     .plugin(tauri_plugin_opener::init())
     .plugin(tauri_plugin_updater::Builder::new().build())
     .plugin(tauri_plugin_process::init())
     .plugin(tauri_plugin_dialog::init())
-    .invoke_handler(tauri::generate_handler![get_token, set_token, clear_token, haptic, save_png, save_recovery, exit_save_ready, finish_exit_save])
+    .invoke_handler(tauri::generate_handler![chat::chat_providers, chat::chat_start, chat::chat_stop, chat::chat_stop_all, chat::chat_begin_session, chat::chat_answer, chat::chat_run_snapshot, get_token, set_token, clear_token, haptic, save_png, save_recovery, exit_save_ready, finish_exit_save])
     .on_window_event(|window, event| {
       if window.label() != "main" { return; }
       if let tauri::WindowEvent::CloseRequested { api, .. } = event {
@@ -176,6 +182,7 @@ pub fn run() {
     .build(tauri::generate_context!())
     .expect("error while building tauri application")
     .run(|app, event| {
+      if matches!(event, tauri::RunEvent::Exit) { app.state::<chat::ChatRuntime>().shutdown(); }
       if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
         let state = app.state::<SaveBeforeExit>();
         // Updater restarts explicitly save before requesting a coded exit.

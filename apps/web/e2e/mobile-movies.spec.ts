@@ -38,8 +38,11 @@ test('the Add sheet keeps a tidy grid with the Movie tile', async ({ page }) => 
   const boxes = await tiles.evaluateAll((els) => els.map((e) => e.getBoundingClientRect()).map((r) => ({ x: r.x, w: r.width, right: r.right })))
   const sheet = (await page.getByTestId('add-sheet').boundingBox())!
   for (const b of boxes) expect(b.right).toBeLessThanOrEqual(sheet.x + sheet.width + 1)
-  // A lone last tile spans the row rather than sitting in a corner.
-  if (boxes.length % 3 === 1) expect(boxes.at(-1)!.w).toBeGreaterThan(boxes[0].w * 2)
+  // Every action shares the same three-column grid, including a partial final row.
+  for (let index = 0; index < boxes.length; index++) {
+    expect(boxes[index].w).toBeCloseTo(boxes[0].w, 0)
+    expect(boxes[index].x).toBeCloseTo(boxes[index % 3].x, 0)
+  }
 })
 
 test('opening the details of a tall card brings the details into view, above the bars', async ({ page }) => {
