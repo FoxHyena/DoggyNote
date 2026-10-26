@@ -81,7 +81,7 @@ export function Popover(props: { anchor: () => HTMLElement; label: string; testi
         onPointerDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => agentDialogKeys(e)}
       >
-        <Show when={props.class?.split(' ').some((name) => name === 'labels-panel' || name === 'templates-popover' || name === 'selection-style-sheet')}><SheetGrip onDismiss={props.close} /></Show>
+        <Show when={props.class?.split(' ').some((name) => name === 'labels-panel' || name === 'move-board-panel' || name === 'templates-popover' || name === 'selection-style-sheet')}><SheetGrip onDismiss={props.close} /></Show>
         {props.children}
       </div>
     </Portal>

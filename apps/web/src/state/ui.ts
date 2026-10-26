@@ -16,6 +16,8 @@ export const [connectMode, setConnectMode] = createSignal<{ from: Id | null } | 
 export const [nearHandle, setNearHandle] = createSignal('')
 export const [trashOpen, setTrashOpen] = createSignal(false)
 export const [paletteOpen, setPaletteOpen] = createSignal(false)
+/** The "?" keyboard shortcut sheet. */
+export const [shortcutsOpen, setShortcutsOpen] = createSignal(false)
 /** Explicit title editing, shared by the phone's two board-navigation triggers. */
 export const [renamingBoardId, setRenamingBoardId] = createSignal<Id | null>(null)
 

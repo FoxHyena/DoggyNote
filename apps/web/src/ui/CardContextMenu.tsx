@@ -5,7 +5,8 @@ import type { Card, Vec } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
 import { beginEdit, selection, setCardContextOpen } from '../state/ui.ts'
 import { canCreateAreaFromSelection, createAreaFromSelection, buryArea, tidyArea } from '../state/areas.ts'
-import { burySelection } from '../state/actions.ts'
+import { burySelection, canMoveSelection } from '../state/actions.ts'
+import { MoveToBoardPopover, moveTargets } from './MoveToBoard.tsx'
 import { duplicateSelection } from '../state/clipboard.ts'
 import { canMakeSyncedCopy, makeSyncedCopy } from '../state/synced.ts'
 import { liveState, peers, pingAt } from '../state/realtime.ts'
@@ -22,6 +23,7 @@ export type ContextPoint = Vec & { screenX: number; screenY: number; cardId: str
 export function CardContextMenu(props: { point: ContextPoint; close: () => void }) {
   let menu!: HTMLDivElement
   const [labels, setLabels] = createSignal(false)
+  const [moving, setMoving] = createSignal(false)
   const [at, setAt] = createSignal({ left: props.point.screenX, top: props.point.screenY })
   const card = () => doc.getCard(props.point.cardId ?? '')
   const cards = createMemo(() => [...selection()].map((id) => doc.getCard(id)).filter((c): c is Card => !!c))
@@ -32,9 +34,9 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
   const canPing = () => liveState() === 'live' && peers().length > 0
   const close = () => { props.close(); props.point.returnTo.focus({ preventScroll: true }) }
   const run = (action: () => void) => { close(); action() }
-  createEffect(() => setCardContextOpen(!!card() && !labels()))
+  createEffect(() => setCardContextOpen(!!card() && !labels() && !moving()))
   onCleanup(() => setCardContextOpen(false))
-  installMenu(() => !labels(), props.close, () => menu, () => props.point.returnTo)
+  installMenu(() => !labels() && !moving(), props.close, () => menu, () => props.point.returnTo)
   createEffect(() => {
     const c = card()
     if (props.point.cardId && (!c || c.deletedAt || c.purged)) close()
@@ -45,7 +47,8 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
   })
   return (
     <Portal>
-      <Show when={!labels()} fallback={<LabelsPopover cards={cards()} anchor={() => props.point.returnTo} close={close} />}>
+      <Show when={moving()}><MoveToBoardPopover anchor={() => props.point.returnTo} close={close} /></Show>
+      <Show when={!labels() && !moving()} fallback={<Show when={labels()}><LabelsPopover cards={cards()} anchor={() => props.point.returnTo} close={close} /></Show>}>
         <div ref={menu} class="menu canvas-ping-menu" classList={{ 'card-context-menu': !!card() }} role="menu" aria-label={card() ? 'Card actions' : COPY.lookHere} data-testid="canvas-context-menu" data-nodrag
           style={{ position: 'fixed', left: `${at().left}px`, top: `${at().top}px` }}
           onPointerDown={(e) => e.stopPropagation()} onContextMenu={(e) => e.preventDefault()}>
@@ -58,6 +61,7 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
             </Show>
             <button class="menu-item" role="menuitem" disabled={!canLabel()} onClick={() => setLabels(true)}><Icon name="label" size={18} />Labels</button>
             <button class="menu-item" role="menuitem" disabled={!sole() || sole()?.type === 'board'} onClick={() => run(() => openThread(card()!.id))}><Icon name="comment" size={18} />Comment</button>
+            <Show when={canMoveSelection() && moveTargets().length}><button class="menu-item" role="menuitem" data-testid="move-to-board" onClick={() => setMoving(true)}><Icon name="moveTo" size={18} />Move to board…</button></Show>
             <Show when={canCreateAreaFromSelection()}><button class="menu-item" role="menuitem" data-testid="area-from-selection" onClick={() => run(() => { createAreaFromSelection() })}><Icon name="board" size={18} />Create area from selection</button></Show>
             <Show when={sole()?.type === 'area'}><button class="menu-item" role="menuitem" onClick={() => run(() => tidyArea(sole()!.id))}>Tidy area</button><button class="menu-item" role="menuitem" onClick={() => run(() => buryArea(sole()!.id))}>Bury area and contents</button></Show>
             <div class="menu-sep" role="separator" />

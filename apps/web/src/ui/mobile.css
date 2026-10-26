@@ -31,7 +31,7 @@ html[data-input='touch'] .card > .resize-handle {
   right: calc(-16px * var(--hs, 1));
   bottom: calc(-16px * var(--hs, 1));
   border-width: calc(2px * var(--hs, 1));
-  border-radius: calc(5px * var(--hs, 1));
+  border-radius: calc(4px * var(--hs, 1));
 }
 html[data-input='touch'] .card > .connect-handle::before,
 html[data-input='touch'] .card > .resize-handle::before {
@@ -260,7 +260,7 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
     background: var(--dn-accent);
     color: var(--dn-accent-text);
     box-shadow: 0 6px 18px rgb(0 0 0 / 0.22);
-    transition: transform 160ms cubic-bezier(0.3, 1.4, 0.5, 1);
+    transition: transform 140ms var(--ease-overshoot);
   }
   .dock-add[aria-expanded='true'] { transform: rotate(45deg); }
   .dock-add:active { transform: scale(0.92); }
@@ -272,7 +272,8 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   .share-panel,
   .export-panel,
   .save-details,
-  .popover.labels-panel {
+  .popover.labels-panel,
+  .popover.move-board-panel {
     position: fixed !important;
     inset: auto 0 var(--vv-bottom, 0px) 0 !important;
     width: auto !important;
@@ -283,7 +284,7 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
     overflow-y: auto;
     overscroll-behavior: contain;
     border-width: 1px 0 0;
-    border-radius: 20px 20px 0 0;
+    border-radius: 18px 18px 0 0;
     box-shadow: 0 0 0 100vmax var(--dn-scrim), 0 -8px 30px rgb(0 0 0 / 0.2);
     z-index: 95;
     animation: sheet-up 240ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -317,7 +318,7 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
     padding-bottom: env(safe-area-inset-bottom);
     border-left: 0;
     border-top: 1px solid var(--dn-border);
-    border-radius: 20px 20px 0 0;
+    border-radius: 18px 18px 0 0;
     box-shadow: 0 -10px 32px rgb(0 0 0 / 0.22);
     z-index: 80;
     animation: sheet-up 240ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -335,7 +336,7 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
     margin-bottom: var(--vv-bottom, 0px);
     padding-bottom: calc(16px + env(safe-area-inset-bottom));
     border-width: 1px 0 0;
-    border-radius: 20px 20px 0 0;
+    border-radius: 18px 18px 0 0;
     animation: sheet-up 240ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
@@ -371,7 +372,7 @@ html[data-input='touch'] :is(input:not([type='checkbox'], [type='radio'], [type=
   .mobile-dock > .icon-btn,
   .mobile-dock .board-navigation > .icon-btn { min-height: 44px; flex-direction: row; gap: 6px; }
   .dock-add { width: 48px; height: 48px; margin-top: 0; }
-  .menu, .nav-menu, .share-panel, .export-panel, .save-details, .popover.labels-panel { max-height: calc(var(--vv-height, 100dvh) - 16px) !important; }
+  .menu, .nav-menu, .share-panel, .export-panel, .save-details, .popover.labels-panel, .popover.move-board-panel { max-height: calc(var(--vv-height, 100dvh) - 16px) !important; }
   .trash { max-height: calc(var(--vv-height, 100dvh) - 56px); left: auto; width: min(420px, 60vw); border-left: 1px solid var(--dn-border); }
 }
 
@@ -401,7 +402,7 @@ html[data-input='touch'] .toybox-item { touch-action: pan-y; cursor: default; }
 .topbar, .mobile-dock, .selection-bar, .canvas-controls, .trash, .menu, .popover, .dialog, .edit-dock { touch-action: manipulation; }
 
 @media (prefers-reduced-motion: reduce) {
-  .menu, .nav-menu, .share-panel, .export-panel, .save-details, .popover.labels-panel, .trash, .dialog, .selection-bar.docked { animation: none !important; }
+  .menu, .nav-menu, .share-panel, .export-panel, .save-details, .popover.labels-panel, .popover.move-board-panel, .trash, .dialog, .selection-bar.docked { animation: none !important; }
 }
 
 /* ---- round 1 visual fixes ---------------------------------------------------- */
@@ -685,6 +686,7 @@ html[data-input='touch'] .selection-phone-actions > .selection-primary:active:no
 .selection-style-sheet .icon-choice > svg { width: 24px; height: 24px; }
 .selection-sheet-align { display: flex; justify-content: space-between; gap: 4px; padding: 4px 0; }
 .selection-sheet-align .bar-icon { min-width: 44px; min-height: 44px; }
+.selection-sheet-distribute { display: grid; gap: 0; padding: 0; }
 @media (max-width: 599px), (max-height: 500px) and (pointer: coarse) {
   .menu.selection-style-sheet, .menu.add-sheet { border-radius: 18px 18px 0 0; }
   :is(.menu.selection-style-sheet, .menu.add-sheet, .share-panel) {

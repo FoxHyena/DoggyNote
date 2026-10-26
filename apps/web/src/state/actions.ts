@@ -3,6 +3,7 @@ import {
   isArea, isAreaItem, itemArea, areaFamily, areaBurialFamily,
   DEFAULT_SKETCH,
   DEFAULT_SWATCH_HEX,
+  findFreeSpot,
   newId,
   orderBetween,
   snap,
@@ -18,7 +19,7 @@ import {
   type Vec,
 } from '@doggynote/core'
 import { areaAt, areaPlacement } from './areas.ts'
-import { worldPosition } from '../canvas/layout.ts'
+import { rectOf, worldPosition } from '../canvas/layout.ts'
 import { isPositionLocked } from './position.ts'
 import { COPY, type CardColor } from '@doggynote/theme'
 import * as doc from './doc.ts'
@@ -233,24 +234,84 @@ export function selectAll() {
 export function moveCardTo(id: Id, toBoard: Id, place: Placement) {
   const c = doc.getCard(id)
   if (!c) return
-  const size = { w: c.w, h: c.h }
-  const patch: Partial<Card> =
-    'columnId' in place
+  doc.update(movePatches([{ card: c, place }], toBoard))
+}
+
+/**
+ * The patches that move cards (with their column or area family, comments,
+ * ink and labels) to `toBoard`. Ids stay, so comments and history come along.
+ * Connections between moved cards follow; any other connection to them goes.
+ */
+function movePatches(moves: { card: Card; place: Placement }[], toBoard: Id): Record<Id, Partial<Obj>> {
+  const patches: Record<Id, Partial<Obj>> = {}
+  const moved: Card[] = []
+  let z = doc.maxZ(toBoard)
+  for (const { card: c, place } of moves) {
+    const size = { w: c.w, h: c.h }
+    patches[c.id] = 'columnId' in place
       ? { boardId: toBoard, areaId: null, columnId: place.columnId, order: place.order }
-      : { boardId: toBoard, areaId: null, columnId: null, x: onGrid(place.at.x - size.w / 2), y: onGrid(place.at.y - 20), z: doc.maxZ(toBoard) + 1 }
-  // Parent moves carry their family, preserving local offsets and owned ink/comments.
-  const family = isArea(c) ? areaFamily(c, [...doc.cardsOn(c.boardId), ...doc.stickersOn(c.boardId)]) : c.type === 'column' ? columnChildren(c.id) : []
-  const moved = [c, ...family], movedIds = new Set(moved.map(item => item.id))
-  const patches: Record<Id, Partial<Obj>> = { [id]: patch }
-  for (const item of family) patches[item.id] = { boardId: toBoard }
-  for (const conn of doc.connectionsOn(c.boardId)) {
+      : { boardId: toBoard, areaId: null, columnId: null, x: onGrid(place.at.x - size.w / 2), y: onGrid(place.at.y - 20), z: ++z }
+    // Parent moves carry their family, preserving local offsets and owned ink/comments.
+    const family = isArea(c) ? areaFamily(c, [...doc.cardsOn(c.boardId), ...doc.stickersOn(c.boardId)]) : c.type === 'column' ? columnChildren(c.id) : []
+    for (const item of family) if (!patches[item.id]) patches[item.id] = { boardId: toBoard }
+    moved.push(c, ...family.filter((item): item is Card => item.kind === 'card'))
+  }
+  const movedIds = new Set(Object.keys(patches))
+  const from = new Set(moves.map((m) => m.card.boardId))
+  for (const b of from) for (const conn of doc.connectionsOn(b)) {
     if (movedIds.has(conn.from) && movedIds.has(conn.to)) patches[conn.id] = { boardId: toBoard }
     else if (movedIds.has(conn.from) || movedIds.has(conn.to)) patches[conn.id] = { purged: true }
   }
-  for (const item of moved) if (item.kind === 'card') {
+  for (const item of moved) {
     for (const m of doc.commentsOn(item.id)) patches[m.id] = { boardId: toBoard }
     for (const stroke of doc.strokesOn(item.id)) patches[stroke.id] = { boardId: toBoard }
+    // An Inbox never holds a synced note (rule 10); the server unsyncs it in the same write.
+    if (isToyboxId(toBoard) && item.type === 'note' && item.syncId) patches[item.id] = { ...patches[item.id], syncId: null } as Partial<Obj>
   }
-  if (toBoard !== c.boardId) for (const [key, p] of Object.entries(moveLabels(moved.filter((item): item is Card => item.kind === 'card'), labelsOn(c.boardId), toBoard))) patches[key] = { ...patches[key], ...p } as Partial<Obj>
-  doc.update(patches)
+  // Labels follow by name onto the target board's labels, made there if missing.
+  for (const b of from) if (b !== toBoard) for (const [key, p] of Object.entries(moveLabels(moved.filter((item) => item.boardId === b), labelsOn(b), toBoard))) patches[key] = { ...patches[key], ...p } as Partial<Obj>
+  return patches
 }
+
+/**
+ * Whether the selection can move to another board: editable cards (connections
+ * between them follow). Board cards stay, as for a cut: moving one would change
+ * who can reach the board inside it.
+ */
+export function canMoveSelection(): boolean {
+  const items = [...selection()].map((id) => doc.get(id))
+  const cards = items.filter((o): o is Card => o?.kind === 'card')
+  const family = (c: Card): Obj[] => isArea(c) ? areaFamily(c, [...doc.cardsOn(c.boardId), ...doc.stickersOn(c.boardId)]) : c.type === 'column' ? columnChildren(c.id) : []
+  return cards.length > 0 && items.every((o) => o?.kind === 'card' || o?.kind === 'connection')
+    && cards.every((c) => c.type !== 'board' && doc.canWriteObject(c) && family(c).every((m) => m.kind !== 'card' || (m.type !== 'board' && doc.canWriteObject(m))))
+}
+
+/**
+ * Move the selected cards to another board as one undo step, keeping their
+ * layout (nudged into free space there), then offer to follow them.
+ */
+export function moveSelectionTo(toBoard: Id, title: string, go: (ids: Id[]) => void): Id[] {
+  const all = [...selection()].map((id) => doc.getCard(id)).filter((c): c is Card => !!c && c.boardId !== toBoard)
+  const ids = new Set(all.map((c) => c.id))
+  // A card whose column or area is moving goes along with it.
+  const roots = all.filter((c) => !(c.columnId && ids.has(c.columnId)) && !(c.areaId && ids.has(c.areaId)))
+  if (!roots.length) return []
+  endEdit()
+  const rects = roots.map((c) => ({ c, r: rectOf(c.id) ?? { x: c.x, y: c.y, w: c.w, h: c.h || 80 } }))
+  const bounds = { x: Math.min(...rects.map(({ r }) => r.x)), y: Math.min(...rects.map(({ r }) => r.y)) }
+  const w = Math.max(...rects.map(({ r }) => r.x + r.w)) - bounds.x
+  const h = Math.max(...rects.map(({ r }) => r.y + r.h)) - bounds.y
+  const taken = doc.cardsOn(toBoard).filter((k) => !k.columnId && !k.areaId).map((k) => ({ x: k.x, y: k.y, w: k.w, h: k.h || 80 }))
+  const spot = findFreeSpot({ x: bounds.x, y: bounds.y, w, h }, taken)
+  const moves = rects.map(({ c, r }) => ({ card: c, place: { at: { x: spot.x + r.x - bounds.x + c.w / 2, y: spot.y + r.y - bounds.y + 20 } } }))
+  const patches = movePatches(moves, toBoard)
+  // The group keeps its exact shape: no per-card grid snapping.
+  for (const { card, place } of moves) Object.assign(patches[card.id], { x: Math.round(place.at.x - card.w / 2), y: Math.round(place.at.y - 20) })
+  doc.update(patches)
+  clearSelection()
+  const n = roots.length, moved = roots.map((c) => c.id)
+  showToast(`Moved ${n} ${n === 1 ? 'card' : 'cards'} to ${title}`, 7000, { label: 'Go to', run: () => go(moved) })
+  return moved
+}
+
+const isToyboxId = (id: Id) => id.startsWith('toybox:')

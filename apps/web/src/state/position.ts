@@ -1,5 +1,5 @@
 import { createMemo, createRoot } from 'solid-js'
-import { alignmentUnits, planAlignment, positionLocks, isAreaItem, areaFamily, isArea, type Alignment, type Id, type Obj } from '@doggynote/core'
+import { alignmentUnits, distributableUnits, planAlignment, planDistribution, positionLocks, type Distribution, isAreaItem, areaFamily, isArea, type Alignment, type Id, type Obj } from '@doggynote/core'
 import * as doc from './doc.ts'
 import { boardId, endEdit, selection } from './ui.ts'
 import { rectOf } from '../canvas/layout.ts'
@@ -31,6 +31,16 @@ export function alignSelection(mode: Alignment) {
   const result = planAlignment(doc.cardsOn(boardId()), selection(), rectOf, mode)
   doc.update(result.patches)
   showToast(result.locked ? `${result.locked} locked ${result.locked === 1 ? 'unit stayed' : 'units stayed'} in place. ${Object.keys(result.patches).length} aligned.` : Object.keys(result.patches).length ? 'Aligned. Undo restores the previous positions.' : 'Already aligned.', 5000, Object.keys(result.patches).length ? { label: 'Undo', run: () => doc.undo() } : null)
+}
+/** Selected units a distribute may move (unlocked, columns as one). */
+export const selectedDistributableUnits = () => distributableUnits(doc.cardsOn(boardId()), selection())
+export function distributeSelection(mode: Distribution) {
+  endEdit()
+  const result = planDistribution(doc.cardsOn(boardId()), selection(), rectOf, mode)
+  const moved = Object.keys(result.patches).length
+  doc.update(result.patches)
+  const stayed = result.locked ? `${result.locked} locked ${result.locked === 1 ? 'unit stayed' : 'units stayed'} in place. ` : ''
+  showToast(moved ? `${stayed}Spaced evenly. Undo restores the previous positions.` : `${stayed}Already evenly spaced.`, 5000, moved ? { label: 'Undo', run: () => doc.undo() } : null)
 }
 export function nudgeSelection(dx: number, dy: number) {
   const patches: Record<Id, Partial<Obj>> = {}

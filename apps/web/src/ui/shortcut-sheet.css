@@ -1,0 +1,62 @@
+/* The "?" keyboard shortcut sheet (ui/ShortcutSheet.tsx). Desktop only. */
+
+.popover.shortcut-sheet {
+  width: min(560px, calc(100vw - 16px));
+  max-width: none;
+  max-height: calc(100dvh - 72px);
+  padding: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.shortcut-sheet-inner { display: grid; gap: 12px; padding: 12px 16px 16px; outline: none; }
+
+.shortcut-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-right: -8px; }
+.shortcut-sheet-head h2 { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.3; }
+
+.shortcut-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+}
+.shortcut-group h3 {
+  margin: 0 0 4px;
+  color: var(--dn-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.shortcut-group dl { display: grid; margin: 0; }
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 28px;
+  border-bottom: 1px solid color-mix(in srgb, var(--dn-border) 60%, transparent);
+}
+.shortcut-row:last-child { border-bottom: 0; }
+.shortcut-row dt { min-width: 0; color: var(--dn-text); font-size: 13px; line-height: 20px; }
+.shortcut-row dd { display: flex; flex: none; gap: 4px; margin: 0; }
+/* Read as one chord ("⇧⌘Z", "Ctrl+Shift+Z"); the keycaps are for the eye. */
+.shortcut-keys-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.shortcut-row kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--dn-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--dn-card);
+  color: var(--dn-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+}
+.shortcut-sheet-foot { margin: 0; color: var(--dn-text-muted); font-size: 12px; line-height: 1.5; }
+
+@media (max-width: 599px) {
+  .shortcut-groups { grid-template-columns: minmax(0, 1fr); }
+}

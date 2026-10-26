@@ -54,6 +54,10 @@ import alignRightSvg from '@phosphor-icons/core/regular/align-right.svg?raw'
 import alignTopSvg from '@phosphor-icons/core/regular/align-top.svg?raw'
 import alignCenterVerticalSvg from '@phosphor-icons/core/regular/align-center-vertical.svg?raw'
 import alignBottomSvg from '@phosphor-icons/core/regular/align-bottom.svg?raw'
+import arrowsOutLineHorizontalSvg from '@phosphor-icons/core/regular/arrows-out-line-horizontal.svg?raw'
+import arrowsOutLineVerticalSvg from '@phosphor-icons/core/regular/arrows-out-line-vertical.svg?raw'
+import keyboardSvg from '@phosphor-icons/core/regular/keyboard.svg?raw'
+import arrowSquareOutSvg from '@phosphor-icons/core/regular/arrow-square-out.svg?raw'
 import lockSimpleSvg from '@phosphor-icons/core/regular/lock-simple.svg?raw'
 import lockSimpleOpenSvg from '@phosphor-icons/core/regular/lock-simple-open.svg?raw'
 import copySvg from '@phosphor-icons/core/regular/copy.svg?raw'
@@ -142,6 +146,11 @@ export const ICONS = {
   alignTop: body(alignTopSvg),
   alignMiddleV: body(alignCenterVerticalSvg),
   alignBottom: body(alignBottomSvg),
+  distributeH: body(arrowsOutLineHorizontalSvg),
+  distributeV: body(arrowsOutLineVerticalSvg),
+  keyboard: body(keyboardSvg),
+  /** Move cards to another board. */
+  moveTo: body(arrowSquareOutSvg),
   lock: body(lockSimpleSvg),
   unlock: body(lockSimpleOpenSvg),
   duplicate: body(copySvg),

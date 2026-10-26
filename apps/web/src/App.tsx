@@ -37,7 +37,8 @@ import { captureLaunch, takeLaunch } from './state/launch.ts'
 import { addText } from './canvas/paste.ts'
 import { showToast } from './state/toast.ts'
 import { startUpdateChecks } from './state/updates.ts'
-import { paletteOpen, setPaletteOpen } from './state/ui.ts'
+import { paletteOpen, setPaletteOpen, shortcutsOpen } from './state/ui.ts'
+import { ShortcutSheet } from './ui/ShortcutSheet.tsx'
 import { Icon } from './ui/icons.tsx'
 import { Signup } from './ui/Signup.tsx'
 import { EditInvite } from './ui/EditInvite.tsx'
@@ -180,6 +181,7 @@ function EditorApp() {
           </main>
           <Show when={phone() && !doc.previewing()}><MobileDock readOnly={!editable()} /></Show>
         </div>
+        <Show when={shortcutsOpen() && !phone()}><ShortcutSheet /></Show>
         <Show when={paletteOpen()}>
           <FetchPalette />
         </Show>

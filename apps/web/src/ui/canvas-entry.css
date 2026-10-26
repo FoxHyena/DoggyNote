@@ -224,7 +224,7 @@ html[data-input="mouse"] .trash-item:hover {
 
 .trash-type {
   grid-column: 1;
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--dn-text-muted);
@@ -376,7 +376,7 @@ html[data-input="mouse"] .login-guides a:hover, .login-guides a:focus-visible { 
   font-size: 11px;
   padding: 1px 6px;
   border: 1px solid var(--dn-border);
-  border-radius: 5px;
+  border-radius: 4px;
 }
 
 .fetch-results {
@@ -588,7 +588,7 @@ html[data-input="mouse"] .fetch-close:hover { color: var(--dn-text); background:
 /* Position controls stay first in the selection toolbar. */
 .bar-position { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
 .position-lock-status { color: var(--dn-text-muted); font-size: 12px; }
-.position-lock-badge { position: absolute; top: 6px; right: 6px; z-index: 2; border: 1px solid var(--dn-border); border-radius: 5px; background: var(--dn-panel); color: var(--dn-text); font-size: 16px; line-height: 20px; width: 22px; text-align: center; pointer-events: none; }
+.position-lock-badge { position: absolute; top: 6px; right: 6px; z-index: 2; border: 1px solid var(--dn-border); border-radius: 4px; background: var(--dn-panel); color: var(--dn-text); font-size: 16px; line-height: 20px; width: 22px; text-align: center; pointer-events: none; }
 
 /* Icon-only selection-bar actions and the align group. */
 .selection-bar .bar-icon { display: inline-grid; place-items: center; min-width: 32px; min-height: 32px; padding: 0; }

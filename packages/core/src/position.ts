@@ -68,6 +68,49 @@ export function planAlignment(cards: readonly Card[], selected: Iterable<Id>, re
   return { patches, units: units.length, locked: units.filter((u) => locked.has(u.card.id)).length }
 }
 
+export type Distribution = 'horizontal' | 'vertical'
+export const DISTRIBUTIONS: readonly { value: Distribution; label: string }[] = [
+  { value: 'horizontal', label: 'Distribute horizontally' },
+  { value: 'vertical', label: 'Distribute vertically' },
+]
+
+/** Units that a distribute may move: selected alignment units that aren't position-locked. */
+export function distributableUnits(cards: readonly Card[], selected: Iterable<Id>): Card[] {
+  const locked = positionLocks(cards)
+  return alignmentUnits(cards, selected).filter((c) => !locked.has(c.id))
+}
+
+/**
+ * Equal gaps between neighbours along one axis. Locked units are left out
+ * entirely: they don't move and don't take a slot. The first and last unit
+ * (by leading edge) stay put; the rest move only along that axis.
+ */
+export function planDistribution(cards: readonly Card[], selected: Iterable<Id>, rectOf: (id: Id) => Rect | null, mode: Distribution) {
+  const locked = alignmentUnits(cards, selected).length - distributableUnits(cards, selected).length
+  const units = distributableUnits(cards, selected).flatMap((card) => {
+    const rect = rectOf(card.id)
+    return rect && [rect.x, rect.y, rect.w, rect.h].every(Number.isFinite) ? [{ card, rect }] : []
+  })
+  const patches: Record<Id, Partial<Card>> = {}
+  if (units.length < 3) return { patches, units: units.length, locked }
+  const horizontal = mode === 'horizontal'
+  const start = (r: Rect) => (horizontal ? r.x : r.y)
+  const size = (r: Rect) => (horizontal ? r.w : r.h)
+  // Stable order: leading edge, then centre, then id, so ties never shuffle.
+  units.sort((a, b) => start(a.rect) - start(b.rect) || start(a.rect) + size(a.rect) / 2 - (start(b.rect) + size(b.rect) / 2) || (a.card.id < b.card.id ? -1 : 1))
+  const first = units[0].rect, last = units[units.length - 1].rect
+  const span = start(last) + size(last) - start(first)
+  const gap = (span - units.reduce((sum, u) => sum + size(u.rect), 0)) / (units.length - 1)
+  let at = start(first)
+  for (const { card, rect } of units) {
+    const delta = at - start(rect)
+    // Patch only the axis that moved. Concurrent edits to the other survive.
+    if (Math.abs(delta) > 1e-9) patches[card.id] = horizontal ? { x: card.x + delta } : { y: card.y + delta }
+    at += size(rect) + gap
+  }
+  return { patches, units: units.length, locked }
+}
+
 export function changesPosition(current: Card | Sticker, patch: Partial<Card | Sticker>, includeHeight = false): boolean {
   const before = current as unknown as Record<string, unknown>, after = patch as Record<string, unknown>
   return ((includeHeight || isArea(current)) && 'h' in after && after.h !== before.h) || POSITION_FIELDS.some((key) => key in after && (after[key] ?? null) !== (before[key] ?? null))
