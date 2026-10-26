@@ -1,5 +1,7 @@
 // Official Phosphor SVGs only. Static imports keep unused icons out of the bundle.
 import traySvg from '@phosphor-icons/core/regular/tray.svg?raw'
+import arrowsLeftRightSvg from '@phosphor-icons/core/regular/arrows-left-right.svg?raw'
+import linkSimpleHorizontalBreakSvg from '@phosphor-icons/core/regular/link-simple-horizontal-break.svg?raw'
 import gridNineSvg from '@phosphor-icons/core/regular/grid-nine.svg?raw'
 import noteSvg from '@phosphor-icons/core/regular/note.svg?raw'
 import linkSvg from '@phosphor-icons/core/regular/link.svg?raw'
@@ -153,6 +155,9 @@ export const ICONS = {
   system: body(desktopSvg),
   warning: body(warningSvg),
   sync: body(arrowsClockwiseSvg),
+  /** A synced copy of a note (edits flow both ways), and making one independent again. */
+  synced: body(arrowsLeftRightSvg),
+  unsync: body(linkSimpleHorizontalBreakSvg),
   dog: body(dogSvg),
   bone: body(boneSvg),
   ball: body(tennisBallSvg),

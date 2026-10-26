@@ -126,6 +126,8 @@ export function materialise(
   for (const o of clip.objects) {
     const base = { ...structuredClone(o), id: ids.get(o.id)!, createdAt: opts.now, deletedAt: null, purged: false } as Obj & { hidden?: unknown }
     delete base.hidden
+    // Pasted, duplicated and template copies of a synced note start independent.
+    delete (base as Partial<Card>).syncId
     if (base.kind === 'board') {
       // Copied boards inside copied boards keep their nesting; the top ones hang under the paste board.
       const parent = (o as Board).parentId

@@ -17,6 +17,7 @@ import { openThread } from './CommentsPanel.tsx'
 import { TodoOptions, TodoMenuItems } from './TodoOptions.tsx'
 import { BarMenu } from './BarMenu.tsx'
 import { duplicateSelection } from '../state/clipboard.ts'
+import { canMakeSyncedCopy, makeSyncedCopy } from '../state/synced.ts'
 import { Popover } from './Popover.tsx'
 import { LabelsButton } from './Labels.tsx'
 import { cardObstacles, placeFloating } from './floatingPlacement.ts'
@@ -276,6 +277,7 @@ export function SelectionBar() {
                 <Show when={canAlign()}><div class="selection-sheet-align" role="group" aria-label="Align selection" data-testid="align-selection"><For each={ALIGNMENTS}>{(a) => <IconButton testid={`align-${a.value}`} icon={ALIGN_ICONS[a.value]} label={a.label} onClick={() => { close(); alignSelection(a.value) }} />}</For></div></Show>
                 <Show when={sole()?.type === 'todo' && writable()}><TodoMenuItems card={sole() as Card<'todo'>} close={close} /></Show>
                 <Show when={canDuplicate()}><button class="menu-item" role="menuitem" data-testid="duplicate-selection" onClick={() => { close(); duplicateSelection() }}><Icon name="duplicate" />Duplicate</button></Show>
+                <Show when={canMakeSyncedCopy(sole())}><button class="menu-item" role="menuitem" data-testid="make-synced-copy" onClick={() => { close(); makeSyncedCopy(sole()!.id) }}><Icon name="synced" />{COPY.synced.make}</button></Show>
                 <Show when={sole() && sole()!.type !== 'board'}><button class="menu-item" role="menuitem" data-testid="comment-button" onClick={() => { close(); openThread(sole()!.id) }}><Icon name="comment" />Comment</button></Show>
                 <Show when={sole()}><button class="menu-item" role="menuitem" data-testid="connect-card" onClick={() => { close(); startConnect() }}><Icon name="line" />Connect to another card</button></Show>
                 <button class="menu-item" role="menuitemcheckbox" aria-checked={selectMore()} data-testid="select-more" onClick={() => { close(); setSelectMore(!selectMore()) }}><Icon name="multi" />{selectMore() ? 'Stop picking more' : 'Pick more cards'}</button>

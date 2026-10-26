@@ -96,6 +96,8 @@ type Base = {
   noteUpdate?: string
   /** Explicit user redo intent; consumed by sync, never stored on the server. */
   noteRestore?: true
+  /** Explicit intent to join a note's sync group; consumed by sync, never stored. */
+  syncJoin?: true
   id: Id
   /** Soft delete (trash). Restorable. */
   deletedAt?: number | null
@@ -129,6 +131,8 @@ export type Card<T extends CardType = CardType> = Base & {
    */
   sketchTitle?: string | null
   sketchPaper?: string | null
+  /** Notes only: copies with the same id keep the same text (packages/core/src/synced.ts). */
+  syncId?: string | null
   content: CardContent[T]
 }
 

@@ -5,6 +5,7 @@ import { accessGuard, bumpAccess, loadAccess, newBoardAccess, type Access } from
 import { prepareNote } from './notes.ts'
 import { checkPositionLocks, dropLockedLayout, positionWriteGuards } from './position.ts'
 import { notifyRooms } from './realtime.ts'
+import { planSyncedNotes } from './synced.ts'
 import { LABEL_FIELD, isBoardInkSize, isSketchContent, isSketchPaper, isSketchTitle, validLabelField, decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
 import * as Y from 'yjs'
 
@@ -178,6 +179,11 @@ async function pushSync(c: Context<AppEnv>) {
   const positions = await checkPositionLocks(db, parsed)
   // Additive for older apps: never an error. Locked layout is dropped, the rest saved.
   parsed = dropLockedLayout(parsed, positions.lockedIds)
+  // Synced notes: validate joins, then write the merged text to every copy.
+  const synced = await planSyncedNotes(db, access, parsed, existing)
+  if (synced.error) return c.json({ error: synced.error, ...(synced.deniedIds ? { deniedIds: synced.deniedIds } : {}) }, synced.deniedIds ? 403 : 400)
+  for (const row of synced.extraRows) existing.set(row.id, row)
+  parsed = [...parsed, ...synced.extra]
   const stmts: D1PreparedStatement[] = [accessGuard(db, access.revision), ...positionWriteGuards(db, access.revision, positions.versions)]
   const newIds = parsed.filter((ch) => !existing.has(ch.id)).map((ch) => ch.id)
   for (let i = 0; i < newIds.length; i += 90) stmts.push(accessGuard(db, access.revision, newIds.slice(i, i + 90)))
@@ -191,7 +197,7 @@ async function pushSync(c: Context<AppEnv>) {
     delete patch.noteRestore
     let note: Awaited<ReturnType<typeof prepareNote>> | undefined
     if (prospective.kind === 'card' && prospective.type === 'note' && ('content' in patch || 'noteUpdate' in patch)) {
-      if (prev && (prev.deleted_at || prev.purged) && 'noteUpdate' in patch && !restoring) return c.json({ error: 'This note was removed', deniedIds: [id] }, 403)
+      if (prev && (prev.deleted_at || prev.purged) && 'noteUpdate' in patch && !restoring && !synced.fanned.has(id)) return c.json({ error: 'This note was removed', deniedIds: [id] }, 403)
       if (prev && 'content' in patch && !('noteUpdate' in patch)) return c.json({ error: 'Notes require collaborative updates', deniedIds: [id] }, 403)
       try {
         note = await prepareNote(db, id, noteMarkdown(prospective as Card<'note'>), patch.noteUpdate as string | undefined, prev?.seq ?? 0, prev?.note_state ? { state: prev.note_state, revision: prev.note_revision! } : null)
