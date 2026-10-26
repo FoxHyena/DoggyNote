@@ -78,6 +78,16 @@ export const COPY = {
   /** Movie cards. */
   movieSearch: 'Sniff out a movie or show…',
   movieNoMatch: 'No scent of that one. Try another title?',
+  /** The public guides at /docs. */
+  guides: {
+    /** Account menu and sign-in link. */
+    open: 'Guides',
+    signIn: 'New here? Read the guides',
+    heading: 'Learn a few new tricks.',
+    search: 'Sniff out a guide',
+    noMatch: 'No scent of that one.',
+    notFound: 'This guide has gone walkies.',
+  },
 } as const
 
 /** Reserved personal inboxes keep their IDs and legacy stored titles across upgrades. */

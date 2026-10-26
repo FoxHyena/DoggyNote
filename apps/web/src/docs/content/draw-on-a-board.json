@@ -1,0 +1,134 @@
+{
+  "slug": "draw-on-a-board",
+  "category": "writing-drawing",
+  "kind": "task",
+  "title": "Draw directly on a board",
+  "summary": "Mark a boundary, write an observation, or rough out a process beside your notes.",
+  "status": "draft",
+  "order": 110,
+  "benefit": "Add quick visual thoughts without creating a separate drawing card.",
+  "outcome": "Editable freehand marks sit beside your references and stay where you drew them.",
+  "prerequisites": [
+    "A board you can edit",
+    "A mouse or trackpad"
+  ],
+  "sections": [
+    {
+      "id": "overview",
+      "title": "Put a thought beside your references",
+      "paragraphs": [
+        "Draw a loose boundary around reference images, add a handwritten observation, or rough out a process alongside written requirements. Completed marks stay editable."
+      ]
+    },
+    {
+      "id": "draw",
+      "title": "Add a mark",
+      "flow": {
+        "entry": "Open an editable board and choose Draw in the tools.",
+        "steps": [
+          {
+            "action": "Choose Pen or Highlighter, then a colour and width.",
+            "result": "The chosen settings are shown in the drawing controls. Highlighter marks are translucent."
+          },
+          {
+            "action": "Drag on the board and release the pointer.",
+            "result": "Your completed mark stays on the board. Make another mark to continue."
+          },
+          {
+            "action": "Hold Space and drag to pan, then release Space.",
+            "result": "The board moves temporarily; you can draw again after releasing Space."
+          },
+          {
+            "action": "Choose Done.",
+            "result": "Drawing mode ends and you can select finished marks."
+          }
+        ],
+        "completion": "Completed marks save as you draw and remain editable when you reopen the board. Watch the save status before closing.",
+        "correction": "Press Escape during a gesture to cancel only the unfinished mark. Press Escape when idle to leave drawing. Undo restores the previous completed action."
+      }
+    },
+    {
+      "id": "edit",
+      "title": "Move or edit finished ink",
+      "flow": {
+        "entry": "Choose Done, then click a visible mark to select it.",
+        "steps": [
+          {
+            "action": "Drag the selected mark, or use its resize handle.",
+            "result": "The mark moves or scales while keeping its proportions."
+          },
+          {
+            "action": "Choose Next mark when marks overlap.",
+            "result": "The selection cycles between overlapping canvas marks."
+          },
+          {
+            "action": "Choose Edit drawing, or press Enter with one mark selected.",
+            "result": "The drawing tools reopen for that mark. Editing stays within its boundary; use Draw for a new mark elsewhere."
+          },
+          {
+            "action": "Choose Lock position in the selection bar.",
+            "result": "The mark stays in place while you arrange nearby content. Its drawing content remains editable."
+          }
+        ],
+        "completion": "Choose Done to keep the completed edits and return to the board. Choose Unlock position before moving or resizing a locked mark.",
+        "correction": "Use Undo or Redo to correct a completed change. Select a mark and choose Bury for recoverable deletion; restore it from Buried bones."
+      }
+    },
+    {
+      "id": "attachment",
+      "title": "What moves with what?",
+      "paragraphs": [
+        "Ink drawn directly on the board stays where you drew it when nearby cards move. Move the ink separately when needed.",
+        "Annotations on an image move and resize with that image. Strokes inside a sketch follow the sketch card.",
+        "Freehand marks do not attach automatically to nearby cards. Use a connector for a structured relationship between cards."
+      ]
+    },
+    {
+      "id": "erase",
+      "title": "Correct a stroke",
+      "flow": {
+        "entry": "Choose Draw, or reopen a selected mark with Edit drawing.",
+        "steps": [
+          {
+            "action": "Choose Eraser and drag across marks.",
+            "result": "Whole strokes are removed, including translucent highlighter strokes."
+          },
+          {
+            "action": "Choose Undo after erasing.",
+            "result": "The strokes removed by that continuous erasing gesture return."
+          }
+        ],
+        "completion": "Choose Done when the drawing is ready.",
+        "correction": "Redo applies the erasure again. Escape cancels an unfinished gesture while keeping earlier completed marks."
+      }
+    },
+    {
+      "id": "save-export",
+      "title": "Reopen and export",
+      "paragraphs": [
+        "Completed marks save as you draw. Offline changes stay on the device and sync when the connection returns. Reopen the board to continue editing its marks.",
+        "If local saving reports a problem, keep the window open and choose Retry saving. A working network connection does not replace saving on the device.",
+        "Use Export as PNG in the board menu for the board or a selection. Marks are included; drawing controls, selection handles and lock indicators are left out. Choose a transparent background when you want only board content."
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Availability and limits",
+      "paragraphs": [
+        "You need permission to edit the board to draw, erase or change marks. View-only visitors can see them.",
+        "Finish the current mark before zooming. Changing the view or interrupting the pointer cancels an unfinished mark; earlier completed marks remain.",
+        "If a mark reaches the drawing limit, release the pointer and start another mark. The visible part of the current mark is kept when you release.",
+        "This guide covers mouse and trackpad input. Pressure-sensitive pen and Pencil behavior is not documented here."
+      ]
+    },
+    {
+      "id": "shortcuts",
+      "title": "Keyboard shortcuts",
+      "paragraphs": [
+        "Space + drag temporarily pans. Escape cancels the current mark; when idle it leaves drawing. Enter edits one selected mark. Command+Z on Mac or Control+Z elsewhere undoes; add Shift to redo."
+      ]
+    }
+  ],
+  "related": [],
+  "links": []
+}

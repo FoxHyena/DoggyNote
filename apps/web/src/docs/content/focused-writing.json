@@ -1,0 +1,96 @@
+{
+  "slug": "focused-writing",
+  "category": "writing-drawing",
+  "kind": "task",
+  "title": "Write a longer note in Focus",
+  "summary": "Give an existing Markdown note more room, then return to the same board card.",
+  "status": "draft",
+  "order": 80,
+  "benefit": "Develop a short research note into a readable project brief without making another copy.",
+  "outcome": "Your expanded brief remains in the same note and is ready to continue on the board.",
+  "prerequisites": [
+    "A note on a board you can access.",
+    "To write, permission to edit the note body."
+  ],
+  "sections": [
+    {
+      "id": "overview",
+      "title": "More room for the same note",
+      "paragraphs": [
+        "Focus opens an existing Markdown note in a larger writing surface. The board name stays at the top, and Back to board returns to the same card. Opening Focus does not create a copy.",
+        "For example, expand a short research note into a project brief with headings, nested lists, source links and code."
+      ]
+    },
+    {
+      "id": "write-your-brief",
+      "title": "Write your project brief",
+      "flow": {
+        "entry": "Select an existing note on an editable board.",
+        "steps": [
+          {
+            "action": "Choose Focus in the selection controls. If you are already editing, choose Focus in the formatting controls; on a touchscreen, use the editing dock.",
+            "result": "The same note opens in a larger surface with its board name and a Back to board control."
+          },
+          {
+            "action": "Add a heading, list and source link in Markdown. Use the formatting controls for emphasis, headings, lists or tasks.",
+            "result": "The live preview formats your writing while keeping the line you are editing easy to change."
+          },
+          {
+            "action": "Choose Back to board.",
+            "result": "Your longer brief appears in the same card on the board."
+          },
+          {
+            "action": "Select the card and choose Focus again.",
+            "result": "You can continue writing in the same note, with useful caret and scroll state retained during the app session."
+          }
+        ],
+        "completion": "The note uses the existing save and sync system. Open Save status to check pending work or a save problem.",
+        "correction": "Back to board and Escape keep edits. Use Undo while writing to correct text. After returning to the board, board Undo reverses the completed edit session and Redo restores it."
+      }
+    },
+    {
+      "id": "markdown",
+      "title": "Use Markdown as you write",
+      "paragraphs": [
+        "Start a heading with # or ##. Start a list with a dash and a space, or with 1. and a space. Enter continues a list; Enter on an empty list item finishes it. Use spaces to indent nested list items.",
+        "Add a source using Markdown link syntax, and surround inline code with backticks. Your note keeps the same Markdown formatting when you return to the board."
+      ]
+    },
+    {
+      "id": "return-and-correct",
+      "title": "Return and correct a change",
+      "paragraphs": [
+        "Back to board and Escape both keep your writing; they do not discard the edit session. If save details are open, Escape dismisses those details first. Press Escape again to return to the board.",
+        "Moving from inline editing into Focus stays in the same edit session. The board Undo action after return reverses that session. A new empty note may disappear when you finish it; an existing note you deliberately empty remains a note.",
+        "Caret and scroll restoration are useful within the current app session. The note text persists when you reopen it; caret and scroll restoration across a full app or browser restart is not promised."
+      ]
+    },
+    {
+      "id": "saving",
+      "title": "Saving and offline work",
+      "paragraphs": [
+        "Changes use the same local saving, background sync and recovery system as inline notes. Save status shows pending work and any save problem.",
+        "If an already-open note is edited offline, changes saved on that device wait to sync when you reconnect. If the app says changes could not be saved on the device, keep the window open and follow its retry or recovery instructions.",
+        "If formatting cannot load, the app provides a visible Markdown text area so you can keep writing and saving."
+      ]
+    },
+    {
+      "id": "synced-and-read-only",
+      "title": "Synced and read-only notes",
+      "paragraphs": [
+        "An editable synced note shows: Synced note · edits update linked notes. Focus edits the shared Markdown body, while each instance keeps its own board position and presentation.",
+        "A view-only note opens in Focused reading. A shared body can also be read-only on an otherwise editable board if your access does not allow editing every linked location. Focus explains that the shared body is read-only without exposing hidden board names or location counts."
+      ]
+    },
+    {
+      "id": "keyboard",
+      "title": "Keyboard controls",
+      "paragraphs": [
+        "Escape dismisses open save details first, then returns to the board while keeping edits. Tab and Shift+Tab move between the writing surface and its controls.",
+        "Use Command+B on Mac or Ctrl+B elsewhere for bold, and Command+I or Ctrl+I for italic. Use the platform Undo and Redo shortcuts to correct text."
+      ]
+    }
+  ],
+  "related": [],
+  "links": []
+}

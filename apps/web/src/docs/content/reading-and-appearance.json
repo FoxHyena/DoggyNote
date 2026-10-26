@@ -1,0 +1,47 @@
+{
+  "slug": "reading-and-appearance",
+  "category": "reference",
+  "kind": "reference",
+  "title": "Read comfortably",
+  "summary": "Switch between light and dark, and move through the guides with your keyboard.",
+  "status": "published",
+  "order": 20,
+  "benefit": "Read the instructions in a way that suits your screen.",
+  "outcome": "You can change the appearance, enlarge the text and get around without a mouse.",
+  "sections": [
+    {
+      "id": "appearance",
+      "title": "Choose an appearance",
+      "paragraphs": [
+        "Use the Appearance button in the header. Its icon shows the current choice: a sun for Light, a moon for Dark, and a screen for System, which follows your device. Each press moves to the next one: System, Light, Dark, then System again.",
+        "The app has the same button in your account menu, and shared boards have it in their top bar. Your choice is remembered in this browser, so the guides and the app match. If the browser blocks storage, the choice still applies to the page you're on."
+      ]
+    },
+    {
+      "id": "keyboard",
+      "title": "Use your keyboard",
+      "paragraphs": [
+        "Press Tab to move between links and buttons. An outline marks where you are. The first link, Skip to content, jumps past the header and the list of guides.",
+        "Press Enter to follow a link, or Enter or Space to press a button. On a small screen, Escape closes Browse guides and returns focus to its button.",
+        "In Safari on a Mac, Option-Tab includes links. Safari's Advanced settings can make Tab include them too."
+      ],
+      "links": [{ "label": "Safari keyboard shortcuts", "href": "https://support.apple.com/guide/safari/keyboard-shortcuts-and-gestures-cpsh003/mac" }]
+    },
+    {
+      "id": "text-and-images",
+      "title": "Make room for the text",
+      "paragraphs": [
+        "Use your browser's zoom to enlarge the page. On narrow screens the list of guides moves behind Browse guides, and the guide stays in one column.",
+        "Screenshots support the written steps. Each caption says what the picture shows, and the text alone is enough to follow along."
+      ]
+    },
+    {
+      "id": "find-your-place",
+      "title": "Return to a section",
+      "paragraphs": ["Use On this page to jump to a heading. The address keeps the section, so you can bookmark it or share it."],
+      "links": [{ "label": "More about section links", "href": "/docs/explore-the-docs#jump-to-a-section" }]
+    }
+  ],
+  "related": ["explore-the-docs"],
+  "links": []
+}

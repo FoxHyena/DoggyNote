@@ -6,15 +6,16 @@ import { Icon } from './icons.tsx'
 import { AdminDashboard } from './AdminDashboard.tsx'
 import { AgentConnections } from './AgentConnections.tsx'
 import { AboutDialog } from './AboutDialog.tsx'
-import { ThemeChoices, type ThemeChoicesProps } from './ThemeChoices.tsx'
+import { ThemeToggle, type ThemeToggleProps } from '../ThemeToggle.tsx'
 import { COPY } from '@doggynote/theme'
 import { canPrompt, installed, isIOS, promptInstall } from '../state/install.ts'
 import { isTauri } from '../state/platform.ts'
+import { GUIDES_URL } from '../state/api.ts'
 import { touch } from '../state/device.ts'
 
 export { SyncStatus } from './SyncStatus.tsx'
 
-export function AccountMenu(props: ThemeChoicesProps) {
+export function AccountMenu(props: ThemeToggleProps) {
   const [open, setOpen] = createSignal(false)
   const [people, setPeople] = createSignal(false)
   const [agents, setAgents] = createSignal(false)
@@ -43,11 +44,20 @@ export function AccountMenu(props: ThemeChoicesProps) {
     const outside = (event: Event) => {
       if (event.target instanceof Node && !container.contains(event.target)) close()
     }
+    // Safari doesn't focus a button you click, so after pressing the appearance icon
+    // focus is on <body> and Escape never reaches the menu's own key handler.
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented || document.activeElement !== document.body) return
+      event.preventDefault()
+      close(true)
+    }
     document.addEventListener('pointerdown', outside, true)
     document.addEventListener('focusin', outside)
+    document.addEventListener('keydown', escape)
     onCleanup(() => {
       document.removeEventListener('pointerdown', outside, true)
       document.removeEventListener('focusin', outside)
+      document.removeEventListener('keydown', escape)
     })
   })
   return (
@@ -80,8 +90,7 @@ export function AccountMenu(props: ThemeChoicesProps) {
       <Show when={open()}>
         <div ref={menu} id={menuId} class="menu nav-menu account-popover" role="dialog" aria-label="Account"><SheetGrip onDismiss={() => close(true)} />
           <div class="account-menu-identity">{user()?.username}</div>
-          <div class="account-menu-section-label">Appearance</div>
-          <ThemeChoices mode={props.mode} onThemeChange={props.onThemeChange} />
+          <div class="account-menu-appearance"><span aria-hidden="true">Appearance</span><ThemeToggle mode={props.mode} onThemeChange={props.onThemeChange} /></div>
           <Show when={user()?.isAdmin}>
             <button
               class="menu-item"
@@ -110,6 +119,7 @@ export function AccountMenu(props: ThemeChoicesProps) {
             </Show>
           </Show>
           <button class="menu-item" data-testid="manage-agents" onClick={() => { close(); setAgents(true) }}>Agent connections</button>
+          <a class="menu-item" data-testid="open-guides" href={GUIDES_URL} target="_blank" rel="noopener" onClick={() => close()}>{COPY.guides.open}</a>
           <button class="menu-item" data-testid="about" onClick={() => { close(); setAbout(true) }}>About &amp; credits</button>
           <button class="menu-item" data-testid="sign-out" onClick={() => { close(); void logout() }}>
             Sign out

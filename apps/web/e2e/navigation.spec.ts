@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { freshBoard, postSync, waitForSync, addNote } from './helpers.ts'
+import { freshBoard, postSync, waitForSync, addNote, setAccountAppearance } from './helpers.ts'
 
 const longTitle = 'A long board title for planning the next excellent dog adventure'
 
@@ -14,10 +14,8 @@ test('compact navigation stays usable across themes, narrow windows and long anc
   ] } })
   await page.reload()
   await waitForSync(page)
-  for (const mode of ['Light', 'Dark']) {
-    await page.getByTestId('account').click()
-    await page.getByRole('radio', { name: mode, exact: true }).click()
-    await page.keyboard.press('Escape')
+  for (const mode of ['Light', 'Dark'] as const) {
+    await setAccountAppearance(page, mode)
     for (const width of [1440, 720, 600, 360]) {
       await page.setViewportSize({ width, height: 900 })
       await page.evaluate((native) => document.documentElement.classList.toggle('tauri', native), width === 720)

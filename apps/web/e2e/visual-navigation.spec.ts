@@ -1,13 +1,11 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
-import { freshBoard, postSync, waitForSync } from './helpers.ts'
+import { freshBoard, postSync, setAccountAppearance, waitForSync } from './helpers.ts'
 
 const widths = [1440, 1024, 720, 600, 360]
 const title = 'A long shared board title for planning walks, meals, and the next excellent dog adventure'
 
 async function setAppearance(page: Page, appearance: 'Light' | 'Dark') {
-  await page.getByTestId('account').click()
-  await page.getByRole('radio', { name: appearance, exact: true }).click()
-  await page.keyboard.press('Escape')
+  await setAccountAppearance(page, appearance)
 }
 
 async function contained(locator: Locator, width: number, height: number) {

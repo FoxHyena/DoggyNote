@@ -2,7 +2,7 @@ import './canvas-entry.css'
 import { Show, createSignal, type JSX } from 'solid-js'
 import { COPY } from '@doggynote/theme'
 import { login, type User } from '../state/session.ts'
-import { ApiError } from '../state/api.ts'
+import { ApiError, GUIDES_URL } from '../state/api.ts'
 import { BoardIconSvg } from './icons.tsx'
 
 export function Login(props: { onLogin: (u: User) => void; introduction?: JSX.Element }) {
@@ -53,6 +53,7 @@ export function Login(props: { onLogin: (u: User) => void; introduction?: JSX.El
         <button class="primary-btn" type="submit" disabled={busy()}>
           {busy() ? COPY.loading : 'Sign in'}
         </button>
+        <p class="login-guides"><a href={GUIDES_URL} data-testid="login-guides">{COPY.guides.signIn}</a></p>
       </form>
     </div>
   )
