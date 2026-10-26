@@ -1,3 +1,5 @@
+import { worldPosition } from '../canvas/layout.ts'
+import { areaAt, areaPlacement, addingToArea, setAddingToArea } from './areas.ts'
 import { batch, createEffect, createRoot, createSignal, onCleanup, untrack } from 'solid-js'
 import { createStore, reconcile } from 'solid-js/store'
 import { newId, screenToWorld, stickerHeight, type Sticker, type StickerAsset, type Vec } from '@doggynote/core'
@@ -110,6 +112,8 @@ export function placeSticker(content: StickerAsset, at?: Vec): string | null {
   const id = newId(), h = w * content.height / content.width
   const z = Math.max(0, ...doc.stickersOn(boardId()).map((s) => s.z)) + 1
   const obj: Sticker = { id, kind: 'sticker', boardId: boardId(), x: center.x - w / 2, y: center.y - h / 2, w, angle: 0, z, content: stickerContent(content), createdAt: Date.now() }
+  const area = addingToArea() ? doc.getCard(addingToArea()) : areaAt(center)
+  Object.assign(obj, areaPlacement({ x: obj.x, y: obj.y }, area)); setAddingToArea(null)
   doc.commit([doc.createChange(obj)])
   if (!doc.get(id)) return null
   select([id]); cancelStickerPlacement()
@@ -134,4 +138,4 @@ export async function favoriteSticker(s: StickerAsset) {
   await api(`/api/stickers/preferences/${s.assetId}`, { method: 'POST', json: { favorite } })
   await refreshStickers()
 }
-export function stickerCenter(s: Sticker): Vec { return { x: s.x + s.w / 2, y: s.y + stickerHeight(s) / 2 } }
+export function stickerCenter(s: Sticker): Vec { const p = doc.get(s.id) === s ? worldPosition(s) : { x: s.x, y: s.y }; return { x: p.x + s.w / 2, y: p.y + stickerHeight(s) / 2 } }

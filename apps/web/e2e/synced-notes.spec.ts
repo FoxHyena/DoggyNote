@@ -10,7 +10,7 @@ const contexts = new Set<BrowserContext>()
 test.afterEach(async () => { await Promise.all([...contexts].map((c) => c.close())); contexts.clear() })
 
 async function fido(browser: Browser, boardId: string, url: string) {
-  const context = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '3' } })
+  const context = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '4' } })
   contexts.add(context)
   expect((await context.request.post('/api/auth/login', { data: { username: 'fido', password: 'fetchfetch' } })).ok()).toBe(true)
   const page = await context.newPage()

@@ -12,7 +12,7 @@ test('collaboration visual evidence @visual', async ({ page, browser, browserNam
   await waitForSync(page)
   const board = page.url().split('/b/')[1]!
   await page.request.post(`/api/boards/${board}/members`, { data: { username: 'fido', permission: 'edit', includeChildren: false } })
-  const context = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '3' }, viewport: { width: 1440, height: 900 } })
+  const context = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '4' }, viewport: { width: 1440, height: 900 } })
   try {
     await context.request.post('/api/auth/login', { data: { username: 'fido', password: 'fetchfetch' } })
     const friend = await context.newPage()

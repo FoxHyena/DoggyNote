@@ -84,3 +84,11 @@ describe('an older app moving a locked card', () => {
     } finally { sql.close() }
   })
 })
+it('reports new members racing a locked parent separately so their content can be preserved',async()=>{
+  const {sql,db,put}=fixture()
+  try{
+    put('area',{type:'area',positionLocked:true,content:{title:'Project'}})
+    const result=await checkPositionLocks(db,[{id:'new',patch:{kind:'card',type:'note',boardId:'b',areaId:'area',x:24,y:72}}])
+    expect(result.lockedIds).toEqual([]);expect(result.lockedCreateIds).toEqual(['new'])
+  }finally{sql.close()}
+})

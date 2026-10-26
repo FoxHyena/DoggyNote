@@ -1,4 +1,4 @@
-import { GRID, canSyncNote, newId, type Card, type Id } from '@doggynote/core'
+import { GRID, canSyncNote, itemArea, newId, type Card, type Id } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
 import { unwrap } from 'solid-js/store'
 import * as doc from './doc.ts'
@@ -6,7 +6,8 @@ import { canEditBoard, canReadBoard } from './access.ts'
 import { revealCard } from './columns.ts'
 import { boardId, openBoard, select } from './ui.ts'
 import { showToast } from './toast.ts'
-import { rectOf } from '../canvas/layout.ts'
+import { rectOf, worldPosition } from '../canvas/layout.ts'
+import { areaPlacement } from './areas.ts'
 
 // Synced copies of a note (packages/core/src/synced.ts, apps/server/src/synced.ts).
 // A copy is made beside the original, never on top of it; cut and paste moves it to any board and
@@ -24,9 +25,11 @@ export function makeSyncedCopy(id: Id): Id | null {
   const copy = structuredClone(unwrap(source)) as Card<'note'>
   delete copy.positionLocked
   const column = source.columnId ? rectOf(source.columnId) : null
+  const origin = worldPosition(source)
+  const at = column ? { x: column.x + column.w + GRID, y: column.y } : { x: origin.x + source.w + GRID, y: origin.y }
   Object.assign(copy, {
-    id: newId(), syncId: group, createdAt: Date.now(), deletedAt: null, purged: false, z: doc.maxZ(source.boardId) + 1,
-    ...(column ? { columnId: null, x: column.x + column.w + GRID, y: column.y } : { x: source.x + source.w + GRID, y: source.y }),
+    id: newId(), syncId: group, createdAt: Date.now(), deletedAt: null, burialId: null, purged: false, z: doc.maxZ(source.boardId) + 1,
+    columnId: null, ...areaPlacement(at, itemArea(source, doc.get)),
   })
   doc.commit([...(source.syncId ? [] : doc.changesFor({ [id]: { syncId: group } as Partial<Card> })), doc.createChange(copy)])
   if (!doc.getCard(copy.id)) return null

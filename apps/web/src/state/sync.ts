@@ -1,5 +1,6 @@
 import { createSignal } from 'solid-js'
-import type { Obj } from '@doggynote/core'
+import { isArea, isAreaItem, orderedAreaChanges, type Obj } from '@doggynote/core'
+import { repairAreaRemovals, detachLockedCreates } from './areas.ts'
 import * as doc from './doc.ts'
 import * as idb from './idb.ts'
 import { ApiError, api } from './api.ts'
@@ -54,8 +55,11 @@ async function uploadAssets() {
 }
 
 async function push() {
+  let conflictRetries = 0
   for (;;) {
-    const pending = doc.pendingOutbox().slice(0, PUSH_CHUNK)
+    repairAreaRemovals()
+    await doc.flush()
+    const pending = orderedAreaChanges(doc.pendingOutbox(), doc.get).slice(0, PUSH_CHUNK)
     if (!pending.length) return
     try {
       const res = await api<{ detachedIds?: string[] }>('/api/sync', { method: 'POST', json: { changes: pending.map((p) => ({ id: p.id, patch: { ...p.patch, id: p.id } })) } })
@@ -67,6 +71,21 @@ async function push() {
         await refreshAccess()
         continue
       }
+      if (error instanceof ApiError && error.status === 409 && Array.isArray(error.details.lockedCreateIds)) {
+        if (++conflictRetries > 3) throw error
+        await pull()
+        detachLockedCreates(error.details.lockedCreateIds as string[])
+        await doc.flush()
+        continue
+      }
+      if (error instanceof ApiError && error.status === 409 && Array.isArray(error.details.areaConflictIds)) {
+        if (++conflictRetries > 3) throw error
+        await pull()
+        await stageAreaTransfers(error.details.areaConflictIds as string[])
+        repairAreaRemovals()
+        await doc.flush()
+        continue
+      }
       if (error instanceof ApiError && error.status === 409) {
         await refreshAccess()
         again = true
@@ -74,6 +93,7 @@ async function push() {
       throw error
     }
     doc.ackOutbox(pending)
+    conflictRetries = 0
     setPendingCount(doc.outboxSize())
     if (pending.length < PUSH_CHUNK) return
   }
@@ -81,6 +101,45 @@ async function push() {
 
 const writable = (object: Obj) => canEditBoard(object.kind === 'board' ? object.id : object.boardId)
 type SyncPull = { objects: Obj[]; cursor: number; more: boolean; epoch: string; accessRevision: string; reset: boolean }
+
+/** A large cross-board move cannot move a parent and all its references in one
+ * 200-row push. Detach source references first, keeping the intended destination
+ * fields durably queued. Repeating or restarting either phase is safe. */
+async function stageAreaTransfers(ids: string[]) {
+  const moving = new Map(ids.flatMap(id => {
+    const area = doc.get(id)
+    const pending = doc.pendingOutbox().find(change => change.id === id)
+    return isArea(area) && !area.deletedAt && !area.purged && pending?.patch && 'boardId' in pending.patch ? [[id, area] as const] : []
+  }))
+  if (!moving.size) return
+  const remote = new Map<string, Obj>()
+  let since = 0
+  for (;;) {
+    const res = await api<SyncPull>(`/api/sync?since=${since}&accessRevision=${encodeURIComponent(accessRevision())}`)
+    for (const object of res.objects) if (!(object as { hidden?: boolean }).hidden) remote.set(object.id, object)
+    if (!res.more) break
+    since = res.cursor
+  }
+  const detaches: { id: string; patch: Partial<Obj> }[] = []
+  for (const [id, destination] of moving) {
+    const source = remote.get(id)
+    if (!isArea(source) || source.boardId === destination.boardId) continue
+    for (const member of remote.values()) {
+      if (!isAreaItem(member) || member.areaId !== id || member.boardId !== source.boardId || member.purged) continue
+      const intended = doc.get(member.id)
+      if (isAreaItem(intended) && intended.boardId === destination.boardId && intended.areaId === id) {
+        doc.checkpoint(intended.id, { boardId: intended.boardId, areaId: id, x: intended.x, y: intended.y })
+      }
+      detaches.push({ id: member.id, patch: { areaId: null, x: source.x + member.x, y: source.y + member.y } })
+    }
+  }
+  await doc.flush()
+  for (let i = 0; i < detaches.length; i += PUSH_CHUNK) {
+    // These are intermediate wire changes: ack only the final queued intent.
+    await api('/api/sync', { method: 'POST', json: { changes: detaches.slice(i, i + PUSH_CHUNK) } })
+  }
+  await pull()
+}
 
 async function pull() {
   let snapshot: Obj[] | null = null

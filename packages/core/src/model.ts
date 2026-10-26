@@ -9,7 +9,7 @@ import type { InkMark } from './ink.ts'
 export type Id = string
 
 /** Every card type this build can draw. Anything else came from a newer app (see cardtext.ts). */
-export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie', 'swatch', 'sketch', 'ink'] as const
+export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'area', 'file', 'movie', 'swatch', 'sketch', 'ink'] as const
 export type CardType = (typeof CARD_TYPES)[number]
 export const isKnownCardType = (t: unknown): t is CardType => (CARD_TYPES as readonly unknown[]).includes(t)
 
@@ -39,6 +39,7 @@ export type CardContent = {
   image: { assetId: Id; width: number; height: number; caption?: string; sizes?: ('thumb' | 'small' | 'medium' | 'full')[] }
   link: { url: string; title?: string; description?: string; image?: string; siteName?: string; status?: 'pending' | 'ok' | 'error' }
   column: { title: string }
+  area: { title: string }
   /**
    * An uploaded file, stored in R2 as "<assetId>/file". PDFs also get a
    * first-page preview stored as the image rendition "<assetId>/thumb".
@@ -101,6 +102,8 @@ type Base = {
   id: Id
   /** Soft delete (trash). Restorable. */
   deletedAt?: number | null
+  /** Identifies a single burial operation for exact family restoration. */
+  burialId?: Id | null
   /** Hard delete. Purged objects are kept as tombstones so deletes sync. */
   purged?: boolean
   createdAt: number
@@ -119,6 +122,8 @@ export type Card<T extends CardType = CardType> = Base & {
   color: CardColor
   /** Set when the card sits inside a column; x/y are then ignored. */
   columnId?: Id | null
+  /** Direct area membership; x/y are relative to its stable origin. Column children inherit it. */
+  areaId?: Id | null
   /** Column presentation only. Null/absent means expanded; member geometry is retained. */
   collapsed?: boolean | null
   order?: number
@@ -192,6 +197,8 @@ export type Sticker = Base & {
   y: number
   w: number
   angle: number
+  /** Direct membership; geometry is relative to the area origin. */
+  areaId?: Id | null
   z: number
   content: StickerAsset
 }
@@ -218,6 +225,7 @@ export const DEFAULT_SIZE: Record<CardType, { w: number; h: number }> = {
   image: { w: 260, h: 200 },
   link: { w: 260, h: 220 },
   column: { w: 280, h: 120 },
+  area: { w: 800, h: 480 },
   file: { w: 260, h: 72 },
   movie: { w: 220, h: 370 },
   swatch: { w: 200, h: 190 },

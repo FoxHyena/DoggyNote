@@ -5,7 +5,7 @@ import { MOD, cardByText, postSync } from './helpers.ts'
 async function account(admin: Page, browser: Browser) {
   const username = `live_${crypto.randomUUID().slice(0, 8)}`
   expect((await admin.request.post('/api/users', { data: { username, password: 'liveaccess123' } })).ok()).toBe(true)
-  const context = await browser.newContext({ storageState: { cookies: [], origins: [] }, extraHTTPHeaders: { 'x-doggynote-protocol': '3' } })
+  const context = await browser.newContext({ storageState: { cookies: [], origins: [] }, extraHTTPHeaders: { 'x-doggynote-protocol': '4' } })
   expect((await context.request.post('/api/auth/login', { data: { username, password: 'liveaccess123' } })).ok()).toBe(true)
   const access = await (await context.request.get('/api/access')).json()
   return { username, context, home: access.homeBoardId as string }

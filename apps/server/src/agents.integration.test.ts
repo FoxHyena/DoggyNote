@@ -230,6 +230,32 @@ it('agents never see labels, and their whole-object replacements keep them', asy
   } finally { f.sql.close() }
 })
 
+it('agent proposals create areas and members, preserve relative positions, and detach a removed area family',async()=>{
+  const f=await fixture()
+  try{
+    const area={...f.card('area',''),type:'area',x:500,y:300,w:800,h:480,content:{title:'Project'}}
+    const col={...f.card('col',''),type:'column',areaId:'area',x:24,y:72,content:{title:'Doing'}}
+    const note={...f.card('context','Context'),areaId:'area',x:350,y:80}
+    const child={...f.card('child','Workflow card'),columnId:'col',order:1}
+    const proposed=await f.request('/agent/proposals',{idempotencyKey:'area-create',label:'Organize project',operations:[area,col,note,child].map(object=>({action:'create',object}))},f.token)
+    expect(proposed.status,await proposed.clone().text()).toBe(201)
+    const {id}=await proposed.json() as {id:string}
+    expect((await f.request(`/agent-proposals/${id}/approve`,{})).status).toBe(200)
+    const row=(id:string)=>f.sql.prepare('SELECT data,seq FROM objects WHERE id=?').get(id) as {data:string;seq:number}
+    const original=JSON.parse(row('area').data)
+    const move=await f.request('/agent/proposals',{idempotencyKey:'area-move',label:'Move project',operations:[{action:'replace',object:{...original,x:800,h:550},expectedRevision:row('area').seq}]},f.token)
+    expect(move.status,await move.clone().text()).toBe(201)
+    const moving=await move.json() as {id:string};expect((await f.request(`/agent-proposals/${moving.id}/approve`,{})).status).toBe(200)
+    expect(JSON.parse(row('context').data)).toMatchObject({x:350,areaId:'area'})
+    const remove=await f.request('/agent/proposals',{idempotencyKey:'area-remove',label:'Remove boundary',operations:[{action:'trash',id:'area',expectedRevision:row('area').seq}]},f.token)
+    expect(remove.status,await remove.clone().text()).toBe(201)
+    const removing=await remove.json() as {id:string};expect((await f.request(`/agent-proposals/${removing.id}/approve`,{})).status).toBe(200)
+    expect(JSON.parse(row('context').data)).toMatchObject({x:1150,y:380,areaId:null})
+    expect(JSON.parse(row('col').data)).toMatchObject({x:824,y:372,areaId:null})
+    expect(JSON.parse(row('child').data)).toMatchObject({columnId:'col'})
+  }finally{f.sql.close()}
+})
+
 it('an approved edit to a synced note updates every copy, or unsyncs it when a copy is out of reach', async () => {
   const f = await fixture()
   try {

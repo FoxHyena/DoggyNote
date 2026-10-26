@@ -124,3 +124,10 @@ it('keeps collapse independently undoable under an inherited column position loc
   expect(doc.getCard('col')!.collapsed).toBe(true)
   expect(doc.getCard('a')).toEqual(before)
 })
+it('an area lock blocks new memberships and protects family removal without blocking member content',()=>{
+  const area=card('area',{type:'area',positionLocked:true,w:800,h:480,content:{title:'Project'}})
+  doc.loadSnapshot([area,card('member',{areaId:'area'})])
+  doc.commit([doc.createChange(card('new-in-locked-area',{areaId:'area'}))]);expect(doc.getCard('new-in-locked-area')).toBeUndefined()
+  doc.update({member:{content:{md:'Edited'}}});expect(doc.getCard('member')!.content).toEqual({md:'Edited'})
+  doc.update({area:{h:900,deletedAt:1}});expect(doc.getCard('area')!.h).toBe(480);expect(doc.getCard('area')!.deletedAt).toBeUndefined()
+})

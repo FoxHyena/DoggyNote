@@ -7,7 +7,7 @@ export async function multiplayerLoad(page: Page, browser: Browser, board: strin
     const username = `perf_${crypto.randomUUID().slice(0, 12)}`, password = 'local-perf-password'
     expect((await page.request.post('/api/users', { data: { username, password } })).ok()).toBe(true)
     expect((await page.request.post(`/api/boards/${board}/members`, { data: { username, permission: 'view', includeChildren: false } })).ok()).toBe(true)
-    const context = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '3' } })
+    const context = await browser.newContext({ extraHTTPHeaders: { 'x-doggynote-protocol': '4' } })
     contexts.push(context)
     expect((await context.request.post(`${origin}/api/auth/login`, { data: { username, password } })).ok()).toBe(true)
     tickets.push((await (await context.request.post(`${origin}/api/boards/${board}/live-ticket`, { data: {} })).json()).ticket)

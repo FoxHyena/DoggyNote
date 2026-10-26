@@ -27,6 +27,6 @@ export function ensureToybox() {
 export const toyboxCards = createRoot(() =>
   createMemo<Card[]>(() => {
     const id = toyboxId()
-    return id ? [...doc.cardsOn(id)].filter((c) => !c.columnId).sort((a, b) => b.createdAt - a.createdAt) : []
+    return id ? [...doc.cardsOn(id)].filter((c) => !c.columnId && !c.areaId).sort((a, b) => b.createdAt - a.createdAt) : []
   }),
 )
