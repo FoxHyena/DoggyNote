@@ -43,9 +43,12 @@ server, so each test works on its own `freshBoard()`.
 
 After merging to `main`, manually run `.github/workflows/release.yml` on main as a separate release action:
 1. The full CI runs again.
-2. The Mac app is built, then signed with a Developer ID Application certificate with hardened runtime and a secure timestamp. Apple must accept notarization, stapling and Gatekeeper checks for both the app and DMG before its updater bundle, DMG and versioned `desktop/<version>/latest.json` are staged in R2; the public fallback manifest stays unchanged. The updater archive is created from the stapled app before receiving its Tauri signature.
-3. The Worker and web app deploy, with migrations applied first. The Worker selects the staged manifest matching `APP_VERSION`, making the compatible updater available when its minimum-client gate takes effect.
-4. After deployment, the fallback `desktop/latest.json` and GitHub release are published. A failed desktop build cannot strand old clients; a new desktop is not advertised by the old Worker.
+2. The website and Worker deploy as soon as CI passes, with migrations applied first and `APP_VERSION` set to the new version (so browsers get their reload toast right away).
+3. Meanwhile the Mac app is built, then signed with a Developer ID Application certificate with hardened runtime and a secure timestamp. Apple must accept notarization, stapling and Gatekeeper checks for both the app and DMG before its updater bundle, DMG and versioned `desktop/<version>/latest.json` (written last) are staged in R2. The updater archive is created from the stapled app before receiving its Tauri signature.
+4. Installed apps are pointed at the new version only after its notarized build is staged: the Worker serves `desktop/<APP_VERSION>/latest.json` once it exists, and the last published `desktop/latest.json` until then. A failed or slow Mac build never holds up the website and never strands old apps; the old Worker never advertises a new desktop build.
+5. After both, the fallback `desktop/latest.json` and the GitHub release are published.
+
+A `MIN_CLIENT` bump makes the deploy wait for the Mac build. The `guard` job (`apps/server/scripts/min-client-guard.sh`) compares `MIN_CLIENT` in `wrangler.toml` with the live `/api/version`; if they differ, or the live value can't be read, the Worker deploys only after the compatible build is staged, so apps sent to "update required" can fetch it.
 
 The version is `0.<minor in version.json>.<run number>`; bump `minor` by hand for big releases. Installed apps update themselves via `tauri-plugin-updater`, and browsers get a reload toast.
 
