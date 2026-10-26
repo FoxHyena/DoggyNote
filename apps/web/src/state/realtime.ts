@@ -33,6 +33,8 @@ export function personStyle(id: string) {
   const color = personColor(id)
   return { '--person-color': `var(--dn-person-${color})`, '--person-ink': 'var(--dn-person-ink)' }
 }
+// Keep the mouse in window coordinates: a camera move changes the board point
+// underneath it even when no new pointermove arrives (trackpad pan/zoom).
 let socket: WebSocket | null = null, pointer: LivePoint | null = null
 let caret: LivePresence['caret'] = null
 const previews = new Map<string, LivePreview>()
@@ -52,8 +54,9 @@ function sendPresence() {
   sendTimer = null
   if (socket?.readyState !== WebSocket.OPEN || !selfSession()) return
   lastSend = performance.now()
-  const v = viewport()
-  socket.send(JSON.stringify({ type: 'presence', pointer, selection: [...selection()].slice(0, 100), editing: editingId(), camera: camera(), width: Math.max(1, v.width), height: Math.max(1, v.height), previews: [...previews.values()].slice(0, 100), caret }))
+  const v = viewport(), c = camera()
+  const at = pointer ? { x: c.x + (pointer.x - v.left) / c.zoom, y: c.y + (pointer.y - v.top) / c.zoom } : null
+  socket.send(JSON.stringify({ type: 'presence', pointer: at, selection: [...selection()].slice(0, 100), editing: editingId(), camera: c, width: Math.max(1, v.width), height: Math.max(1, v.height), previews: [...previews.values()].slice(0, 100), caret }))
 }
 export function schedulePresence() {
   sendTimer ??= setTimeout(sendPresence, Math.max(0, 75 - (performance.now() - lastSend)))
@@ -157,8 +160,7 @@ export function installRealtime() {
     const move = (e: PointerEvent) => {
       const canvas = (e.target as Element)?.closest?.('[data-testid="canvas"]')
       if (blurred || document.hidden || !canvas || e.pointerType === 'touch') { pointer = null; schedulePresence(); return }
-      const r = canvas.getBoundingClientRect(), c = camera()
-      pointer = { x: c.x + (e.clientX - r.left) / c.zoom, y: c.y + (e.clientY - r.top) / c.zoom }; schedulePresence()
+      pointer = { x: e.clientX, y: e.clientY }; schedulePresence()
     }
     const manual = (e: Event) => { const target = e.target as Element; if (target?.closest?.('[data-testid="canvas"]') && !target.closest('.follow-banner')) stopFollowing() }
     const key = (e: KeyboardEvent) => { if (following() && (e.key === 'Escape' || e.key.startsWith('Arrow'))) stopFollowing(); if (e.key === 'Escape') { previews.clear(); schedulePresence() } }
