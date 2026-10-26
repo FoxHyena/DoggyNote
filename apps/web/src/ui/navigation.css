@@ -26,6 +26,7 @@
 .board-nav-menu .nav-menu-head { flex-shrink: 0; }
 .board-nav-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
 .board-nav-menu .nav-menu-section-label { padding-left: 38px; }
+.topbar .board-navigation { display: flex; min-width: 0; }
 .ancestor-menu .nav-menu { width: 320px; }
 .ancestor-menu .menu-item { overflow-wrap: anywhere; }
 .account-popover { width: 240px; }
