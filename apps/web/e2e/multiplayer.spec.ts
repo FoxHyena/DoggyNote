@@ -24,6 +24,29 @@ async function live(page: Page) {
   await page.keyboard.press('Escape')
 }
 
+test('window blur hides a cursor without leaving the room; focus requires a fresh canvas move', async ({ page, browser }) => {
+  await freshBoard(page)
+  const other = await friend(browser, page)
+  await live(page); await live(other)
+  const box = (await other.getByTestId('canvas').boundingBox())!
+  await other.bringToFront()
+  await other.mouse.move(box.x + 120, box.y + 120)
+  await expect(page.getByTestId('remote-cursor')).toBeVisible()
+
+  // Dispatch lifecycle events explicitly: Playwright keeps background pages
+  // visible. Native tab visibility is covered by multiplayer-lifecycle.spec.
+  await other.evaluate(() => window.dispatchEvent(new Event('blur')))
+  await expect(page.getByTestId('remote-cursor')).toHaveCount(0)
+  await other.mouse.move(box.x + 140, box.y + 140)
+  await expect(page.getByTestId('remote-cursor')).toHaveCount(0)
+  await other.evaluate(() => window.dispatchEvent(new Event('focus')))
+  await expect(page.getByTestId('remote-cursor')).toHaveCount(0)
+  await other.mouse.move(box.x + 160, box.y + 160)
+  await expect(page.getByTestId('remote-cursor')).toBeVisible()
+  await page.getByTestId('collaborators').click()
+  await expect(page.getByTestId('participant')).toHaveCount(2)
+})
+
 test('members, live cursors, selections, pings and following work without manual refresh', async ({ page, browser }) => {
   await freshBoard(page, 'Multiplayer studio')
   await addNote(page, 'A place for shared ideas')

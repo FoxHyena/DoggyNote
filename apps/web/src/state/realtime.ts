@@ -104,6 +104,7 @@ export function updateAwareness() {
 export function installRealtime() {
   return createRoot((dispose) => {
     let generation = 0, retry: ReturnType<typeof setTimeout> | null = null, activeBoard = ''
+    let blurred = false
     const disconnect = () => {
       generation++; if (retry) clearTimeout(retry)
       retry = null; socket?.close(); socket = null
@@ -155,7 +156,7 @@ export function installRealtime() {
     createEffect(() => { camera(); viewport(); selection(); editingId(); schedulePresence() })
     const move = (e: PointerEvent) => {
       const canvas = (e.target as Element)?.closest?.('[data-testid="canvas"]')
-      if (!canvas || e.pointerType === 'touch') { pointer = null; schedulePresence(); return }
+      if (blurred || document.hidden || !canvas || e.pointerType === 'touch') { pointer = null; schedulePresence(); return }
       const r = canvas.getBoundingClientRect(), c = camera()
       pointer = { x: c.x + (e.clientX - r.left) / c.zoom, y: c.y + (e.clientY - r.top) / c.zoom }; schedulePresence()
     }
@@ -164,6 +165,10 @@ export function installRealtime() {
     const finishGesture = clearLivePreviews
     const visibility = () => { if (document.hidden) { disconnect(); setLiveState('offline') } else void connect() }
     const leave = () => { pointer = null; schedulePresence() }
+    // A visible window can still be behind another app. Keep its room alive,
+    // but do not resurrect the last mouse position until a fresh focused move.
+    const blur = () => { blurred = true; leave() }
+    const focus = () => { blurred = false }
     const transientOff = doc.onTransient((id, patch) => {
       const o = doc.base(id)
       if (o && o.kind === 'card' && o.boardId === activeBoard && ('x' in patch || 'y' in patch || 'w' in patch || 'h' in patch) && id !== editingId()) {
@@ -178,11 +183,13 @@ export function installRealtime() {
     window.addEventListener('pointermove', move); window.addEventListener('pointerdown', manual, true); window.addEventListener('wheel', manual, true); window.addEventListener('keydown', key, true)
     window.addEventListener('pointerup', finishGesture); window.addEventListener('pointercancel', finishGesture)
     document.addEventListener('visibilitychange', visibility); window.addEventListener('online', visibility); window.addEventListener('offline', visibility); document.addEventListener('pointerleave', leave)
+    window.addEventListener('blur', blur); window.addEventListener('focus', focus)
     onCleanup(() => {
       disconnect(); transientOff(); outOff(); clearInterval(heartbeat); if (sendTimer) clearTimeout(sendTimer); sendTimer = null
       window.removeEventListener('pointermove', move); window.removeEventListener('pointerdown', manual, true); window.removeEventListener('wheel', manual, true); window.removeEventListener('keydown', key, true)
       window.removeEventListener('pointerup', finishGesture); window.removeEventListener('pointercancel', finishGesture)
       document.removeEventListener('visibilitychange', visibility); window.removeEventListener('online', visibility); window.removeEventListener('offline', visibility); document.removeEventListener('pointerleave', leave)
+      window.removeEventListener('blur', blur); window.removeEventListener('focus', focus)
     })
     return dispose
   })
