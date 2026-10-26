@@ -12,6 +12,7 @@ import { COLUMN_HEADER, layoutTick, rectOf } from '../canvas/layout.ts'
 import { union, worldToScreen } from '@doggynote/core'
 import { BOARD_ICONS, BoardIconSvg, Icon, IconButton, type IconName } from './icons.tsx'
 import { canvasControlsSize } from './CanvasControls.tsx'
+import { ColorDots } from './ColorDots.tsx'
 import { openThread } from './CommentsPanel.tsx'
 import { TodoOptions, TodoMenuItems } from './TodoOptions.tsx'
 import { BarMenu } from './BarMenu.tsx'
@@ -39,10 +40,12 @@ export function SelectionBar() {
   const editingList = () => !docked() && doc.getCard(editingId() ?? '')?.type === 'todo'
   const show = () => !cardContextOpen() && (cards().length || conns().length) && !draggingIds().size && (!editingId() || editingList()) && !connectMode()
   createEffect(() => { if (!show() || !phone()) setPanel(null) })
+  // A colour card is its colour, and ink on the board has no card to tint.
+  const tintable = () => cards().some((c) => c.type !== 'swatch' && c.type !== 'ink')
   const sole = () => (cards().length === 1 && selection().size === 1 ? cards()[0] : undefined)
   const editable = () => {
     const c = sole()
-    return !!c && (c.type === 'note' || c.type === 'todo' || c.type === 'column' || c.type === 'image' || c.type === 'swatch' || c.type === 'link' || c.type === 'movie') && doc.canWriteObject(c)
+    return !!c && (c.type === 'note' || c.type === 'todo' || c.type === 'column' || c.type === 'image' || c.type === 'swatch' || c.type === 'link' || c.type === 'movie' || c.type === 'sketch') && doc.canWriteObject(c)
   }
   // Labels go on the cards of one board; a column is a container, so it has none.
   const canLabel = () => cards().length > 0 && cards().every((c) => c.type !== 'column' && c.boardId === cards()[0].boardId && doc.canWriteObject(c))
@@ -125,36 +128,16 @@ export function SelectionBar() {
     return { left: at.x + size.width / 2, top: at.y }
   })
 
+  // Any other colour comes from the wheel, applied once it closes: one change, one undo step.
   const colours = () => (
-    <div class="swatches" role="group" aria-label="Colour">
-      <For each={CARD_COLORS}>
-        {(c) => (
-          <button
-            class="swatch"
-            aria-pressed={currentColor() === c}
-            classList={{ on: currentColor() === c, 'swatch-none': c === 'none' }}
-            style={{ '--sw': `var(--dn-card-${c}-bg)` }}
-            data-testid={`swatch-${c}`}
-            data-tip={COPY.colorNames[c]}
-            aria-label={COPY.colorNames[c]}
-            onClick={() => setColor(selection(), c)}
-          />
-        )}
-      </For>
-      {/* Any other colour: the system picker. One change, one undo step. */}
-      <label class="swatch swatch-custom" classList={{ on: !!customColor() }} style={customColor() ? { '--sw': customColor()! } : undefined} data-tip={customColor() ? `Custom colour ${customColor()}` : 'Custom colour'} data-testid="swatch-custom">
-        <Show when={!customColor()}>
-          <Icon size={16} name="plus" />
-        </Show>
-        <input
-          type="color"
-          data-testid="swatch-custom-input"
-          aria-label="Custom colour"
-          value={(customColor() ?? DEFAULT_SWATCH_HEX).toLowerCase()}
-          onChange={(e) => pickCustom(e.currentTarget.value)}
-        />
-      </label>
-    </div>
+    <ColorDots
+      class="tint-dots"
+      label="Colour"
+      dots={CARD_COLORS.map((c) => ({ value: c, name: COPY.colorNames[c], paint: c === 'none' ? 'transparent' : `var(--dn-card-${c}-bg)`, testid: `swatch-${c}`, none: c === 'none' }))}
+      value={currentColor()}
+      onPick={(c) => setColor(selection(), c as CardColor)}
+      custom={{ value: customColor(), fallback: DEFAULT_SWATCH_HEX, testid: 'swatch-custom-input', slotTestId: 'swatch-custom', live: false, onPick: pickCustom }}
+    />
   )
   const boardIcons = () => (
     <div class="icon-picker" aria-label="Board icon">
@@ -209,9 +192,9 @@ export function SelectionBar() {
           </div>
           </Show>
         </Show>
-        <Show when={cards().some((c) => c.type !== 'swatch')}>
+        <Show when={tintable()}>
         <div class="bar-group bar-style">
-        {/* A colour card is its colour: the card tints are for everything else. */}
+        {/* A colour card is its colour, and ink on the board has no card to tint: the tints are for everything else. */}
         {colours()}
         <Show when={soleBoard()}>
           <Show when={docked()}>
@@ -224,7 +207,7 @@ export function SelectionBar() {
         </div>
         </Show>
         <Show when={hasActions()}>
-        <Show when={cards().some((c) => c.type !== 'swatch')}>
+        <Show when={tintable()}>
         <div class="bar-sep" />
         </Show>
         <div class="bar-group bar-actions">
@@ -276,7 +259,7 @@ export function SelectionBar() {
             <Show when={soleBoard()} fallback={<Show when={editable()}><button class="bar-btn selection-primary" data-testid="edit-card" onClick={() => beginEdit(sole()!.id)}><Icon name="edit" size={20} /><span>Edit</span></button></Show>}>
               <button class="bar-btn selection-primary" data-testid="open-board" onClick={() => openBoard(soleBoard()!.id)}><Icon name="open" size={20} /><span>Open</span></button>
             </Show>
-            <Show when={cards().some((c) => c.type !== 'swatch')}>
+            <Show when={tintable()}>
               <button ref={colourTrigger} class="bar-btn" data-testid="selection-colour" aria-haspopup="dialog" aria-expanded={panel() === 'colour'} onClick={() => openPanel('colour')}><Icon name="droplet" size={20} /><span>Colour</span></button>
             </Show>
             <Show when={canLabel()}><LabelsButton cards={cards()} labelled /></Show>

@@ -118,74 +118,10 @@ html[data-input="mouse"] .tool:hover {
   }
 }
 
-.swatches,
 .icon-picker {
   display: flex;
   flex: 0 0 auto;
   gap: 4px;
-}
-
-/* The button is the hit area; the dot is drawn inside it, so touch can grow the
-   target without growing the dot. */
-.swatch {
-  --dot: 24px;
-  position: relative;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: var(--dot);
-  height: var(--dot);
-  border: 0;
-  border-radius: 50%;
-  padding: 0;
-  background: transparent;
-  color: var(--dn-text-muted);
-  cursor: pointer;
-}
-.swatch::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: var(--dot);
-  height: var(--dot);
-  box-sizing: border-box;
-  border-radius: 50%;
-  background: var(--sw, transparent);
-  box-shadow: inset 0 0 0 1.5px var(--dn-border);
-}
-.swatch.on::before {
-  outline: 2px solid var(--dn-selection);
-  outline-offset: 2px;
-}
-.swatch:focus-visible { outline: none; }
-.swatch:focus-visible::before { outline: 2px solid var(--dn-selection); outline-offset: 2px; }
-/* No colour: an empty ring with a slash, so it never reads as a dark or white tint. */
-.swatch-none::before { background: transparent; }
-.swatch-none::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 1.5px;
-  height: calc(var(--dot) * 0.72);
-  border-radius: 1px;
-  background: var(--dn-text-muted);
-  transform: rotate(45deg);
-}
-/* The custom slot: a dashed ring with a plus until a custom colour is set. */
-.swatch-custom:not(.on)::before { box-shadow: none; border: 1.5px dashed var(--dn-text-muted); }
-.swatch-custom > svg { position: relative; }
-.swatch-custom > input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  opacity: 0;
-  cursor: pointer;
 }
 
 .icon-choice {
@@ -636,7 +572,7 @@ html[data-input="mouse"] .trash-item:hover {
 .capture .capture-input:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 0; }
 @media (pointer: coarse) {
   .selection-bar .bar-btn, .selection-bar .icon-choice { min-width: 44px; min-height: 44px; }
-  .selection-bar .swatch { width: 44px; height: 44px; --dot: 32px; }
+  .selection-bar .tint-dots { --cd-dot: 32px; }
   .trash-item > .bar-btn, .trash-item > .icon-btn, .trash-head .icon-btn, .trash > .danger-btn { min-height: 44px; min-width: 44px; }
 }
 
@@ -655,7 +591,7 @@ html[data-input="mouse"] .fetch-close:hover { color: var(--dn-text); background:
 .selection-bar .bar-icon { display: inline-grid; place-items: center; min-width: 32px; min-height: 32px; padding: 0; }
 /* Icon buttons sit edge to edge, so the pointer never drops into a gap between them. */
 .selection-bar:not(.docked) { gap: 0; }
-.selection-bar:not(.docked) .swatches { margin: 0 8px; }
+.selection-bar:not(.docked) .tint-dots { flex: 0 0 auto; flex-wrap: nowrap; margin: 0 8px; }
 .selection-bar:not(.docked) .bar-sep { margin: 0 6px; }
 .selection-bar .bar-align { display: flex; }
 .dn-tooltip { position: fixed; z-index: 1000; max-width: 260px; padding: 4px 8px; border: 1px solid var(--dn-border); border-radius: 6px; background: var(--dn-panel); color: var(--dn-text); box-shadow: 0 4px 12px rgb(0 0 0 / 0.2); font-size: 12px; line-height: 1.35; white-space: normal; pointer-events: none; animation: tip-in 120ms ease-out; }

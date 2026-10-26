@@ -1,5 +1,6 @@
 import {
   DEFAULT_SIZE,
+  DEFAULT_SKETCH,
   DEFAULT_SWATCH_HEX,
   newId,
   orderBetween,
@@ -33,6 +34,8 @@ export const EMPTY_CONTENT: { [T in CardType]: () => CardContent[T] } = {
   file: () => ({ assetId: '', name: '', size: 0, mime: '' }),
   movie: () => ({ kind: 'movie', title: '' }),
   swatch: () => ({ hex: DEFAULT_SWATCH_HEX }),
+  sketch: () => ({ ...DEFAULT_SKETCH }),
+  ink: () => ({ width: 1, height: 1 }),
 }
 
 /** Where a new card goes: a world point (card's top-centre lands there) or a column slot. */
@@ -105,7 +108,7 @@ export function createCard(
   doc.commit(tx)
   // Created somewhere else (e.g. straight into the Toy box): don't select or edit it here.
   if (opts.boardId && opts.boardId !== boardId()) return card.id
-  const editable = type === 'note' || type === 'todo' || type === 'column' || type === 'board' || type === 'link' || type === 'movie' || type === 'swatch'
+  const editable = type === 'note' || type === 'todo' || type === 'column' || type === 'board' || type === 'link' || type === 'movie' || type === 'swatch' || type === 'sketch'
   if (opts.edit ?? editable) beginEdit(card.id, { isNew: true })
   else select([card.id])
   return card.id
@@ -220,6 +223,8 @@ export function moveCardTo(id: Id, toBoard: Id, place: Placement) {
   for (const conn of doc.connectionsOn(c.boardId)) if (conn.from === id || conn.to === id) patches[conn.id] = { purged: true }
   // Its comments go with it, so the new board's sharing (or Toy box privacy) covers them.
   for (const m of doc.commentsOn(id)) patches[m.id] = { boardId: toBoard }
+  // So does its ink.
+  for (const s of doc.strokesOn(id)) patches[s.id] = { boardId: toBoard }
   // Its labels map by name onto the new board's.
   if (toBoard !== c.boardId) for (const [key, p] of Object.entries(moveLabels([c], labelsOn(c.boardId), toBoard))) patches[key] = { ...patches[key], ...p } as Partial<Obj>
   doc.update(patches)

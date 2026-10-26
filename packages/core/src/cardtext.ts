@@ -5,6 +5,7 @@
 import type { Card, Id } from './model.ts'
 import { mdToText, noteMarkdown } from './markdown.ts'
 import { swatchHex, swatchName } from './swatch.ts'
+import { sketchOf } from './sketch.ts'
 
 // Cards are synced from everyone's devices: a malformed one must not break search
 // or the trash list for the whole workspace, so it degrades to a generic answer.
@@ -56,6 +57,8 @@ function rawCardText(c: Card): string {
     }
     case 'swatch':
       return [swatchName(c as Card<'swatch'>), swatchHex(c as Card<'swatch'>)].filter(Boolean).join('\n')
+    case 'sketch':
+      return sketchOf(c).title
     default:
       return ''
   }
@@ -87,6 +90,10 @@ function rawCardLabel(c: Card, boardTitle: (boardId: Id) => string): string {
     }
     case 'swatch':
       return swatchName(c as Card<'swatch'>) || swatchHex(c as Card<'swatch'>)
+    case 'sketch':
+      return sketchOf(c).title || 'Sketch'
+    case 'ink':
+      return 'Drawing'
     default:
       return 'Card'
   }

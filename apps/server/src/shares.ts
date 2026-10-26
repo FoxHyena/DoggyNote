@@ -9,7 +9,7 @@ type ShareRow = { token: string; board_id: string; include_children: number; per
 const alive = (o: Obj) => !o.purged && !o.deletedAt
 const visibleRelations = (items: Obj[]) => {
   const cards = new Set(items.filter((o) => o.kind === 'card' && alive(o)).map((o) => o.id))
-  return items.filter((o) => o.kind === 'comment' ? !!o.cardId && cards.has(o.cardId) : o.kind === 'connection' ? !!o.from && !!o.to && cards.has(o.from) && cards.has(o.to) : true)
+  return items.filter((o) => o.kind === 'comment' || o.kind === 'stroke' ? !!o.cardId && cards.has(o.cardId) : o.kind === 'connection' ? !!o.from && !!o.to && cards.has(o.from) && cards.has(o.to) : true)
 }
 const WEEK = 7 * 86_400_000
 export const shares = new Hono<AppEnv>()

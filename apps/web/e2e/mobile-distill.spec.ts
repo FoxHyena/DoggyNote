@@ -9,10 +9,11 @@ test('Add uses one aligned compact button grid with three leading cards', async 
   await sheet.evaluate(el => Promise.all(el.getAnimations().map(a => a.finished.catch(() => undefined))))
   await expect(sheet.locator('.add-primary button')).toHaveText(['Note', 'To-do', 'Board'])
   await expect(sheet.locator('.add-primary-note')).toHaveCount(1)
-  await expect(sheet.getByRole('menuitem')).toHaveCount(12)
+  await expect(sheet.getByRole('menuitem')).toHaveCount(14)
   for (const width of [page.viewportSize()!.width, 320]) {
     await page.setViewportSize({ width, height: page.viewportSize()!.height })
-    expect((await sheet.boundingBox())!.height).toBeLessThanOrEqual(290)
+    // Header, the three leading cards, then four rows of occasional tools (Sketch and Draw took the fourth).
+    expect((await sheet.boundingBox())!.height).toBeLessThanOrEqual(340)
     const boxes = []
     for (const button of await sheet.getByRole('menuitem').all()) {
       const box = (await button.boundingBox())!
@@ -36,13 +37,17 @@ test('note actions use a compact dock and Colour restores focus on dismissal', a
   const bar = page.getByTestId('selection-bar')
   await selectionBarFits(page)
   await expect(bar.locator('.selection-phone-actions > button')).toHaveText(['Edit', 'Colour', 'Labels', 'Bury', 'More'])
-  await expect(bar.locator('.swatch')).toHaveCount(0)
+  await expect(bar.locator('.tint-dots')).toHaveCount(0)
   await page.getByTestId('selection-colour').tap()
   const palette = page.getByTestId('selection-style-sheet')
   expect((await palette.boundingBox())!.height).toBeLessThanOrEqual(185)
-  expect((await palette.locator('.swatches').boundingBox())!.width).toBeLessThanOrEqual(220)
-  expect(await palette.evaluate(el => el.querySelector('.swatches')!.getBoundingClientRect().top - el.querySelector('.selection-sheet-head')!.getBoundingClientRect().bottom)).toBeCloseTo(12, 0)
-  for (const swatch of await palette.locator('.swatch').all()) expect((await swatch.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+  expect((await palette.locator('.tint-dots').boundingBox())!.width).toBeLessThanOrEqual(220)
+  expect(await palette.evaluate(el => el.querySelector('.tint-dots')!.getBoundingClientRect().top - el.querySelector('.selection-sheet-head')!.getBoundingClientRect().bottom)).toBeCloseTo(12, 0)
+  // 32px dots, each with a 44px+ target around it.
+  for (const dot of await palette.locator('.color-dot').all()) {
+    expect((await dot.boundingBox())!.height).toBeGreaterThanOrEqual(32)
+    expect(await dot.evaluate((el) => el.getBoundingClientRect().height - 2 * parseFloat(getComputedStyle(el, '::after').top))).toBeGreaterThanOrEqual(44)
+  }
   await page.getByTestId('swatch-sky').tap()
   await expect(page.getByTestId('swatch-sky')).toHaveAttribute('aria-pressed', 'true')
   await page.keyboard.press('Escape')

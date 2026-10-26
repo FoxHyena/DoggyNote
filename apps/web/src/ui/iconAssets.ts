@@ -71,6 +71,11 @@ import houseLineSvg from '@phosphor-icons/core/regular/house-line.svg?raw'
 import bowlFoodSvg from '@phosphor-icons/core/regular/bowl-food.svg?raw'
 import starSvg from '@phosphor-icons/core/regular/star.svg?raw'
 import heartSvg from '@phosphor-icons/core/regular/heart.svg?raw'
+import scribbleSvg from '@phosphor-icons/core/regular/scribble.svg?raw'
+import pencilSimpleLineSvg from '@phosphor-icons/core/regular/pencil-simple-line.svg?raw'
+import penSvg from '@phosphor-icons/core/regular/pen.svg?raw'
+import highlighterSvg from '@phosphor-icons/core/regular/highlighter.svg?raw'
+import eraserSvg from '@phosphor-icons/core/regular/eraser.svg?raw'
 import pawPrintFillSvg from '@phosphor-icons/core/fill/paw-print-fill.svg?raw'
 import starFillSvg from '@phosphor-icons/core/fill/star-fill.svg?raw'
 import pushPinFillSvg from '@phosphor-icons/core/fill/push-pin-fill.svg?raw'
@@ -154,6 +159,13 @@ export const ICONS = {
   bowl: body(bowlFoodSvg),
   star: body(starSvg),
   heart: body(heartSvg),
+  /** A sketch card: a doodle on its own sheet. */
+  sketch: body(scribbleSvg),
+  /** Drawing straight on the board: a pencil and the line it left. */
+  draw: body(pencilSimpleLineSvg),
+  pen: body(penSvg),
+  highlighter: body(highlighterSvg),
+  eraser: body(eraserSvg),
   paw: body(pawPrintFillSvg),
   starFilled: body(starFillSvg),
   pinFilled: body(pushPinFillSvg),

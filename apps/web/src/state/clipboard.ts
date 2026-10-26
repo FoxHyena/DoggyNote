@@ -166,7 +166,7 @@ function moveBack(clip: ClipPayload, at: Vec, column?: { id: Id; orders: number[
       const c = o as Card
       patches[c.id] = { boardId: c.boardId, x: c.x, y: c.y, z: c.z, columnId: c.columnId ?? null, order: c.order, ...(clip.roots.includes(c.id) ? { deletedAt: null } : {}) }
     }
-    if (o.kind === 'connection') patches[o.id] = { boardId: o.boardId }
+    if (o.kind === 'connection' || o.kind === 'stroke') patches[o.id] = { boardId: o.boardId }
   }
   if (target !== clip.boardId) {
     const moved = new Set(Object.keys(patches))

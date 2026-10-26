@@ -1,17 +1,17 @@
 import { Hono, type Context } from 'hono'
-import { stickerObjectSchema, isReservedId } from '@doggynote/core/agent'
+import { stickerObjectSchema, strokeObjectSchema, isReservedId } from '@doggynote/core/agent'
 import type { AppEnv } from './env.ts'
 import { accessGuard, bumpAccess, loadAccess, newBoardAccess, type Access } from './access.ts'
 import { prepareNote } from './notes.ts'
 import { checkPositionLocks, dropLockedLayout, positionWriteGuards } from './position.ts'
 import { notifyRooms } from './realtime.ts'
-import { LABEL_FIELD, validLabelField, decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
+import { LABEL_FIELD, isBoardInkSize, isSketchContent, isSketchPaper, isSketchTitle, validLabelField, decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
 import * as Y from 'yjs'
 
 // Push: field patches, merged per top-level field (last write to arrive wins).
 // Pull: every object whose seq is above the client's cursor.
 
-export const KINDS = new Set(['board', 'card', 'connection', 'comment', 'sticker'])
+export const KINDS = new Set(['board', 'card', 'connection', 'comment', 'sticker', 'stroke'])
 const KEY = /^[a-zA-Z][a-zA-Z0-9]{0,31}$/
 // ':' is for namespaced ids like "toybox:<userId>".
 const ID = /^[a-zA-Z0-9_:-]{1,64}$/
@@ -326,7 +326,13 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
       if (typeof board !== 'string' || next.get(board)?.kind !== 'board' || !editable(board)) ok = false
       if (prev && (typeof prev.data.boardId !== 'string' || !editable(prev.data.boardId))) ok = false
       if (o.kind === 'card') {
-        if (!['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie', 'swatch'].includes(o.type as string)) ok = false
+        if (!['note', 'todo', 'board', 'image', 'link', 'column', 'file', 'movie', 'swatch', 'sketch', 'ink'].includes(o.type as string)) ok = false
+        // A sketch's paper colour goes straight into CSS on every device: only canonical #RRGGBB.
+        if (o.type === 'sketch' && !o.purged && (!isSketchContent(o.content) || (o.sketchPaper != null && !isSketchPaper(o.sketchPaper)) || (o.sketchTitle != null && !isSketchTitle(o.sketchTitle)))) ok = false
+        // Only sketches carry a sketch title or paper.
+        if (o.type !== 'sketch' && ('sketchTitle' in patch || 'sketchPaper' in patch)) ok = false
+        // Ink drawn on the board sits on the board, never in a column.
+        if (o.type === 'ink' && !o.purged && (!isBoardInkSize(o.content) || o.columnId != null)) ok = false
         // A colour card's HEX goes straight into CSS on every device: only canonical #RRGGBB.
         if (o.type === 'swatch' && !o.purged) { const hex = (o.content as { hex?: unknown } | undefined)?.hex; if (normalizeSwatchHex(hex) !== hex) ok = false }
         if (o.type === 'column' && o.columnId != null) ok = false
@@ -367,6 +373,16 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
               if (!refs.some((r) => (!r.owner_id || r.owner_id === userId) && readable(r.board_id))) ok = false
             }
           }
+        }
+      }
+      if (o.kind === 'stroke') {
+        // Its geometry is drawn as SVG and canvas paths on every device.
+        if (!o.purged && !strokeObjectSchema.safeParse(o).success) ok = false
+        // Ink belongs to a sketch or board ink card on the same board.
+        if (prev && o.cardId !== prev.data.cardId) ok = false
+        if (!prev || 'boardId' in patch) {
+          const card = next.get(o.cardId as string)
+          if (card?.kind !== 'card' || (card.type !== 'sketch' && card.type !== 'ink') || card.boardId !== board || (!prev && (card.deletedAt || card.purged))) ok = false
         }
       }
       if (o.kind === 'comment') {

@@ -1,5 +1,5 @@
 import { For, Show, createEffect, createMemo, createSignal, type JSX } from 'solid-js'
-import { LABEL_PRESETS, MAX_LABEL_NAME, inkFor, normalizeLabelName, normalizeSwatchHex, pickLabelColor, type Card, type Label, type LabelColor } from '@doggynote/core'
+import { LABEL_PRESETS, MAX_LABEL_NAME, inkFor, normalizeLabelName, pickLabelColor, type Card, type Label, type LabelColor } from '@doggynote/core'
 import { COPY, cardColors } from '@doggynote/theme'
 import { theme } from '../theme.ts'
 import * as doc from '../state/doc.ts'
@@ -7,6 +7,7 @@ import { createLabel, findLabel, hasLabel, labelNameProblem, labelUsage, labelsF
 import { showToast } from '../state/toast.ts'
 import { Icon, IconButton } from './icons.tsx'
 import { Popover } from './Popover.tsx'
+import { ColorDots } from './ColorDots.tsx'
 import './labels.css'
 import { cardObstacles } from './floatingPlacement.ts'
 import { phone, touch } from '../state/device.ts'
@@ -63,46 +64,18 @@ export function LabelsButton(props: { cards: Card[]; labelled?: boolean }) {
   )
 }
 
-/** Preset dots, then the system colour wheel in the last slot. */
-function ColorDots(props: { label: string; value: LabelColor; onPick: (c: LabelColor) => void; live?: boolean }) {
-  const custom = () => isHex(props.value)
-  const pick = (value: string) => {
-    const hex = normalizeSwatchHex(value)
-    if (hex) props.onPick(hex as LabelColor)
-  }
+/** Preset dots, then the system colour wheel in the last slot (the shared picker). */
+function LabelColorDots(props: { label: string; value: LabelColor; onPick: (c: LabelColor) => void; live?: boolean }) {
   return (
-    <div class="label-dots" role="group" aria-label={props.label}>
-      <For each={LABEL_PRESETS}>
-        {(c) => (
-          <button
-            type="button"
-            class="label-dot"
-            classList={{ on: props.value === c }}
-            style={labelStyle(c)}
-            data-testid="label-color"
-            data-color={c}
-            aria-label={colorName(c)}
-            data-tip={colorName(c)}
-            aria-pressed={props.value === c}
-            onClick={() => props.onPick(c)}
-          />
-        )}
-      </For>
-      <label class="label-dot label-custom" classList={{ on: custom() }} style={custom() ? labelStyle(props.value) : undefined} data-tip="Custom colour">
-        <Show when={!custom()}>
-          <Icon size={14} name="plus" />
-        </Show>
-        <input
-          type="color"
-          data-testid="label-custom-color"
-          aria-label="Custom colour"
-          value={custom() ? props.value.toLowerCase() : '#3e63dd'}
-          // The wheel fires input on every drag step: a new label follows it, an existing one saves once on close.
-          onInput={(e) => props.live && pick(e.currentTarget.value)}
-          onChange={(e) => pick(e.currentTarget.value)}
-        />
-      </label>
-    </div>
+    <ColorDots
+      class="label-dots"
+      label={props.label}
+      dots={LABEL_PRESETS.map((c) => ({ value: c, name: colorName(c), paint: `var(--dn-card-${c}-bg)`, data: { 'data-color': c } }))}
+      value={props.value}
+      onPick={(c) => props.onPick(c as LabelColor)}
+      dotTestId="label-color"
+      custom={{ value: isHex(props.value) ? props.value : null, fallback: '#3e63dd', testid: 'label-custom-color', live: !!props.live, onPick: (hex) => props.onPick(hex as LabelColor) }}
+    />
   )
 }
 
@@ -329,7 +302,7 @@ export function LabelsPopover(props: { cards: Card[]; anchor: () => HTMLElement;
                         </Show>
                       </Show>
                       <Show when={recoloring() === id && renaming() !== id}>
-                        <ColorDots label={`Colour of ${l().name}`} value={l().color} onPick={(c) => { recolorLabel(boardId, id, c); setRecoloring(null) }} />
+                        <LabelColorDots label={`Colour of ${l().name}`} value={l().color} onPick={(c) => { recolorLabel(boardId, id, c); setRecoloring(null) }} />
                       </Show>
                     </li>
                   )}
@@ -349,7 +322,7 @@ export function LabelsPopover(props: { cards: Card[]; anchor: () => HTMLElement;
         </ul>
       </Show>
       <Show when={canCreate()}>
-        <ColorDots label="Colour for the new label" value={newColor()} live onPick={setNewColor} />
+        <LabelColorDots label="Colour for the new label" value={newColor()} live onPick={setNewColor} />
       </Show>
       <Show when={!writable() && query().trim() && !shown().length}>
         <p class="labels-empty" data-testid="labels-empty">No labels match</p>

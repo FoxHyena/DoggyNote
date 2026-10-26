@@ -8,9 +8,10 @@ import * as doc from '../state/doc.ts'
 import { appendOrder, createCard, type Placement } from '../state/actions.ts'
 import { boardId, camera, connectMode, setConnectMode, setTrashOpen, trashOpen, viewport } from '../state/ui.ts'
 import { addAnyFiles, addImages } from '../canvas/paste.ts'
+import { beginBoardDrawing, boardDrawing, endBoardDrawing } from '../state/drawing.ts'
 import { Icon, type IconName } from './icons.tsx'
 
-export type Tool = { id: CardType | 'line'; label: string; icon: IconName }
+export type Tool = { id: CardType | 'line' | 'draw'; label: string; icon: IconName }
 
 export const TOOLS: Tool[] = [
   { id: 'note', label: 'Note', icon: 'note' },
@@ -21,10 +22,24 @@ export const TOOLS: Tool[] = [
   { id: 'column', label: 'Column', icon: 'column' },
   { id: 'movie', label: 'Movie', icon: 'film' },
   { id: 'swatch', label: 'Colour', icon: 'swatch' },
+  { id: 'sketch', label: 'Sketch', icon: 'sketch' },
+  { id: 'draw', label: 'Draw', icon: 'draw' },
 ]
 
 export const PRIMARY_TOOLS = TOOLS.slice(0, 3)
 export const MORE_TOOLS = TOOLS.slice(3)
+
+/** Tools that switch a mode rather than add a card. */
+export const modeTool = (id: Tool['id']): id is 'line' | 'draw' => id === 'line' || id === 'draw'
+
+/** The Line and Draw tools toggle their mode; any other tool ends draw mode and adds a card. */
+export function useTool(id: Tool['id'], place: () => Placement | null) {
+  if (id === 'draw') return boardDrawing() ? endBoardDrawing() : beginBoardDrawing()
+  endBoardDrawing()
+  if (id === 'line') return setConnectMode(connectMode() ? null : { from: null })
+  const at = place()
+  if (at) createCard(id, at)
+}
 
 /** A click on a tool drops the card near the viewport centre, in free space. */
 export function centrePlacement(type: CardType = 'note'): Placement {
@@ -58,22 +73,18 @@ export function Toolbar() {
     el.setPointerCapture(e.pointerId)
 
     const move = (ev: PointerEvent) => {
-      if (!dragging && Math.hypot(ev.clientX - start.x, ev.clientY - start.y) > 6 && tool.id !== 'line') dragging = true
+      if (!dragging && Math.hypot(ev.clientX - start.x, ev.clientY - start.y) > 6 && !modeTool(tool.id)) dragging = true
       if (dragging) setGhost({ tool, at: { x: ev.clientX, y: ev.clientY } })
     }
     const up = (ev: PointerEvent) => {
       el.removeEventListener('pointermove', move)
       el.removeEventListener('pointerup', up)
       setGhost(null)
-      if (tool.id === 'line') {
-        setConnectMode(connectMode() ? null : { from: null })
-        return
-      }
-      const place = dragging ? placementAt(ev.clientX, ev.clientY) : centrePlacement(tool.id as CardType)
-      if (!place) return
-      // Columns can't nest.
-      if (tool.id === 'column' && 'columnId' in place) return
-      createCard(tool.id, place)
+      useTool(tool.id, () => {
+        const place = dragging ? placementAt(ev.clientX, ev.clientY) : centrePlacement(tool.id as CardType)
+        // Columns can't nest.
+        return place && tool.id === 'column' && 'columnId' in place ? null : place
+      })
     }
     el.addEventListener('pointermove', move)
     el.addEventListener('pointerup', up)
@@ -89,15 +100,15 @@ export function Toolbar() {
               {(t) => (
                 <button
                   class="tool"
-                  classList={{ active: t.id === 'line' && !!connectMode(), 'tool-primary': t.id === 'note' }}
+                  classList={{ active: (t.id === 'line' && !!connectMode()) || (t.id === 'draw' && boardDrawing()), 'tool-primary': t.id === 'note' }}
                   data-testid={`tool-${t.id}`}
                   aria-label={t.label}
+                  aria-pressed={t.id === 'draw' ? boardDrawing() : undefined}
                   onClick={(e) => {
                     if (e.detail !== 0) return
-                    if (t.id === 'line') setConnectMode(connectMode() ? null : { from: null })
-                    else createCard(t.id, centrePlacement(t.id))
+                    useTool(t.id, () => centrePlacement(t.id as CardType))
                   }}
-                  title={t.id === 'line' ? 'Line: click two cards to connect them' : `${t.label}: click to add, or drag onto the board`}
+                  title={t.id === 'line' ? 'Line: click two cards to connect them' : t.id === 'draw' ? 'Draw: ink straight on the board' : `${t.label}: click to add, or drag onto the board`}
                   onPointerDown={(e) => onToolPointerDown(e, t)}
                   // The new card takes focus on pointerup; a tap's late mousedown would take it back.
                   onMouseDown={(e) => e.preventDefault()}
