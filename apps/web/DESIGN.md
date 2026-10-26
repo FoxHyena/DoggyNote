@@ -211,6 +211,8 @@ The same family supplies the **diff** colours (added, changed, removed) shown wh
 ### Named Rules
 **The One Lamp Rule.** Retriever Gold is the only accent. It appears where attention belongs (selection, focus, the single primary action, the active tool) and nowhere decorative. If a screen has two gold buttons, one of them is wrong.
 
+**The Unread Dot exception.** `--dn-unread` (Collar Coral in the den, a deep coral by day) is the one colour outside the lamp. It marks a friend's comment you haven't seen, only as a dot of 8–12px ringed in the surface behind it: on the comment badge, a board tile, a Boards row and the top-bar bell. Never text, never a fill, never larger. It passes 3:1 on every surface in `theme.test.ts`.
+
 **The Twin Rule.** No colour exists in one theme only. Every new token gets a dark and a light value in `tokens.ts` and passes `theme.test.ts`: 4.5:1 for text, 3:1 for the selection outline.
 
 **The No Hex Rule.** Components never contain a hex value. They read `var(--dn-*)`. Canvas drawing code reads `surfaces[theme()]`.

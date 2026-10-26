@@ -113,11 +113,14 @@ export function stampComment(
   if (!prev) {
     patch.authorId = me.id
     patch.author = me.username
+    // Server time, so unread never depends on whose clock is off (core/unread.ts).
+    patch.postedAt = Date.now()
     return null
   }
   if (prev.kind !== 'comment') return 'bad kind'
   delete patch.authorId
   delete patch.author
+  delete patch.postedAt
   if (patch.purged === true) patch.text = ''
   if (prev.author_id !== me.id && !Object.keys(patch).every((k) => OTHERS_MAY_SET.has(k))) return 'Only the author can change a comment'
   return null

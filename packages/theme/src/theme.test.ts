@@ -58,6 +58,10 @@ describe('contrast', () => {
     it(`${t}: selection outline clears 3:1 on canvas`, () => {
       expect(contrast(s.selection, s.bg)).toBeGreaterThanOrEqual(3)
     })
+    it(`${t}: the unread dot clears 3:1 on every surface it sits on`, () => {
+      // It always wears a ring of panel colour, so the gold comment badge never touches it.
+      for (const bg of [s.bg, s.panel, s.card, s.cardHover]) expect(contrast(s.unread, bg)).toBeGreaterThanOrEqual(3)
+    })
     it(`${t}: proposal outlines clear 3:1 on canvas and card, and their chip text 4.5:1`, () => {
       for (const d of [s.diffAdded, s.diffChanged, s.diffRemoved]) {
         expect(contrast(d, s.bg)).toBeGreaterThanOrEqual(3)

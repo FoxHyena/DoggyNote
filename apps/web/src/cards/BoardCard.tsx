@@ -4,6 +4,7 @@ import { boardDisplayTitle, cardColorVars } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { endEdit, onEndEdit } from '../state/ui.ts'
 import { BoardIconSvg } from '../ui/icons.tsx'
+import { unreadInside, unreadLabel } from '../state/unread.ts'
 import type { CardProps } from '../canvas/CardView.tsx'
 
 export const UNTITLED_BOARD = 'Untitled board'
@@ -42,6 +43,9 @@ export function BoardCard(props: CardProps<'board'>) {
     <div class="board-card" data-open-board={props.card.content.boardId} title={props.readOnly ? 'Open board' : 'Double-click to open · Enter to rename'}>
       <div class="board-tile" style={{ '--tile-bg': cardColorVars(board()?.color, 'gold').bg, '--tile-fg': cardColorVars(board()?.color, 'gold').text }}>
         <BoardIconSvg icon={board()?.icon ?? 'paw'} size={30} />
+        <Show when={!props.lod && unreadInside(props.card.content.boardId)}>
+          {(n) => <span class="unread-dot board-unread" data-testid="board-unread" role="img" aria-label={`${unreadLabel(n())} inside`} />}
+        </Show>
       </div>
       <Show
         when={props.editing}

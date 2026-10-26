@@ -3,6 +3,7 @@ import type { AppEnv } from './env.ts'
 import { auth, requireUser, users } from './auth.ts'
 import { stickers, telegramWebhook } from './stickers.ts'
 import { sync } from './sync.ts'
+import { seen } from './seen.ts'
 import { assets } from './assets.ts'
 import { shares } from './shares.ts'
 import { agents } from './agents.ts'
@@ -95,6 +96,7 @@ authed.use('/notes/*', async (c, next) => {
 })
 authed.route('/', users)
 authed.route('/', sync)
+authed.route('/', seen)
 authed.route('/', stickers)
 authed.route('/', movies)
 authed.get('/unfurl', async (c) => {

@@ -51,6 +51,8 @@ import { phone } from './state/device.ts'
 import { installClipboard } from './state/clipboard.ts'
 import { isPreviewBoard } from './state/preview.ts'
 import { ProposalBanner } from './ui/ProposalBanner.tsx'
+import { UnreadButton } from './ui/Unread.tsx'
+import { installUnread } from './state/unread.ts'
 
 /** The board can be edited now: you may edit it, and no agent proposal is being previewed. */
 const editable = () => canEditBoard(boardId()) && !doc.previewing()
@@ -99,6 +101,7 @@ function EditorApp() {
         if (!doc.getBoard(boardId()) || !canReadBoard(boardId())) openBoard(homeBoardId())
         migrateNotesToMarkdown()
         ensureToybox()
+        installUnread()
         openLaunchIntent()
       })
     }
@@ -160,6 +163,7 @@ function EditorApp() {
                   <button class="icon-btn" data-testid="open-fetch" aria-label={`${COPY.search} (⌘K)`} data-tooltip={`${COPY.search} (⌘K)`} onClick={() => setPaletteOpen(true)}><Icon name="search" /></button>
                   <ToyboxButton />
                 </Show>
+                <UnreadButton />
                 <Collaborators />
                 <BoardActions boardId={boardId()} primary={<ShareButton boardId={boardId()} />} />
                 <AccountMenu mode={theme.mode()} onThemeChange={theme.setMode} />

@@ -34,6 +34,7 @@ import selectionSvg from '@phosphor-icons/core/regular/selection.svg?raw'
 import cameraSvg from '@phosphor-icons/core/regular/camera.svg?raw'
 import caretRightSvg from '@phosphor-icons/core/regular/caret-right.svg?raw'
 import chatSvg from '@phosphor-icons/core/regular/chat.svg?raw'
+import bellSvg from '@phosphor-icons/core/regular/bell.svg?raw'
 import checkSvg from '@phosphor-icons/core/regular/check.svg?raw'
 import slidersHorizontalSvg from '@phosphor-icons/core/regular/sliders-horizontal.svg?raw'
 import downloadSimpleSvg from '@phosphor-icons/core/regular/download-simple.svg?raw'
@@ -122,6 +123,7 @@ export const ICONS = {
   camera: body(cameraSvg),
   open: body(caretRightSvg),
   comment: body(chatSvg),
+  bell: body(bellSvg),
   check: body(checkSvg),
   sliders: body(slidersHorizontalSvg),
   download: body(downloadSimpleSvg),

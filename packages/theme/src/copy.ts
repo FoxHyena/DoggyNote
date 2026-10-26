@@ -97,6 +97,15 @@ export const COPY = {
     /** The server unsynced your copy: you can't edit every copy. */
     detached: "This note stopped syncing: you can't edit every copy. Your edit is kept here.",
   },
+  /** Comments from friends you haven't seen yet (the top-bar list and the dots). */
+  unread: {
+    title: 'New for you',
+    /** The top-bar button's label, next to the count. */
+    short: 'New',
+    markAll: 'Mark all as read',
+    caughtUp: 'All caught up. Good dog!',
+    goTo: 'Go to',
+  },
   /** The public guides at /docs. */
   guides: {
     /** Account menu and sign-in link. */
