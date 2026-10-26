@@ -275,7 +275,7 @@ export function GroupingPlayground() {
         <span class="gp-group-dot" style={{ background: `var(--dn-card-${g().color}-bg)` }} />
         <input class="gp-group-title" aria-label={`Group name: ${g().title}`} value={g().title} maxlength="70" onChange={e => updateGroup(g().id, group => ({ ...group, title: e.currentTarget.value.trim() || 'Untitled group' }))} />
         <span class="gp-count">{g().columns.length} columns <span>· {noteCount(g())} items</span></span>
-        <Show when={concept() === 'areas'}><button class="gp-text-button gp-tidy" onClick={() => tidy(g().id)}><Icon name="alignTop" size={15} />Tidy</button></Show>
+        <Show when={concept() === 'areas'}><button class="gp-text-button gp-tidy" onClick={() => tidy(g().id)}><Icon name="tidy" size={15} />Tidy</button></Show>
         <details class="gp-add-menu"><summary aria-label={`Add to ${g().title}`}><Icon name="plus" size={16} />Add to area</summary><div class="gp-add-options">
           <button onClick={e => added(e, () => addColumn(g().id))}><Icon name="column" size={17} />Column</button>
           <For each={['note', 'todo', 'link'] as const}>{kind => <button onClick={e => added(e, () => addItem(g().id, kind))}><Icon name={itemIcon(kind)} size={17} />{kind === 'todo' ? 'Checklist' : kind === 'link' ? 'Link' : 'Note'}</button>}</For>

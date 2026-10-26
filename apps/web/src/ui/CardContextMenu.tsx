@@ -59,7 +59,7 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
             <button class="menu-item" role="menuitem" disabled={!canLabel()} onClick={() => setLabels(true)}><Icon name="label" size={18} />Labels</button>
             <button class="menu-item" role="menuitem" disabled={!sole() || sole()?.type === 'board'} onClick={() => run(() => openThread(card()!.id))}><Icon name="comment" size={18} />Comment</button>
             <Show when={canCreateAreaFromSelection()}><button class="menu-item" role="menuitem" data-testid="area-from-selection" onClick={() => run(() => { createAreaFromSelection() })}><Icon name="board" size={18} />Create area from selection</button></Show>
-            <Show when={sole()?.type === 'area'}><button class="menu-item" role="menuitem" onClick={() => run(() => tidyArea(sole()!.id))}>Tidy area</button><button class="menu-item" role="menuitem" onClick={() => run(() => buryArea(sole()!.id))}>Bury area and contents</button></Show>
+            <Show when={sole()?.type === 'area'}><button class="menu-item" role="menuitem" onClick={() => run(() => tidyArea(sole()!.id))}><Icon name="tidy" size={18} />Tidy area</button><button class="menu-item" role="menuitem" onClick={() => run(() => buryArea(sole()!.id))}>Bury area and contents</button></Show>
             <div class="menu-sep" role="separator" />
             <button class="menu-item" role="menuitem" disabled={!writable()} onClick={() => run(burySelection)}><Icon name="bury" size={18} />{sole()?.type === 'area' ? 'Remove area (keep contents)' : COPY.bury}</button>
           </Show>
