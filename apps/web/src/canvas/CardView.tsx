@@ -26,6 +26,8 @@ import { SwatchCard } from '../cards/SwatchCard.tsx'
 import { SketchCard } from '../cards/SketchCard.tsx'
 import { InkCard } from '../cards/InkCard.tsx'
 import { CardLabels } from '../ui/Labels.tsx'
+import { SyncedMarker } from '../ui/SyncedCopies.tsx'
+import { copiesOf } from '../state/synced.ts'
 
 export type CardProps<T extends Card['type'] = Card['type']> = {
   card: Card<T>
@@ -152,6 +154,9 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
       </ErrorBoundary>
       <Show when={isPositionLocked(props.card.id) && !props.readOnly && !props.lod}>
         <span class="position-lock-badge" data-testid="position-lock-badge" title={props.card.positionLocked === true ? 'Position locked — select to unlock' : 'Column layout locked — unlock the column or its locked member'} aria-label="Position locked"><Icon name="lock" size={12} /></span>
+      </Show>
+      <Show when={!props.lod && props.card.type === 'note' && copiesOf(props.card.id).length}>
+        <SyncedMarker card={props.card} />
       </Show>
       <Show when={comments() && !props.lod}>
         <button

@@ -23,6 +23,8 @@ INSERT INTO board_access (board_id, owner_id, legacy) VALUES ('home', NULL, 1);
 " > /dev/null
 node scripts/seed-stickers.mjs "$DIR"
 : > "$DIR/fixture.env"
-exec pnpm exec wrangler dev --env-file "$DIR/fixture.env" --port "${PORT:-8787}" --persist-to "$DIR" --var ALLOWED_ORIGINS:tauri://localhost,http://localhost:${DESKTOP_PORT:-4174} --var DEV_DIAG:1 --var MIN_CLIENT:0.0.0 --var ASSET_TOKEN_SECRET:e2e-only-not-a-real-secret \
+# Tests do not use the inspector. An ephemeral port avoids a race with another
+# worktree's Worker even when their HTTP ports already differ.
+exec pnpm exec wrangler dev --env-file "$DIR/fixture.env" --port "${PORT:-8787}" --inspector-port 0 --persist-to "$DIR" --var ALLOWED_ORIGINS:tauri://localhost,http://localhost:${DESKTOP_PORT:-4174} --var DEV_DIAG:1 --var MIN_CLIENT:0.0.0 --var ASSET_TOKEN_SECRET:e2e-only-not-a-real-secret \
   --var TMDB_TOKEN:e2e-tmdb-token --var TMDB_BASE:http://localhost:${FIXTURE_PORT:-5180}/tmdb/3 --var TMDB_IMAGE_BASE:http://localhost:${FIXTURE_PORT:-5180}/tmdb-img \
   --var TELEGRAM_BOT_TOKEN:fixture-only-never-sent --var TELEGRAM_BOT_USERNAME:DoggyNoteFixtureBot --var TELEGRAM_WEBHOOK_SECRET:e2e-sticker-webhook

@@ -16,6 +16,8 @@ export const [connectMode, setConnectMode] = createSignal<{ from: Id | null } | 
 export const [nearHandle, setNearHandle] = createSignal('')
 export const [trashOpen, setTrashOpen] = createSignal(false)
 export const [paletteOpen, setPaletteOpen] = createSignal(false)
+/** Explicit title editing, shared by the phone's two board-navigation triggers. */
+export const [renamingBoardId, setRenamingBoardId] = createSignal<Id | null>(null)
 
 /** Touch: taps add cards to the selection (or take them out) instead of replacing it. */
 export const [selectMore, setSelectMore] = createSignal(false)
@@ -183,6 +185,7 @@ export function openBoard(id: Id) {
   // A proposal preview keeps you on its boards until you leave it.
   if (doc.previewing()) return
   endEdit()
+  setRenamingBoardId(null)
   clearSelection()
   // Switch now; hashchange fires later and would let a fast click land on the old board.
   setBoardIdSignal(id)
@@ -194,6 +197,7 @@ window.addEventListener('hashchange', () => {
   const id = boardFromHash()
   if (id === boardId()) return
   endEdit()
+  setRenamingBoardId(null)
   clearSelection()
   setBoardIdSignal(id)
   rememberBoard(id)

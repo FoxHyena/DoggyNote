@@ -280,3 +280,21 @@ test('offline removal survives restart and safely detaches a concurrent join ove
   expect(rows.filter(o=>o.areaId===areaId&&!o.deletedAt&&!o.purged)).toHaveLength(0)
   expect(rows.find(o=>o.id===joined.id)).toMatchObject({x:64,y:112,areaId:null})
 })
+
+test('a synced copy of a column note inherits the area with independent local placement',async({page})=>{
+  const {areaFixture}=await import('./area-fixture.ts'),{GRID}=await import('@doggynote/core')
+  const f=await areaFixture(page),id=f.id('synced-source')
+  const response=await postSync(page.request,{data:{changes:[{id,patch:{id,kind:'card',type:'note',boardId:f.board,columnId:f.col,areaId:null,x:0,y:0,w:240,h:90,z:1,color:'none',order:2,createdAt:Date.now(),content:{md:'Planning note to keep in sync'}}}]}})
+  expect(response.ok(),await response.text()).toBe(true)
+  await page.reload()
+  await f.element(id).click({button:'right',position:{x:30,y:20}})
+  await page.getByTestId('canvas-context-menu').getByRole('menuitem',{name:'Make a synced copy',exact:true}).click()
+  await waitForSync(page)
+  const rows=(await pullAllObjects(page.request)).objects
+  const source=rows.find(o=>o.id===id),copy=rows.find(o=>o.id!==id&&o.syncId===id)
+  expect(source).toMatchObject({columnId:f.col,areaId:null,syncId:id})
+  expect(copy).toMatchObject({columnId:null,areaId:f.area,x:24+280+GRID,y:80})
+  const element=f.element(copy.id),before=await element.boundingBox()
+  await dragBy(page,f.element(f.area).locator('.area-grip'),50,30)
+  await expect.poll(async()=>Math.round((await element.boundingBox())!.x-before!.x)).toBe(50)
+})

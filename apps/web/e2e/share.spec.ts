@@ -3,7 +3,7 @@ import { pullAllObjects } from './helpers.ts'
 import { postSync } from './helpers.ts'
 import { waitForSync } from './helpers.ts'
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test'
-import { addNote, at, cardByText, dragBy, freshBoard } from './helpers.ts'
+import { addNote, at, cardByText, chooseAppearance, dragBy, freshBoard } from './helpers.ts'
 
 // Extra devices are outside Playwright's context fixture; close them after
 // every test so old pages cannot keep polling in later tests.
@@ -52,10 +52,9 @@ test('a share link opens logged-out, read-only, with inner boards reachable', as
   await expect(v.getByTestId('canvas-controls')).toBeVisible()
   await expect(v.getByTestId('snap-toggle')).toHaveCount(0)
   await expect(v.getByTestId('account')).toHaveCount(0)
-  await v.getByTestId('viewer-more').click()
-  await v.getByRole('radio', { name: 'Light', exact: true }).click()
+  // Appearance is one icon in the viewer's top bar.
+  await chooseAppearance(v, 'Light')
   await expect(v.locator('html')).toHaveAttribute('data-theme', 'light')
-  await v.keyboard.press('Escape')
   // No editing affordances.
   await expect(v.locator('.toolbar')).toHaveCount(0)
   await expect(v.getByTestId('undo')).toHaveCount(0)

@@ -97,7 +97,7 @@ export async function renderPng(opts: ExportOptions): Promise<Rendered> {
       if (sticker && !keep.has(sticker)) return false
       const card = n.getAttribute('data-card-id')
       if (card && n.classList.contains('free') && !keep.has(card)) return false
-      const conn = n.getAttribute('data-connection-id')
+      const conn = n.getAttribute('data-connection-id') ?? n.getAttribute('data-connection-end-id')
       if (conn) {
         const c = doc.get(conn)
         if (!c || c.kind !== 'connection') return false
@@ -118,14 +118,13 @@ export async function renderPng(opts: ExportOptions): Promise<Rendered> {
       // The connector layer is a 1×1 SVG that overflows onto the board; a
       // clone gets clipped to that box, so size it to the export area.
       onCloneNode: (clone) => {
-        const svg = (clone as Element).querySelector?.('svg.connections') as SVGSVGElement | null
-        if (!svg) return
-        svg.setAttribute('width', String(box.w))
-        svg.setAttribute('height', String(box.h))
-        svg.setAttribute('viewBox', `${box.x} ${box.y} ${box.w} ${box.h}`)
-        // The clone carries every computed style inline (inset, block-size…), which
-        // would pin it back to 1×1; replace them. Its paths keep their own styles.
-        svg.setAttribute('style', `position:absolute;left:${box.x}px;top:${box.y}px;width:${box.w}px;height:${box.h}px;overflow:visible`)
+        for (const svg of (clone as Element).querySelectorAll?.('svg.connections') ?? []) {
+          svg.setAttribute('width', String(box.w))
+          svg.setAttribute('height', String(box.h))
+          svg.setAttribute('viewBox', `${box.x} ${box.y} ${box.w} ${box.h}`)
+          // Both connector layers must fill the exported world rectangle.
+          svg.setAttribute('style', `position:absolute;left:${box.x}px;top:${box.y}px;width:${box.w}px;height:${box.h}px;overflow:visible`)
+        }
       },
       fetchFn: viaProxy,
       // Same-origin session cookie (browser) or ?t= tokens already in the URLs (desktop).

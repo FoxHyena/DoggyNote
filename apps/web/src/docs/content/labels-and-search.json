@@ -1,0 +1,84 @@
+{
+  "slug": "labels-and-search",
+  "category": "working-on-boards",
+  "kind": "task",
+  "title": "Label cards and find them again",
+  "summary": "Tag related cards with a coloured label, then use Fetch to find them across your boards.",
+  "status": "published",
+  "order": 130,
+  "benefit": "Keep track of to-dos and open questions without moving cards out of place.",
+  "outcome": "Cards carry a label such as To buy, and typing it in Fetch lists every card that has it.",
+  "prerequisites": ["Edit access to the board to add or change labels. Anyone can see them."],
+  "keywords": ["tag", "search", "filter", "Fetch", "organise", "organize"],
+  "sections": [
+    {
+      "id": "how-labels-work",
+      "title": "How labels work",
+      "paragraphs": [
+        "A label is a small coloured tag on the bottom of a card. For example, while puppy-proofing a flat, label the things you need to buy To buy and the things you're unsure about Question.",
+        "Labels belong to a board. Use the same label on as many of that board's cards as you like; renaming or recolouring it changes it on all of them. A label with the same name on another board is a separate label. Columns don't take labels, but the cards inside them do."
+      ]
+    },
+    {
+      "id": "add-a-label",
+      "title": "Add a label",
+      "flow": {
+        "entry": "Right-click a card and choose Labels. On a phone or tablet, tap the card, then Labels in the bar at the bottom.",
+        "steps": [
+          { "action": "Type a name, for example To buy.", "result": "The list shows the board's labels that match. If none match, a Create row shows your new label in a colour of its own, with colour dots underneath if you'd like a different one." },
+          { "action": "Press Enter.", "result": "The highlighted label goes on the card: the matching one if there is one, otherwise the new label. Its tag appears on the card and it's ticked in the list." },
+          { "action": "Press Escape, or click outside the list.", "result": "The list closes and the label stays on the card." }
+        ],
+        "completion": "Labels save straight away and sync to everyone on the board.",
+        "correction": "Open Labels again and click the label to take it off the card. Undo reverses the last change too."
+      },
+      "figures": [{
+        "src": "/docs/assets/labels-and-search/labels-popover.png",
+        "darkSrc": "/docs/assets/labels-and-search/labels-popover-dark.png",
+        "alt": "The Labels list open under a selected note that says Move the shoe rack out of the hallway. The search field contains To. Below it is the existing To buy label with colour, rename and remove icons, then a Create row for a new label called To, and a row of colour dots.",
+        "caption": "Typing To highlights the existing To buy label. Enter puts it on the card.",
+        "width": 656,
+        "height": 584
+      }]
+    },
+    {
+      "id": "several-cards",
+      "title": "Label several cards at once",
+      "paragraphs": [
+        "Select the cards first: Shift-click each one, or drag a box around them. Then right-click one of them and choose Labels. Clicking a label adds it to every selected card. A dash instead of a tick means only some of them have it; clicking it adds it to the rest.",
+        "You can also move through the list with the arrow keys and press Enter to add or remove the highlighted label."
+      ]
+    },
+    {
+      "id": "find-labelled-cards",
+      "title": "Find cards by label",
+      "flow": {
+        "entry": "Open Fetch, DoggyNote's search, from the magnifying glass in the top bar, or press ⌘K (Ctrl+K on Windows).",
+        "steps": [
+          { "action": "Type the label's name, for example to buy.", "result": "Every card with that label is listed with its board and its labels. Fetch also matches board names and the words on cards." },
+          { "action": "Choose a result, or use the arrow keys and press Enter.", "result": "DoggyNote opens the card's board, selects the card and brings it into view. If it's inside a collapsed column, the column opens." }
+        ],
+        "completion": "Fetch searches every board you can open.",
+        "correction": "Press Escape to close Fetch without going anywhere."
+      },
+      "figures": [{
+        "src": "/docs/assets/labels-and-search/fetch-by-label.png",
+        "darkSrc": "/docs/assets/labels-and-search/fetch-by-label-dark.png",
+        "alt": "Fetch with the search to buy. Two results: Cable covers behind the sofa and Move the shoe rack out of the hallway, each a note in Puppy-proofing the flat with a To buy label.",
+        "caption": "Searching for a label lists every card that carries it.",
+        "width": 1152,
+        "height": 384
+      }]
+    },
+    {
+      "id": "rename-recolour-remove",
+      "title": "Rename, recolour or remove a label",
+      "paragraphs": [
+        "Each row in the Labels list has three icons. Colour picks a new colour from the same dots. Rename lets you type a new name in place: press Enter to save it or Escape to cancel. You can also double-click the label to rename it. The new name and colour show on every card on the board that has the label.",
+        "Remove label takes it off every card on this board. A message says how many cards it was on and offers Undo. To take a label off just the selected cards, click it in the list instead."
+      ]
+    }
+  ],
+  "related": ["collapse-columns", "colour-cards"],
+  "links": []
+}

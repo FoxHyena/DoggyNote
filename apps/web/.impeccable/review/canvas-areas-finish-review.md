@@ -8,6 +8,10 @@ Pass. PRODUCT.md exists and establishes the web canvas, preserved editing/collab
 
 All eight required captures exist and were opened: desktop dark/light, collapsed light, add-menu light, phone dark/light, and tablet dark/light. Desktop captures are 1440×900; phone captures are 1179×2097 and tablet captures 1668×2388, consistent with the supplied scaled device viewports. They show the named states, intact chrome and content, and no malformed/blank capture regions. The detector report was read and contains `[]`; no second detector pass was run.
 
+Post-main integration freshness confirmation: all eight exact capture paths were reopened after their 2026-10-25 refresh (fixture board suffix `188aa1c1`). Dimensions and named states remain valid. The refreshed chrome does not overlap area controls; foreground arrow ends remain legible without obscuring card text. Area hierarchy, palette, collapse rendering, add menu, and phone/tablet visible-header behavior preserve the original assessment. No detector was rerun and no unrelated incumbent UI was reviewed. This scoped follow-up found no integration regression and retains `disposition: ship`.
+
+Parent-reported functional evidence for this refresh: 398 unit tests and typecheck pass; 52 combined area, synced-note and touch browser checks pass; PNG/sticker export checks pass; 1,000-member area performance measured p95 16.7ms and 13MB. These results were supplied to the reviewer rather than independently executed.
+
 ## fidelity
 
 Before reading the contract, the captures established a large, softly tinted grouping frame with a compact title/grip/disclosure row; familiar yellow and green workflow columns; an independently positioned context note; thin rightward arrows; and the existing rail, top bar, and phone dock. That hierarchy remains the basis of this review.

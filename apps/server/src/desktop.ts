@@ -2,8 +2,8 @@ import { Hono } from 'hono'
 import type { AppEnv, Env } from './env.ts'
 
 // Desktop releases live in R2 under "desktop/":
-//   desktop/latest.json                       fallback manifest (published after deployment)
-//   desktop/<version>/latest.json             staged manifest exposed by that Worker version
+//   desktop/latest.json                       fallback manifest (last published release)
+//   desktop/<version>/latest.json             staged manifest, served by the Worker whose APP_VERSION matches
 //   desktop/<version>/DoggyNote.app.tar.gz    signed update bundle
 //   desktop/<version>/DoggyNote_<v>_<arch>.dmg first-install disk image
 // These are public: app binaries aren't secret, and the GitHub repo is private,
@@ -16,8 +16,10 @@ type Manifest = { version: string; platforms: Record<string, { url: string; sign
 
 export const desktop = new Hono<AppEnv>()
 
-/** Stage binaries first, then deploying APP_VERSION exposes their manifest.
- * An old Worker continues advertising its compatible release during staging. */
+/** The release deploys this Worker with APP_VERSION before the Mac build is
+ * staged (unless MIN_CLIENT changes; see release.yml). Its manifest is written
+ * to R2 last, after the bundle and DMG, so it appears here only once complete.
+ * Until then, and on older Workers, the last published release is served. */
 async function releaseManifest(env: Env): Promise<R2ObjectBody | null> {
   if (env.APP_VERSION && VERSION.test(env.APP_VERSION)) {
     const staged = await env.BUCKET.get(`desktop/${env.APP_VERSION}/latest.json`)

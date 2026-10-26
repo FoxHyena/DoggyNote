@@ -5,7 +5,8 @@ import { For, Show, createMemo, createSignal, type JSX } from 'solid-js'
 import { HOME_BOARD_ID, type Board, type Id } from '@doggynote/core'
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
-import { boardId, openBoard } from '../state/ui.ts'
+import { boardId, openBoard, renamingBoardId, setRenamingBoardId } from '../state/ui.ts'
+import { BoardNavigation } from './BoardNavigation.tsx'
 import { installMenu } from './menu.ts'
 import { phone, touch } from '../state/device.ts'
 
@@ -24,10 +25,11 @@ export function breadcrumbs(id: Id, root: Id = HOME_BOARD_ID): Board[] {
 
 const titleOf = (b: Board) => boardDisplayTitle(b, b.id === HOME_BOARD_ID ? COPY.home : 'Untitled board')
 
-export function TopBar(props: { readOnly: boolean; root?: Id; left?: JSX.Element; status?: JSX.Element; permission?: JSX.Element; right?: JSX.Element }) {
+export function TopBar(props: { readOnly: boolean; navigation?: boolean; root?: Id; left?: JSX.Element; status?: JSX.Element; permission?: JSX.Element; right?: JSX.Element }) {
   const crumbs = createMemo(() => breadcrumbs(boardId(), props.root))
   const current = () => doc.getBoard(boardId())
-  const [renaming, setRenaming] = createSignal(false)
+  const renaming = () => renamingBoardId() === boardId() && !props.readOnly
+  const setRenaming = (value: boolean) => setRenamingBoardId(value ? boardId() : null)
   const [ancestorsOpen, setAncestorsOpen] = createSignal(false)
   let ancestorRoot!: HTMLDivElement, ancestorTrigger!: HTMLButtonElement
   installMenu(ancestorsOpen, () => setAncestorsOpen(false), () => ancestorRoot, () => ancestorTrigger)
@@ -81,6 +83,7 @@ export function TopBar(props: { readOnly: boolean; root?: Id; left?: JSX.Element
           <Show
             when={renaming()}
             fallback={
+              <Show when={phone() && props.navigation} fallback={
               <button
                 class="crumb current"
                 data-testid="board-name"
@@ -89,6 +92,7 @@ export function TopBar(props: { readOnly: boolean; root?: Id; left?: JSX.Element
               >
                 {titleOf(current()!)}
               </button>
+              }><BoardNavigation renderTrigger={({ open, toggle, menuId, ref }) => <button ref={ref} class="crumb current" data-testid="board-name" aria-haspopup="dialog" aria-controls={open() ? menuId : undefined} aria-expanded={open()} onClick={toggle}>{titleOf(current()!)}</button>} /></Show>
             }
           >
             <input

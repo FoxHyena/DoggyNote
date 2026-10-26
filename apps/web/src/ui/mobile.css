@@ -656,14 +656,6 @@ html[data-input='touch'] .share-panel .bar-btn { padding-inline: 12px; border-ra
 /* Mixed lock actions must not push the alignment picker off a phone screen. */
 .selection-bar.docked .bar-position { flex-wrap: wrap; overflow: visible; }
 
-/* Appearance choices in phone sheets sit in one
-   shared track, so the unpicked options read as options rather than loose text. */
-@media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {
-  .theme-choices { gap: 0; margin: 0 12px 12px; padding: 3px; border: 1px solid var(--dn-border); border-radius: 12px; }
-  .viewer-menu .theme-choices { padding-bottom: 3px; border-bottom: 1px solid var(--dn-border); }
-  .theme-choice { border-radius: 9px; }
-}
-
 /* A field in a phone sheet scrolls into view inside the sheet (state/viewport.ts),
    with a little room so its confirm button on the same row clears the keyboard too. */
 @media (max-width: 599px), (pointer: coarse) and (max-height: 500px) {

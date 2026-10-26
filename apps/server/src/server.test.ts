@@ -184,6 +184,27 @@ describe('desktop releases', () => {
       delete files['desktop/0.2.100/DoggyNote_0.2.100_aarch64.dmg']
     }
   })
+  it('a Worker deployed before its Mac build is staged keeps serving the last release, then switches once staged', async () => {
+    // release.yml deploys the Worker while the Mac app is still notarizing.
+    const deployed = { BUCKET, APP_VERSION: '0.2.101', MIN_CLIENT: '0.1.0' } as never
+    const version = async (path: string) => {
+      const res = await app.request(path, {}, deployed)
+      return path.endsWith('download') ? res.headers.get('location') : ((await res.json()) as { version: string }).version
+    }
+    try {
+      expect(await version('/api/desktop/latest.json')).toBe('0.1.42')
+      expect(await version('/api/desktop/download')).toBe('/api/desktop/files/0.1.42/DoggyNote_0.1.42_aarch64.dmg')
+      // The desktop job stages the bundle and DMG first, the manifest last.
+      files['desktop/0.2.101/DoggyNote_0.2.101_aarch64.dmg'] = 'NEW DMG'
+      expect(await version('/api/desktop/latest.json')).toBe('0.1.42')
+      files['desktop/0.2.101/latest.json'] = JSON.stringify({ ...manifest, version: '0.2.101', dmg: 'DoggyNote_0.2.101_aarch64.dmg' })
+      expect(await version('/api/desktop/latest.json')).toBe('0.2.101')
+      expect(await version('/api/desktop/download')).toBe('/api/desktop/files/0.2.101/DoggyNote_0.2.101_aarch64.dmg')
+    } finally {
+      delete files['desktop/0.2.101/latest.json']
+      delete files['desktop/0.2.101/DoggyNote_0.2.101_aarch64.dmg']
+    }
+  })
   it('only serves release files, never other bucket keys', async () => {
     for (const p of ['/api/desktop/files/0.1.42/..%2F..%2Flatest.json', '/api/desktop/files/0.1.42/secret.png', '/api/desktop/files/x/DoggyNote.app.tar.gz']) {
       expect((await app.request(p, {}, env)).status).toBe(404)

@@ -127,6 +127,25 @@ describe('connector anchors', () => {
     const free = connectorPath(r, 'bottom', { x: 10, y: 400 })
     expect(free.end).toEqual({ x: 10, y: 400 })
   })
+  it('connector tails retain a short continuous curve and the destination tangent on every side', () => {
+    const b = { x: 400, y: 180, w: 200, h: 100 }
+    for (const from of ['top', 'right', 'bottom', 'left'] as const) {
+      for (const to of ['top', 'right', 'bottom', 'left'] as const) {
+        const p = connectorPath(r, from, { rect: b, side: to })
+        const [x, y, , , cx, cy, ex, ey] = p.tail.match(/-?\d+(?:\.\d+)?/g)!.map(Number)
+        expect([ex, ey]).toEqual([p.end.x, p.end.y])
+        expect(Math.hypot(ex - x, ey - y)).toBeGreaterThan(4)
+        expect(Math.hypot(ex - x, ey - y)).toBeLessThan(20)
+        if (to === 'left' || to === 'right') {
+          expect(cy).toBe(ey)
+          expect(Math.sign(cx - ex)).toBe(to === 'left' ? -1 : 1)
+        } else {
+          expect(cx).toBe(ex)
+          expect(Math.sign(cy - ey)).toBe(to === 'top' ? -1 : 1)
+        }
+      }
+    }
+  })
 })
 
 describe('geometry', () => {

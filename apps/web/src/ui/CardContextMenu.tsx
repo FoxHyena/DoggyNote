@@ -7,6 +7,7 @@ import { beginEdit, selection, setCardContextOpen } from '../state/ui.ts'
 import { canCreateAreaFromSelection, createAreaFromSelection, buryArea, tidyArea } from '../state/areas.ts'
 import { burySelection } from '../state/actions.ts'
 import { duplicateSelection } from '../state/clipboard.ts'
+import { canMakeSyncedCopy, makeSyncedCopy } from '../state/synced.ts'
 import { liveState, peers, pingAt } from '../state/realtime.ts'
 import { LabelsPopover } from './Labels.tsx'
 import { openThread } from './CommentsPanel.tsx'
@@ -52,6 +53,9 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
           <Show when={card()}>
             <button class="menu-item" role="menuitem" disabled={!canEdit()} onClick={() => run(() => beginEdit(card()!.id))}><Icon name="edit" size={18} />{card()?.type === 'board' ? 'Rename' : 'Edit'}</button>
             <button class="menu-item" role="menuitem" disabled={!writable()} onClick={() => run(duplicateSelection)}><Icon name="duplicate" size={18} />Duplicate</button>
+            <Show when={canMakeSyncedCopy(sole())}>
+              <button class="menu-item" role="menuitem" data-testid="make-synced-copy" onClick={() => run(() => makeSyncedCopy(card()!.id))}><Icon name="synced" size={18} />{COPY.synced.make}</button>
+            </Show>
             <button class="menu-item" role="menuitem" disabled={!canLabel()} onClick={() => setLabels(true)}><Icon name="label" size={18} />Labels</button>
             <button class="menu-item" role="menuitem" disabled={!sole() || sole()?.type === 'board'} onClick={() => run(() => openThread(card()!.id))}><Icon name="comment" size={18} />Comment</button>
             <Show when={canCreateAreaFromSelection()}><button class="menu-item" role="menuitem" data-testid="area-from-selection" onClick={() => run(() => { createAreaFromSelection() })}><Icon name="board" size={18} />Create area from selection</button></Show>

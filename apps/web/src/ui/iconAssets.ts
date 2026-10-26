@@ -1,5 +1,7 @@
 // Official Phosphor SVGs only. Static imports keep unused icons out of the bundle.
 import traySvg from '@phosphor-icons/core/regular/tray.svg?raw'
+import arrowsLeftRightSvg from '@phosphor-icons/core/regular/arrows-left-right.svg?raw'
+import linkSimpleHorizontalBreakSvg from '@phosphor-icons/core/regular/link-simple-horizontal-break.svg?raw'
 import gridNineSvg from '@phosphor-icons/core/regular/grid-nine.svg?raw'
 import noteSvg from '@phosphor-icons/core/regular/note.svg?raw'
 import linkSvg from '@phosphor-icons/core/regular/link.svg?raw'
@@ -38,6 +40,7 @@ import downloadSimpleSvg from '@phosphor-icons/core/regular/download-simple.svg?
 import uploadSimpleSvg from '@phosphor-icons/core/regular/upload-simple.svg?raw'
 import arrowCounterClockwiseSvg from '@phosphor-icons/core/regular/arrow-counter-clockwise.svg?raw'
 import infoSvg from '@phosphor-icons/core/regular/info.svg?raw'
+import bookOpenTextSvg from '@phosphor-icons/core/regular/book-open-text.svg?raw'
 import filmStripSvg from '@phosphor-icons/core/regular/film-strip.svg?raw'
 import xCircleSvg from '@phosphor-icons/core/regular/x-circle.svg?raw'
 import dropSvg from '@phosphor-icons/core/regular/drop.svg?raw'
@@ -125,6 +128,7 @@ export const ICONS = {
   upload: body(uploadSimpleSvg),
   restore: body(arrowCounterClockwiseSvg),
   info: body(infoSvg),
+  guides: body(bookOpenTextSvg),
   film: body(filmStripSvg),
   labelOff: body(xCircleSvg),
   droplet: body(dropSvg),
@@ -153,6 +157,9 @@ export const ICONS = {
   system: body(desktopSvg),
   warning: body(warningSvg),
   sync: body(arrowsClockwiseSvg),
+  /** A synced copy of a note (edits flow both ways), and making one independent again. */
+  synced: body(arrowsLeftRightSvg),
+  unsync: body(linkSimpleHorizontalBreakSvg),
   dog: body(dogSvg),
   bone: body(boneSvg),
   ball: body(tennisBallSvg),

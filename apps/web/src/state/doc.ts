@@ -25,7 +25,7 @@ import {
 import * as idb from './idb.ts'
 import { setToastAction, showToast } from './toast.ts'
 import * as Y from 'yjs'
-import { decodeUpdate, noteDocument, noteMarkdown, noteState, replaceText, REMOTE_ORIGIN } from '@doggynote/core'
+import { decodeUpdate, isLiveSynced, noteDocument, noteMarkdown, noteState, replaceText, syncIdOf, REMOTE_ORIGIN } from '@doggynote/core'
 
 // The document store. Every edit goes through `commit` (undoable) or `silent`
 // (not undoable, e.g. measured heights, unfurled link titles). Both apply the
@@ -142,6 +142,27 @@ export function noteDoc(id: Id): Y.Doc {
   })
   return document
 }
+// ---- synced copies ----------------------------------------------------------
+// Synced notes (packages/core/src/synced.ts). The server merges an edit into
+// every copy, and the copies arrive with the pull right after the push. There is
+// no local shortcut: the server alone decides whether you may edit every copy.
+
+/** syncId → the live synced notes on this device. Tracks only the fields it reads. */
+const syncGroups = createRoot(() => createMemo(() => {
+  const groups = new Map<string, Id[]>()
+  for (const o of Object.values(state.objs)) {
+    const group = syncIdOf(o)
+    if (group && isLiveSynced(o)) groups.set(group, [...(groups.get(group) ?? []), o.id])
+  }
+  return groups
+}))
+/** The other live copies of a synced note, as far as this device can see. */
+export function syncedCopies(id: Id): Card<'note'>[] {
+  const o = get(id), group = syncIdOf(o)
+  if (!group) return []
+  return (syncGroups().get(group) ?? []).filter((other) => other !== id).map((other) => getCard(other) as Card<'note'>).filter(Boolean)
+}
+
 /** Retain creation ownership across the gap between push acknowledgement and access refresh. */
 export const localBoardCreations = new Set<Id>()
 const outboxListeners = new Set<() => void>()
@@ -263,6 +284,8 @@ function record(id: Id, patch: Partial<Obj>) {
     delete (patch as Partial<Card>).content
   }
   if ('noteState' in patch) { patch = { ...patch }; delete patch.noteState }
+  // Joining a note's sync group is explicit, so stale copies of `syncId` can't join.
+  if ((patch as Partial<Card>).syncId) patch = { ...patch, syncJoin: true }
   if (patch.kind === 'board') localBoardCreations.add(id)
   dirtyObjs.add(id)
   const previous = { ...(outbox.get(id) ?? {}) } as Partial<Obj> & { noteRestore?: boolean }

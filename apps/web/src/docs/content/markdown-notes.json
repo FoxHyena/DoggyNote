@@ -1,0 +1,65 @@
+{
+  "slug": "markdown-notes",
+  "category": "writing-drawing",
+  "kind": "task",
+  "title": "Write and format notes",
+  "summary": "Type a note right on the board and format it with headings, lists and checkboxes as you go.",
+  "status": "published",
+  "order": 310,
+  "benefit": "Turn a quick jotting into a tidy list or plan without leaving the board.",
+  "outcome": "A note with a heading, a list and tickable checkboxes, edited where it sits on the board.",
+  "prerequisites": ["A board you can edit."],
+  "keywords": ["markdown", "text", "bold", "italic", "heading", "list", "checkbox", "to-do", "type"],
+  "sections": [
+    {
+      "id": "overview",
+      "title": "How notes work",
+      "paragraphs": [
+        "Notes are written in Markdown, a few simple marks that become formatting. Type ## and a space for a heading, or - and a space for a bullet point. While you type, the formatting shows straight away and the marks fade out of the way. The note looks the same while you edit it as it does on the board.",
+        "For example, keep your dog's care notes for a sitter: a Feeding heading, a bulleted list of meals, and a checkbox for each job."
+      ]
+    },
+    {
+      "id": "write-a-note",
+      "title": "Write a note",
+      "flow": {
+        "entry": "Double-click an empty spot on the board, or choose Note at the top of the tools on the left. On a phone, double-tap the board or tap + at the bottom of the screen, then Note.",
+        "steps": [
+          { "action": "Type ## Walks and press Enter.", "result": "Walks becomes a heading." },
+          { "action": "Type 1. Morning loop round the block, press Enter, then type Long walk after lunch.", "result": "A numbered list. Enter starts the next item, and Enter on an empty item ends the list." },
+          { "action": "Select a word and choose B in the bar above the note, or press ⌘B (Ctrl+B on Windows).", "result": "The word turns bold." },
+          { "action": "Press Escape, or click an empty part of the board.", "result": "You're back on the board, and the note shows its formatting." }
+        ],
+        "completion": "Notes save as you type and sync to everyone on the board. If someone else is in the same note, you see each other's typing as it happens.",
+        "correction": "While editing, ⌘Z (Ctrl+Z) undoes your last few keystrokes. After you leave the note, Undo at the bottom left of the board reverses the whole edit."
+      },
+      "figures": [{
+        "src": "/docs/assets/markdown-notes/editing-a-note.png",
+        "darkSrc": "/docs/assets/markdown-notes/editing-a-note-dark.png",
+        "alt": "Two notes. Feeding has a bulleted list with bold labels and two checkboxes, one ticked and crossed out. Walks is being edited: it has a numbered list and a line of text, and the formatting bar above it shows B, I, S, H, bullet, 1., checkbox, outdent and indent buttons.",
+        "caption": "Editing the Walks note. The formatting bar sits above the note while you type.",
+        "width": 1392,
+        "height": 478
+      }]
+    },
+    {
+      "id": "change-a-note",
+      "title": "Change a note later",
+      "paragraphs": [
+        "Click a note once to select it, then click it again, or double-click it, to edit it where it is. You can also select it and press Enter, or right-click it and choose Edit. On a touch screen, tap it once to select it and tap again to type.",
+        "Checkboxes work without editing: click one on the board to tick it off."
+      ]
+    },
+    {
+      "id": "markdown",
+      "title": "Formatting you can use",
+      "paragraphs": [
+        "Headings: # for a big heading, ## or ### for smaller ones. Lists: - or * for bullets, 1. for numbers, and - [ ] for a checkbox. Tab nests a list item and Shift+Tab moves it back out.",
+        "Text: **bold** (⌘B), _italic_ (⌘I), ~~strikethrough~~ (⌘⇧X) and `code` (⌘E). Start a line with > for a quote, and write [a link](https://example.com) for a link. On Windows, use Ctrl instead of ⌘.",
+        "The bar above the note has the same choices: B, I, S, H for a heading, bullets, 1. for numbers, a checkbox, and outdent and indent. On a phone or tablet it sits above the keyboard instead; tap the board when you're done."
+      ]
+    }
+  ],
+  "related": ["sketch-cards", "labels-and-search"],
+  "links": []
+}

@@ -1,0 +1,84 @@
+{
+  "slug": "draw-on-a-board",
+  "category": "writing-drawing",
+  "kind": "task",
+  "title": "Draw straight on the board",
+  "summary": "Circle a picture, point an arrow at a note or highlight a detail, right on the board.",
+  "status": "published",
+  "order": 330,
+  "benefit": "Add a quick mark without making a separate card for it.",
+  "outcome": "Your marks sit on the board beside your cards, and you can move, lock or erase them later.",
+  "prerequisites": ["A board you can edit."],
+  "keywords": ["ink", "pen", "highlighter", "eraser", "annotate", "mark up", "arrow", "line"],
+  "sections": [
+    {
+      "id": "overview",
+      "title": "Marks beside your cards",
+      "paragraphs": [
+        "Draw puts ink straight onto the board, over or between your cards. For example, circle the meeting spot in a park photo and draw an arrow to the note with the time.",
+        "Each mark you draw stays where you drew it. If you move a card afterwards, the mark doesn't follow it. For a drawing that moves as one card, use a sketch instead."
+      ],
+      "links": [{ "label": "Draw a sketch card", "href": "/docs/sketch-cards" }]
+    },
+    {
+      "id": "draw",
+      "title": "Draw a mark",
+      "flow": {
+        "entry": "In the tools on the left, choose Draw under More. On a phone, tap + at the bottom of the screen, then Draw.",
+        "steps": [
+          { "action": "Pick Pen or Highlighter, a colour and a line width (Fine, Medium or Bold) in the bar at the top.", "result": "The choice is outlined. Highlighter marks are wide and see-through." },
+          { "action": "Drag on the board, then let go.", "result": "The mark stays where you drew it. Keep drawing to add more." },
+          { "action": "For a straight line, click where it should start, then hold Shift and click where it should end.", "result": "A straight line joins the two points. Shift-click again to carry on from the end of that line." },
+          { "action": "Choose Done drawing, the tick at the end of the bar, or press Escape.", "result": "The drawing bar closes and the board works as usual again." }
+        ],
+        "completion": "Every mark saves as soon as you let go and syncs to everyone on the board.",
+        "correction": "Use Undo at the bottom left of the board, or ⌘Z (Ctrl+Z on Windows), to remove the last mark. Pressing Escape halfway through a mark drops just that mark."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/draw-on-a-board/drawing-tools.png",
+          "darkSrc": "/docs/assets/draw-on-a-board/drawing-tools-dark.png",
+          "alt": "The drawing bar: pen, highlighter and eraser icons, six ink colours and a + for a custom colour, three line widths and a tick. A tooltip reads Highlighter · Shift-click for a straight line.",
+          "caption": "The drawing bar. Hover over a tool for its name and the straight-line tip.",
+          "width": 1242,
+          "height": 210
+        },
+        {
+          "src": "/docs/assets/draw-on-a-board/ink-beside-photo.png",
+          "darkSrc": "/docs/assets/draw-on-a-board/ink-beside-photo-dark.png",
+          "alt": "A park photo captioned Meet by the big oak, circled in red, with a red arrow pointing to a green note that says Saturday 10 am. Bring a ball. The time is highlighted in yellow.",
+          "caption": "A circle, an arrow and a highlight drawn straight on the board.",
+          "width": 1464,
+          "height": 698
+        }
+      ]
+    },
+    {
+      "id": "erase",
+      "title": "Erase marks",
+      "paragraphs": [
+        "Choose Draw, pick the Eraser and drag across the marks you want to remove. The eraser takes away whole strokes, not parts of them. Shift-click with the eraser to erase along a straight line.",
+        "Undo brings back everything removed by one sweep of the eraser."
+      ]
+    },
+    {
+      "id": "move-and-lock",
+      "title": "Move, resize or lock a mark",
+      "paragraphs": [
+        "When you're not drawing, click a mark to select it. Drag it to move it, or drag its corner to resize it. Lock position in the selection bar keeps it in place while you rearrange the cards around it.",
+        "To remove a mark this way, select it and press Delete, or right-click it and choose Bury. Undo brings it back, and so does Buried bones, DoggyNote's bin, in the tools on the left."
+      ]
+    },
+    {
+      "id": "tips-and-limits",
+      "title": "Tips and limits",
+      "paragraphs": [
+        "While Draw is on, hold Space and drag to move around the board, or scroll and pinch as usual. Let go of Space to draw again.",
+        "A single mark can only be so long. If you see “That line ran out of leash”, lift and start a new mark where you stopped.",
+        "Pen, finger and mouse all work. People with view-only access see the marks but can't change them. Marks are included when you export the board with Export PNG."
+      ]
+    }
+  ],
+  "related": ["sketch-cards", "image-captions"],
+  "links": []
+}
