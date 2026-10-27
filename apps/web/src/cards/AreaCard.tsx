@@ -1,7 +1,7 @@
 import { For, Show, onMount } from 'solid-js'
 import { AREA_HEADER, areaMembers, type CardType } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
-import { endEdit, camera, viewport } from '../state/ui.ts'
+import { endEdit } from '../state/ui.ts'
 import { areaDropTarget, areaAddPoint, setAddingToArea, tidyArea, removeArea, buryArea } from '../state/areas.ts'
 import { columnCollapsed, setColumnCollapsed } from '../state/columns.ts'
 import { createCard } from '../state/actions.ts'
@@ -12,8 +12,6 @@ import { openStickers } from '../state/stickers.ts'
 import { BarMenu } from '../ui/BarMenu.tsx'
 import { Icon, type IconName } from '../ui/icons.tsx'
 import type { CardProps } from '../canvas/CardView.tsx'
-import { rectOf } from '../canvas/layout.ts'
-import { exporting } from '../state/export.ts'
 import './area.css'
 
 const choices: { type: CardType; title: string; icon: IconName }[] = [
@@ -26,16 +24,6 @@ export function AreaCard(props: CardProps<'area'>) {
   let file!: HTMLInputElement
   const title = () => typeof props.card.content?.title === 'string' ? props.card.content.title : ''
   const collapsed = () => columnCollapsed(props.card)
-  // The frame can span thousands of world pixels. Keep its controls in the
-  // visible header segment; exports return the title to the stable origin.
-  const headerStyle = () => {
-    if (exporting()) return undefined
-    const frame = rectOf(props.card.id), cam = camera(), view = viewport()
-    if (!frame) return undefined
-    const left = Math.max(frame.x, cam.x + 12 / cam.zoom)
-    const right = Math.min(frame.x + frame.w, cam.x + (view.width - 12) / cam.zoom)
-    return { 'margin-left': `${left - frame.x}px`, width: `${Math.max(320, right - left)}px` }
-  }
   const add = (type: CardType) => {
     setAddingToArea(props.card.id)
     setColumnCollapsed(props.card.id, false)
@@ -45,7 +33,7 @@ export function AreaCard(props: CardProps<'area'>) {
   }
   return <div class="area" classList={{ 'area-drop-active': areaDropTarget() === props.card.id }} style={{ '--area-header': `${AREA_HEADER}px` }}>
     <div class="area-edge area-edge-bottom" data-area-edge /><div class="area-edge area-edge-left" data-area-edge /><div class="area-edge area-edge-right" data-area-edge />
-    <header class="area-head" data-area-header style={headerStyle()}>
+    <header class="area-head" data-area-header>
       <span class="area-grip" aria-hidden="true"><Icon name="grip" size={18} /></span>
       <button class="column-toggle" data-nodrag aria-label={collapsed() ? 'Expand area' : 'Collapse area'} aria-expanded={!collapsed()} onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); setColumnCollapsed(props.card.id, !collapsed(), props.readOnly) }}><Icon name={collapsed() ? 'open' : 'chevronDown'} size={16} /></button>
       <span class="area-title" data-edit-title><Show when={props.editing} fallback={<strong data-testid="area-title">{title() || 'Area'}</strong>}><input ref={el => onMount(() => el.focus())} class="column-title-input" aria-label="Area name" data-testid="area-title-input" value={title()} placeholder="Area" onInput={e => doc.transient(props.card.id, { content: { title: e.currentTarget.value } })} onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); endEdit() } }} /></Show></span>
