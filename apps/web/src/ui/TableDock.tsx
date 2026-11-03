@@ -21,7 +21,7 @@ export function TableDock() {
         <div class="table-dock" role="toolbar" aria-label={COPY.table.cells} data-testid="table-dock" data-kind={t().kind()}>
           <button class="table-dock-btn" data-testid="dock-prev" aria-label={COPY.table.previousCell} onPointerDown={press(() => t().prev())}><Icon size={22} name="chevronLeft" /></button>
           <button class="table-dock-btn" data-testid="dock-next" aria-label={COPY.table.nextCell} onPointerDown={press(() => t().next())}><Icon size={22} name="chevronRight" /></button>
-          <span class="table-dock-sep" aria-hidden="true" />
+          <Show when={t().kind() !== 'cells'}><span class="table-dock-sep" aria-hidden="true" /></Show>
           <div class="table-dock-slots" data-testid="dock-slots">
             <Switch>
               <Match when={t().kind() === 'rows'}>

@@ -315,3 +315,18 @@ test('a range tints every cell it covers, wrapped rows included (round 1 follow-
   await page.keyboard.press('Shift+ArrowDown')
   await check()
 })
+
+test('Shift+Space picks the row and Ctrl+Space the column, so the keyboard needs no grips', async ({ page }) => {
+  await seedTable(page, COLS, PACK)
+  await openEditing(page, 1, 1)
+  await page.keyboard.press('Shift+Space')
+  await expect(page.getByTestId('table-bar')).toHaveAttribute('data-kind', 'rows')
+  await expect(input(page)).toHaveValue('')
+  await page.keyboard.press('Alt+Shift+ArrowUp')
+  expect(await names(page)).toEqual(['Mochi', 'Rex', 'Biscuit', 'Fido'])
+  // Picking a column from a picked row starts at the row's first cell.
+  await page.keyboard.press('Control+Space')
+  await expect(page.getByTestId('table-bar')).toHaveAttribute('data-kind', 'cols')
+  await page.keyboard.press('Alt+Shift+ArrowRight')
+  expect((await grid(page))[0]).toEqual(['Age', 'Pup', 'Treat'])
+})

@@ -151,7 +151,7 @@ html[data-input='touch'] .table-add { isolation: isolate; }
   border-radius: 6px;
   background: transparent;
   color: var(--dn-text-muted);
-  opacity: 0.55;
+  opacity: 0.7;
   cursor: grab;
   pointer-events: auto;
   touch-action: none;
@@ -169,14 +169,14 @@ html[data-input='touch'] .table-gutter-cols { height: 32px; bottom: calc(100% + 
 html[data-input='touch'] .table-gutter-cols .table-grip { height: 32px; }
 /* Touch targets are 44px: the extra reaches past the grip without enlarging it. */
 html[data-input='touch'] .table-grip::after { content: ''; position: absolute; inset: -6px -6px; }
-.table-drop { position: absolute; background: var(--dn-selection); border-radius: 1px; pointer-events: none; z-index: 3; }
-.table-drop[data-kind='rows'] { left: 0; right: 0; height: 2px; margin-top: -1px; }
-.table-drop[data-kind='cols'] { top: 0; bottom: 0; width: 2px; margin-left: -1px; }
+.table-drop { position: absolute; background: var(--dn-selection); pointer-events: none; z-index: 3; }
+.table-drop[data-kind='rows'] { left: -8px; right: -8px; height: 2px; margin-top: -1px; }
+.table-drop[data-kind='cols'] { top: -8px; bottom: -8px; width: 2px; margin-left: -1px; }
 
 /* Resize: a thin strip on each boundary of the header row (wider for a finger). */
 .table-resize { position: absolute; width: 6px; margin-left: -3px; cursor: col-resize; pointer-events: auto; touch-action: none; z-index: 2; }
 html[data-input='touch'] .table-resize { width: 16px; margin-left: -8px; }
-.table-resize::after { content: ''; position: absolute; top: 6px; bottom: 6px; left: 50%; width: 2px; margin-left: -1px; border-radius: 1px; background: transparent; transition: background-color 120ms; }
+.table-resize::after { content: ''; position: absolute; top: 6px; bottom: 6px; left: 50%; width: 2px; margin-left: -1px; background: transparent; transition: background-color 120ms; }
 html[data-input='mouse'] .table-resize:hover::after, .table-resize:active::after { background: var(--dn-text-muted); }
 
 /* A column header's ⋯: on hover, or while its column is picked. */

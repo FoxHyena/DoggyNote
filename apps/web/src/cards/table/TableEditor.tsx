@@ -477,6 +477,12 @@ export function TableEditor(props: {
         return selectLine(k, Math.max(0, Math.min(lineCount(k) - 1, next)), true)
       }
     }
+    // As in a spreadsheet: Shift+Space picks the row, Ctrl+Space the column (no grips needed).
+    if (key === ' ' && !titleActive() && ((e.shiftKey && !mod && !e.altKey) || (e.ctrlKey && !e.metaKey && !e.altKey))) {
+      e.preventDefault()
+      const cur = at(anchor())
+      return e.ctrlKey ? selectLine('cols', cur.c) : selectLine('rows', Math.max(0, cur.r))
+    }
     if (dir) {
       e.preventDefault()
       return move(dir, e.shiftKey, mod)
