@@ -293,3 +293,144 @@ it('an approved edit to a synced note updates every copy, or unsyncs it when a c
     expect(stored('y')).toMatchObject({ syncId: 'x', content: { md: 'Walk at 6' } })
   } finally { f.sql.close() }
 })
+
+// ---- tables -----------------------------------------------------------------------
+
+/** A table card as an agent writes it. */
+const tableCard = (content: unknown, extra: Record<string, unknown> = {}) => ({ id: 'dogs', kind: 'card', type: 'table', boardId: 'root', x: 0, y: 0, w: 560, h: 200, z: 1, color: 'none', createdAt: 1, content, ...extra })
+const dogs = () => ({
+  title: 'Pack',
+  columns: [{ name: 'Dog' }, { name: 'Weight', type: 'number' }, { name: 'Status', type: 'select', options: [{ name: 'Healthy', color: 'sky' }] }, { name: 'Next', type: 'date' }],
+  rows: [{ cells: ['Rex', 31.5, 'Healthy', '2026-12-01'] }, { cells: ['Fido', 8, 'Sleepy', null] }, { cells: [{ value: 'Biscuit', bold: true }, 12, 'Healthy', null] }] as { id?: string; cells: unknown[] }[],
+})
+type Fixture = Awaited<ReturnType<typeof fixture>>
+const storedTable = (f: Fixture, id = 'dogs') => JSON.parse((f.sql.prepare('SELECT data FROM objects WHERE id=?').get(id) as { data: string }).data) as Record<string, unknown>
+async function stage(f: Fixture, key: string, operations: unknown[]) {
+  const response = await f.request('/agent/proposals', { idempotencyKey: key, label: `Table ${key}`, operations }, f.token)
+  return { response, body: await response.clone().json() as { id?: string; error?: string } }
+}
+type ReadTable = { object: Record<string, unknown> & { content: { title: string; columns: { id: string; name: string }[]; rows: { id?: string; cells: unknown[] }[] } }; revision: number }
+const readTable = async (f: Fixture): Promise<ReadTable> => {
+  const read = await (await f.request('/agent/boards/root', undefined, f.token)).json() as { objects: ReadTable[] }
+  return read.objects.find((o) => o.object.id === 'dogs')!
+}
+const tableKeys = (o: Record<string, unknown>) => Object.keys(o).filter((k) => /^t[rkc][0-9]/.test(k))
+
+it('stages a table as flat fields, approves it, shows it to agents as columns and rows, and reverses it', async () => {
+  const f = await fixture()
+  try {
+    const { response, body } = await stage(f, 'table-create', [{ action: 'create', object: tableCard(dogs()) }])
+    expect(response.status).toBe(201)
+    // Proposals store (and the app previews) the stored form.
+    const detail = await (await f.request(`/agent-proposals/${body.id}`)).json() as { proposal: { changes: { after: Record<string, unknown> }[] } }
+    const after = detail.proposal.changes[0]!.after
+    expect(after.content).toEqual({ title: 'Pack' })
+    expect(tableKeys(after).length).toBe(3 + 4 + 10)
+    expect(f.sql.prepare("SELECT 1 FROM objects WHERE id='dogs'").get()).toBeUndefined()
+    expect((await f.request(`/agent-proposals/${body.id}/approve`, {})).status).toBe(200)
+    expect(storedTable(f).content).toEqual({ title: 'Pack' })
+
+    const read = await readTable(f)
+    expect(tableKeys(read.object)).toEqual([])
+    expect(read.object.content.rows.map((r) => r.cells)).toEqual([
+      ['Rex', 31.5, 'Healthy', '2026-12-01'],
+      ['Fido', 8, 'Sleepy', null],
+      [{ value: 'Biscuit', bold: true }, 12, 'Healthy', null],
+    ])
+    expect(read.object.content.columns.every((c) => /^[0-9][0-9a-z]{5}$/.test(c.id))).toBe(true)
+
+    expect((await f.request(`/agent-proposals/${body.id}/reverse`, {})).status).toBe(200)
+    expect(storedTable(f).deletedAt).toBeGreaterThan(0)
+  } finally { f.sql.close() }
+})
+
+it('a replace sends the whole table: missing rows and cells are removed, and reversing brings them back', async () => {
+  const f = await fixture()
+  try {
+    const first = await stage(f, 'table-seed', [{ action: 'create', object: tableCard(dogs()) }])
+    await f.request(`/agent-proposals/${first.body.id}/approve`, {})
+    const original = storedTable(f)
+    const read = await readTable(f)
+    const content = structuredClone(read.object.content)
+    const fido = content.rows[1]!
+    content.rows.splice(1, 1) // remove Fido
+    content.rows[0]!.cells[1] = 33 // Rex gains weight
+    content.rows.push({ cells: ['Pip', 4, 'Healthy', '2027-01-01'] })
+    const { response, body } = await stage(f, 'table-replace', [{ action: 'replace', expectedRevision: read.revision, object: { ...read.object, content } }])
+    expect(response.status).toBe(201)
+    expect((await f.request(`/agent-proposals/${body.id}/approve`, {})).status).toBe(200)
+    const now = storedTable(f)
+    const fidoKeys = tableKeys(original).filter((k) => k.includes(fido.id!))
+    expect(fidoKeys.length).toBe(1 + 3) // the row and its three filled cells
+    for (const key of fidoKeys) expect(now[key], key).toBeUndefined()
+    const after = (await readTable(f)).object.content
+    expect(after.rows.map((r) => r.cells[0])).toEqual(['Rex', { value: 'Biscuit', bold: true }, 'Pip'])
+    expect(after.rows[0]!.cells[1]).toBe(33)
+    // Rex's row kept its id and order value.
+    expect(after.rows[0]!.id).toBe(read.object.content.rows[0]!.id)
+    const rexRow = `tr${after.rows[0]!.id}`
+    expect(now[rexRow]).toEqual(original[rexRow])
+
+    expect((await f.request(`/agent-proposals/${body.id}/reverse`, {})).status).toBe(200)
+    const back = storedTable(f)
+    expect(tableKeys(back).sort()).toEqual(tableKeys(original).sort())
+    for (const key of tableKeys(original)) expect(back[key], key).toEqual(original[key])
+  } finally { f.sql.close() }
+})
+
+it('refuses a stale table revision, and an approval after someone else edited the table', async () => {
+  const f = await fixture()
+  try {
+    const seed = await stage(f, 'table-seed-2', [{ action: 'create', object: tableCard(dogs()) }])
+    await f.request(`/agent-proposals/${seed.body.id}/approve`, {})
+    const read = await readTable(f)
+    const stale = await stage(f, 'table-stale', [{ action: 'replace', expectedRevision: read.revision - 1, object: read.object }])
+    expect(stale.response.status).toBe(409)
+    expect(stale.body.error).toContain('Revision conflict')
+    const fresh = await stage(f, 'table-fresh', [{ action: 'replace', expectedRevision: read.revision, object: { ...read.object, content: { ...read.object.content, title: 'Renamed' } } }])
+    expect(fresh.response.status).toBe(201)
+    // A person edits a cell before the review is done.
+    const row = read.object.content.rows[0]!.id, col = read.object.content.columns[0]!.id
+    f.sql.exec(`UPDATE counters SET value=value+1 WHERE name='seq'; UPDATE objects SET data=json_set(data,'$.tc${row}${col}','Human'),seq=(SELECT value FROM counters WHERE name='seq') WHERE id='dogs'`)
+    const approve = await f.request(`/agent-proposals/${fresh.body.id}/approve`, {})
+    expect(approve.status).toBe(409)
+    expect(storedTable(f).content).toEqual({ title: 'Pack' })
+  } finally { f.sql.close() }
+})
+
+it('names the cell when a value does not fit its column', async () => {
+  const f = await fixture()
+  try {
+    const bad = dogs()
+    bad.rows[1]!.cells[3] = 'next week'
+    const { response, body } = await stage(f, 'table-bad-date', [{ action: 'create', object: tableCard(bad) }])
+    expect(response.status).toBe(409)
+    expect(body.error).toBe('Row 2, "Next": use YYYY-MM-DD')
+    const worse = dogs()
+    worse.rows[0]!.cells[1] = 'heavy'
+    expect((await stage(f, 'table-bad-number', [{ action: 'create', object: tableCard(worse) }])).body.error).toBe('Row 1, "Weight": use a number')
+    // Shape errors come from the schema, with the path.
+    const shape = await stage(f, 'table-bad-shape', [{ action: 'create', object: tableCard({ ...dogs(), rows: [{ cells: [{ value: 'x', italic: true }] }] }) }])
+    expect(shape.response.status).toBe(400)
+    expect(shape.body.error).toContain('content.rows.0.cells.0')
+    expect((await stage(f, 'table-too-wide', [{ action: 'create', object: tableCard({ title: '', columns: Array.from({ length: 27 }, (_, i) => ({ name: `C${i}` })), rows: [] }) }])).response.status).toBe(400)
+  } finally { f.sql.close() }
+})
+
+it('keeps the 512 KB request and 200 operation limits for tables', async () => {
+  const f = await fixture()
+  try {
+    // 100 rows of long text clear the schema but not the byte limit.
+    const big = { title: '', columns: [{ name: 'A' }, { name: 'B' }, { name: 'C' }], rows: Array.from({ length: 100 }, () => ({ cells: ['x'.repeat(1800), 'y'.repeat(1800), 'z'.repeat(1800)] })) }
+    const tooLarge = await stage(f, 'table-big', [{ action: 'create', object: tableCard(big) }])
+    expect(tooLarge.response.status).toBe(413)
+    const many = Array.from({ length: 201 }, (_, i) => ({ action: 'create', object: tableCard({ title: `T${i}`, columns: [{ name: 'A' }], rows: [] }, { id: `t${i}` }) }))
+    expect((await stage(f, 'table-many', many)).response.status).toBe(400)
+    // The largest allowed table (100 x 26 short cells) is fine.
+    const widest = { title: '', columns: Array.from({ length: 26 }, (_, i) => ({ name: `C${i}` })), rows: Array.from({ length: 100 }, () => ({ cells: Array.from({ length: 26 }, (_, i) => `v${i}`) })) }
+    const ok = await stage(f, 'table-max', [{ action: 'create', object: tableCard(widest) }])
+    expect(ok.response.status).toBe(201)
+    expect((await f.request(`/agent-proposals/${ok.body.id}/approve`, {})).status).toBe(200)
+    expect(Object.keys(storedTable(f)).filter((k) => k.startsWith('tc')).length).toBe(2600)
+  } finally { f.sql.close() }
+})

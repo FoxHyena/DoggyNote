@@ -26,6 +26,11 @@ it('rejects permanent deletion and duplicate object operations', async () => {
   await expect(prepareAgentChanges(db, access, credential, { id: 'rex', username: 'rex', isAdmin: false }, { ...base, operations: [{ action: 'replace', object: { ...note, purged: true }, expectedRevision: 10 }] })).rejects.toThrow('Permanent deletion')
   await expect(prepareAgentChanges(db, access, credential, { id: 'rex', username: 'rex', isAdmin: false }, { ...base, operations: [{ action: 'trash', id: note.id, expectedRevision: 10 }, { action: 'restore', id: note.id, expectedRevision: 10 }] })).rejects.toThrow('Only one operation')
 })
+it('names the table cell that does not fit its column, before touching anything', async () => {
+  const db = { prepare: () => ({ all: async () => ({ results: [] }) }) } as unknown as D1Database
+  const table: AgentObject = { ...note, id: 'table-1', type: 'table', content: { title: 'Visits', columns: [{ name: 'Dog' }, { name: 'Next', type: 'date' }], rows: [{ cells: ['Rex', '2026-12-01'] }, { cells: ['Fido', 'soon'] }] } }
+  await expect(prepareAgentChanges(db, access, credential, { id: 'rex', username: 'rex', isAdmin: false }, { idempotencyKey: 'request-123', label: 'Add table', operations: [{ action: 'create', object: table }] })).rejects.toThrow('Row 2, "Next": use YYYY-MM-DD')
+})
 it('area height is a manually chosen dimension, not an ignorable measurement',()=>{
   const area={...note,type:'area' as const,content:{title:'Project'}}
   expect(sameAgentState(area,{...area,h:600})).toBe(false)
