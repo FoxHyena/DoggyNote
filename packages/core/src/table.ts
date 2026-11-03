@@ -25,12 +25,14 @@ export type SelectOption = { id: string; n: string; c: PresetColor }
 /** Stored shapes (what travels over sync). */
 export type CellField = Prim | { v?: Prim; b?: 1; a?: Align; bg?: PresetColor } | null
 export type RowField = { o: number; bg?: PresetColor } | null
-export type ColumnField = { n: string; o: number; w: number; t: ColumnType; a?: Align; opts?: SelectOption[] } | null
+/** `s`: the column the rows were last sorted by, and which way ('a' ascending, 'd' descending). */
+export type SortMark = 'a' | 'd'
+export type ColumnField = { n: string; o: number; w: number; t: ColumnType; a?: Align; opts?: SelectOption[]; s?: SortMark } | null
 
 /** Read shapes (always well-formed). */
 export type Cell = { v: CellValue; b: boolean; a?: Align; bg?: PresetColor }
 export type TableRow = { id: string; o: number; bg?: PresetColor }
-export type TableColumn = { id: string; n: string; o: number; w: number; t: ColumnType; a?: Align; opts: SelectOption[] }
+export type TableColumn = { id: string; n: string; o: number; w: number; t: ColumnType; a?: Align; opts: SelectOption[]; s?: SortMark }
 export type TablePatch = Record<string, unknown>
 
 export const COLUMN_TYPES: readonly ColumnType[] = ['text', 'number', 'checkbox', 'date', 'select', 'rating']
@@ -94,6 +96,7 @@ const fields = (card: Source) => card as Record<string, unknown>
 const isRecord = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
 const isAlign = (v: unknown): v is Align => v === 'l' || v === 'c' || v === 'r'
+const isSortMark = (v: unknown): v is SortMark => v === 'a' || v === 'd'
 const isType = (v: unknown): v is ColumnType => (COLUMN_TYPES as readonly unknown[]).includes(v)
 const isPrim = (v: unknown): v is Prim => typeof v === 'string' || typeof v === 'boolean' || finite(v)
 const byOrder = (a: { o: number; id: string }, b: { o: number; id: string }) => a.o - b.o || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
@@ -128,6 +131,7 @@ export function tableColumns(card: Source): TableColumn[] {
       t: isType(f.t) ? f.t : 'text',
       ...(isAlign(f.a) ? { a: f.a } : {}),
       opts: readOptions(f.opts),
+      ...(isSortMark(f.s) ? { s: f.s } : {}),
     })
   }
   return out.sort(byOrder)
@@ -371,7 +375,7 @@ export function addRows(card: Source, count = 1, at?: number): { patch: TablePat
     ids.push(id)
     patch[rowKey(id)] = { o: orders[k]! } satisfies RowField
   }
-  return { patch, ids }
+  return { patch: Object.assign(unsorted(card), patch), ids }
 }
 
 /** Tombstone rows and every cell in them. */
@@ -427,21 +431,33 @@ function rowField(card: Source, id: string, change: { o?: number; bg?: PresetCol
   return { o, ...(bg ? { bg } : {}) }
 }
 
-function columnField(col: TableColumn, change: Partial<Omit<TableColumn, 'id' | 'a'>> & { a?: Align | null } = {}): NonNullable<ColumnField> {
-  const next = { ...col, ...change } as TableColumn & { a?: Align | null }
+function columnField(col: TableColumn, change: Partial<Omit<TableColumn, 'id' | 'a' | 's'>> & { a?: Align | null; s?: SortMark | null } = {}): NonNullable<ColumnField> {
+  const next = { ...col, ...change } as TableColumn & { a?: Align | null; s?: SortMark | null }
   const opts = next.opts
   return {
     n: clip(next.n, TABLE_CAPS.name), o: next.o, w: next.w, t: next.t,
     ...(next.a ? { a: next.a } : {}),
     ...(opts.length ? { opts: opts.slice(0, TABLE_CAPS.options) } : {}),
+    ...(next.s ? { s: next.s } : {}),
   }
+}
+
+/**
+ * Takes the sort mark off every column that has one. Anything that moves rows or adds
+ * them leaves the table no longer in the order a sort made, so the mark would lie.
+ * Pass the card as it will be after the change, so a column field already in the patch is not overwritten.
+ */
+function unsorted(card: Source): TablePatch {
+  const patch: TablePatch = {}
+  for (const col of tableColumns(card)) if (col.s) patch[colKey(col.id)] = columnField(col, { s: null })
+  return patch
 }
 
 /** Move a row so it ends up at `toIndex` of the new order. */
 export function moveRow(card: Source, rowId: string, toIndex: number): TablePatch {
   const others = tableRows(card).filter((r) => r.id !== rowId)
   const i = Math.max(0, Math.min(toIndex, others.length))
-  return { [rowKey(rowId)]: rowField(card, rowId, { o: orderBetween(others[i - 1]?.o, others[i]?.o) }) }
+  return { ...unsorted(card), [rowKey(rowId)]: rowField(card, rowId, { o: orderBetween(others[i - 1]?.o, others[i]?.o) }) }
 }
 
 /** Move a column so it ends up at `toIndex` of the new order. */
@@ -680,7 +696,7 @@ export function retype(card: Source, colId: string, to: ColumnType): TablePatch 
       taken.add(o.id); next.push(o); known.set(text.toLowerCase(), o)
     }
     opts = next
-    patch[colKey(colId)] = columnField(col, { t: to, opts })
+    patch[colKey(colId)] = columnField(col, { t: to, opts, s: null })
     for (const row of rows) {
       const cell = cellOf(card, row.id, colId)
       const text = toText(col, cell)?.trim()
@@ -689,7 +705,7 @@ export function retype(card: Source, colId: string, to: ColumnType): TablePatch 
     }
     return patch
   }
-  patch[colKey(colId)] = columnField(col, { t: to })
+  patch[colKey(colId)] = columnField(col, { t: to, s: null })
   for (const row of rows) {
     const cell = cellOf(card, row.id, colId)
     const text = toText(col, cell)
@@ -740,7 +756,11 @@ export function compareCells(col: ColumnType | ColLike, dir: 'asc' | 'desc' = 'a
   }
 }
 
-/** Row orders that sort the table by a column. Only rows whose position changes are written. */
+/**
+ * Row orders that sort the table by a column. Only rows whose position changes are written.
+ * The column is marked as the one sorted (`s`), and any other column's mark is taken off; the
+ * mark stays until something moves or adds rows (see `unsorted`).
+ */
 export function sortRows(card: Source, colId: string, dir: 'asc' | 'desc' = 'asc'): TablePatch {
   const col = tableColumns(card).find((c) => c.id === colId)
   if (!col) return {}
@@ -752,6 +772,10 @@ export function sortRows(card: Source, colId: string, dir: 'asc' | 'desc' = 'asc
   indexed.forEach(({ row }, i) => {
     if (row.o !== i + 1) patch[rowKey(row.id)] = rowField(card, row.id, { o: i + 1 })
   })
+  const mark: SortMark = dir === 'desc' ? 'd' : 'a'
+  for (const c of tableColumns(card)) {
+    if (c.id === colId ? c.s !== mark : c.s) patch[colKey(c.id)] = columnField(c, { s: c.id === colId ? mark : null })
+  }
   return patch
 }
 
@@ -889,10 +913,11 @@ function validRow(v: Record<string, unknown>): boolean {
 }
 
 function validColumn(v: Record<string, unknown>): boolean {
-  if (!Object.keys(v).every((k) => ['n', 'o', 'w', 't', 'a', 'opts'].includes(k))) return false
+  if (!Object.keys(v).every((k) => ['n', 'o', 'w', 't', 'a', 'opts', 's'].includes(k))) return false
   if (typeof v.n !== 'string' || v.n.length > TABLE_CAPS.name || !finite(v.o) || Math.abs(v.o) > 1e12) return false
   if (!finite(v.w) || v.w <= 0 || v.w > 1000 || !isType(v.t)) return false
   if (v.a !== undefined && !isAlign(v.a)) return false
+  if (v.s !== undefined && !isSortMark(v.s)) return false
   if (v.opts === undefined) return true
   if (!Array.isArray(v.opts) || v.opts.length > TABLE_CAPS.options) return false
   const seen = new Set<string>()

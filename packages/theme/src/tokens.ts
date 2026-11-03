@@ -140,6 +140,39 @@ export const cardColors: Record<ThemeName, Record<PresetColor, { bg: string; tex
   },
 }
 
+/**
+ * Fills inside table cells and rows, and the tags drawn on them. A table is a grid of
+ * many fills side by side, so the dark theme's full-strength swatches (which suit one
+ * note) shout there. Dark fills are about the swatch at 30% over the card (gold, collar
+ * and peach nudged toward olive, rose and clay so the warm three stay apart), with the
+ * theme's own light text; light fills are the pastel swatches as they are.
+ */
+export const tableFills: Record<ThemeName, Record<PresetColor, { bg: string; text: string }>> = {
+  dark: {
+    none: cardColors.dark.none,
+    gold: { bg: '#625a2c', text: surfaces.dark.text },
+    collar: { bg: '#663a3e', text: surfaces.dark.text },
+    ball: { bg: '#47554b', text: surfaces.dark.text },
+    sky: { bg: '#45505a', text: surfaces.dark.text },
+    lilac: { bg: '#524c5c', text: surfaces.dark.text },
+    peach: { bg: '#6c4a30', text: surfaces.dark.text },
+  },
+  light: cardColors.light,
+}
+
+/**
+ * How much of its ink an empty paw or an unticked box keeps (the rest is the cell's
+ * own background). Chosen so they clear 3:1 against every table background in both
+ * themes, plain or filled; a filled paw or a tick is the full ink.
+ */
+export const TABLE_EMPTY_INK = 0.7
+
+/** CSS values for a table fill (`--dn-table-<colour>-bg` and `-text`); anything but a preset is 'none'. */
+export function tableFillVars(c: unknown): { bg: string; text: string } {
+  const color = isPresetColor(c) ? c : 'none'
+  return { bg: `var(--dn-table-${color}-bg)`, text: `var(--dn-table-${color}-text)` }
+}
+
 const kebab = (s: string) => s.replace(/[A-Z]/g, (c) => '-' + c.toLowerCase())
 
 /** CSS custom properties for one theme, e.g. `--dn-bg: #1c1b1a;`. */
@@ -149,7 +182,10 @@ export function themeVars(name: ThemeName): string {
   for (const c of CARD_COLORS) {
     lines.push(`--dn-card-${c}-bg: ${cardColors[name][c].bg};`)
     lines.push(`--dn-card-${c}-text: ${cardColors[name][c].text};`)
+    lines.push(`--dn-table-${c}-bg: ${tableFills[name][c].bg};`)
+    lines.push(`--dn-table-${c}-text: ${tableFills[name][c].text};`)
   }
+  lines.push(`--dn-table-empty-ink: ${TABLE_EMPTY_INK};`)
   return lines.join('\n')
 }
 

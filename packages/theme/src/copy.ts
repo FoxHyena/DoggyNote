@@ -169,6 +169,10 @@ export const COPY = {
     columnActions: 'Column actions',
     rowActions: 'Row actions',
     resizeColumn: 'Resize column',
+    /** Keyboard resize: the grip's tooltip says it, the live region reports the result. */
+    columnGripTip: (name: string) => `${name || 'Column'}: select, drag to move · Alt+Shift+< > to resize`,
+    announceResized: (name: string, percent: number) => `${name || 'Column'} is ${percent}% of the table`,
+    announceResizeLimit: (wider: boolean) => (wider ? 'This column is already as wide as it can go' : 'This column is already as narrow as it goes'),
     renameColumn: 'Rename column',
     moveRowUp: 'Move up',
     moveRowDown: 'Move down',
@@ -198,6 +202,11 @@ export const COPY = {
       return dir === 'asc' ? 'Sort A to Z' : 'Sort Z to A'
     },
     announceSorted: 'Sorted',
+    /** The arrow a sorted column keeps in its header. Its name is the header's aria-sort; this is the tooltip. */
+    sortedBy: (dir: 'asc' | 'desc') => (dir === 'asc' ? 'Sorted A to Z. Editing does not re-sort.' : 'Sorted Z to A. Editing does not re-sort.'),
+    /** A quiet line outside a brand-new table, until a first cell is filled (or it has been seen three times). */
+    firstRunHint: 'Type to fill · Tab for the next cell · drag ⋮⋮ to reorder',
+    firstRunHintTouch: 'Tap to fill · ‹ › below for the next cell',
     announceType: (name: string) => `Column is now ${name}`,
     /** Formatting. */
     bold: 'Bold',
@@ -231,6 +240,8 @@ export const COPY = {
     /** Ticks, paws and dates. */
     ticked: 'Ticked',
     unticked: 'Not ticked',
+    /** A tick box's name: its column, then the row's first cell. Its state is the box's own to say. */
+    checkLabel: (column: string, who: string) => `${column}, ${who}`,
     pawsLabel: (n: number) => (n === 0 ? 'No paws' : n === 1 ? '1 of 5 paws' : `${n} of 5 paws`),
     pawLabel: (n: number) => (n === 1 ? '1 paw' : `${n} paws`),
     pickDate: 'Pick a date',

@@ -129,10 +129,50 @@ Method: impeccable critique + audit as two isolated sub-agents (A: design review
 
 ### Consciously deferred
 
-- **Dark-theme fills** use the same full-strength swatches as notes, so a filled row is brighter than its card. Tinting them toward the panel would split the table's colours from every other card; revisit if it is still loud in real use.
-- **Unticked paws** are drawn at 22% and an unticked box at 55% of the ink, below 3:1 for non-text contrast. They are placeholders that every table shares; a real-use look will say whether they need to be firmer.
-- **Resizing a column by keyboard.** The strip is a pointer control; a "Column width" menu item or arrow-key resizing is the next step. On a phone the 16px strip is below the 24px target-size guide.
-- **First-run teaching.** A new table has no hint that the dots drag or that a header has a menu; the guide covers it. A one-line hint under a new table is an option.
-- **No sort state.** A sort is a one-off by design (rows never jump while someone types), so no column shows an arrow. The guide says so.
-- **The checkbox's accessible name** changes with its state while `aria-checked` already carries it; a constant name would be a little quieter in VoiceOver.
-- **Real-device checks** nobody can drive in a test: the native date wheel and whether a tap on a dock button keeps the keyboard up on iOS (rounds 2a), the system's selection menu for Copy, and the new edit camera on a real phone with the keyboard open.
+- **Real-device checks** nobody can drive in a test: the native date wheel and whether a tap on a dock button keeps the keyboard up on iOS (round 2a), the system's selection menu for Copy, and the edit camera on a real phone with the keyboard open. The hint's place above the dock on a real iPhone belongs on that list too.
+
+Everything else that was deferred here is done in round 3 below.
+
+## Round 3 (PR 7: the deferred items)
+
+Screenshots in `round-3/`: dark and light, desktop (a table with every fill, tags, paws and boxes, sorted by Paws with the arrow in its header, read and editing; the fill panel; a brand-new table with its hint) and phone 390 (read; a brand-new table with the shorter hint above the dock).
+
+Method: impeccable critique + audit as two isolated sub-agents (A: design review of the screenshots and source; B: the detector, clean, and a code audit), then the fixes below.
+
+### Done (was deferred)
+
+| Was deferred | Done |
+|---|---|
+| **Resizing a column by keyboard** | With a column picked (Ctrl+Space, or its grip), Alt+Shift+< narrows and Alt+Shift+> widens it by 16px through `resizeBoundary`: the room comes from its right neighbour, or from the left one for the last column. One press is one change and one undo step (not coalesced, so each is predictable). The field carries `aria-keyshortcuts`, the grip's tooltip says "Alt+Shift+< > to resize", and the live region reports "Pup is 34% of the table", or that the column is already as wide or as narrow as it goes. The keys use `event.code`, because Alt changes what the key types on a Mac, and they never type into the field |
+| **No sort state** | A column sorted A to Z (or any of its wordings) keeps a small arrow and `aria-sort` in its header. The mark is `s: 'a' \| 'd'` on the column field. `moveRow(s)`, `addRows` (so inserting, Tab on the last cell, duplicating and a pasting that grows the table), `retype` and a sort of another column take it off; renaming, resizing, filling and editing values keep it. Agents read it as `sorted: "asc" \| "desc"` and cannot write it: a replace keeps it only when every row comes back in the order it was read. The server accepts `s` additively (`validTableField`) |
+| **First-run teaching** | A brand-new table shows one muted 12px line under it, outside the card and below the "+ row" pill: "Type to fill · Tab for the next cell · drag ⋮⋮ to reorder" (on touch "Tap to fill · ‹ › below for the next cell"). It ends at the first change made in the table, and is shown at most three times to someone who never fills one in. "Seen" lives in `localStorage` (`doggynote.tableHint`) |
+| **Dark-theme fills** | Table cells, rows and tags use `tableFills`: light is the pastel swatches as before; dark is about 30% of the swatch over the card with the theme's own light text (gold, collar and peach nudged toward olive, rose and clay so the warm three stay apart). The LOD drawing and tag chips use the same pairs |
+| **Unticked paws** | Empty paws are the outline paw at 70% ink and set ones the solid paw at full ink, so the difference is shape as well as strength; unticked boxes keep 70% too. `TABLE_EMPTY_INK` is one token, also used by the LOD drawing, and `theme.test.ts` checks it against every fill in both themes |
+| **The checkbox's accessible name** | "Good boy, Rex" (the column, then the row's first cell; "Row 3, Good boy" when that cell is empty or the box is in the first column), in the read view and the viewer. The state is `aria-checked`'s to say, so the name stays constant. This deviates from the brief's example "Good boy, Rex: ticked" on purpose: a name that changes with the state is the noise the README noted |
+
+### Contrast
+
+| Pair | Dark | Light |
+|---|---|---|
+| Fill text on every fill (4.5:1) | 5.7 to 7.6 | 8.3 to 10.4 |
+| Gold selection ring on the fill (3:1) | 3.4 to 4.5 | the ink ring inside runs there, as before |
+| Text under the range tint (4.5:1) | 4.7 to 6.1 | 7.2 to 8.8 |
+| Empty paw or box on its cell (3:1) | 3.7 to 4.7 on fills, 6.5 plain | 4.3 to 4.8 on fills, 5.7 plain |
+
+### What the review found, and the fixes
+
+| Finding | Fix |
+|---|---|
+| "Fetch" reads as the search verb, and the touch hint printed arrows far from the real ones | "Tab for the next cell"; "‹ › below" on touch |
+| The hint floated a long way under the card | 30px (48px on touch) below the card, just under the pill |
+| The sort arrow was brighter than the header's own text, and pushed a centred name off centre | It inherits the header's colour and hangs off the right end of a centred name; the crowded-header test counts it |
+| Gold, collar and peach collapsed into one brown in dark | Their dark fills moved toward olive, rose and clay |
+| The two "already as wide/narrow" messages were the same text, which a live region does not repeat | The region is cleared first |
+| `aria-keyshortcuts` used `code` names; the hint's glyphs read badly in a screen reader | Key values (`Alt+Shift+< Alt+Shift+>`); the hint is `aria-hidden` (the same keys are on the field and the grip) |
+
+### Known trade-offs
+
+- **The fill panel's dots stay the full card swatches**, as in every other colour panel; the fill they paint is a quieter version of them in the dark theme. Painting the real fill made the six dots hard to tell apart.
+- **The sort mark lives on the column field**, so a row added to a sorted table rewrites that column's field once (and so can overwrite a peer's concurrent rename or resize of it). It is only while a mark exists, and a per-column mark key would have meant a second field per column. The mark also stays when a value in the sorted column is edited: it says "last sorted", and its tooltip says editing does not re-sort.
+- **Keyboard resize is not coalesced**: ten presses are ten undo steps.
+- **An empty paw is a thin outline** at 14px; its 3:1 is computed from its colour, and by eye it reads fine on every fill, but antialiasing makes it lighter than a solid shape of the same colour.

@@ -166,11 +166,14 @@ it('refuses table fields on anything but a table card, and bad values anywhere',
   expect((await push({ id: 'root', [cell]: 'x' })).status).toBe(403)
   expect((await push(base('t1', 'table', 'root', fields))).status).toBe(200)
   // Wrong shapes are refused before any write.
-  for (const bad of [{ [cell]: 'x'.repeat(2001) }, { [cell]: { bg: 'url(x)' } }, { [cell]: [1] }, { [rowKey(rowIds[0]!)]: { o: 'a' } }, { [colKey(colIds[0]!)]: { n: 'x', o: 1, w: 0, t: 'text' } }, { [colKey(colIds[0]!)]: { n: 'x', o: 1, w: 1, t: 'nope' } }]) {
+  for (const bad of [{ [cell]: 'x'.repeat(2001) }, { [cell]: { bg: 'url(x)' } }, { [cell]: [1] }, { [rowKey(rowIds[0]!)]: { o: 'a' } }, { [colKey(colIds[0]!)]: { n: 'x', o: 1, w: 0, t: 'text' } }, { [colKey(colIds[0]!)]: { n: 'x', o: 1, w: 1, t: 'nope' } }, { [colKey(colIds[0]!)]: { n: 'x', o: 1, w: 1, t: 'text', s: 'up' } }]) {
     const res = await push({ id: 't1', ...bad })
     expect(res.status).toBe(400)
     expect(JSON.stringify(await res.json())).toContain('bad table field')
   }
+  // The sort mark is an additive column field: both directions are accepted.
+  expect((await push({ id: 't1', [colKey(colIds[0]!)]: { n: 'x', o: 1, w: 1, t: 'text', s: 'a' } })).status).toBe(200)
+  expect((await push({ id: 't1', [colKey(colIds[0]!)]: { n: 'x', o: 1, w: 1, t: 'text', s: 'd' } })).status).toBe(200)
   // A table can't become a note, and its content stays an object.
   expect((await push({ id: 't1', type: 'note' })).status).toBe(403)
   expect((await push({ id: 't1', content: 'x' })).status).toBe(403)

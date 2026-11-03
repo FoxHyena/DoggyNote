@@ -294,14 +294,72 @@ describe('sorting', () => {
   it('sorts rows stably, writing orders only for rows that moved', () => {
     const { card, rows, cols } = fixture(['text', 'text', 'text'], [['a'], ['c'], ['b']])
     const patch = sortRows(card, cols[0]!)
-    expect(Object.keys(patch).sort()).toEqual([rowKey(rows[1]!), rowKey(rows[2]!)].sort())
+    expect(Object.keys(patch).sort()).toEqual([colKey(cols[0]!), rowKey(rows[1]!), rowKey(rows[2]!)].sort())
     expect(tableRows(apply(card, patch)).map((r) => r.id)).toEqual([rows[0], rows[2], rows[1]])
     expect(tableRows(apply(card, sortRows(card, cols[0]!, 'desc'))).map((r) => r.id)).toEqual([rows[1], rows[2], rows[0]])
     expect(sortRows(apply(card, patch), cols[0]!)).toEqual({})
-    // Equal cells keep their order.
+    // Equal cells keep their order (only the mark is written).
     const ties = fixture(['text', 'text', 'text'], [['a'], ['a'], ['a']])
-    expect(sortRows(ties.card, ties.cols[0]!)).toEqual({})
-    expect(sortRows(ties.card, ties.cols[0]!, 'desc')).toEqual({})
+    expect(Object.keys(sortRows(ties.card, ties.cols[0]!))).toEqual([colKey(ties.cols[0]!)])
+    expect(tableRows(apply(ties.card, sortRows(ties.card, ties.cols[0]!, 'desc'))).map((r) => r.id)).toEqual(ties.rows)
+  })
+  describe('the sort mark', () => {
+    const marked = (card: Record<string, unknown>) => tableColumns(card).filter((c) => c.s).map((c) => `${c.n}${c.s}`)
+    const sortedFixture = () => {
+      const { card, rows, cols } = fixture(['text', 'text', 'text'], [['c'], ['a'], ['b']])
+      return { card: apply(card, sortRows(card, cols[0]!)), rows, cols }
+    }
+    it('marks the sorted column with its direction, and moves the mark with another sort', () => {
+      const { card, cols } = fixture(['text', 'text', 'text'], [['c', 'x'], ['a', 'z'], ['b', 'y']])
+      const a = apply(card, sortRows(card, cols[0]!))
+      expect(marked(a)).toEqual(['Aa'])
+      const d = apply(a, sortRows(a, cols[0]!, 'desc'))
+      expect(marked(d)).toEqual(['Ad'])
+      const other = apply(d, sortRows(d, cols[1]!))
+      expect(marked(other)).toEqual(['Ba'])
+      // Sorting the same way again writes nothing.
+      expect(sortRows(other, cols[1]!)).toEqual({})
+    })
+    it('stays through edits that leave the order alone', () => {
+      const { card, cols, rows } = sortedFixture()
+      for (const patch of [
+        setCells(card, [{ row: rows[0]!, col: cols[1]!, value: 'x' }]), setStyle(card, [{ row: rows[0]!, col: cols[0]! }], { b: true }),
+        setRowFill(card, [rows[0]!], 'sky'), updateColumn(card, cols[0]!, { n: 'Renamed', w: 2 }), resizeBoundary(card, cols[0]!, 0.2),
+        moveColumn(card, cols[0]!, 2), addColumn(card).patch, deleteRows(card, [rows[1]!]),
+      ]) expect(tableColumns(apply(card, patch)).find((c) => c.id === cols[0])!.s, JSON.stringify(patch)).toBe('a')
+    })
+    it('goes when rows are moved, added, duplicated or pasted in', () => {
+      const { card, cols, rows } = sortedFixture()
+      const order = tableRows(card).map((r) => r.id)
+      for (const [name, patch] of [
+        ['moveRow', moveRow(card, order[0]!, 2)], ['moveRows', moveRows(card, [order[0]!, order[1]!], 2)],
+        ['addRows', addRows(card, 1, 1).patch], ['duplicateRows', duplicateRows(card, [order[0]!]).patch],
+        ['pasteGrid', pasteGrid(card, [['x'], ['y'], ['z'], ['w']], { r: 0, c: 0 }).patch],
+        ['retype', retype(card, cols[0]!, 'number')],
+      ] as const) expect(marked(apply(card, patch)), name).toEqual([])
+      void rows
+    })
+    it('stays when a move changes nothing, or a paste only fills cells', () => {
+      const { card, cols } = sortedFixture()
+      const order = tableRows(card).map((r) => r.id)
+      expect(moveRows(card, [order[0]!], 0)).toEqual({})
+      expect(marked(apply(card, pasteGrid(card, [['x']], { r: 0, c: 1 }).patch))).toEqual(['Aa'])
+      void cols
+    })
+    it('does not lose a rename made in the same paste that grows the table', () => {
+      const { card, cols } = sortedFixture()
+      const after = apply(card, pasteGrid(card, [['New name'], ['1'], ['2'], ['3'], ['4']], { r: -1, c: 0 }).patch)
+      expect(tableColumns(after).find((c) => c.id === cols[0])).toMatchObject({ n: 'New name' })
+      expect(marked(after)).toEqual([])
+    })
+    it('is read tolerantly and validated', () => {
+      const c = '100001'
+      expect(tableColumns({ [colKey(c)]: { n: 'x', o: 1, w: 1, t: 'text', s: 'd' } })[0]!.s).toBe('d')
+      expect(tableColumns({ [colKey(c)]: { n: 'x', o: 1, w: 1, t: 'text', s: 'up' } })[0]).not.toHaveProperty('s')
+      expect(validTableField(colKey(c), { n: 'x', o: 1, w: 1, t: 'text', s: 'a' })).toBe(true)
+      expect(validTableField(colKey(c), { n: 'x', o: 1, w: 1, t: 'text', s: 'd' })).toBe(true)
+      for (const s of ['up', 1, null, true]) expect(validTableField(colKey(c), { n: 'x', o: 1, w: 1, t: 'text', s })).toBe(false)
+    })
   })
   it('sorts a select by option name and keeps row fills', () => {
     const base = fixture(['select', 'text', 'text'])

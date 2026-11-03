@@ -254,13 +254,13 @@ test('the fill sheet: 32px dots with 44px targets, presets only, and the keyboar
   expect(reach).toBeGreaterThanOrEqual(43.9)
   await pop.getByTestId('table-fill-sky').tap()
   await expect(pop).toHaveCount(0)
-  expect(await cell(page, 1, 0).getAttribute('style')).toContain('--dn-card-sky-bg')
+  expect(await cell(page, 1, 0).getAttribute('style')).toContain('--dn-table-sky-bg')
   await expect(table(page)).toHaveClass(/editing/)
   // Whole rows through the row's own Fill.
   await page.getByTestId('table-row-grip').nth(0).tap()
   await page.getByTestId('dock-fill').tap()
   await page.getByTestId('table-fill-peach').tap()
-  for (const c of [0, 1, 2, 3]) expect(await cell(page, 0, c).getAttribute('style')).toContain('--dn-card-peach-bg')
+  for (const c of [0, 1, 2, 3]) expect(await cell(page, 0, c).getAttribute('style')).toContain('--dn-table-peach-bg')
 })
 
 test('paws and boxes by tap: a tap on a paw sets it, the same paw clears; a selected table ticks on one tap', async ({ page }) => {
@@ -342,4 +342,29 @@ test('editing a table near the top or left edge frames its grips, clear of the t
     expect(b.y).toBeGreaterThanOrEqual(bar.y + bar.height - 0.5)
     expect(b.x).toBeGreaterThanOrEqual(0)
   }
+})
+
+test('a brand-new table shows a shorter hint that points at the dock arrows, above the dock and outside the card', async ({ page }) => {
+  await page.getByTestId('dock-add').tap()
+  await page.getByTestId('add-table').tap()
+  await expect(input(page)).toBeFocused()
+  const hint = page.getByTestId('table-hint')
+  await expect(hint).toHaveText('Tap to fill · ‹ › below for the next cell')
+  expect(await hint.evaluate((el) => getComputedStyle(el).fontSize)).toBe('12px')
+  // Seen without scrolling, clear of the dock on the keyboard, and below the card it belongs to.
+  await page.waitForTimeout(500)
+  const h = (await hint.boundingBox())!
+  const vp = page.viewportSize()!
+  // The line is as wide as the card (which may run past the screen) but its text starts at the card's left edge, in view.
+  expect(h.x).toBeGreaterThanOrEqual(0)
+  expect(h.x + 14 + 230).toBeLessThanOrEqual(vp.width)
+  expect(h.y).toBeGreaterThan(0)
+  const dock = (await page.getByTestId('edit-dock').boundingBox())!
+  expect(h.y + h.height).toBeLessThanOrEqual(dock.y + 1)
+  const card = (await page.locator('[data-type=table]').last().boundingBox())!
+  expect(h.y).toBeGreaterThanOrEqual(card.y + card.height)
+  // Typing a first cell ends it.
+  await page.keyboard.type('Rex')
+  await page.getByTestId('dock-next').tap()
+  await expect(hint).toHaveCount(0)
 })

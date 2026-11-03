@@ -35,7 +35,11 @@ function readPalette(): Palette {
   for (const c of CARD_COLORS) {
     p[`${c}-bg`] = get(`--dn-card-${c}-bg`)
     p[`${c}-text`] = get(`--dn-card-${c}-text`)
+    // Tables use their own, quieter fills in the dark theme (cells, rows and tags).
+    p[`table-${c}-bg`] = get(`--dn-table-${c}-bg`)
+    p[`table-${c}-text`] = get(`--dn-table-${c}-text`)
   }
+  p.emptyInk = get('--dn-table-empty-ink')
   p.customInkDark = get('--dn-custom-ink-dark')
   p.customInkLight = get('--dn-custom-ink-light')
   return p

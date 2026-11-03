@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
-import { freshBoard } from './helpers.ts'
+import { freshBoard, setAccountAppearance } from './helpers.ts'
 import { MOD, activeCell, cell, columnGrip, grid, headerCells, input, openEditing, rowGrip, seedTyped, type TypedColumn, type TypedRow } from './tables.ts'
 
 // Bold, alignment, fill and sort, and the bar that carries them: at most four
@@ -118,7 +118,7 @@ test('fill: the card colours as dots, cells and rows, a cell beats its row, and 
   await expect(pop).toHaveCount(0)
   await expect(input(page)).toBeFocused()
   await expect(cell(page, 0, 0)).toHaveAttribute('data-fill', '')
-  expect(await cell(page, 0, 0).getAttribute('style')).toContain('--dn-card-sky-bg')
+  expect(await cell(page, 0, 0).getAttribute('style')).toContain('--dn-table-sky-bg')
   expect(await bg(cell(page, 0, 0))).not.toBe(TRANSPARENT)
   expect(await bg(cell(page, 0, 1))).toBe(TRANSPARENT)
   // A row: every cell of it.
@@ -126,17 +126,17 @@ test('fill: the card colours as dots, cells and rows, a cell beats its row, and 
   await page.getByTestId('table-fill').click()
   await expect(page.getByTestId('table-fill-popover')).toBeVisible()
   await page.getByTestId('table-fill-peach').click()
-  for (const c of [0, 1, 2, 3]) expect(await cell(page, 1, c).getAttribute('style')).toContain('--dn-card-peach-bg')
+  for (const c of [0, 1, 2, 3]) expect(await cell(page, 1, c).getAttribute('style')).toContain('--dn-table-peach-bg')
   // The row's colour sits behind a cell's own: the cell wins, and clearing it gives the row's back.
   await openAt(page, 1, 1)
   await page.getByTestId('table-fill').click()
   await page.getByTestId('table-fill-lilac').click()
-  expect(await cell(page, 1, 1).getAttribute('style')).toContain('--dn-card-lilac-bg')
-  expect(await cell(page, 1, 0).getAttribute('style')).toContain('--dn-card-peach-bg')
+  expect(await cell(page, 1, 1).getAttribute('style')).toContain('--dn-table-lilac-bg')
+  expect(await cell(page, 1, 0).getAttribute('style')).toContain('--dn-table-peach-bg')
   await page.getByTestId('table-fill').click()
   await expect(page.getByTestId('table-fill-lilac')).toHaveAttribute('aria-pressed', 'true')
   await page.getByTestId('table-fill-none').click()
-  expect(await cell(page, 1, 1).getAttribute('style')).toContain('--dn-card-peach-bg')
+  expect(await cell(page, 1, 1).getAttribute('style')).toContain('--dn-table-peach-bg')
   // None on a row clears it.
   await rowGrip(page, 1).click()
   await page.getByTestId('table-fill').click()
@@ -302,4 +302,86 @@ test('a draft is aligned and weighted like its cell, and a right-aligned header 
   const first = (await page.getByTestId('table-column-menu').nth(0).boundingBox())!
   const firstHead = (await headerCells(page).nth(0).boundingBox())!
   expect(first.x).toBeGreaterThan(firstHead.x + firstHead.width / 2)
+})
+
+test('a sorted column keeps a small arrow in its header until the rows move or grow again', async ({ page }) => {
+  await seedTyped(page, COLS, ROWS)
+  const marks = page.getByTestId('table-sort-mark')
+  await expect(marks).toHaveCount(0)
+  await openEditing(page, 0, 0)
+  const headBefore = (await headerCells(page).first().boundingBox())!
+  await columnGrip(page, 0).click()
+  await page.getByTestId('table-sort').click()
+  await page.getByTestId('table-sort-asc').click()
+  await expect(marks).toHaveCount(1)
+  await expect(headerCells(page).nth(0)).toHaveAttribute('aria-sort', 'ascending')
+  await expect(headerCells(page).nth(0).getByTestId('table-sort-mark')).toHaveAttribute('data-dir', 'a')
+  // An arrow takes no room: the header is as tall as it was.
+  expect(Math.abs((await headerCells(page).first().boundingBox())!.height - headBefore.height)).toBeLessThan(1)
+  // Its tooltip says what it is; it does not cover or move the column's name.
+  await headerCells(page).first().getByTestId('table-sort-mark').hover()
+  await expect(page.locator('.dn-tooltip')).toContainText('Sorted A to Z')
+  await page.mouse.move(0, 0)
+  // The other direction flips it; another column takes it over (one mark at a time).
+  await page.getByTestId('table-sort').click()
+  await page.getByTestId('table-sort-desc').click()
+  await expect(headerCells(page).nth(0)).toHaveAttribute('aria-sort', 'descending')
+  await columnGrip(page, 1).click()
+  await page.getByTestId('table-sort').click()
+  await page.getByTestId('table-sort-asc').click()
+  await expect(marks).toHaveCount(1)
+  await expect(headerCells(page).nth(0)).not.toHaveAttribute('aria-sort', /.+/)
+  await expect(headerCells(page).nth(1)).toHaveAttribute('aria-sort', 'ascending')
+  // Edits that keep the order keep the mark: a value, a width, a fill.
+  await openAt(page, 0, 0)
+  await page.keyboard.type('Zed')
+  await page.keyboard.press('Enter')
+  await columnGrip(page, 0).click()
+  await page.keyboard.press('Alt+Shift+Period')
+  await expect(marks).toHaveCount(1)
+  // The read view shows it too.
+  await page.keyboard.press('Escape')
+  await page.keyboard.press('Escape')
+  await page.keyboard.press('Escape')
+  await expect(page.getByTestId('table-grid').locator('th[aria-sort=ascending]')).toHaveCount(1)
+  // Moving a row takes it off, and undo brings the arrow back with the order.
+  await openEditing(page, 0, 0)
+  await rowGrip(page, 0).click()
+  await page.keyboard.press('Alt+Shift+ArrowDown')
+  await expect(marks).toHaveCount(0)
+  await expect(headerCells(page).nth(1)).not.toHaveAttribute('aria-sort', /.+/)
+  await page.keyboard.press(`${MOD}+z`)
+  await expect(marks).toHaveCount(1)
+  // Sorting again, then adding a row (the "+ row" pill), also takes it off.
+  await columnGrip(page, 1).click()
+  await page.getByTestId('table-sort').click()
+  await page.getByTestId('table-sort-desc').click()
+  await expect(marks).toHaveCount(1)
+  await page.getByTestId('table-add-row').click()
+  await expect(marks).toHaveCount(0)
+})
+
+test('table fills are softer in the dark theme and the pastel swatch in the light one, with paws that read as 0 of 5', async ({ page }) => {
+  await seedTyped(page, COLS, [{ bg: 'sky', cells: ['Mochi', 12, true, 3] }, { cells: ['Rex', { v: 4, bg: 'gold' }, false, 5] }, { cells: ['Biscuit', 7, true, 0] }])
+  const rgb = (hex: string) => `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ')})`
+  const paw = (row: number, n: number) => cell(page, row, 3).locator(`.table-paw[data-paw="${n}"]`)
+  const opacity = (loc: Locator) => loc.evaluate((el) => Number(getComputedStyle(el).opacity))
+  // Dark: the swatch at 30% over the card, with the theme's light text.
+  expect(await bg(cell(page, 0, 0))).toBe(rgb('#45505a'))
+  expect(await bg(cell(page, 1, 1))).toBe(rgb('#625a2c'))
+  expect(await cell(page, 0, 0).evaluate((el) => getComputedStyle(el).color)).toBe(rgb('#ece7e1'))
+  // Paws: a set one is a solid paw at full ink, an empty one an outline at the tested strength, on plain and filled cells.
+  await expect(paw(1, 5).locator('svg')).toHaveAttribute('data-icon', 'paw')
+  await expect(paw(0, 4).locator('svg')).toHaveAttribute('data-icon', 'pawOutline')
+  expect(await opacity(paw(1, 5))).toBe(1)
+  expect(await opacity(paw(0, 4))).toBeCloseTo(0.7, 2)
+  expect(await opacity(paw(2, 1))).toBeCloseTo(0.7, 2)
+  // An unticked box keeps the same strength; a ticked one is the full lamp.
+  expect(await opacity(cell(page, 1, 2).locator('.table-check'))).toBeCloseTo(0.7, 2)
+  expect(await opacity(cell(page, 0, 2).locator('.table-check'))).toBe(1)
+  await setAccountAppearance(page, 'Light')
+  expect(await bg(cell(page, 0, 0))).toBe(rgb('#bcd4ee'))
+  expect(await bg(cell(page, 1, 1))).toBe(rgb('#f4dc8f'))
+  expect(await cell(page, 0, 0).evaluate((el) => getComputedStyle(el).color)).toBe(rgb('#10263f'))
+  expect(await opacity(paw(0, 4))).toBeCloseTo(0.7, 2)
 })
