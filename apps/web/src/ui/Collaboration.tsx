@@ -4,14 +4,13 @@ import './collaboration.css'
 import { For, Show, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
 import { COPY } from '@doggynote/theme'
 import { noteMarkdown, type Card } from '@doggynote/core'
-import { liveState, members, peers, personStyle, sessionName, following, follow, stopFollowing, pingAt, pings, installRealtime } from '../state/realtime.ts'
+import { initials, liveState, members, peers, personStyle, sessionName, following, follow, stopFollowing, pingAt, pings, installRealtime } from '../state/realtime.ts'
 import { boardId, camera, viewport } from '../state/ui.ts'
 import * as doc from '../state/doc.ts'
 import { rectOf } from '../canvas/layout.ts'
 import { installMenu } from './menu.ts'
 import { user } from '../state/session.ts'
 
-const initials = (name: string) => name.slice(0, 2).toUpperCase()
 export function Collaborators() {
   const [open, setOpen] = createSignal(false)
   let root!: HTMLDivElement, trigger!: HTMLButtonElement

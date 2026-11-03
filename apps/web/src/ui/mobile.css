@@ -607,7 +607,6 @@ html[data-input='touch'] .card > .connect-handle { border-color: var(--dn-select
 /* UX1-04: the connect hint never swallows the tap meant for a card. */
 .connect-banner { pointer-events: none; }
 .connect-banner button { pointer-events: auto; }
-.nav-menu-recent { padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--dn-border); }
 /* Taps answer with a press state (hover doesn't exist on glass). */
 html[data-input='touch'] :is(.icon-btn, .bar-btn, .menu-item, .tool, .toast-action):active:not(:disabled) { background: var(--dn-card-hover); }
 

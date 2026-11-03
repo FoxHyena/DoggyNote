@@ -25,7 +25,16 @@
 .board-nav-menu { display: flex; flex-direction: column; width: 340px; min-width: 0; overflow: hidden; }
 .board-nav-menu .nav-menu-head { flex-shrink: 0; }
 .board-nav-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
-.board-nav-menu .nav-menu-section-label { padding-left: 38px; }
+/* Your spaces: fixed places on top, one rule, then lists under real headings
+   (text colour, aligned with the icons, more room above than below). */
+.board-nav-menu .nav-menu-section { padding-top: 0; margin-top: 0; border-top: 0; }
+.board-nav-menu .nav-menu-section-label { padding: 16px 12px 4px; color: var(--dn-text); font-size: 13px; font-weight: 600; line-height: 20px; }
+.board-nav-menu .menu-sep + section > .nav-menu-section-label { padding-top: 8px; }
+.board-nav-menu .nav-menu-section > .nav-menu-description { padding-left: 12px; }
+.board-nav-menu .nav-menu-meta { display: inline-flex; align-items: center; gap: 8px; }
+/* Who shared a board: their initials in their cursor colour. */
+.nav-menu-avatar { width: 20px; height: 20px; font-size: 9px; }
+.nav-menu-more { color: var(--dn-text-muted); }
 .topbar .board-navigation { display: flex; min-width: 0; }
 .ancestor-menu .nav-menu { width: 320px; }
 .ancestor-menu .menu-item { overflow-wrap: anywhere; }
