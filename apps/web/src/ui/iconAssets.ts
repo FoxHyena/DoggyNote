@@ -9,6 +9,12 @@ import listChecksSvg from '@phosphor-icons/core/regular/list-checks.svg?raw'
 import arrowUpRightSvg from '@phosphor-icons/core/regular/arrow-up-right.svg?raw'
 import squaresFourSvg from '@phosphor-icons/core/regular/squares-four.svg?raw'
 import rowsSvg from '@phosphor-icons/core/regular/rows.svg?raw'
+import tableSvg from '@phosphor-icons/core/regular/table.svg?raw'
+import rowsPlusTopSvg from '@phosphor-icons/core/regular/rows-plus-top.svg?raw'
+import rowsPlusBottomSvg from '@phosphor-icons/core/regular/rows-plus-bottom.svg?raw'
+import columnsPlusLeftSvg from '@phosphor-icons/core/regular/columns-plus-left.svg?raw'
+import columnsPlusRightSvg from '@phosphor-icons/core/regular/columns-plus-right.svg?raw'
+import columnsSvg from '@phosphor-icons/core/regular/columns.svg?raw'
 import imageSvg from '@phosphor-icons/core/regular/image.svg?raw'
 import boneSvg from '@phosphor-icons/core/regular/bone.svg?raw'
 import archiveSvg from '@phosphor-icons/core/regular/archive.svg?raw'
@@ -101,6 +107,12 @@ export const ICONS = {
   line: body(arrowUpRightSvg),
   board: body(squaresFourSvg),
   column: body(rowsSvg),
+  table: body(tableSvg),
+  rowAbove: body(rowsPlusTopSvg),
+  rowBelow: body(rowsPlusBottomSvg),
+  columnLeft: body(columnsPlusLeftSvg),
+  columnRight: body(columnsPlusRightSvg),
+  columns: body(columnsSvg),
   image: body(imageSvg),
   bury: body(archiveSvg),
   trash: body(trashSvg),
@@ -139,6 +151,7 @@ export const ICONS = {
   swatch: body(swatchesSvg),
   chevronDown: body(caretDownSvg),
   chevronLeft: body(caretLeftSvg),
+  chevronRight: body(caretRightSvg),
   alignLeft: body(alignLeftSvg),
   alignCenterH: body(alignCenterHorizontalSvg),
   alignRight: body(alignRightSvg),

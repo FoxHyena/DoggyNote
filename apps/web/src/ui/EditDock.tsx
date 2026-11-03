@@ -4,6 +4,7 @@ import { editingId } from '../state/ui.ts'
 import { touch } from '../state/device.ts'
 import { FORMAT, activeNoteEditor } from '../cards/NoteCard.tsx'
 import { Icon } from './icons.tsx'
+import { TableDock } from './TableDock.tsx'
 
 // Touch editing a note: formatting on top of the keyboard (--vv-bottom,
 // state/viewport.ts) instead of floating over the card. Buttons act on
@@ -28,9 +29,9 @@ export function EditDock() {
   // Keep focus (and the keyboard) in the editor.
   const keep = (e: PointerEvent) => e.preventDefault()
   return (
-    <Show when={touch() && card()?.type === 'note'}>
+    <Show when={touch() && (card()?.type === 'note' || card()?.type === 'table')}>
       <div class="edit-dock" data-testid="edit-dock" data-nodrag onPointerDown={keep}>
-        <div class="edit-dock-tools" role="toolbar" aria-label="Formatting">
+        <Show when={card()?.type === 'table'} fallback={<div class="edit-dock-tools" role="toolbar" aria-label="Formatting">
           <For each={DOCK_ORDER.map((cmd) => FORMAT.find((f) => f.cmd === cmd)!)}>
             {(f) => (
               <button class={`fmt fmt-${f.cmd}`} aria-label={f.title.split(':')[0]} data-testid={`dock-fmt-${f.cmd}`} onPointerDown={(e) => { keep(e); activeNoteEditor()?.run(f.cmd) }}>
@@ -38,7 +39,9 @@ export function EditDock() {
               </button>
             )}
           </For>
-        </div>
+        </div>}>
+          <TableDock />
+        </Show>
       </div>
     </Show>
   )

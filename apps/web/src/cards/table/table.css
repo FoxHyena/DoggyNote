@@ -1,0 +1,116 @@
+/* Table cards. Colours are theme tokens only; cell fills are the tested card pairs. */
+.card-table { cursor: default; }
+.card-table.editing { cursor: default; }
+.table-card { position: relative; color: inherit; }
+.table-card, .table-card * { box-sizing: border-box; }
+/* The grid runs edge to edge under the card's own 6px corners. */
+.table-clip { overflow: hidden; border-radius: inherit; }
+
+.table-title {
+  padding: 11px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.table-placeholder { color: var(--dn-text-muted); font-weight: 400; }
+
+.table-grid { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.table-grid th,
+.table-grid td {
+  height: 32px;
+  padding: 6px 10px;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: left;
+  vertical-align: top;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.table-grid th {
+  background: var(--dn-panel);
+  color: var(--dn-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.table-grid td + td,
+.table-grid th + th { border-left: 1px solid var(--dn-border); }
+.table-grid tbody td { border-top: 1px solid var(--dn-border); }
+.table-grid [data-align='c'] { text-align: center; }
+.table-grid [data-align='r'] { text-align: right; }
+.table-grid td[data-type='number'] { font-variant-numeric: tabular-nums; }
+.table-grid td[data-bold] { font-weight: 600; }
+.table-grid td[data-fill] { background: var(--cell-bg); color: var(--cell-text); }
+html[data-input='mouse'] .card-table.editing td:not([data-fill]):hover { background: var(--dn-card-hover); }
+.card-table.editing td, .card-table.editing th { cursor: cell; }
+.card-table.editing .table-title { cursor: text; }
+.card-table, .card-table * { user-select: none; -webkit-user-select: none; }
+.card-table .table-input { user-select: text; -webkit-user-select: text; }
+
+/* The editor: layers over the same DOM, outside layout, so no row ever moves. */
+.table-editor { position: absolute; inset: 0; pointer-events: none; }
+.table-range {
+  position: absolute;
+  background: color-mix(in srgb, var(--dn-selection) 14%, transparent);
+  pointer-events: none;
+}
+.table-input {
+  position: absolute;
+  z-index: 1;
+  margin: 0;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 0;
+  outline: 2px solid var(--dn-selection);
+  outline-offset: -2px;
+  background: var(--ta-bg, var(--c-bg));
+  color: var(--ta-fg, var(--dn-text));
+  caret-color: var(--dn-text);
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  resize: none;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  pointer-events: auto;
+}
+/* Navigating: nothing to see but the outline; a typed character switches to editing. */
+.table-input[data-mode='nav'] { background: transparent; color: transparent; caret-color: transparent; pointer-events: none; }
+.table-input[data-target='title'] { padding: 11px 14px; font-weight: 600; white-space: nowrap; }
+.table-input[data-target='header'] { font-size: 12px; font-weight: 600; background: var(--ta-bg, var(--dn-panel)); }
+.table-input[data-target='header'][data-mode='nav'] { background: transparent; }
+/* iOS zooms into fields under 16px. The field is 16px scaled to the card's 14px; the card itself keeps its text size. */
+html[data-input='touch'] .table-input {
+  padding: calc(6px / 0.875) calc(10px / 0.875);
+  font-size: 16px;
+  line-height: calc(20px / 0.875);
+  transform: scale(0.875);
+  transform-origin: 0 0;
+}
+html[data-input='touch'] .table-input[data-target='title'] { padding: calc(11px / 0.875) calc(14px / 0.875); }
+html[data-input='touch'] .table-input[data-target='header'] { font-size: 16px; }
+
+/* Adding a row or column happens outside the card, so its height never jumps. */
+.table-add {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px dashed var(--dn-border);
+  border-radius: 8px;
+  background: var(--dn-panel);
+  color: var(--dn-text-muted);
+  cursor: pointer;
+  pointer-events: auto;
+}
+.table-add:hover { background: var(--dn-card-hover); color: var(--dn-text); }
+.table-add:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 2px; }
+.table-add-row { left: 0; right: 0; top: calc(100% + 12px); height: 28px; }
+.table-add-column { top: 0; bottom: 0; left: calc(100% + 12px); width: 28px; }
+html[data-input='touch'] .table-add-row { height: 44px; }
+html[data-input='touch'] .table-add-column { width: 44px; }
+
+.table-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

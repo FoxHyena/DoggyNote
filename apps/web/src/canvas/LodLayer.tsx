@@ -13,6 +13,7 @@ import { acquireUrl, releaseUrl } from '../state/assets.ts'
 import { acquireStickerOutline } from '../state/stickerOutline.ts'
 import { user } from '../state/session.ts'
 import { COLUMN_HEADER, COLUMN_INSET, cardHeight, rectOf, worldSticker } from './layout.ts'
+import { drawTable, trackTable } from './lodTable.ts'
 
 // Zoomed out, a board can put a thousand cards on screen. As DOM that costs
 // ~60 ms a frame (the browser re-layerizes every card); drawn into one canvas
@@ -202,6 +203,7 @@ export function LodLayer() {
       if (c.type === 'area') {
         ctx.fillStyle = pal.panel; roundRect(ctx, x, y, w, h, 12 * z); ctx.fill(); ctx.strokeStyle = pal.border; ctx.lineWidth = 1; ctx.stroke(); ctx.fillStyle = pal.muted; ctx.fillRect(x + 24 * z, y + 20 * z, Math.min(160, c.w / 3) * z, Math.max(1, 6 * z)); return
       }
+      if (c.type === 'table') { drawTable(ctx, pal, c, x, y, w, h, z, tint, doc.canWriteObject(c)); return }
       if (c.type === 'board') {
         // Synced data: tolerate a card whose content is missing.
         const b = doc.getBoard((c as Card<'board'>).content?.boardId)
@@ -405,7 +407,7 @@ export function LodLayer() {
     selection()
     thumbTick()
     for (const s of doc.stickersOn(boardId())) void (s.x, s.y, s.w, s.angle, s.z, s.areaId, s.content.assetId)
-    for (const c of doc.cardsOn(boardId())) void (c.x, c.y, c.w, c.h, c.z, c.color, c.columnId, c.areaId, c.order, columnCollapsed(c), c.type === 'swatch' && (c as Card<'swatch'>).content?.hex, c.type === 'sketch' && (c.content, c.sketchTitle, c.sketchPaper), (c.type === 'sketch' || c.type === 'ink') && doc.strokesOn(c.id))
+    for (const c of doc.cardsOn(boardId())) void (c.x, c.y, c.w, c.h, c.z, c.color, c.columnId, c.areaId, c.order, columnCollapsed(c), c.type === 'swatch' && (c as Card<'swatch'>).content?.hex, c.type === 'sketch' && (c.content, c.sketchTitle, c.sketchPaper), (c.type === 'sketch' || c.type === 'ink') && doc.strokesOn(c.id), c.type === 'table' && trackTable(c))
     if (!frame) frame = requestAnimationFrame(draw)
   })
   onCleanup(() => {

@@ -729,3 +729,25 @@ html[data-input='touch'] .selection-phone-actions > .selection-primary:active:no
   :is(.menu.add-sheet, .menu.selection-style-sheet)[data-phone-sheet] { padding-top: 16px !important; }
   :is(.add-sheet, .selection-style-sheet) > .sheet-grip { width: 96px; margin-inline: auto; top: -16px; margin-top: -16px; margin-bottom: -12px; }
 }
+
+/* ---- table dock ----------------------------------------------------------------
+   Editing a table: ‹ › (Tab for a keyboard with none), then room for the cell
+   styles, then ⋯. Four 44px targets and gaps fit 360px with room to spare. */
+.table-dock { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.table-dock-btn,
+.table-dock .bar-btn {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 10px;
+  color: var(--dn-text);
+}
+.table-dock-btn:active,
+.table-dock .bar-btn:active { background: var(--dn-card-hover); }
+.table-dock-sep { width: 1px; height: 24px; background: var(--dn-border); }
+.table-dock-btn { border: 0; background: transparent; }
+.table-dock .bar-btn { border: 0; background: transparent; }
+.table-dock-menu { display: contents; }
