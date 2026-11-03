@@ -44,13 +44,11 @@
   vertical-align: middle;
   border-bottom: 1px solid var(--dn-border);
 }
-/* Rows are separated by hairlines. Column lines are always laid out but only drawn while editing, so entering edit moves nothing. */
+/* A full grid, soft: both directions use the same 70% hairline, in read and edit alike. */
 .table-grid td + td,
-.table-grid th + th { border-left: 1px solid transparent; }
+.table-grid th + th { border-left: 1px solid color-mix(in srgb, var(--dn-border) 70%, transparent); }
 .table-grid tbody td { border-top: 1px solid color-mix(in srgb, var(--dn-border) 70%, transparent); }
 .table-grid tbody tr:first-child td { border-top: 0; }
-.card-table.editing .table-grid td + td,
-.card-table.editing .table-grid th + th { border-left-color: color-mix(in srgb, var(--dn-border) 50%, transparent); }
 .table-grid [data-align='c'] { text-align: center; }
 .table-grid [data-align='r'] { text-align: right; }
 .table-grid td[data-type='number'] { font-variant-numeric: tabular-nums; }

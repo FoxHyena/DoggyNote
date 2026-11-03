@@ -36,7 +36,7 @@ Method: impeccable critique + audit as a single context (no sub-agents, as in ro
 
 | Round 1 | Round 1b |
 |---|---|
-| A full tan lattice in the light theme; header on a panel fill | Row hairlines only (70% of the border); column lines are laid out but drawn only while editing (50%), so entering edit moves nothing; the header has no fill and one full-strength rule under it, and the title and header read as one zone |
+| A full tan lattice in the light theme, scored hard; header on a panel fill | Still a full grid, but soft: both directions use 70% of the border colour, the same in read and edit (the user wanted the grid kept). The header has no fill and one full-strength rule under it, and the title and header read as one zone |
 | Cell text at 10px, title at 14px | The first and last columns pad 14px, so the text lines up with the title |
 | Two gold things while editing (card ring and cell) | The card ring steps back to 55%, so the active cell is the one lamp |
 | Two full-length dashed + strips | Quiet 56×20 and 20×56 pills, 55% at rest, full with a hover fill (mouse only); on touch a 44px target drawing a 28px dot |
