@@ -208,6 +208,23 @@ export function cellDisplay(col: ColLike, cell: Cell): string {
   return String(v)
 }
 
+/**
+ * Text a number or date column could not read (typed or pasted before the type
+ * was set, or not a number at all). It is kept and shown muted, never dropped.
+ */
+export function unreadText(col: ColLike, cell: Cell): string | null {
+  const v = cell.v
+  if (typeof v !== 'string') return null
+  if (col.t === 'number') return parseNumber(v) === null ? clip(v, TABLE_CAPS.cell) : null
+  if (col.t === 'date') return isIsoDate(v) ? null : clip(v, TABLE_CAPS.cell)
+  return null
+}
+
+/** Where a cell's content sits: its own choice, else its column's, else what the type suits (numbers right; ticks and paws centred). */
+export function effectiveAlign(col: Pick<TableColumn, 't' | 'a'>, cellAlign?: Align): Align {
+  return cellAlign ?? col.a ?? (col.t === 'number' ? 'r' : col.t === 'checkbox' || col.t === 'rating' ? 'c' : 'l')
+}
+
 /** The table's title (synced data: anything but text reads as empty). */
 export function tableTitle(card: Source): string {
   const content = fields(card).content
@@ -241,20 +258,39 @@ export function tableText(card: Source): string {
 
 // ---- numbers and coercion ----------------------------------------------------
 
-/** "12", "1,200.5", " -3 ", "1e3" -> number; anything else null. */
-export function parseNumber(text: string): number | null {
-  const t = text.trim().replace(/,/g, '')
+/** How the person typing writes numbers and dates (the web app reads it from the browser's locale). */
+export type InputLocale = { decimal: '.' | ','; dates: 'mdy' | 'dmy' | 'ymd' }
+
+/** "12", "1,200.5", " -3 ", "1e3" -> number; anything else null. With a comma as the decimal mark, "1.200,5" reads as 1200.5. */
+export function parseNumber(text: string, decimal: '.' | ',' = '.'): number | null {
+  const raw = text.trim()
+  // A comma mark: dots group thousands ("1.234,5", "1.234"); a lone dot ("1.5") is still a point.
+  const t = decimal === ','
+    ? raw.includes(',') || /^[-+]?\d{1,3}(\.\d{3})+$/.test(raw) ? raw.replace(/\./g, '').replace(',', '.') : raw
+    : raw.replace(/,/g, '')
   if (!t || !/^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(t)) return null
   const n = Number(t)
   return Number.isFinite(n) ? n : null
 }
 
-function parseDate(text: string): string | null {
+/**
+ * ISO "2026-03-14" and "2026/3/14" always; with a locale also "3/14/2026", "14.03.2026"
+ * and "14-3-26" in that locale's order (a two-digit year is 20xx). Null if it isn't a real day.
+ */
+export function parseDate(text: string, order: InputLocale['dates'] = 'ymd'): string | null {
   const t = text.trim()
   if (isIsoDate(t)) return t
-  const m = /^(\d{4})[/.](\d{1,2})[/.](\d{1,2})$/.exec(t)
+  const m = /^(\d{1,4})[/.\-](\d{1,2})[/.\-](\d{1,4})$/.exec(t)
   if (!m) return null
-  const iso = `${m[1]}-${m[2]!.padStart(2, '0')}-${m[3]!.padStart(2, '0')}`
+  const [a, b, c] = [m[1]!, m[2]!, m[3]!]
+  let y: string, mo: string, d: string
+  if (a.length === 4) [y, mo, d] = [a, b, c]
+  else if (order === 'dmy') [d, mo, y] = [a, b, c]
+  else if (order === 'mdy') [mo, d, y] = [a, b, c]
+  else return null
+  if (y.length === 2) y = `20${y}`
+  if (y.length !== 4 || d.length > 2) return null
+  const iso = `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`
   return isIsoDate(iso) ? iso : null
 }
 
@@ -266,14 +302,14 @@ const FALSE_WORDS = new Set(['false', 'no', 'n', '0', ''])
  * fit stays a string (so nothing typed or pasted is lost); a select takes an
  * option's name or id, else stays a string and shows empty.
  */
-export function parseInput(col: ColLike, text: string): CellValue {
+export function parseInput(col: ColLike, text: string, locale?: InputLocale): CellValue {
   const t = clip(text, TABLE_CAPS.cell)
   if (!t.trim()) return null
   switch (col.t) {
     case 'text': return t
-    case 'number': return parseNumber(t) ?? t
+    case 'number': return parseNumber(t, locale?.decimal) ?? t
     case 'checkbox': { const w = t.trim().toLowerCase(); return TRUE_WORDS.has(w) ? true : FALSE_WORDS.has(w) ? false : t }
-    case 'date': return parseDate(t) ?? t
+    case 'date': return parseDate(t, locale?.dates) ?? t
     case 'select': { const w = t.trim(); return col.opts?.find((o) => o.id === w)?.id ?? col.opts?.find((o) => o.n.trim().toLowerCase() === w.toLowerCase())?.id ?? t }
     case 'rating': { const n = parseNumber(t); return n !== null && Number.isInteger(n) && n >= 1 && n <= 5 ? n : t }
   }
@@ -485,6 +521,68 @@ export function setRowFill(card: Source, rowIds: Iterable<string>, bg: PresetCol
   return patch
 }
 
+// ---- select options -----------------------------------------------------------
+
+const PALETTE_COLORS = CARD_COLORS.filter((c) => c !== 'none')
+
+/** The next colour for a new option: the first of the palette that no option uses yet, else round again. */
+export function nextOptionColor(opts: readonly SelectOption[]): PresetColor {
+  const used = new Set(opts.map((o) => o.c))
+  return PALETTE_COLORS.find((c) => !used.has(c)) ?? PALETTE_COLORS[opts.length % PALETTE_COLORS.length]!
+}
+
+const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase()
+
+/** The option with this name (any case) in a column, if there is one. */
+export function findOption(opts: readonly SelectOption[], name: string): SelectOption | undefined {
+  return opts.find((o) => sameName(o.n, name))
+}
+
+/**
+ * A new option on a column. If one has the name already, that one is returned and
+ * nothing is written. Null at the option cap or for an empty name.
+ */
+export function addOption(card: Source, colId: string, name: string, color?: PresetColor): { patch: TablePatch; option: SelectOption } | null {
+  const col = tableColumns(card).find((c) => c.id === colId)
+  const n = clip(name.replace(/\s+/g, ' ').trim(), TABLE_CAPS.name)
+  if (!col || !n) return null
+  const known = findOption(col.opts, n)
+  if (known) return { patch: {}, option: known }
+  if (col.opts.length >= TABLE_CAPS.options) return null
+  const option: SelectOption = { id: optionId(new Set(col.opts.map((o) => o.id))), n, c: color ?? nextOptionColor(col.opts) }
+  return { patch: updateColumn(card, colId, { opts: [...col.opts, option] }), option }
+}
+
+/** Rename or recolour one option. Cells keep pointing at it by id. */
+export function updateOption(card: Source, colId: string, optId: string, change: { n?: string; c?: PresetColor }): TablePatch {
+  const col = tableColumns(card).find((c) => c.id === colId)
+  if (!col || !col.opts.some((o) => o.id === optId)) return {}
+  const opts = col.opts.map((o) => (o.id === optId ? { id: o.id, n: change.n === undefined ? o.n : clip(change.n.trim(), TABLE_CAPS.name), c: change.c ?? o.c } : o))
+  return updateColumn(card, colId, { opts })
+}
+
+/** Delete an option and empty the cells that had it. */
+export function removeOption(card: Source, colId: string, optId: string): TablePatch {
+  const col = tableColumns(card).find((c) => c.id === colId)
+  if (!col || !col.opts.some((o) => o.id === optId)) return {}
+  const patch = updateColumn(card, colId, { opts: col.opts.filter((o) => o.id !== optId) })
+  const stale: CellRef[] = []
+  for (const row of tableRows(card)) if (cellOf(card, row.id, colId).v === optId) stale.push({ row: row.id, col: colId })
+  return Object.assign(patch, clearCells(card, stale))
+}
+
+/** Move an option to `toIndex` of the new order. */
+export function moveOption(card: Source, colId: string, optId: string, toIndex: number): TablePatch {
+  const col = tableColumns(card).find((c) => c.id === colId)
+  const from = col?.opts.findIndex((o) => o.id === optId) ?? -1
+  if (!col || from < 0) return {}
+  const opts = [...col.opts]
+  const [o] = opts.splice(from, 1)
+  opts.splice(Math.max(0, Math.min(toIndex, opts.length)), 0, o!)
+  if (opts.every((x, i) => x === col.opts[i])) return {}
+  return updateColumn(card, colId, { opts })
+}
+
 export type CellRef = { row: string; col: string }
 
 /**
@@ -558,7 +656,6 @@ function toText(col: TableColumn, cell: Cell): string | null {
   return String(cell.v)
 }
 
-const PALETTE = CARD_COLORS.filter((c) => c !== 'none')
 
 /**
  * Change a column's type. Values that convert without loss are converted;
@@ -579,7 +676,7 @@ export function retype(card: Source, colId: string, to: ColumnType): TablePatch 
     for (const row of rows) {
       const text = toText(col, cellOf(card, row.id, colId))?.trim()
       if (!text || known.has(text.toLowerCase()) || next.length >= TABLE_CAPS.options) continue
-      const o: SelectOption = { id: optionId(taken), n: clip(text, TABLE_CAPS.name), c: PALETTE[next.length % PALETTE.length]! }
+      const o: SelectOption = { id: optionId(taken), n: clip(text, TABLE_CAPS.name), c: PALETTE_COLORS[next.length % PALETTE_COLORS.length]! }
       taken.add(o.id); next.push(o); known.set(text.toLowerCase(), o)
     }
     opts = next

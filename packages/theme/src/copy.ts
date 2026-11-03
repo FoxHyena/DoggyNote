@@ -186,6 +186,55 @@ export const COPY = {
     pasteClipped: "That didn't all fit: this table's kennel holds 100 rows and 26 columns, so the rest stayed in the bag.",
     /** A table with nothing in it to look at. */
     empty: 'An empty bowl. Add a column to start.',
+    /** Column types. The select type is a tag; ratings are paws. */
+    types: { text: 'Text', number: 'Number', checkbox: 'Checkbox', date: 'Date', select: 'Tag', rating: 'Paws' },
+    columnType: 'Column type',
+    /** Sorting a column, worded for what it holds. */
+    sort: 'Sort',
+    sortLabel: (type: string, dir: 'asc' | 'desc') => {
+      if (type === 'number' || type === 'rating') return dir === 'asc' ? 'Sort 1 to 9' : 'Sort 9 to 1'
+      if (type === 'date') return dir === 'asc' ? 'Oldest first' : 'Newest first'
+      if (type === 'checkbox') return dir === 'asc' ? 'Unticked first' : 'Ticked first'
+      return dir === 'asc' ? 'Sort A to Z' : 'Sort Z to A'
+    },
+    announceSorted: 'Sorted',
+    announceType: (name: string) => `Column is now ${name}`,
+    /** Formatting. */
+    bold: 'Bold',
+    align: 'Align',
+    alignLeft: 'Align left',
+    alignCentre: 'Align centre',
+    alignRight: 'Align right',
+    alignCellDefault: 'Column default',
+    alignColumnDefault: 'Automatic',
+    fill: 'Fill',
+    fillRows: 'Row fill',
+    announceFilled: 'Fill changed',
+    announceAligned: 'Alignment changed',
+    announceBold: (on: boolean) => (on ? 'Bold' : 'Not bold'),
+    /** Tags. */
+    findOption: 'Sniff out an option…',
+    createOption: (name: string) => `Create "${name}"`,
+    noOptions: 'No options yet. Type a name to bury the first.',
+    clearValue: 'Clear',
+    optionsFull: "This column's kennel of options is full: 50 is the most it can hold.",
+    editOptions: 'Edit options',
+    optionName: 'Option name',
+    optionColour: (name: string) => `Colour for ${name || 'this option'}`,
+    moveOptionUp: 'Move option up',
+    moveOptionDown: 'Move option down',
+    deleteOption: 'Delete option',
+    addOption: 'Add an option',
+    optionDeleted: (name: string) => `Removed “${name}”`,
+    optionTaken: 'Another option already answers to that name.',
+    announceOptionAdded: (name: string) => `Added ${name}`,
+    /** Ticks, paws and dates. */
+    ticked: 'Ticked',
+    unticked: 'Not ticked',
+    pawsLabel: (n: number) => (n === 0 ? 'No paws' : n === 1 ? '1 of 5 paws' : `${n} of 5 paws`),
+    pawLabel: (n: number) => (n === 1 ? '1 paw' : `${n} paws`),
+    pickDate: 'Pick a date',
+    done: 'Done',
   },
   /** The public guides at /docs. */
   guides: {
