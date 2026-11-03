@@ -54,7 +54,66 @@
 .table-grid td[data-type='number'] { font-variant-numeric: tabular-nums; }
 .table-grid td[data-bold] { font-weight: 600; }
 .table-grid td[data-fill] { background: var(--cell-bg); color: var(--cell-text); }
+/* Text its column's type couldn't read (a word in a number column) is kept, and shown quieter. */
+.table-grid td[data-muted]:not([data-fill]) { color: var(--dn-text-muted); }
+.table-grid td[data-muted][data-fill] { opacity: 0.75; }
 html[data-input='mouse'] .card-table.editing td:not([data-fill]):hover { background: var(--dn-card-hover); }
+/* A range paints its own tint over the cells; the hover tint on top of it would make one cell (the one the pointer
+   rests on, which is the active cell after Shift+arrows) read darker than the rest. */
+html[data-input='mouse'] .card-table.editing:has(.table-range) td:hover { background: transparent; }
+html[data-input='mouse'] .card-table.editing:has(.table-range) td[data-fill]:hover { background: var(--cell-bg); }
+
+/* Per-type content. Everything sits on the 20px text line, so a row is never taller for a tick, paws or a tag. */
+.table-check {
+  position: relative;
+  display: inline-grid;
+  place-content: center;
+  box-sizing: border-box;
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
+  vertical-align: top;
+  border: 1.5px solid color-mix(in srgb, currentColor 55%, transparent);
+  border-radius: 4px;
+}
+.table-check[aria-checked='true'] { border-color: var(--dn-accent); background: var(--dn-accent); }
+.table-check[aria-checked='true']::before {
+  content: '';
+  width: 3px;
+  height: 7px;
+  margin-top: -2px;
+  border: solid var(--dn-accent-text);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+/* Fingers and a mouse alike get a roomier target than the 15px box, without moving the row. */
+.table-check::after { content: ''; position: absolute; inset: -8px; }
+.table-check[data-nodrag] { cursor: pointer; }
+.table-rating { display: inline-flex; align-items: center; gap: 1px; max-width: 100%; height: 14px; margin-top: 3px; vertical-align: top; overflow: hidden; }
+.table-paw { display: grid; flex: 0 1 14px; min-width: 6px; opacity: 0.22; }
+.table-paw[data-on] { opacity: 1; }
+.table-paw .dn-icon { width: 100%; height: auto; max-width: 14px; }
+.card-table.editing .table-paw { cursor: pointer; }
+.table-chip {
+  display: inline-block;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--chip-text);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--chip-text) 16%, transparent);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  vertical-align: top;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* "No colour" is the card's own colour: give the tag an edge so it still reads as one. */
+.table-chip[data-none] { background: var(--dn-card-hover); color: var(--dn-text); box-shadow: inset 0 0 0 1px var(--dn-border); }
 /* One gold thing at a time: while a table is edited, its card ring steps back and the active cell keeps the full outline. */
 .card.card-table.editing { outline-color: color-mix(in srgb, var(--dn-selection) 55%, transparent); }
 .card-table.editing td, .card-table.editing th { cursor: cell; }
@@ -202,3 +261,59 @@ html[data-input='touch'] .table-col-menu::after { content: ''; position: absolut
 }
 
 .table-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* The date wheel for a finger: a real input laid over the active cell, unseen, that the tap focuses. */
+.table-date {
+  position: absolute;
+  z-index: 1;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+  font-size: 16px;
+}
+
+/* Tag panels (the picker and the options editor) borrow Labels' panel, list and row. A few extras. */
+.table-pop .table-chip { max-width: 100%; }
+.table-pop-clear {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--lb-row);
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--dn-text-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+html[data-input='mouse'] .table-pop-clear:hover { color: var(--dn-text); background: var(--dn-card-hover); }
+.table-pop-clear:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: -2px; }
+html[data-input='touch'] .table-pop-clear { font-size: 16px; }
+.table-options { width: 320px; }
+.table-option-row { gap: 8px; padding-right: 2px; }
+.table-option-dot {
+  flex: none;
+  box-sizing: border-box;
+  position: relative;
+  width: var(--lb-dot);
+  height: var(--lb-dot);
+  margin-left: 4px;
+  padding: 0;
+  border: 1px solid var(--dn-border);
+  border-radius: 50%;
+  background: var(--dot);
+  cursor: pointer;
+}
+.table-option-dot[aria-expanded='true'] { box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-selection); }
+.table-option-dot:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--dn-panel), 0 0 0 3.5px var(--dn-text); }
+html[data-input='touch'] .table-option-dot::after { content: ''; position: absolute; inset: -6px; }
+.table-option-name { flex: 1 1 0; width: auto; }
+.table-option-tools { display: flex; flex: none; gap: 2px; }
+.table-option-tools .label-action:disabled { opacity: 0.35; cursor: default; }
+@media (pointer: coarse) { .table-option-tools { gap: 0; } }

@@ -1,10 +1,10 @@
 import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, onMount } from 'solid-js'
 import {
-  TABLE_CAPS, addColumn, addRows, cellDisplay, cellOf, clearCells, copyGrid, deleteColumns, deleteRows, duplicateRows, moveColumns, moveRows, parseInput, parseTsv, pasteGrid,
-  resizeBoundary, setCells, tableTitle, toTsv, updateColumn,
-  type Card, type TableColumn, type TablePatch,
+  TABLE_CAPS, addColumn, addOption, addRows, cellOf, cellValue, clearCells, copyGrid, deleteColumns, deleteRows, duplicateRows, moveColumns, moveOption, moveRows, parseInput, parseTsv, pasteGrid,
+  removeOption, resizeBoundary, retype, setCells, setRowFill, setStyle, sortRows, tableRows, tableTitle, toTsv, updateColumn, updateOption,
+  type Align, type Card, type ColumnType, type TableColumn, type TablePatch,
 } from '@doggynote/core'
-import { COPY } from '@doggynote/theme'
+import { COPY, type PresetColor } from '@doggynote/theme'
 import * as doc from '../../state/doc.ts'
 import { endEdit, onFlushEdit } from '../../state/ui.ts'
 import { touch } from '../../state/device.ts'
@@ -12,6 +12,9 @@ import { showToast } from '../../state/toast.ts'
 import { revealEditCaret, takeEditCaret } from '../../canvas/Canvas.tsx'
 import { Icon } from '../../ui/icons.tsx'
 import { TableLineMenu } from '../../ui/TableMenus.tsx'
+import { SelectPopover } from './SelectPopover.tsx'
+import { OptionsPopover } from './OptionsPopover.tsx'
+import { editText, inputLocale } from './format.ts'
 import { activeTable, setActiveTable, type SelectionKind, type TableControl } from './tableControl.ts'
 import { bodyRows, confine, edge, enterDown, homeEnd, rangeOf, step, tab, type Cursor, type Dir } from './tableNav.ts'
 
@@ -67,12 +70,27 @@ export function TableEditor(props: {
   /** While a grip is dragged: the line where the rows or columns would land. */
   const [drop, setDrop] = createSignal<{ kind: Line; at: number } | null>(null)
   const [menu, setMenu] = createSignal<{ kind: Line; x: number; y: number } | null>(null)
+  /** The tag picker, open on a cell. */
+  const [select, setSelect] = createSignal<{ row: string; col: string; query: string } | null>(null)
+  /** The options editor, open on a tag column. */
+  const [optionsCol, setOptionsCol] = createSignal<string | null>(null)
+  let dp: HTMLInputElement | undefined
   let editTarget: Target = { kind: 'title' }
   let initial = ''
 
   const size = () => ({ rows: props.rowIds().length, cols: props.colIds().length })
   const titleActive = () => onTitle() || !props.colIds().length
   const column = (colId: string) => props.columns().find((c) => c.id === colId)
+  /** The column of the active cell, when it is a plain body cell (not the title, a header, or a picked row or column). */
+  const cellColumn = (): TableColumn | undefined => {
+    if (titleActive() || kind() !== 'cells') return undefined
+    const a = at(anchor())
+    return a.r < 0 ? undefined : column(props.colIds()[a.c]!)
+  }
+  const inputMode = () => {
+    const t = cellColumn()?.t
+    return t === 'checkbox' || t === 'select' || t === 'rating' || (t === 'date' && touch()) ? 'none' : undefined
+  }
 
   // ---- positions: ids to indices and back ----------------------------------------
   const rowIndex = (p: Pos) => {
@@ -111,7 +129,7 @@ export function TableEditor(props: {
     const col = column(t.col)
     if (!col) return ''
     if (t.kind === 'header') return col.n
-    return cellDisplay(col, cellOf(props.card, t.row, t.col))
+    return editText(col, cellOf(props.card, t.row, t.col))
   }
   /** The change that saves `text` into `t`, or null if nothing would change (or the cell is gone). */
   function patchFor(t: Target, text: string): TablePatch | null {
@@ -126,8 +144,9 @@ export function TableEditor(props: {
       return name === col.n ? null : updateColumn(props.card, t.col, { n: name })
     }
     if (!props.rowIds().includes(t.row)) return null
-    if (text === cellDisplay(col, cellOf(props.card, t.row, t.col))) return null
-    return setCells(props.card, [{ row: t.row, col: t.col, value: parseInput(col, text) }])
+    if (text === editText(col, cellOf(props.card, t.row, t.col))) return null
+    const value = parseInput(col, text, inputLocale())
+    return value === cellOf(props.card, t.row, t.col).v ? null : setCells(props.card, [{ row: t.row, col: t.col, value }])
   }
   const run = (...patches: (TablePatch | null)[]) => {
     const merged = Object.assign({}, ...patches.filter(Boolean)) as TablePatch
@@ -161,9 +180,21 @@ export function TableEditor(props: {
   }
 
   // ---- moving ---------------------------------------------------------------------
+  // Ticks, tags and paws take no typing, so no keyboard should come up for them. A field that already
+  // has the focus keeps the keyboard it opened with, so on touch a change is applied by focusing again.
+  let shownMode: string | undefined
+  function syncInputMode() {
+    const want = inputMode()
+    if (want) ta.setAttribute('inputmode', want)
+    else ta.removeAttribute('inputmode')
+    const changed = want !== shownMode
+    shownMode = want
+    return changed
+  }
   function settle() {
     setTarget(titleActive() ? 'title' : at(anchor()).r < 0 ? 'header' : 'cell')
     if (mode() === 'edit') cancel()
+    if (syncInputMode() && touch() && document.activeElement === ta) ta.blur()
     ta.focus({ preventScroll: true })
     announce()
     if (touch()) revealEditCaret()
@@ -283,6 +314,183 @@ export function TableEditor(props: {
     setAnchor(posAt({ r: 0, c: 0 }))
     setFocus(posAt({ r: size().rows - 1, c: size().cols - 1 }))
     settle()
+  }
+
+  // ---- types: ticks, paws, tags and dates ----------------------------------------
+  /** Body cells covered by the selection. */
+  const cellRefs = () => {
+    const { c0, c1 } = range()
+    return rowsSelected().flatMap((r) => props.colIds().slice(c0, c1 + 1).map((col) => ({ row: props.rowIds()[r]!, col })))
+  }
+  const refsOfType = (t: ColumnType) => cellRefs().filter((r) => column(r.col)?.t === t)
+  /** Tick or untick the selected boxes together: they all follow the active cell's opposite. */
+  function toggleChecks() {
+    const refs = refsOfType('checkbox')
+    if (!refs.length) return
+    const a = at(anchor())
+    const lead = refs.find((r) => r.row === props.rowIds()[a.r] && r.col === props.colIds()[a.c]) ?? refs[0]!
+    const on = cellValue(column(lead.col)!, cellOf(props.card, lead.row, lead.col)) !== true
+    run(setCells(props.card, refs.map((r) => ({ ...r, value: on }))))
+    setAnnouncement(on ? COPY.table.ticked : COPY.table.unticked)
+  }
+  /** Paws for the selected rating cells (null clears). */
+  function setRatings(n: number | null) {
+    const refs = refsOfType('rating')
+    if (!refs.length) return
+    run(setCells(props.card, refs.map((r) => ({ ...r, value: n }))))
+    setAnnouncement(COPY.table.pawsLabel(n ?? 0))
+  }
+  /** A click on a paw sets it; a click on the paw already set clears. */
+  function ratePaw(n: number) {
+    const a = at(anchor())
+    const col = column(props.colIds()[a.c]!)
+    if (!col || a.r < 0) return
+    setRatings(cellValue(col, cellOf(props.card, props.rowIds()[a.r]!, col.id)) === n ? null : n)
+  }
+  /** A tick or paw under a point, with a roomier target than the glyph itself. */
+  function glyphAt(td: Element | null, x: number, y: number): { check: true } | { paw: number } | null {
+    if (!td) return null
+    const check = td.querySelector('.table-check')
+    if (check) {
+      const r = check.getBoundingClientRect()
+      return x >= r.left - 10 && x <= r.right + 10 && y >= r.top - 10 && y <= r.bottom + 10 ? { check: true } : null
+    }
+    const rating = td.querySelector('.table-rating')
+    if (rating) {
+      const r = rating.getBoundingClientRect()
+      if (x < r.left - 4 || x > r.right + 4 || y < r.top - 10 || y > r.bottom + 10) return null
+      let best = 0, away = Infinity
+      rating.querySelectorAll<HTMLElement>('[data-paw]').forEach((el) => {
+        const b = el.getBoundingClientRect()
+        const d = Math.abs((b.left + b.right) / 2 - x)
+        if (d < away) { away = d; best = Number(el.dataset.paw) }
+      })
+      return best ? { paw: best } : null
+    }
+    return null
+  }
+  function pressGlyph(td: Element | null, x: number, y: number): boolean {
+    const g = glyphAt(td, x, y)
+    if (!g) return false
+    if ('check' in g) toggleChecks()
+    else ratePaw(g.paw)
+    return true
+  }
+  function openSelect(query = '') {
+    const col = cellColumn()
+    const a = at(anchor())
+    if (col?.t !== 'select' || a.r < 0) return
+    setSelect({ row: props.rowIds()[a.r]!, col: col.id, query })
+  }
+  function closeSelect() {
+    setSelect(null)
+    ta.focus({ preventScroll: true })
+  }
+  function pickOption(id: string | null) {
+    const s = select()
+    if (!s) return
+    run(setCells(props.card, [{ row: s.row, col: s.col, value: id }]))
+    closeSelect()
+  }
+  function createOption(name: string) {
+    const s = select()
+    if (!s) return
+    const made = addOption(props.card, s.col, name)
+    if (!made) return void showToast(COPY.table.optionsFull)
+    run(made.patch, setCells(props.card, [{ row: s.row, col: s.col, value: made.option.id }]))
+    setAnnouncement(COPY.table.announceOptionAdded(made.option.n))
+    closeSelect()
+  }
+  /** The native date wheel, for a finger (the field can't take a date well on a phone). */
+  function openDate() {
+    if (!dp) return
+    dp.focus({ preventScroll: true })
+    try { dp.showPicker?.() } catch { /* needs a gesture the browser did not see: focus alone still opens it on iOS */ }
+  }
+  /** Enter, F2, a double click or a second tap: what "edit this cell" means for its type. */
+  function activate() {
+    const col = cellColumn()
+    if (col?.t === 'checkbox') return toggleChecks()
+    if (col?.t === 'select') return openSelect()
+    if (col?.t === 'rating') return
+    if (col?.t === 'date' && touch()) return openDate()
+    beginEditing(textOf(targetOf()))
+  }
+  /** Keys that mean something in a type's cell while navigating. True when handled. */
+  function typeKey(e: KeyboardEvent): boolean {
+    const col = cellColumn()
+    if (!col || e.metaKey || e.ctrlKey || e.altKey) return false
+    const key = e.key
+    if (col.t === 'checkbox') {
+      if (key === ' ' && !e.shiftKey) { e.preventDefault(); toggleChecks(); return true }
+      if (key.length === 1) { e.preventDefault(); return true }
+    }
+    if (col.t === 'rating') {
+      if (/^[0-5]$/.test(key)) { e.preventDefault(); setRatings(key === '0' ? null : Number(key)); return true }
+      if (key.length === 1) { e.preventDefault(); return true }
+    }
+    return false
+  }
+
+  // ---- formatting, columns and sorting ----------------------------------------------
+  const selectedColumns = () => (titleActive() ? [] : props.columns().slice(range().c0, range().c1 + 1))
+  const sharedOf = <T,>(values: T[]): T | null => (values.length && values.every((v) => v === values[0]) ? values[0]! : null)
+  const styled = () => cellRefs().map((r) => cellOf(props.card, r.row, r.col))
+  const bold = () => { const cells = styled(); return cells.length > 0 && cells.every((c) => c.b) }
+  function toggleBold() {
+    const refs = cellRefs()
+    if (!refs.length) return
+    const on = !bold()
+    run(setStyle(props.card, refs, { b: on }))
+    setAnnouncement(COPY.table.announceBold(on))
+  }
+  const align = (): Align | null => (kind() === 'cols' ? sharedOf(selectedColumns().map((c) => c.a ?? null)) : sharedOf(styled().map((c) => c.a ?? null)))
+  function setAlign(a: Align | null) {
+    commit()
+    if (kind() === 'cols') run(...selectedColumns().map((c) => updateColumn(props.card, c.id, { a })))
+    else run(setStyle(props.card, cellRefs(), { a }))
+    setAnnouncement(COPY.table.announceAligned)
+  }
+  const fill = (): PresetColor | null => {
+    if (kind() === 'rows') {
+      const bgs = new Map(tableRows(props.card).map((r) => [r.id, r.bg ?? null]))
+      return sharedOf(rowsSelected().map((r) => bgs.get(props.rowIds()[r]!) ?? null))
+    }
+    return sharedOf(styled().map((c) => c.bg ?? null))
+  }
+  function setFill(color: PresetColor | null) {
+    commit()
+    if (kind() === 'rows') run(setRowFill(props.card, rowsSelected().map((r) => props.rowIds()[r]!), color))
+    else run(setStyle(props.card, cellRefs(), { bg: color }))
+    setAnnouncement(COPY.table.announceFilled)
+  }
+  const columnType = (): ColumnType | null => sharedOf(selectedColumns().map((c) => c.t))
+  function setType(type: ColumnType) {
+    commit()
+    const cols = selectedColumns()
+    if (!cols.length) return
+    // A tag picker open on a column that stops being tags would be talking about nothing.
+    setSelect(null)
+    run(...cols.map((c) => retype(props.card, c.id, type)))
+    setAnnouncement(COPY.table.announceType(COPY.table.types[type]))
+  }
+  const canSort = () => selectedColumns().length === 1
+  function sort(dir: 'asc' | 'desc') {
+    const col = selectedColumns()
+    if (col.length !== 1) return
+    commit()
+    run(sortRows(props.card, col[0]!.id, dir))
+    setAnnouncement(COPY.table.announceSorted)
+  }
+  const canEditOptions = () => selectedColumns().length === 1 && selectedColumns()[0]!.t === 'select'
+  function editOptions() {
+    if (!canEditOptions()) return
+    commit()
+    setOptionsCol(selectedColumns()[0]!.id)
+  }
+  const optionsAnchor = (): HTMLElement => {
+    const i = props.colIds().indexOf(optionsCol() ?? '')
+    return (props.table()?.tHead?.rows[0]?.cells[i] as HTMLElement | undefined) ?? ta
   }
 
   // ---- whole rows and columns -----------------------------------------------------
@@ -483,6 +691,7 @@ export function TableEditor(props: {
       const cur = at(anchor())
       return e.ctrlKey ? selectLine('cols', cur.c) : selectLine('rows', Math.max(0, cur.r))
     }
+    if (typeKey(e)) return
     if (dir) {
       e.preventDefault()
       return move(dir, e.shiftKey, mod)
@@ -491,6 +700,7 @@ export function TableEditor(props: {
       const k = key.toLowerCase()
       if (k === 'c' || k === 'x') return armClip()
       if (k === 'a') { e.preventDefault(); return selectAll() }
+      if (k === 'b') { e.preventDefault(); return toggleBold() }
       if (k === 'z') { e.preventDefault(); return e.shiftKey ? doc.redo() : doc.undo() }
       if (k === 'y') { e.preventDefault(); return doc.redo() }
       if (key === 'Home' || key === 'End') { e.preventDefault(); return goto(homeEnd(at(anchor()), key === 'End', true, size()), e.shiftKey) }
@@ -501,7 +711,7 @@ export function TableEditor(props: {
       case 'F2':
         e.preventDefault()
         if (kind() === 'rows') goto({ r: at(anchor()).r, c: 0 })
-        return beginEditing(textOf(targetOf()))
+        return activate()
       case 'Tab':
         e.preventDefault()
         return tabMove(e.shiftKey)
@@ -526,6 +736,14 @@ export function TableEditor(props: {
   function onInput() {
     // Typing with a whole row or column picked would write somewhere unseen: it does nothing.
     if (mode() === 'nav' && ta.value && kind() !== 'cells') { ta.value = ''; return }
+    // Tags take the first character into their filter box; ticks and paws take no typing.
+    const t = cellColumn()?.t
+    if (mode() === 'nav' && ta.value && (t === 'select' || t === 'checkbox' || t === 'rating')) {
+      const typed = ta.value
+      ta.value = ''
+      if (t === 'select') openSelect(typed)
+      return
+    }
     if (mode() === 'nav' && ta.value) {
       editTarget = targetOf()
       initial = ''
@@ -534,7 +752,8 @@ export function TableEditor(props: {
     if (mode() === 'edit') fit()
   }
   const onCompositionStart = () => {
-    if (mode() === 'nav' && kind() === 'cells') { editTarget = targetOf(); initial = ''; setMode('edit') }
+    const t = cellColumn()?.t
+    if (mode() === 'nav' && kind() === 'cells' && t !== 'checkbox' && t !== 'rating' && t !== 'select') { editTarget = targetOf(); initial = ''; setMode('edit') }
   }
 
   // ---- pointer --------------------------------------------------------------------
@@ -570,6 +789,7 @@ export function TableEditor(props: {
       return beginEditing(textOf(targetOf()))
     }
     goto(hit.cur, e.shiftKey && !titleActive())
+    if (!e.shiftKey && pressGlyph((e.target as Element).closest('td'), e.clientX, e.clientY)) return
     dragging = true
     try { props.wrap().setPointerCapture(e.pointerId) } catch { /* the pointer is already gone */ }
   }
@@ -595,7 +815,11 @@ export function TableEditor(props: {
     // A touch double tap is two taps (select, then edit): never an extra edit.
     if (touch()) return
     const hit = hitOf(under(e))
-    if (hit && !hit.title) beginEditing(textOf(targetOf()))
+    if (!hit || hit.title) return
+    // A tick or a paw already answered its clicks; a second one must not undo the first.
+    const t = cellColumn()?.t
+    if (t === 'checkbox' || t === 'rating') return
+    activate()
   }
   // A tap selects a cell; a tap on the selected cell edits it. Focus moves inside the tap, so the keyboard comes up.
   function tapCell(e: MouseEvent) {
@@ -612,7 +836,8 @@ export function TableEditor(props: {
     const same = mode() === 'nav' && !titleActive() && a.r === hit.cur.r && a.c === hit.cur.c && range().r0 === range().r1 && range().c0 === range().c1
     commit()
     goto(hit.cur)
-    if (same) beginEditing(textOf(targetOf()))
+    if (pressGlyph(el instanceof Element ? el.closest('td') : null, e.clientX, e.clientY)) return
+    if (same) activate()
   }
 
   // ---- grips, resize strips and menus ---------------------------------------------
@@ -843,6 +1068,9 @@ export function TableEditor(props: {
     removeRows, removeColumns,
     clear: clearSelected,
     refocus: () => ta.focus({ preventScroll: true }),
+    canFormat: () => rowsSelected().length > 0,
+    bold, toggleBold, align, setAlign, fill, setFill,
+    columnType, setType, canSort, sort, canEditOptions, editOptions,
   }
   onMount(() => {
     const wrap = props.wrap()
@@ -867,6 +1095,7 @@ export function TableEditor(props: {
     const table = props.table()
     if (table) ro.observe(table)
     setActiveTable(control)
+    syncInputMode()
     ta.focus({ preventScroll: true })
     announce()
     onCleanup(() => {
@@ -1037,6 +1266,55 @@ export function TableEditor(props: {
         <button class="table-add table-add-column" data-table-strip data-testid="table-add-column" aria-label={COPY.table.addColumn} data-tip={COPY.table.addColumn} {...strip(() => addColumnAt(props.colIds().length))}>
           <Icon name="plus" size={16} />
         </button>
+      </Show>
+      <Show when={touch() && cellColumn()?.t === 'date'}>
+        <input
+          ref={dp}
+          type="date"
+          class="table-date"
+          data-testid="table-date"
+          aria-label={COPY.table.pickDate}
+          value={(() => { const c = cellColumn(); const a = at(anchor()); const v = c && a.r >= 0 ? cellValue(c, cellOf(props.card, props.rowIds()[a.r]!, c.id)) : null; return typeof v === 'string' ? v : '' })()}
+          style={{ left: `${boxes().active?.x ?? 0}px`, top: `${boxes().active?.y ?? 0}px`, width: `${boxes().active?.w ?? 0}px`, height: `${boxes().active?.h ?? 0}px` }}
+          onChange={(e) => {
+            const a = at(anchor())
+            const c = cellColumn()
+            if (!c || a.r < 0) return
+            run(setCells(props.card, [{ row: props.rowIds()[a.r]!, col: c.id, value: e.currentTarget.value || null }]))
+          }}
+          onBlur={() => ta.focus({ preventScroll: true })}
+        />
+      </Show>
+      <Show when={select()}>
+        {(s) => (
+          <SelectPopover
+            anchor={() => ta}
+            follow={() => boxes().active}
+            options={() => column(s().col)?.opts ?? []}
+            value={() => { const col = column(s().col); const v = col ? cellValue(col, cellOf(props.card, s().row, s().col)) : null; return typeof v === 'string' ? v : null }}
+            query={s().query}
+            onPick={pickOption}
+            onCreate={createOption}
+            close={closeSelect}
+          />
+        )}
+      </Show>
+      <Show when={optionsCol() && column(optionsCol()!)?.t === 'select'}>
+        <OptionsPopover
+          anchor={optionsAnchor}
+          column={() => column(optionsCol()!)}
+          onAdd={(name) => { const made = addOption(props.card, optionsCol()!, name); if (!made) showToast(COPY.table.optionsFull); else run(made.patch) }}
+          onRename={(optId, name) => run(updateOption(props.card, optionsCol()!, optId, { n: name }))}
+          onRecolor={(optId, c) => run(updateOption(props.card, optionsCol()!, optId, { c }))}
+          onMove={(optId, to) => run(moveOption(props.card, optionsCol()!, optId, to))}
+          onRemove={(optId) => {
+            const col = optionsCol()!
+            const name = column(col)?.opts.find((o) => o.id === optId)?.n ?? ''
+            run(removeOption(props.card, col, optId))
+            showToast(COPY.table.optionDeleted(name), 6000, { label: 'Undo', run: () => doc.undo() })
+          }}
+          close={() => { setOptionsCol(null); ta.focus({ preventScroll: true }) }}
+        />
       </Show>
       <div class="table-live" role="status" aria-live="polite">{announcement()}</div>
     </div>

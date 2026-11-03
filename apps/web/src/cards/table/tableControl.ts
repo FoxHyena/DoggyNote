@@ -1,5 +1,6 @@
 import { createSignal } from 'solid-js'
-import type { Id } from '@doggynote/core'
+import type { Align, ColumnType, Id } from '@doggynote/core'
+import type { PresetColor } from '@doggynote/theme'
 
 /**
  * The table being edited, for the controls that live outside the card: the
@@ -38,6 +39,30 @@ export type TableControl = {
   renameColumn: () => void
   /** Put the keyboard focus back in the grid (after a menu closes). */
   refocus: () => void
+
+  // ---- formatting: cells and rows (columns for the default alignment) ----
+  /** There are body cells to style (a header alone has none). */
+  canFormat: () => boolean
+  /** Every selected cell is bold. */
+  bold: () => boolean
+  toggleBold: () => void
+  /** The choice shared by the selection: a cell's own alignment (cells), or the column's default (columns). Null when none, or when they differ. */
+  align: () => Align | null
+  setAlign: (align: Align | null) => void
+  /** The fill the selection shares (a cell's, or a row's when whole rows are picked), or null. */
+  fill: () => PresetColor | null
+  setFill: (color: PresetColor | null) => void
+
+  // ---- columns ----
+  /** The type of the selected columns, or null when they differ. */
+  columnType: () => ColumnType | null
+  setType: (type: ColumnType) => void
+  /** Sorting is for exactly one column. */
+  canSort: () => boolean
+  sort: (dir: 'asc' | 'desc') => void
+  /** The one selected column is a tag column: its options can be edited. */
+  canEditOptions: () => boolean
+  editOptions: () => void
 }
 
 export const [activeTable, setActiveTable] = createSignal<TableControl | null>(null)

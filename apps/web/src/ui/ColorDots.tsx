@@ -34,8 +34,8 @@ export function ColorDots(props: {
   value: string | null
   onPick: (value: string) => void
   dotTestId?: string
-  /** The wheel. `value` is the custom colour when one is chosen (not a preset). `testid` is the input's, `slotTestId` the slot's. */
-  custom: { value: string | null; fallback: string; testid: string; slotTestId?: string; onPick: (hex: string) => void; live?: boolean; autofocus?: boolean }
+  /** The wheel. `value` is the custom colour when one is chosen (not a preset). `testid` is the input's, `slotTestId` the slot's. Without it the row is presets only. */
+  custom?: { value: string | null; fallback: string; testid: string; slotTestId?: string; onPick: (hex: string) => void; live?: boolean; autofocus?: boolean }
   /** Focus lands on the current dot when the panel opens. */
   autofocus?: boolean
   class?: string
@@ -44,7 +44,7 @@ export function ColorDots(props: {
 }) {
   const pick = (raw: string) => {
     const hex = normalizeSwatchHex(raw)
-    if (hex) props.custom.onPick(hex)
+    if (hex) props.custom?.onPick(hex)
   }
   return (
     <div class={`color-dots ${props.class ?? ''}`} style={props.style} role="group" aria-label={props.label} onKeyDown={(e) => props.onKeyDown?.(e)}>
@@ -65,21 +65,25 @@ export function ColorDots(props: {
           />
         )}
       </For>
-      <label class="color-dot color-custom" data-testid={props.custom.slotTestId} classList={{ on: !!props.custom.value, edge: nearPanel(props.custom.value) }} style={props.custom.value ? { '--dot': props.custom.value } : undefined} data-tip={props.custom.value ? `Custom colour ${props.custom.value}` : 'Custom colour'}>
-        <Show when={!props.custom.value}>
-          <Icon size={14} name="plus" />
-        </Show>
-        <input
-          type="color"
-          data-testid={props.custom.testid}
-          data-autofocus={props.custom.autofocus || undefined}
-          aria-label="Custom colour"
-          value={(props.custom.value ?? props.custom.fallback).toLowerCase()}
-          // The wheel fires input on every drag step; `live` follows it, otherwise it applies once on close.
-          onInput={(e) => props.custom.live !== false && pick(e.currentTarget.value)}
-          onChange={(e) => pick(e.currentTarget.value)}
-        />
-      </label>
+      <Show when={props.custom}>
+        {(custom) => (
+          <label class="color-dot color-custom" data-testid={custom().slotTestId} classList={{ on: !!custom().value, edge: nearPanel(custom().value) }} style={custom().value ? { '--dot': custom().value! } : undefined} data-tip={custom().value ? `Custom colour ${custom().value}` : 'Custom colour'}>
+            <Show when={!custom().value}>
+              <Icon size={14} name="plus" />
+            </Show>
+            <input
+              type="color"
+              data-testid={custom().testid}
+              data-autofocus={custom().autofocus || undefined}
+              aria-label="Custom colour"
+              value={(custom().value ?? custom().fallback).toLowerCase()}
+              // The wheel fires input on every drag step; `live` follows it, otherwise it applies once on close.
+              onInput={(e) => custom().live !== false && pick(e.currentTarget.value)}
+              onChange={(e) => pick(e.currentTarget.value)}
+            />
+          </label>
+        )}
+      </Show>
     </div>
   )
 }

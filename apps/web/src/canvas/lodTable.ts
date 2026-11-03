@@ -1,4 +1,5 @@
-import { cellDisplay, cellKey, isTableField, readCell, tableColumns, tableRows, tableTitle, type Card } from '@doggynote/core'
+import { cellDisplay, cellKey, cellValue, effectiveAlign, isTableField, readCell, tableColumns, tableRows, tableTitle, unreadText, type Card } from '@doggynote/core'
+import { isPresetColor } from '@doggynote/theme'
 
 // A table card zoomed out (below 35%), drawn on the overview canvas instead of
 // as DOM: the header band, grid lines, and a short bar where a cell has text.
@@ -10,6 +11,10 @@ const TITLE_H = 42
 const ROW_H = 32
 
 type Pal = Record<string, string>
+
+/** A preset fill as canvas colours; 'none' and anything unknown draw nothing. */
+const fillOf = (pal: Pal, color: unknown): { bg: string; text: string } | null =>
+  isPresetColor(color) && color !== 'none' && pal[`${color}-bg`] ? { bg: pal[`${color}-bg`]!, text: pal[`${color}-text`] ?? pal.muted! } : null
 
 /** Read every table field, so the overview redraws when any cell, row or column changes. */
 export function trackTable(card: Card) {
@@ -69,6 +74,19 @@ export function drawTable(
     const bottom = Math.min(y + h, ctx.canvas.height)
     const first = Math.max(0, Math.floor((0 - gridTop) / rowH) - 1)
     const last = Math.min(rows.length, Math.ceil((bottom - gridTop) / rowH))
+    // Row and cell fills sit under the lines and the text bars: the cell's beats the row's.
+    const fields = card as unknown as Record<string, unknown>
+    for (let r = first; r < last; r++) {
+      const row = rows[r]!
+      const top = gridTop + (r + 1) * rowH
+      if (top > y + h) break
+      const rowFill = fillOf(pal, row.bg)
+      if (rowFill) { ctx.fillStyle = rowFill.bg; ctx.fillRect(x, top, w, rowH) }
+      cols.forEach((col, i) => {
+        const bg = fillOf(pal, readCell(fields[cellKey(row.id, col.id)]).bg)
+        if (bg) { ctx.fillStyle = bg.bg; ctx.fillRect(edges[i]!, top, edges[i + 1]! - edges[i]!, rowH) }
+      })
+    }
     ctx.strokeStyle = pal.border
     ctx.lineWidth = 1
     ctx.beginPath()
@@ -83,26 +101,70 @@ export function drawTable(
     }
     ctx.stroke()
 
-    // A bar where a cell has text; skipped when the whole table is a few pixels wide.
+    // A mark where a cell has something; skipped when the whole table is a few pixels wide.
     if (z >= 0.06) {
-      const fields = card as unknown as Record<string, unknown>
-      ctx.fillStyle = ink
-      ctx.globalAlpha = 0.45
       for (let r = first; r < last; r++) {
         const row = rows[r]!
-        const cy = gridTop + (r + 1) * rowH + rowH / 2 - 3 * z
-        if (cy > y + h) break
+        const top = gridTop + (r + 1) * rowH
+        if (top + rowH / 2 > y + h) break
+        const mid = top + rowH / 2
         cols.forEach((col, i) => {
-          const text = cellDisplay(col, readCell(fields[cellKey(row.id, col.id)]))
+          const cell = readCell(fields[cellKey(row.id, col.id)])
+          const cellFill = fillOf(pal, cell.bg ?? row.bg)
+          // Ink that reads on this cell's own fill.
+          const ink2 = cellFill?.text ?? ink
+          const left = edges[i]! + 10 * z, right = edges[i + 1]! - 10 * z, room = right - left
+          if (room <= 0) return
+          const align = effectiveAlign(col, cell.a)
+          const place = (len: number) => (align === 'r' ? right - len : align === 'c' ? left + (room - len) / 2 : left)
+          ctx.fillStyle = ink2
+          if (col.t === 'checkbox') {
+            const on = cellValue(col, cell) === true
+            const size = Math.min(room, 10 * z)
+            const bx = place(size)
+            ctx.globalAlpha = on ? 0.8 : 0.45
+            if (on) ctx.fillRect(bx, mid - size / 2, size, size)
+            else { ctx.lineWidth = Math.max(1, z); ctx.strokeStyle = ink2; ctx.strokeRect(bx + 0.5, mid - size / 2 + 0.5, size, size) }
+            ctx.globalAlpha = 1
+            return
+          }
+          if (col.t === 'rating') {
+            const n = (cellValue(col, cell) as number | null) ?? 0
+            if (!n) return
+            const d = Math.min(8 * z, room / 5), gap = d * 0.4
+            const len = n * d + (n - 1) * gap
+            ctx.globalAlpha = 0.7
+            for (let k = 0; k < n; k++) { ctx.beginPath(); ctx.arc(place(Math.min(len, room)) + d / 2 + k * (d + gap), mid, d / 2, 0, Math.PI * 2); ctx.fill() }
+            ctx.globalAlpha = 1
+            return
+          }
+          if (col.t === 'select') {
+            const v = cellValue(col, cell)
+            const opt = col.opts.find((o) => o.id === v)
+            if (!opt) return
+            const len = Math.max(2, Math.min(room, (opt.n.length * 6 + 12) * z))
+            const chip = fillOf(pal, opt.c)
+            // A tag is a small tinted pill; one with no colour is a bar, like text.
+            if (chip) {
+              ctx.fillStyle = chip.bg
+              roundRect(ctx, place(len), mid - 7 * z, len, 14 * z, 7 * z)
+              ctx.fill()
+              ctx.fillStyle = chip.text
+              ctx.globalAlpha = 0.55
+              const inner = Math.max(1, len - 12 * z)
+              ctx.fillRect(place(len) + (len - inner) / 2, mid - 2 * z, inner, Math.max(1, 4 * z))
+              ctx.globalAlpha = 1
+              return
+            }
+          }
+          const text = unreadText(col, cell) ?? cellDisplay(col, cell)
           if (!text) return
-          const room = edges[i + 1]! - edges[i]! - 20 * z
           const len = Math.max(1, Math.min(room, text.length * 7 * z))
-          // Numbers sit on the right, like the cells.
-          const left = col.t === 'number' ? edges[i + 1]! - 10 * z - len : edges[i]! + 10 * z
-          ctx.fillRect(left, cy, len, Math.max(1, 6 * z))
+          ctx.globalAlpha = unreadText(col, cell) !== null ? 0.28 : 0.45
+          ctx.fillRect(place(len), mid - 3 * z, len, Math.max(1, 6 * z))
+          ctx.globalAlpha = 1
         })
       }
-      ctx.globalAlpha = 1
     }
   }
   ctx.restore()

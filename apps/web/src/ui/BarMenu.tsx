@@ -11,6 +11,8 @@ export function BarMenu(props: {
   triggerRef?: (element: HTMLButtonElement) => void
   label: string
   title: string
+  /** The hover tip (and the name, for an icon-only button). */
+  tip?: string
   icon: JSX.Element
   testId: string
   menuTestId: string
@@ -44,7 +46,9 @@ export function BarMenu(props: {
         data-testid={props.testId}
         aria-haspopup="menu"
         aria-expanded={open()}
-        title={props.title}
+        title={props.tip ? undefined : props.title}
+        data-tip={props.tip}
+        aria-label={props.tip ? props.title : undefined}
         onPointerDown={() => (wasOpen = open())}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') wasOpen = open() }}
         onClick={toggle}
