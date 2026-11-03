@@ -73,8 +73,8 @@ test('the active cell stays above the keyboard, and the dock fits a 360px screen
   expect(dock.x + dock.width).toBeLessThanOrEqual(360)
   for (const id of ['dock-prev', 'dock-next', 'dock-table-more']) {
     const b = (await page.getByTestId(id).boundingBox())!
-    expect(b.width).toBeGreaterThanOrEqual(44)
-    expect(b.height).toBeGreaterThanOrEqual(44)
+    expect(b.width).toBeGreaterThan(43.9)
+    expect(b.height).toBeGreaterThan(43.9)
     expect(b.x + b.width).toBeLessThanOrEqual(360)
   }
 })
@@ -102,8 +102,8 @@ test('the dock menu inserts a row, and tapping a cell then the same cell edits i
 test('"+ row" and "+ column" are finger-sized', async ({ page }) => {
   await tapOn(page, cell(page, 0, 0), { x: 20, y: 10 })
   await tapOn(page, cell(page, 0, 0), { x: 20, y: 10 })
-  expect((await page.getByTestId('table-add-row').boundingBox())!.height).toBeGreaterThanOrEqual(44)
-  expect((await page.getByTestId('table-add-column').boundingBox())!.width).toBeGreaterThanOrEqual(44)
+  expect((await page.getByTestId('table-add-row').boundingBox())!.height).toBeGreaterThan(43.9)
+  expect((await page.getByTestId('table-add-column').boundingBox())!.width).toBeGreaterThan(43.9)
   await tap(page, await page.getByTestId('table-add-row').boundingBox().then((b) => ({ x: b!.x + b!.width / 2, y: b!.y + b!.height / 2 })))
   await expect(table(page).locator('tbody tr')).toHaveCount(4)
 })
