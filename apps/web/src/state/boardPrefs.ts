@@ -80,6 +80,14 @@ function change(id: string, update: { favorite?: boolean; opened?: true }) {
 export const isFavourite = (id: string) => boardPrefs()[id]?.favoriteAt != null
 export const setFavourite = (id: string, favorite: boolean) => change(id, { favorite })
 
+// Another device's stars matter when you come back to this one. Not when a menu opens:
+// a refresh landing mid-gesture would move the rows under your finger.
+function refreshOnReturn() {
+  if (document.visibilityState === 'visible') void refreshBoardPrefs()
+}
+window.addEventListener('focus', refreshOnReturn)
+document.addEventListener('visibilitychange', refreshOnReturn)
+
 createRoot(() => {
   createEffect(on(() => user()?.id, (id) => {
     if (!id) { owner = ''; setBoardPrefs({}); pending = {}; return }

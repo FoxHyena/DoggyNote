@@ -49,6 +49,8 @@ test('a star in the top bar adds a Favourite that follows you to another device,
       await mac.keyboard.press('Escape')
 
       await expect.poll(async () => (await (await me.api.get('/api/board-preferences')).json()).preferences.find((p: { boardId: string }) => p.boardId === walks)?.favoriteAt ?? null).toBeNull()
+      // Picking the other device back up brings its stars up to date.
+      await phone.evaluate(() => window.dispatchEvent(new Event('focus')))
       menu = await openMenu(phone)
       await expect(menu.getByTestId('favourite-board-link')).toHaveCount(0)
     } finally { await other.close() }

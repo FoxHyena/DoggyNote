@@ -8,7 +8,7 @@ import { phone } from '../state/device.ts'
 import { canReadBoard, type BoardPermission } from '../state/access.ts'
 import { sharedRoots } from '../state/sharedBoards.ts'
 import { favouriteIds, recentIds } from '../state/boardLists.ts'
-import { boardPrefs, isFavourite, refreshBoardPrefs, setFavourite } from '../state/boardPrefs.ts'
+import { boardPrefs, isFavourite, setFavourite } from '../state/boardPrefs.ts'
 import { FavouriteButton } from './FavouriteButton.tsx'
 import { initials, personStyle } from '../state/realtime.ts'
 import * as doc from '../state/doc.ts'
@@ -48,9 +48,8 @@ export function BoardNavigation(props: { renderTrigger?: (state: { open: Accesso
   }
   const reachable = (id: string) => !id.startsWith('toybox:') && !!doc.getBoard(id) && !doc.getBoard(id)!.deletedAt && canReadBoard(id)
   const rowTitle = (id: string) => boardDisplayTitle(doc.getBoard(id), id.startsWith('home') ? `My ${COPY.home}` : 'Untitled board')
-  // Starred boards, in the order you starred them. Stars from your other devices arrive when the menu opens.
+  // Starred boards, in the order you starred them. Stars from your other devices arrive when you come back to the app.
   const favourites = () => favouriteIds(boardPrefs()).filter(reachable)
-  createEffect(() => { if (open()) void refreshBoardPrefs() })
   // The last few boards you opened on any device, one tap away. Favourites already have their own place.
   const recent = () => recentIds(boardPrefs(), recentBoards()).filter((id) => id !== boardId() && reachable(id) && !isFavourite(id)).slice(0, 5)
   const canFavourite = () => phone() && reachable(boardId())
