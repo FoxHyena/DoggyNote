@@ -103,6 +103,8 @@ test('the dock menu inserts a row, and tapping a cell then the same cell edits i
 test('"+ row" and "+ column" are finger-sized', async ({ page }) => {
   await tapOn(page, cell(page, 0, 0), { x: 20, y: 10 })
   await tapOn(page, cell(page, 0, 0), { x: 20, y: 10 })
+  // The board glides to bring the cell above the keyboard: measure once it has settled.
+  await page.waitForTimeout(500)
   expect((await page.getByTestId('table-add-row').boundingBox())!.height).toBeGreaterThan(43.9)
   expect((await page.getByTestId('table-add-column').boundingBox())!.width).toBeGreaterThan(43.9)
   await tap(page, await page.getByTestId('table-add-row').boundingBox().then((b) => ({ x: b!.x + b!.width / 2, y: b!.y + b!.height / 2 })))
