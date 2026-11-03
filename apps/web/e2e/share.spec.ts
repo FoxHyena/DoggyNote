@@ -4,6 +4,8 @@ import { postSync } from './helpers.ts'
 import { waitForSync } from './helpers.ts'
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test'
 import { addNote, at, cardByText, chooseAppearance, dragBy, freshBoard } from './helpers.ts'
+import { seedCards } from './touch.ts'
+import { grid, tableFields } from './tables.ts'
 
 // Extra devices are outside Playwright's context fixture; close them after
 // every test so old pages cannot keep polling in later tests.
@@ -185,4 +187,30 @@ test.describe('image access', () => {
     const id = await addImage(page)
     expect((await page.request.get(`/api/assets/${id}/medium`)).status()).toBe(200)
   })
+})
+
+test('a shared table is read-only for viewers: no cell editing, no add strips, no clear', async ({ page, browser }) => {
+  await freshBoard(page)
+  const { fields } = tableFields(['Pup', 'Treat'], [['Rex', 'Bacon'], ['Mochi', 'Cheese']])
+  await seedCards(page, [{ type: 'table', x: 40, y: 40, w: 420, content: { title: 'The pack' }, fields }])
+  const url = await createShare(page, true)
+  const v = await stranger(browser, url)
+  await expect(v.getByTestId('viewer')).toBeVisible()
+  const card = v.locator('[data-type=table]')
+  await expect(card).toBeVisible()
+  expect(await grid(v, card)).toEqual([['Pup', 'Treat'], ['Rex', 'Bacon'], ['Mochi', 'Cheese']])
+  await expect(card.getByTestId('table-title')).toHaveText('The pack')
+  // Click, click again, double-click, type, delete: nothing is editable.
+  await card.locator('tbody td').first().click()
+  await card.locator('tbody td').first().click()
+  await card.locator('tbody td').first().dblclick()
+  await v.keyboard.press('Enter')
+  await v.keyboard.type('Hacked')
+  await v.keyboard.press('Delete')
+  await expect(card).not.toHaveClass(/editing/)
+  await expect(v.getByTestId('table-input')).toHaveCount(0)
+  await expect(v.getByTestId('table-add-row')).toHaveCount(0)
+  await expect(v.getByTestId('table-add-column')).toHaveCount(0)
+  await expect(v.getByTestId('selection-bar')).toHaveCount(0)
+  expect(await grid(v, card)).toEqual([['Pup', 'Treat'], ['Rex', 'Bacon'], ['Mochi', 'Cheese']])
 })

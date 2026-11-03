@@ -73,7 +73,15 @@ async function seed(page: Page): Promise<string> {
         const row = Math.floor(i / COLS)
         const isImage = i % Math.round(total / IMAGES) === 0 && imageIds.length > 0
         const base = { id: id(), kind: 'card', boardId, x: col * 300, y: row * 280, w: 260, z: i + 1, color: 'none', columnId: null, order: 0, createdAt: now }
-        if (isImage) {
+        if (!isImage && i % 100 === 50) {
+          // Ten tables of 20 rows by 6 columns: every cell is a field of its own.
+          const tid = () => `${Math.floor(Math.random() * 10)}${Math.random().toString(36).slice(2, 7).padEnd(5, '0')}`
+          const cols = Array.from({ length: 6 }, tid), rows = Array.from({ length: 20 }, tid)
+          const fields: Record<string, unknown> = {}
+          cols.forEach((c, k) => { fields[`tk${c}`] = { n: `Column ${k + 1}`, o: k + 1, w: 1, t: 'text' } })
+          rows.forEach((r, k) => { fields[`tr${r}`] = { o: k + 1 }; cols.forEach((c, j) => { fields[`tc${r}${c}`] = `r${k + 1} c${j + 1}` }) })
+          objs.push({ ...base, type: 'table', w: 420, h: 42 + 32 * 21, content: { title: `Table ${i}` }, ...fields })
+        } else if (isImage) {
           objs.push({ ...base, type: 'image', h: 195, content: { assetId: imageIds.pop(), width: 1600, height: 1200, sizes: ['thumb', 'small', 'medium', 'full'] } })
         } else {
           const text = LOREM.repeat(1 + (i % 3))
@@ -86,11 +94,20 @@ async function seed(page: Page): Promise<string> {
           })
         }
       }
-      for (let i = 0; i < objs.length; i += 200) {
+      // Like the app, a request carries at most 200 changes and about 2,000 keys (a table is one key per cell).
+      const batches: Record<string, unknown>[][] = [[]]
+      let keys = 0
+      for (const o of objs) {
+        const n = Object.keys(o).length
+        if (batches[batches.length - 1].length >= 200 || (keys + n > 2000 && keys)) { batches.push([]); keys = 0 }
+        batches[batches.length - 1].push(o)
+        keys += n
+      }
+      for (const batch of batches) {
         const write = () => fetch('/api/sync', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ changes: objs.slice(i, i + 200).map((o) => ({ id: o.id, patch: o })) }),
+          body: JSON.stringify({ changes: batch.map((o) => ({ id: o.id, patch: o })) }),
         })
         let r = await write()
         for (let attempt = 0; r.status === 409 && attempt < 10; attempt++) r = await write()
