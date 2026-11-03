@@ -311,7 +311,7 @@ Pill-shaped, 12px weight 500, 1px × 8px padding, with each label's own backgrou
 Den Floor fill, 1px border, 8px radius, at least 44px tall, 14px text. Focus is a 2px selection outline with no offset. Errors appear as Collar Coral text beneath, or as a Collar swatch block for form-level errors.
 
 ### Menus and popovers
-Shelf background, 1px border, 10px radius, floating shadow, 4px inner padding. Rows are at least 36px tall, 13px text, 6px radius, with a hover fill. Keyboard hints sit right-aligned in muted 12px. Right-clicking a card hides the selection bar while its menu offers edit (Rename for boards), duplicate, label, comment and bury actions; arrows move through the menu and Escape returns focus to the card. A location ping appears only when another live participant is present. Separators are 1px border lines inset 6px.
+Shelf background, 1px border, 10px radius, floating shadow, 4px inner padding. Rows are at least 36px tall, 13px text, 6px radius, with a hover fill. Keyboard hints sit right-aligned in muted 12px. Right-clicking a card hides the selection bar while its menu offers edit (Rename for boards); cut, copy, paste and duplicate with their ⌘ hints; label, comment and area actions; and bury, in separated groups. Arrows move through the menu and Escape returns focus to the card. Right-clicking empty canvas on a board you can edit offers just Paste, landing at the pointer; a location ping joins it only when another live participant is present. Separators are 1px border lines inset 6px.
 
 ### Dialogs and sheets
 Shelf background, 14px radius, at most 460px wide, over a 45% black backdrop. Headings are 16px. On phones, dialogs and panels become bottom sheets over the scrim token.

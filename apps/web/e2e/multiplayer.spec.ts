@@ -495,6 +495,8 @@ test('right-clicking the canvas opens a compact Look here menu at the pointer', 
   const at = { x: canvas.x + canvas.width / 3, y: canvas.y + canvas.height / 3 }
   await page.mouse.click(at.x, at.y, { button: 'right' })
   const menu = page.locator('.canvas-ping-menu')
+  await expect(menu.getByRole('menuitem')).toHaveText(['Paste⌘V', 'Look here'])
+  await page.keyboard.press('End')
   await expect(menu.getByRole('menuitem', { name: 'Look here', exact: true })).toBeFocused()
   await expect(menu.locator('svg[data-icon="lookHere"]')).toHaveAttribute('viewBox', '0 0 256 256')
   const box = (await menu.boundingBox())!
@@ -527,7 +529,7 @@ test('a shared card offers its actions and a location ping for the other partici
   await other.bringToFront()
   await cardByText(other, 'Point to this card').click({ button: 'right', position: { x: 30, y: 20 } })
   const menu = other.getByTestId('canvas-context-menu')
-  await expect(menu.getByRole('menuitem')).toHaveText(['Edit', 'Duplicate', 'Make a synced copy', 'Labels', 'Comment', 'Create area from selection', 'Bury', 'Look here'])
+  await expect(menu.getByRole('menuitem')).toHaveText(['Edit', 'Cut⌘X', 'Copy⌘C', 'Paste⌘V', 'Duplicate⌘D', 'Make a synced copy', 'Labels', 'Comment', 'Create area from selection', 'Bury', 'Look here'])
   await other.keyboard.press('End')
   await expect(menu.getByRole('menuitem', { name: 'Look here', exact: true })).toBeFocused()
   await other.keyboard.press('Enter')

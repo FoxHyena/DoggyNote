@@ -1459,7 +1459,7 @@ export function Canvas(props: { readOnly: boolean }) {
     }
     const at = lastPointer ? toWorld(lastPointer) : centerWorld()
     const column = lastPointer ? columnAt(at, new Set()) : null
-    if (handleCanvasPaste(e, at, column?.id)) e.preventDefault()
+    if (handleCanvasPaste(e.clipboardData, at, column?.id)) e.preventDefault()
   }
 
   // iOS starts its own text selection from a held, moving finger; cancelling the
@@ -1576,11 +1576,14 @@ export function Canvas(props: { readOnly: boolean }) {
         const card = id ? doc.getCard(id) : undefined
         if (!card && target.closest('button,[data-nodrag]')) return
         const canPing = liveState() === 'live' && peers().length > 0
-        if ((!card || props.readOnly) && !canPing) return
+        // Empty canvas offers Paste on a board you can edit.
+        const canPaste = !props.readOnly && doc.canWriteObject(doc.getBoard(boardId()))
+        if ((!card || props.readOnly) && !canPing && !canPaste) return
         e.preventDefault()
         endEdit()
         if (card && !props.readOnly && !selection().has(card.id)) select([card.id])
-        setContextPoint({ ...toWorld(e), screenX: e.clientX, screenY: e.clientY, cardId: props.readOnly ? null : card?.id ?? null, returnTo: (card && cardEl(card.id)) || vp })
+        const world = toWorld(e)
+        setContextPoint({ ...world, screenX: e.clientX, screenY: e.clientY, cardId: props.readOnly ? null : card?.id ?? null, columnId: columnAt(world, new Set())?.id, returnTo: (card && cardEl(card.id)) || vp })
       }}
       onDragOver={(e) => {
         if (!props.readOnly) e.preventDefault()
