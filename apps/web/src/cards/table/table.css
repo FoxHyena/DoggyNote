@@ -76,7 +76,10 @@ html[data-input='mouse'] .card-table.editing:has(.table-range) td[data-fill]:hov
   border: 1.5px solid color-mix(in srgb, currentColor 55%, transparent);
   border-radius: 4px;
 }
+/* As a to-do's done box: the lamp's colour on a plain cell, the cell's own ink on a filled one. */
 .table-check[aria-checked='true'] { border-color: var(--dn-accent); background: var(--dn-accent); }
+.table-grid td[data-fill] .table-check[aria-checked='true'] { border-color: var(--cell-text); background: var(--cell-text); }
+.table-grid td[data-fill] .table-check[aria-checked='true']::before { border-color: var(--cell-bg); }
 .table-check[aria-checked='true']::before {
   content: '';
   width: 3px;
@@ -88,6 +91,7 @@ html[data-input='mouse'] .card-table.editing:has(.table-range) td[data-fill]:hov
 }
 /* Fingers and a mouse alike get a roomier target than the 15px box, without moving the row. */
 .table-check::after { content: ''; position: absolute; inset: -8px; }
+html[data-input='touch'] .table-check::after { inset: -14px; }
 .table-check[data-nodrag] { cursor: pointer; }
 .table-rating { display: inline-flex; align-items: center; gap: 1px; max-width: 100%; height: 14px; margin-top: 3px; vertical-align: top; overflow: hidden; }
 .table-paw { display: grid; flex: 0 1 14px; min-width: 6px; opacity: 0.22; }
@@ -155,6 +159,8 @@ html[data-input='mouse'] .card-table.editing:has(.table-range) td[data-fill]:hov
 .table-input[data-align='r'] { text-align: right; }
 .table-input[data-bold] { font-weight: 600; }
 /* Navigating: nothing to see but the outline; a typed character switches to editing. */
+/* Gold on a gold fill disappears: the cell's own ink runs just inside the ring. */
+.table-input[data-filled] { box-shadow: inset 0 0 0 3px var(--ta-fg); }
 .table-input[data-mode='nav'] { background: transparent; color: transparent; caret-color: transparent; pointer-events: none; }
 .table-input[data-target='title'] { padding: 11px 14px 6px; font-weight: 600; white-space: nowrap; }
 /* Whole rows or columns picked: the grips and the tint show it, not an outline on one cell. */
@@ -216,13 +222,21 @@ html[data-input='touch'] .table-add { isolation: isolate; }
   cursor: grab;
   pointer-events: auto;
   touch-action: none;
-  transition: opacity 120ms, background-color 120ms, color 120ms;
+  transition: opacity 120ms, color 120ms;
 }
 .table-gutter-rows .table-grip { left: 0; width: 24px; }
 .table-gutter-cols .table-grip { top: 0; height: 24px; }
 .table-gutter-cols .table-grip .dn-icon { transform: rotate(90deg); }
-html[data-input='mouse'] .table-grip:hover { opacity: 1; background: var(--dn-card-hover); color: var(--dn-text); }
-.table-grip.on { opacity: 1; background: var(--dn-card-hover); color: var(--dn-text); }
+/* The tint is a small pill behind the dots, not the whole column's width: a picked column's grip would
+   otherwise read as a stray grey box floating over the board (the column's own tint shows which one). */
+.table-grip { isolation: isolate; }
+.table-grip::before { content: ''; position: absolute; z-index: -1; inset: 0; margin: auto; border-radius: 6px; background: transparent; transition: background-color 120ms; pointer-events: none; }
+.table-gutter-cols .table-grip::before { width: 36px; max-width: 100%; }
+.table-gutter-rows .table-grip::before { height: 28px; max-height: 100%; }
+html[data-input='mouse'] .table-grip:hover { opacity: 1; color: var(--dn-text); }
+html[data-input='mouse'] .table-grip:hover::before { background: var(--dn-card-hover); }
+.table-grip.on { opacity: 1; color: var(--dn-text); }
+.table-grip.on::before { background: var(--dn-card-hover); }
 .table-grip:active { cursor: grabbing; }
 html[data-input='touch'] .table-gutter-rows { width: 32px; right: calc(100% + 6px); }
 html[data-input='touch'] .table-gutter-rows .table-grip { width: 32px; }
@@ -230,6 +244,7 @@ html[data-input='touch'] .table-gutter-cols { height: 32px; bottom: calc(100% + 
 html[data-input='touch'] .table-gutter-cols .table-grip { height: 32px; }
 /* Touch targets are 44px: the extra reaches past the grip without enlarging it. */
 html[data-input='touch'] .table-grip::after { content: ''; position: absolute; inset: -6px -6px; }
+.table-grip:focus-visible, .table-col-menu:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 1px; }
 .table-drop { position: absolute; background: var(--dn-selection); pointer-events: none; z-index: 3; }
 .table-drop[data-kind='rows'] { left: -8px; right: -8px; height: 2px; margin-top: -1px; }
 .table-drop[data-kind='cols'] { top: -8px; bottom: -8px; width: 2px; margin-left: -1px; }
@@ -261,7 +276,7 @@ html[data-input='mouse'] .table-resize:hover::after, .table-resize:active::after
 html[data-input='mouse'] .table-col-menu:hover { background: var(--dn-card-hover); color: var(--dn-text); }
 html[data-input='touch'] .table-col-menu::after { content: ''; position: absolute; inset: -10px; }
 @media (prefers-reduced-motion: reduce) {
-  .table-add, .table-grip, .table-col-menu, .table-resize::after { transition: none; }
+  .table-add, .table-grip, .table-grip::before, .table-col-menu, .table-resize::after { transition: none; }
 }
 
 .table-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

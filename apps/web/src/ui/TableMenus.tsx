@@ -22,7 +22,7 @@ export function TableLineMenu(props: { kind: 'rows' | 'cols'; x: number; y: numb
     <Portal>
       <div ref={menu} class="menu bar-menu table-line-menu" role="menu" aria-label={title()} data-testid={props.kind === 'rows' ? 'table-row-menu' : 'table-column-menu-list'} data-nodrag style={{ position: 'fixed', left: `${at().left}px`, top: `${at().top}px` }} onPointerDown={(e) => e.stopPropagation()} onContextMenu={(e) => e.preventDefault()}>
         <SheetGrip onDismiss={props.close} />
-        <div class="nav-menu-head sheet-only"><strong>{title()}</strong><Show when={phone()}><button class="bar-btn" role="menuitem" aria-label="Close table actions" onClick={props.close}>Done</button></Show></div>
+        <div class="nav-menu-head sheet-only"><strong>{title()}</strong><Show when={phone()}><button class="bar-btn" role="menuitem" onClick={props.close}>Done</button></Show></div>
         <Show when={props.kind === 'rows'} fallback={<ColumnMenuItems close={props.close} />}><RowMenuItems close={props.close} /></Show>
       </div>
     </Portal>
