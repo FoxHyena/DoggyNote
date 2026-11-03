@@ -279,3 +279,27 @@ test('a filled cell keeps its colour under the draft, and fills show in the read
   await page.keyboard.press('Enter')
   expect(await input(page).evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(before)
 })
+
+test('a draft is aligned and weighted like its cell, and a right-aligned header keeps its ⋯ clear of its name', async ({ page }) => {
+  await seedTyped(page, COLS, [{ cells: [{ v: 'Mochi', b: 1 }, 12, true, 3] }, { cells: ['Rex', 4, false, 5] }])
+  await openAt(page, 0, 1)
+  await page.keyboard.press('Enter')
+  expect(await input(page).evaluate((el) => getComputedStyle(el).textAlign)).toBe('right')
+  await page.keyboard.press('Escape')
+  await page.keyboard.press('ArrowLeft')
+  await page.keyboard.press('Enter')
+  expect(Number(await input(page).evaluate((el) => getComputedStyle(el).fontWeight))).toBeGreaterThanOrEqual(600)
+  await page.keyboard.press('Escape')
+  // The Age header is on the right, so its menu button sits on the left of the column.
+  await columnGrip(page, 1).click()
+  const menu = (await page.getByTestId('table-column-menu').nth(1).boundingBox())!
+  const head = (await headerCells(page).nth(1).boundingBox())!
+  expect(menu.x).toBeLessThan(head.x + head.width / 2)
+  const name = await headerCells(page).nth(1).evaluate((el) => { const r = document.createRange(); r.selectNodeContents(el); const b = r.getBoundingClientRect(); return { x: b.x, w: b.width } })
+  expect(menu.x + menu.width).toBeLessThanOrEqual(name.x + 1)
+  // A left-aligned header keeps it on the right.
+  await columnGrip(page, 0).click()
+  const first = (await page.getByTestId('table-column-menu').nth(0).boundingBox())!
+  const firstHead = (await headerCells(page).nth(0).boundingBox())!
+  expect(first.x).toBeGreaterThan(firstHead.x + firstHead.width / 2)
+})

@@ -56,7 +56,7 @@
 .table-grid td[data-fill] { background: var(--cell-bg); color: var(--cell-text); }
 /* Text its column's type couldn't read (a word in a number column) is kept, and shown quieter. */
 .table-grid td[data-muted]:not([data-fill]) { color: var(--dn-text-muted); }
-.table-grid td[data-muted][data-fill] { opacity: 0.75; }
+.table-grid td[data-muted][data-fill] { font-style: italic; }
 html[data-input='mouse'] .card-table.editing td:not([data-fill]):hover { background: var(--dn-card-hover); }
 /* A range paints its own tint over the cells; the hover tint on top of it would make one cell (the one the pointer
    rests on, which is the active cell after Shift+arrows) read darker than the rest. */
@@ -150,6 +150,10 @@ html[data-input='mouse'] .card-table.editing:has(.table-range) td[data-fill]:hov
   overflow-wrap: anywhere;
   pointer-events: auto;
 }
+/* The draft is aligned and weighted like its cell, so typing doesn't jump sideways. */
+.table-input[data-align='c'] { text-align: center; }
+.table-input[data-align='r'] { text-align: right; }
+.table-input[data-bold] { font-weight: 600; }
 /* Navigating: nothing to see but the outline; a typed character switches to editing. */
 .table-input[data-mode='nav'] { background: transparent; color: transparent; caret-color: transparent; pointer-events: none; }
 .table-input[data-target='title'] { padding: 11px 14px 6px; font-weight: 600; white-space: nowrap; }
@@ -276,6 +280,10 @@ html[data-input='touch'] .table-col-menu::after { content: ''; position: absolut
 }
 
 /* Tag panels (the picker and the options editor) borrow Labels' panel, list and row. A few extras. */
+/* The fill panel is seven dots, so it is as wide as they are (240px with its padding), not Labels' 280. */
+.labels-panel.table-fill { width: auto; }
+/* A tag is one choice, not a set: the current one is ticked without Labels' box around it. */
+.labels-panel .label-check.table-tick { border-color: transparent; }
 .table-pop .table-chip { max-width: 100%; }
 .table-pop-clear {
   display: flex;

@@ -82,7 +82,7 @@ export function SelectPopover(props: {
             {(o) => (
               <li id={optionDomId(o.id)} role="option" aria-selected={props.value() === o.id} class="label-row" classList={{ active: active() === o.id }} data-testid="table-option" data-option={o.n}>
                 <button type="button" tabIndex={-1} class="label-toggle" aria-label={o.n} onClick={() => choose(o.id)}>
-                  <span class="label-check" aria-hidden="true"><Show when={props.value() === o.id}><Icon size={12} name="check" /></Show></span>
+                  <span class="label-check table-tick" aria-hidden="true"><Show when={props.value() === o.id}><Icon size={12} name="check" /></Show></span>
                   <span class="table-chip" data-none={o.c === 'none' ? '' : undefined} style={chipVars(o.c)}>{o.n}</span>
                 </button>
               </li>

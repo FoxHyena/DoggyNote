@@ -1,6 +1,6 @@
 import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, onMount } from 'solid-js'
 import {
-  TABLE_CAPS, addColumn, addOption, addRows, cellOf, cellValue, clearCells, copyGrid, deleteColumns, deleteRows, duplicateRows, moveColumns, moveOption, moveRows, parseInput, parseTsv, pasteGrid,
+  TABLE_CAPS, addColumn, addOption, addRows, cellOf, effectiveAlign, cellValue, clearCells, copyGrid, deleteColumns, deleteRows, duplicateRows, moveColumns, moveOption, moveRows, parseInput, parseTsv, pasteGrid,
   removeOption, resizeBoundary, retype, setCells, setRowFill, setStyle, sortRows, tableRows, tableTitle, toTsv, updateColumn, updateOption,
   type Align, type Card, type ColumnType, type TableColumn, type TablePatch,
 } from '@doggynote/core'
@@ -1007,6 +1007,10 @@ export function TableEditor(props: {
       head: head ? boxOf(head) : null,
       table: t ? boxOf(t) : null,
     })
+    // The draft sits as its cell does: aligned, and bold if the cell is.
+    ta.dataset.align = (!titleActive() && fill?.dataset.align) || 'l'
+    if (!titleActive() && fill?.dataset.bold !== undefined) ta.dataset.bold = ''
+    else delete ta.dataset.bold
     // A filled cell keeps its colour under the draft.
     ta.style.setProperty('--ta-bg', fill?.dataset.fill !== undefined ? fill.style.getPropertyValue('--cell-bg') : '')
     // The field's text lines up with the cell's: 14px at the card's edges.
@@ -1222,7 +1226,7 @@ export function TableEditor(props: {
                 data-testid="table-column-menu"
                 aria-haspopup="menu"
                 aria-label={COPY.table.columnMenu(column(colId)?.n ?? '')}
-                style={{ left: `${layout().cols[i()]!.x + layout().cols[i()]!.w}px`, top: `${layout().head!.y}px`, height: `${layout().head!.h}px` }}
+                style={{ left: `${layout().cols[i()]!.x + (column(colId) && effectiveAlign(column(colId)!) === 'r' ? 36 : layout().cols[i()]!.w)}px`, top: `${layout().head!.y}px`, height: `${layout().head!.h}px` }}
                 {...strip((e) => openColumnMenu(i(), e.currentTarget as HTMLElement))}
               >
                 <Icon name="more" size={16} />

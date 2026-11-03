@@ -93,6 +93,7 @@ import arrowDownSvg from '@phosphor-icons/core/regular/arrow-down.svg?raw'
 import arrowLeftSvg from '@phosphor-icons/core/regular/arrow-left.svg?raw'
 import arrowRightSvg from '@phosphor-icons/core/regular/arrow-right.svg?raw'
 import eraserSvg from '@phosphor-icons/core/regular/eraser.svg?raw'
+import listBulletsSvg from '@phosphor-icons/core/regular/list-bullets.svg?raw'
 import textTSvg from '@phosphor-icons/core/regular/text-t.svg?raw'
 import hashSvg from '@phosphor-icons/core/regular/hash.svg?raw'
 import checkSquareSvg from '@phosphor-icons/core/regular/check-square.svg?raw'
@@ -211,6 +212,7 @@ export const ICONS = {
   pen: body(penSvg),
   highlighter: body(highlighterSvg),
   eraser: body(eraserSvg),
+  listBullets: body(listBulletsSvg),
   typeText: body(textTSvg),
   typeNumber: body(hashSvg),
   typeCheckbox: body(checkSquareSvg),

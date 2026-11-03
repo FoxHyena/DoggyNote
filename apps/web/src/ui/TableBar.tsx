@@ -125,7 +125,7 @@ export function ColumnMenuItems(props: { close: () => void }) {
         <button class="menu-item" role="menuitem" data-testid="table-rename-column" disabled={t().colSpan() !== 1} onClick={() => { props.close(); t().renameColumn() }}><Icon name="edit" />{COPY.table.renameColumn}</button>
         <button class="menu-item" role="menuitem" data-testid="table-menu-type" aria-haspopup="menu" disabled={!t().colSpan()} onClick={swap('type')}><Icon name={TYPE_ICONS[t().columnType() ?? 'text']} />{COPY.table.columnType}<span class="menu-hint">{t().columnType() ? COPY.table.types[t().columnType()!] : ''}</span></button>
         <Show when={t().canEditOptions()}>
-          <button class="menu-item" role="menuitem" data-testid="table-edit-options" onClick={act(() => t().editOptions())}><Icon name="typeSelect" />{COPY.table.editOptions}</button>
+          <button class="menu-item" role="menuitem" data-testid="table-edit-options" onClick={act(() => t().editOptions())}><Icon name="listBullets" />{COPY.table.editOptions}</button>
         </Show>
         <div class="menu-sep" role="separator" />
         <SortItems close={props.close} />
