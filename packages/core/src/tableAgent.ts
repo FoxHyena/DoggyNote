@@ -1,7 +1,7 @@
 import { CARD_COLORS, isPresetColor, type PresetColor } from '@doggynote/theme'
 import { ordersBetween } from './order.ts'
 import {
-  COLUMN_TYPES, TABLE_CAPS, cellKey, cellOf, cellValue, colKey, encodeCell, isIsoDate, optionId, parseNumber, readCell, rowKey, tableColumns, tableId, tableRows, tableTitle,
+  COLUMN_TYPES, TABLE_CAPS, cellKey, cellOf, cellValue, colKey, encodeCell, findOption, isIsoDate, nextOptionColor, optionId, parseNumber, readCell, rowKey, tableColumns, tableId, tableRows, tableTitle,
   type Align, type Cell, type CellValue, type ColumnField, type ColumnType, type Prim, type RowField, type SelectOption, type TablePatch,
 } from './table.ts'
 
@@ -31,7 +31,6 @@ const ALIGN_OUT: Record<Align, AgentAlign> = { l: 'left', c: 'center', r: 'right
 const ALIGN_IN: Record<AgentAlign, Align> = { left: 'l', center: 'c', right: 'r' }
 const ID = /^[0-9][0-9a-z]{5}$/
 const OPTION_ID = /^[0-9][0-9a-z]{3}$/
-const PALETTE = CARD_COLORS.filter((c) => c !== 'none')
 const MAX_TITLE = 1000
 
 // ---- storage -> agent -----------------------------------------------------------
@@ -152,7 +151,7 @@ function buildColumn(spec: AgentColumn, n: number, id: string, old: { n: string;
       optId ??= prior?.id
       optId ??= optionId(new Set([...taken, ...known.map((k) => k.id)]))
       taken.add(optId)
-      opts.push({ id: optId, n: o.name.trim(), c: colour(`Column ${label}, option "${o.name.trim()}"`, o.color) ?? (o.color === 'none' ? 'none' : prior?.c ?? PALETTE[i % PALETTE.length]!) })
+      opts.push({ id: optId, n: o.name.trim(), c: colour(`Column ${label}, option "${o.name.trim()}"`, o.color) ?? (o.color === 'none' ? 'none' : prior?.c ?? nextOptionColor(opts)) })
     })
   }
   const field: NonNullable<ColumnField> = {
@@ -193,10 +192,10 @@ function coerce(col: BuiltColumn, t: ColumnType, value: Prim | null | undefined,
       if (typeof value === 'boolean') return bad('use an option name')
       const name = String(value).trim()
       if (name.length > TABLE_CAPS.name) return bad(`an option name is at most ${TABLE_CAPS.name} characters`)
-      let option = col.opts.find((o) => same(o.n, name))
+      let option = findOption(col.opts, name)
       if (!option) {
         if (col.opts.length >= TABLE_CAPS.options) return bad(`this column already has ${TABLE_CAPS.options} options`)
-        option = { id: optionId(new Set(col.opts.map((o) => o.id))), n: name, c: PALETTE[col.opts.length % PALETTE.length]! }
+        option = { id: optionId(new Set(col.opts.map((o) => o.id))), n: name, c: nextOptionColor(col.opts) }
         col.opts.push(option)
       }
       return option.id
