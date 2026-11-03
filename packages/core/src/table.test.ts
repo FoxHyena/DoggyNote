@@ -3,7 +3,7 @@ import {
   TABLE_CAPS, TABLE_FIELD, addColumn, addRows, cellKey, cellOf, cellDisplay, cellValue, clearCells, colKey, compareCells, deleteColumns, deleteRows, guessHeader,
   looksTabular, moveColumn, moveRow, optionId, parseInput, parseNumber, parseTableKey, parseTsv, resizeBoundary, retype, rowKey, setCells, setRowFill, setStyle,
   sortRows, starterTable, tableColumns, tableFromGrid, tableId, tableLimitError, tableRows, tableText, toTsv, updateColumn, validTableField, withoutTableTombstones,
-  readCell, isBlankTable, type TablePatch,
+  readCell, isBlankTable, copyGrid, duplicateRows, moveColumns, moveRows, pasteGrid, type TablePatch,
 } from './index.ts'
 
 const apply = (card: Record<string, unknown>, patch: TablePatch) => ({ ...card, ...patch })
@@ -430,5 +430,92 @@ describe('isBlankTable', () => {
     const [row] = tableRows(card)
     const [col] = tableColumns(card)
     expect(isBlankTable({ ...card, [cellKey(row!.id, col!.id)]: null }, names)).toBe(true)
+  })
+})
+
+describe('moving blocks, duplicating and pasting', () => {
+  const ids = (card: Record<string, unknown>) => tableRows(card).map((r) => r.id)
+
+  it('moves a block of rows together, in order, to any place', () => {
+    const { card } = fixture()
+    const more = apply(card, addRows(card, 2).patch)
+    const [a, b, c, d, e] = ids(more) as [string, string, string, string, string]
+    expect(ids(apply(more, moveRows(more, [b, c], 3)))).toEqual([a, d, e, b, c])
+    expect(ids(apply(more, moveRows(more, [d, e], 0)))).toEqual([d, e, a, b, c])
+    expect(ids(apply(more, moveRows(more, [c], 1)))).toEqual([a, c, b, d, e])
+    expect(moveRows(more, [b, c], 1)).toEqual({})
+  })
+
+  it('moves columns the same way, touching only those columns', () => {
+    const { card, cols } = fixture()
+    const patch = moveColumns(card, [cols[0]!, cols[1]!], 1)
+    expect(tableColumns(apply(card, patch)).map((c) => c.id)).toEqual([cols[2], cols[0], cols[1]])
+    expect(Object.keys(patch).sort()).toEqual([colKey(cols[0]!), colKey(cols[1]!)].sort())
+  })
+
+  it('duplicates rows with their cells and fill, right after the last one', () => {
+    const { card, rows, cols } = fixture(undefined, [['a', 'b', 'c'], ['d', 'e', 'f']])
+    const filled = apply(card, setRowFill(card, [rows[0]!], 'sky'))
+    const { patch, ids: copies } = duplicateRows(filled, [rows[0]!, rows[1]!])
+    const next = apply(filled, patch)
+    expect(ids(next)).toEqual([rows[0], rows[1], copies[0], copies[1], rows[2]])
+    expect(cellOf(next, copies[1]!, cols[2]!).v).toBe('f')
+    expect(tableRows(next).find((r) => r.id === copies[0])?.bg).toBe('sky')
+  })
+
+  it('copies the displayed text of a range, with names when the header is in it', () => {
+    const { card, rows, cols } = fixture(['text', 'number', 'text'], [['a', 2, 'c']])
+    expect(copyGrid(card, [rows[0]!], [cols[0]!, cols[1]!], false)).toEqual([['a', '2']])
+    expect(copyGrid(card, [rows[0]!], [cols[1]!], true)).toEqual([['B'], ['2']])
+  })
+
+  it('pastes from a cell, reading each value by its column', () => {
+    const { card, rows, cols } = fixture(['text', 'number', 'text'])
+    const r = pasteGrid(card, [['x', '1,5'], ['y', 'z']], { r: 1, c: 0 })
+    const next = apply(card, r.patch)
+    expect(cellOf(next, rows[1]!, cols[0]!).v).toBe('x')
+    expect(cellOf(next, rows[1]!, cols[1]!).v).toBe(15)
+    expect(cellOf(next, rows[2]!, cols[1]!).v).toBe('z')
+    expect(r.range).toEqual({ r0: 1, r1: 2, c0: 0, c1: 1 })
+    expect(r.clipped).toBe(false)
+  })
+
+  it('grows the table with the paste, adding columns in order', () => {
+    const { card } = fixture()
+    const r = pasteGrid(card, [['1', '2', '3', '4', '5'], ['6', '7', '8', '9', '10']], { r: 2, c: 1 })
+    const next = apply(card, r.patch)
+    expect(tableRows(next)).toHaveLength(4)
+    const cols = tableColumns(next)
+    expect(cols).toHaveLength(6)
+    expect(new Set(cols.map((c) => c.o)).size).toBe(6)
+    expect(cellOf(next, tableRows(next)[3]!.id, cols[5]!.id).v).toBe('10')
+  })
+
+  it('stops at the caps and says so', () => {
+    const { card } = fixture()
+    const big = Array.from({ length: 120 }, (_, i) => [String(i)])
+    const r = pasteGrid(card, big, { r: 0, c: 0 })
+    expect(tableRows(apply(card, r.patch))).toHaveLength(TABLE_CAPS.rows)
+    expect(r.clipped).toBe(true)
+    const wide = pasteGrid(card, [Array.from({ length: 30 }, (_, i) => String(i))], { r: 0, c: 0 })
+    expect(tableColumns(apply(card, wide.patch))).toHaveLength(TABLE_CAPS.cols)
+    expect(wide.clipped).toBe(true)
+  })
+
+  it('fills a range with one pasted value, and a header with names', () => {
+    const { card, rows, cols } = fixture()
+    const r = pasteGrid(card, [['go']], { r: 0, c: 0 }, { r0: 0, r1: 1, c0: 0, c1: 1 })
+    const next = apply(card, r.patch)
+    for (const row of [rows[0]!, rows[1]!]) for (const col of [cols[0]!, cols[1]!]) expect(cellOf(next, row, col).v).toBe('go')
+    expect(cellOf(next, rows[2]!, cols[0]!).v).toBe(null)
+    const names = apply(card, pasteGrid(card, [['Pup', 'Age'], ['Rex', '4']], { r: -1, c: 0 }).patch)
+    expect(tableColumns(names).map((c) => c.n)).toEqual(['Pup', 'Age', 'C'])
+    expect(cellOf(names, rows[0]!, cols[1]!).v).toBe('4')
+  })
+
+  it('does not write empty keys for cells that have nothing', () => {
+    const { card } = fixture()
+    const r = pasteGrid(card, [['', 'a']], { r: 0, c: 0 })
+    expect(Object.keys(r.patch).filter((k) => k.startsWith('tc'))).toHaveLength(1)
   })
 })
