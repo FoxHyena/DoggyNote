@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test'
-import { cellKey, rowKey, colKey, starterTable, tableColumns, tableRows } from '@doggynote/core'
+import { cellKey, rowKey, colKey, starterTable, tableColumns, tableRows, tableId, optionId, type Align, type ColumnType, type SelectOption } from '@doggynote/core'
+import type { PresetColor } from '@doggynote/theme'
 import { MOD } from './helpers.ts'
 import { seedCards } from './touch.ts'
 
@@ -77,3 +78,45 @@ export async function dragMouse(page: Page, from: { x: number; y: number }, to: 
 export const rowGrip = (page: Page, i: number) => page.getByTestId('table-row-grip').nth(i)
 export const columnGrip = (page: Page, i: number) => page.getByTestId('table-column-grip').nth(i)
 export const centerOf = async (loc: Locator) => { const b = (await loc.boundingBox())!; return { x: b.x + b.width / 2, y: b.y + b.height / 2 } }
+
+export type TypedColumn = { n: string; t?: ColumnType; opts?: [string, PresetColor][]; a?: Align }
+export type TypedRow = { bg?: PresetColor; cells: unknown[] }
+
+/**
+ * The fields of a table with typed columns, for seeding through the API. Cells are stored values or
+ * styled `{ v, b, a, bg }` objects; for a tag column pass the option's name and it becomes the option id.
+ */
+export function typedFields(columns: TypedColumn[], rows: TypedRow[]) {
+  const fields: Record<string, unknown> = {}
+  const colIds: string[] = [], rowIds: string[] = []
+  const opts: SelectOption[][] = []
+  const taken = new Set<string>()
+  columns.forEach((c, i) => {
+    const id = tableId(taken); taken.add(id); colIds.push(id)
+    const o = (c.opts ?? []).map(([n, color]) => ({ id: optionId(), n, c: color }))
+    opts.push(o)
+    fields[colKey(id)] = { n: c.n, o: i + 1, w: 1, t: c.t ?? 'text', ...(c.a ? { a: c.a } : {}), ...(o.length ? { opts: o } : {}) }
+  })
+  rows.forEach((r, i) => {
+    const id = tableId(taken); taken.add(id); rowIds.push(id)
+    fields[rowKey(id)] = { o: i + 1, ...(r.bg ? { bg: r.bg } : {}) }
+    r.cells.forEach((v, j) => {
+      if (v === null || v === undefined || v === '') return
+      const col = columns[j]!
+      const named = (x: unknown) => (typeof x === 'string' && col.t === 'select' ? (opts[j]!.find((o) => o.n === x)?.id ?? x) : x)
+      fields[cellKey(id, colIds[j]!)] = v !== null && typeof v === 'object' && 'v' in (v as object) ? { ...(v as object), v: named((v as { v: unknown }).v) } : named(v)
+    })
+  })
+  return { fields, rows: rowIds, cols: colIds, opts }
+}
+
+export async function seedTyped(page: Page, columns: TypedColumn[], rows: TypedRow[], card: { title?: string; w?: number; x?: number; y?: number } = {}) {
+  const t = typedFields(columns, rows)
+  await seedCards(page, [{ type: 'table', x: card.x ?? 100, y: card.y ?? 100, w: card.w ?? 640, content: { title: card.title ?? 'The pack' }, fields: t.fields }])
+  await expect(table(page)).toBeVisible()
+  return t
+}
+
+/** What a body cell shows, for the types that draw more than text. */
+export const checkOf = (page: Page, row: number, col: number) => cell(page, row, col).locator('.table-check')
+export const ratingOf = async (page: Page, row: number, col: number) => Number(await cell(page, row, col).locator('.table-rating').getAttribute('data-n'))
