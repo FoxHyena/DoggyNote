@@ -70,6 +70,23 @@ export async function localBlob(assetId: Id, size: AssetSize): Promise<Blob | un
 }
 export const markUploaded = (assetId: Id) => idb.del('meta', `upload:${assetId}`)
 
+/** The largest stored rendition as a PNG, the one image type every clipboard takes. GIFs come out still. */
+export async function pngOf(assetId: Id, sizes?: readonly AssetSize[]): Promise<Blob> {
+  const size = (['full', 'medium', 'small', 'thumb'] as const).find((s) => !sizes || sizes.includes(s)) ?? 'full'
+  let blob = await localBlob(assetId, size).catch(() => undefined)
+  if (!blob) {
+    const res = await fetch(await assetUrl(assetId, size), { credentials: 'same-origin' })
+    if (!res.ok) throw new Error('Image unavailable')
+    blob = await res.blob()
+  }
+  if (blob.type === 'image/png') return blob
+  const bitmap = await createImageBitmap(blob)
+  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height)
+  canvas.getContext('2d')!.drawImage(bitmap, 0, 0)
+  bitmap.close()
+  return canvas.convertToBlob({ type: 'image/png' })
+}
+
 // Object URLs for local blobs, ref-counted so unmounted cards release memory.
 const urls = new Map<string, { url: string; refs: number }>()
 

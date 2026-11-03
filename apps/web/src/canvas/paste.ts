@@ -7,7 +7,8 @@ import { resolveMovie } from '../state/movies.ts'
 import { revealCard } from './Canvas.tsx'
 import { select } from '../state/ui.ts'
 import { addFiles } from '../state/files.ts'
-import { pasteClip, readClip, takePlainPaste } from '../state/clipboard.ts'
+import { memoryClip, pasteClip, readClip, takePlainPaste } from '../state/clipboard.ts'
+import { showToast } from '../state/toast.ts'
 
 // Paste and drop onto the canvas: images become image cards, a URL becomes a
 // link card, other text becomes a note.
@@ -79,8 +80,7 @@ export function addAnyFiles(files: File[], at: Vec, onBoard?: Id, areaId?: Id): 
 }
 
 /** Paste onto the canvas: copied cards first, then files, then text. `columnId`: the column under the pointer. */
-export function handleCanvasPaste(e: ClipboardEvent, at: Vec, columnId?: Id): boolean {
-  const dt = e.clipboardData
+export function handleCanvasPaste(dt: DataTransfer | null, at: Vec, columnId?: Id): boolean {
   if (!dt) return false
   // ⌘⇧V: just the words, as a note (no copied cards, no link preview). An empty
   // paste (some systems fire one for the keys themselves) leaves the flag for the real one.
@@ -101,6 +101,33 @@ export function handleCanvasPaste(e: ClipboardEvent, at: Vec, columnId?: Id): bo
     return true
   }
   return false
+}
+
+/**
+ * The card menu's Paste: read the system clipboard (the browser may ask first) and
+ * paste it as ⌘V would. If it can't be read, the last clip copied here, as long as
+ * nothing else can have been copied since (see `memoryClip`).
+ */
+export async function pasteFromSystem(at: Vec, columnId?: Id) {
+  let items: ClipboardItems
+  try {
+    items = await navigator.clipboard.read()
+  } catch {
+    const clip = memoryClip()
+    if (clip) pasteClip(clip, at, { columnId })
+    else showToast('DoggyNote wasn’t allowed to read the clipboard. Press ⌘V to paste instead.')
+    return
+  }
+  const dt = new DataTransfer()
+  for (const item of items) {
+    for (const type of item.types) {
+      const blob = await item.getType(type).catch(() => null)
+      if (!blob) continue
+      if (type === 'text/plain' || type === 'text/html') dt.setData(type, await blob.text())
+      else if (IMAGE_TYPES.test(type)) dt.items.add(new File([blob], `pasted.${type.split('/')[1]}`, { type }))
+    }
+  }
+  if (!handleCanvasPaste(dt, at, columnId)) showToast('Nothing on the clipboard to paste.')
 }
 
 export function handleCanvasDrop(e: DragEvent, at: Vec) {

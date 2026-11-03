@@ -57,6 +57,9 @@ import alignBottomSvg from '@phosphor-icons/core/regular/align-bottom.svg?raw'
 import lockSimpleSvg from '@phosphor-icons/core/regular/lock-simple.svg?raw'
 import lockSimpleOpenSvg from '@phosphor-icons/core/regular/lock-simple-open.svg?raw'
 import copySvg from '@phosphor-icons/core/regular/copy.svg?raw'
+import filesSvg from '@phosphor-icons/core/regular/files.svg?raw'
+import scissorsSvg from '@phosphor-icons/core/regular/scissors.svg?raw'
+import clipboardTextSvg from '@phosphor-icons/core/regular/clipboard-text.svg?raw'
 import dotsThreeSvg from '@phosphor-icons/core/regular/dots-three.svg?raw'
 import dotsSixVerticalSvg from '@phosphor-icons/core/regular/dots-six-vertical.svg?raw'
 import layoutSvg from '@phosphor-icons/core/regular/layout.svg?raw'
@@ -146,6 +149,9 @@ export const ICONS = {
   lock: body(lockSimpleSvg),
   unlock: body(lockSimpleOpenSvg),
   duplicate: body(copySvg),
+  cut: body(scissorsSvg),
+  copy: body(filesSvg),
+  paste: body(clipboardTextSvg),
   more: body(dotsThreeSvg),
   grip: body(dotsSixVerticalSvg),
   template: body(layoutSvg),

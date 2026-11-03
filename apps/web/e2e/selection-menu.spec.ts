@@ -45,17 +45,17 @@ test('crowded actions find an offset when both above and below contain cards', a
   await clearOf(page.getByTestId('selection-bar'), [selected, cardByText(page, 'Above'), cardByText(page, 'Below')])
 })
 
-test('card context actions support arrows, Escape, editing, duplication, labels, comments and bury undo', async ({ page }) => {
+test('card context actions support arrows, Escape, editing, clipboard, duplication, labels, comments and bury undo', async ({ page }) => {
   await freshBoard(page)
   await seedCards(page, [note('Right click idea', 260, 240)])
   const card = cardByText(page, 'Right click idea'), menu = page.getByTestId('canvas-context-menu')
   const open = () => card.click({ button: 'right', position: { x: 30, y: 20 } })
   await open()
   await expect(page.getByTestId('selection-bar')).toHaveCount(0)
-  await expect(menu.getByRole('menuitem')).toHaveText(['Edit', 'Duplicate', 'Make a synced copy', 'Labels', 'Comment', 'Create area from selection', 'Bury'])
+  await expect(menu.getByRole('menuitem')).toHaveText(['Edit', 'Cut⌘X', 'Copy⌘C', 'Paste⌘V', 'Duplicate⌘D', 'Make a synced copy', 'Labels', 'Comment', 'Create area from selection', 'Bury'])
   // Menus share the migrated icon family and Bury uses Archive, distinct from permanent deletion.
-  await expect(menu.locator('svg')).toHaveCount(7)
-  for (const name of ['edit', 'duplicate', 'synced', 'label', 'comment', 'bury']) {
+  await expect(menu.locator('svg')).toHaveCount(10)
+  for (const name of ['edit', 'cut', 'copy', 'paste', 'duplicate', 'synced', 'label', 'comment', 'bury']) {
     const icon = menu.locator(`svg[data-icon="${name}"]`)
     await expect(icon).toHaveAttribute('viewBox', '0 0 256 256')
     await expect(icon).toHaveAttribute('aria-hidden', 'true')
@@ -67,7 +67,7 @@ test('card context actions support arrows, Escape, editing, duplication, labels,
   await expect(menu.getByRole('menuitem', { name: 'Bury', exact: true })).toBeFocused()
   await page.keyboard.press('Home')
   await page.keyboard.press('ArrowDown')
-  await expect(menu.getByRole('menuitem', { name: 'Duplicate', exact: true })).toBeFocused()
+  await expect(menu.getByRole('menuitem', { name: 'Cut', exact: true })).toBeFocused()
   await page.keyboard.press('Escape')
   await expect(menu).toHaveCount(0)
   await expect(card).toBeFocused()
@@ -105,7 +105,7 @@ test('card context actions support arrows, Escape, editing, duplication, labels,
   await expect(card).toBeVisible()
 })
 
-test('solo empty canvas preserves the native menu and outside clicks dismiss card actions', async ({ page }) => {
+test('solo empty canvas offers just Paste and outside clicks dismiss card actions', async ({ page }) => {
   await freshBoard(page)
   await seedCards(page, [note('Outside click', 260, 240)])
   await page.getByTestId('collaborators').click()
@@ -116,9 +116,10 @@ test('solo empty canvas preserves the native menu and outside clicks dismiss car
   }))
   const p = await at(page, 0.9, 0.85)
   await page.mouse.click(p.x, p.y, { button: 'right' })
-  await expect(page.locator('html')).toHaveAttribute('data-context-prevented', 'false')
-  await expect(page.getByTestId('canvas-context-menu')).toHaveCount(0)
+  await expect(page.locator('html')).toHaveAttribute('data-context-prevented', 'true')
+  await expect(page.getByTestId('canvas-context-menu').getByRole('menuitem')).toHaveText(['Paste⌘V'])
   await page.keyboard.press('Escape')
+  await expect(page.getByTestId('canvas-context-menu')).toHaveCount(0)
   const card = cardByText(page, 'Outside click')
   await card.click({ button: 'right' })
   await expect(page.getByTestId('canvas-context-menu')).toBeVisible()
