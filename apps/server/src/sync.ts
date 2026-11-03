@@ -25,9 +25,9 @@ const MAX_KEYS = 90
 const MAX_PATCH_KEYS = 5000
 /** Keys per json_set / json_remove statement: 88 values + 7 fixed parameters stays under D1's 100. */
 const SET_CHUNK = 88
-// The editor can't make a table card yet, but the server already stores them; drop this
-// when 'table' joins CARD_TYPES.
-const SERVER_CARD_TYPES: readonly unknown[] = [...CARD_TYPES, 'table']
+/** Arguments per SQL function call are capped at 127: json_set takes a path and a value per key, json_remove a path. */
+const SET_GROUP = 50
+const REMOVE_GROUP = 100
 const MAX_OBJECT_BYTES = 256 * 1024
 const PULL_LIMIT = 1000
 
@@ -87,8 +87,9 @@ export function upsertSql(patch: Record<string, unknown>): Statement & { more: S
   const removes = keys.filter(removed)
   const expr = (base: string, set: string[], remove: string[], first: number) => {
     let e = base
-    if (set.length) e = `json_set(${e}, ${set.map((k, i) => `'$.${k}', json(?${first + i})`).join(', ')})`
-    if (remove.length) e = `json_remove(${e}, ${remove.map((k) => `'$.${k}'`).join(', ')})`
+    // SQLite limits a function to 127 arguments (D1 enforces it): nest json_set in groups of 50 pairs.
+    for (let i = 0; i < set.length; i += SET_GROUP) e = `json_set(${e}, ${set.slice(i, i + SET_GROUP).map((k, j) => `'$.${k}', json(?${first + i + j})`).join(', ')})`
+    for (let i = 0; i < remove.length; i += REMOVE_GROUP) e = `json_remove(${e}, ${remove.slice(i, i + REMOVE_GROUP).map((k) => `'$.${k}'`).join(', ')})`
     return e
   }
   const json = (k: string) => JSON.stringify(patch[k] ?? null)
@@ -383,7 +384,7 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
       if (prev && (typeof prev.data.boardId !== 'string' || !editable(prev.data.boardId))) ok = false
       if (o.kind === 'card') {
         if (prev && prev.data.type !== o.type) ok = false
-        if (!SERVER_CARD_TYPES.includes(o.type)) ok = false
+        if (!(CARD_TYPES as readonly unknown[]).includes(o.type)) ok = false
         // A table's rows, columns and cells are fields of the card itself, within the caps.
         if (o.type === 'table' && !o.purged && (!o.content || typeof o.content !== 'object' || Array.isArray(o.content) || ('title' in o.content && typeof (o.content as { title?: unknown }).title !== 'string') || (Object.keys(patch).some((k) => TABLE_FIELD.test(k)) && tableLimitError(o)))) ok = false
         // A sketch's paper colour goes straight into CSS on every device: only canonical #RRGGBB.
