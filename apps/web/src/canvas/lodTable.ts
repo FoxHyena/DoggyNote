@@ -60,9 +60,7 @@ export function drawTable(
     for (const c of cols) edges.push(edges[edges.length - 1]! + (c.w / total) * w)
     const gridTop = y + titleH
     const rowH = ROW_H * z
-    // Header band.
-    ctx.fillStyle = pal.panel
-    ctx.fillRect(x, gridTop, w, Math.min(rowH, h - titleH * 1))
+    // Header: no band, as drawn at full size (one rule under it, below).
     ctx.fillStyle = pal.muted
     ctx.globalAlpha = 0.7
     cols.forEach((c, i) => {
@@ -87,10 +85,12 @@ export function drawTable(
         if (bg) { ctx.fillStyle = bg.bg; ctx.fillRect(edges[i]!, top, edges[i + 1]! - edges[i]!, rowH) }
       })
     }
+    // The soft full grid, as at full size: 70% of the border everywhere, and the rule under the header at full strength.
     ctx.strokeStyle = pal.border
     ctx.lineWidth = 1
+    ctx.globalAlpha = 0.7
     ctx.beginPath()
-    for (let r = Math.max(0, first); r <= last; r++) {
+    for (let r = Math.max(1, first); r <= last; r++) {
       const ly = Math.round(gridTop + (r + 1) * rowH) + 0.5 - 1
       if (ly < y + h) { ctx.moveTo(x, ly); ctx.lineTo(x + w, ly) }
     }
@@ -100,6 +100,9 @@ export function drawTable(
       ctx.lineTo(lx, Math.min(y + h, gridTop + (rows.length + 1) * rowH))
     }
     ctx.stroke()
+    ctx.globalAlpha = 1
+    const rule = Math.round(gridTop + rowH) + 0.5 - 1
+    if (rule < y + h) { ctx.beginPath(); ctx.moveTo(x, rule); ctx.lineTo(x + w, rule); ctx.stroke() }
 
     // A mark where a cell has something; skipped when the whole table is a few pixels wide.
     if (z >= 0.06) {

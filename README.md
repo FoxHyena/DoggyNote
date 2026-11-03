@@ -13,7 +13,7 @@
   <img src="docs/screenshots/board-dark.png" alt="A DoggyNote board with notes, a packing-list column, to-dos, images, a link preview, a PDF and connectors" width="900">
 </p>
 
-DoggyNote is an infinite canvas for notes, to-do lists, images, links and files. You arrange them freely, group them into columns, nest boards inside boards, and draw lines between them. It's built for a handful of people sharing one server. It runs as a native Mac app, and anyone can view a board you share in their browser.
+DoggyNote is an infinite canvas for notes, to-do lists, tables, images, links and files. You arrange them freely, group them into columns, nest boards inside boards, and draw lines between them. It's built for a handful of people sharing one server. It runs as a native Mac app, and anyone can view a board you share in their browser.
 
 It's designed to stay fast on big boards. The Mac app is a small native app (about 13 MB), not a bundled copy of Chrome. A board with a thousand cards and hundreds of images pans at a steady 60 fps.
 
@@ -21,6 +21,7 @@ It's designed to stay fast on big boards. The Mac app is a small native app (abo
 
 **On the board**
 - **Notes in Markdown** with live preview: headings, bold, lists, checklists and links render as you type.
+- **Tables** with typed columns (text, number, checkbox, date, tag and paw rating), bold, alignment and fills, one-off sort, paste from a spreadsheet, and a compact bar or phone dock for editing. Agents can read and propose them.
 - **To-do lists**, **columns** that cards snap into, and **boards inside boards** with icons and colours.
 - **Images**: paste, drop or upload. Several sizes are stored, so zoomed-out boards stay light.
 - **Links** unfurl into previews with title, description and image.
