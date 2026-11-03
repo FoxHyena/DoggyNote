@@ -982,7 +982,7 @@ export function TableEditor(props: {
                 type="button"
                 tabIndex={-1}
                 class="table-col-menu"
-                classList={{ shown: hoverCol() === colId || columnSelected(i()) }}
+                classList={{ shown: hoverCol() === colId || columnSelected(i()) || (touch() && !titleActive() && at(anchor()).c === i()) }}
                 data-col={colId}
                 data-testid="table-column-menu"
                 aria-haspopup="menu"

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { freshBoard, waitForSync } from './helpers.ts'
 import { closeKeyboard, fakeKeyboard, seedCards, tap, tapOn } from './touch.ts'
-import { activeCell, cell, grid, input, table, tableFields } from './tables.ts'
+import { activeCell, cell, grid, headerCells, input, table, tableFields } from './tables.ts'
 
 // Phones: a table is tapped to select, tapped again to edit, and walked with the
 // dock's ‹ › (the keyboard has no Tab). The field is 16px so iOS never zooms,
@@ -10,7 +10,8 @@ import { activeCell, cell, grid, input, table, tableFields } from './tables.ts'
 test.beforeEach(async ({ page }) => {
   await freshBoard(page)
   const { fields } = tableFields(['Pup', 'Treat', 'Age'], [['Rex', 'Bacon', '4'], ['Mochi', 'Cheese', '7'], ['', '', '']])
-  await seedCards(page, [{ type: 'table', x: 0, y: 0, w: 340, content: { title: 'The pack' }, fields }])
+  // Clear of the left edge, so the row grips outside the card are on screen.
+  await seedCards(page, [{ type: 'table', x: 70, y: 140, w: 300, content: { title: 'The pack' }, fields }])
 })
 
 test('a tap selects the table, a second tap edits the cell under the finger and opens the dock', async ({ page }) => {
@@ -106,4 +107,45 @@ test('"+ row" and "+ column" are finger-sized', async ({ page }) => {
   expect((await page.getByTestId('table-add-column').boundingBox())!.width).toBeGreaterThan(43.9)
   await tap(page, await page.getByTestId('table-add-row').boundingBox().then((b) => ({ x: b!.x + b!.width / 2, y: b!.y + b!.height / 2 })))
   await expect(table(page).locator('tbody tr')).toHaveCount(4)
+})
+
+test('the dock is laid out in three places: ‹ › left, the selection\'s buttons in the middle, ⋯ right', async ({ page }) => {
+  await tapOn(page, cell(page, 0, 0), { x: 20, y: 10 })
+  await tapOn(page, cell(page, 0, 0), { x: 20, y: 10 })
+  const dock = (await page.getByTestId('table-dock').boundingBox())!
+  const prev = (await page.getByTestId('dock-prev').boundingBox())!
+  const next = (await page.getByTestId('dock-next').boundingBox())!
+  const more = (await page.getByTestId('dock-table-more').boundingBox())!
+  // 12px gutters, ‹ › together on the left, ⋯ against the right edge.
+  expect(prev.x - dock.x).toBeGreaterThanOrEqual(11.5)
+  expect(next.x).toBeGreaterThan(prev.x)
+  expect(next.x - (prev.x + prev.width)).toBeLessThanOrEqual(9)
+  expect(dock.x + dock.width - (more.x + more.width)).toBeGreaterThanOrEqual(11.5)
+  expect(dock.x + dock.width - (more.x + more.width)).toBeLessThanOrEqual(14)
+  expect(more.x - (next.x + next.width)).toBeGreaterThan(100)
+  await expect(page.getByTestId('dock-slots')).toHaveCount(1)
+})
+
+test('a row grip selects the row and the dock shows its buttons; the column ⋯ opens a sheet', async ({ page }) => {
+  await tapOn(page, cell(page, 1, 0), { x: 20, y: 10 })
+  await tapOn(page, cell(page, 1, 0), { x: 20, y: 10 })
+  await page.waitForTimeout(400)
+  await page.getByTestId('table-row-grip').nth(1).tap()
+  await expect(page.getByTestId('table-dock')).toHaveAttribute('data-kind', 'rows')
+  await expect(page.getByTestId('dock-row-below')).toBeVisible()
+  expect((await page.getByTestId('dock-row-below').boundingBox())!.width).toBeGreaterThan(43.9)
+  await page.getByTestId('dock-row-below').tap()
+  await expect(table(page).locator('tbody tr')).toHaveCount(4)
+  // A column header on a phone: tap it, and its ⋯ shows (the grips above may sit under the top bar).
+  await tapOn(page, headerCells(page).nth(1), { x: 20, y: 10 })
+  await page.waitForTimeout(300)
+  await page.getByTestId('table-column-menu').nth(1).tap()
+  await expect(page.getByTestId('table-dock')).toHaveAttribute('data-kind', 'cols')
+  const sheet = page.getByTestId('table-column-menu-list')
+  await expect(sheet).toBeVisible()
+  // A bottom sheet on a phone.
+  const b = (await sheet.boundingBox())!
+  expect(b.y + b.height).toBeGreaterThan((page.viewportSize()!.height) - 4)
+  await sheet.getByTestId('table-move-right').tap()
+  expect((await grid(page))[0]).toEqual(['Pup', 'Age', 'Treat'])
 })

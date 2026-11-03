@@ -31,7 +31,7 @@ export function TableBar() {
             <Match when={true}>
               <IconButton testid="table-row-below" icon="rowBelow" label={COPY.table.insertRowBelow} disabled={!t().canAddRow()} onClick={() => t().insertRow('below')} />
               <IconButton testid="table-column-right" icon="columnRight" label={COPY.table.insertColumnRight} disabled={!t().canAddColumn()} onClick={() => t().insertColumn('right')} />
-              <IconButton testid="table-clear" icon="eraser" label={COPY.table.clear} disabled={!t().rowSpan()} onClick={() => t().clear()} />
+              <IconButton testid="table-clear" icon="eraser" label={COPY.table.clear} title={`${COPY.table.clear} (Delete)`} disabled={!t().rowSpan()} onClick={() => t().clear()} />
             </Match>
           </Switch>
           <BarMenu label="" title={COPY.table.moreActions} testId="table-more" menuTestId="table-more-menu" icon={<Icon name="more" size={18} />}>
