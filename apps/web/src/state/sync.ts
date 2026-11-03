@@ -10,6 +10,7 @@ import { cancelEdit, editingId } from './ui.ts'
 import { SIZES, localBlob, markUploaded, onAssetQueued, pendingUploads, type AssetSize } from './assets.ts'
 import { showToast } from './toast.ts'
 import { COPY } from '@doggynote/theme'
+import { PUSH_CHUNK, budgetChanges } from './pushBudget.ts'
 
 // Background sync: upload images, push queued patches, then pull everything
 // newer than our cursor. Runs on every local change (debounced), on focus, when
@@ -23,7 +24,6 @@ export const [lastError, setLastError] = createSignal<string | null>(null)
 export const [lastSyncAt, setLastSyncAt] = createSignal<number | null>(null)
 export const [pendingUploadsCount, setPendingUploadsCount] = createSignal(0)
 
-const PUSH_CHUNK = 200
 const POLL_MS = 10_000
 // While the board's live room is connected it announces changes, so polling is only a backstop
 // (other boards, access changes). Each poll costs a D1 access check.
@@ -59,7 +59,9 @@ async function push() {
   for (;;) {
     repairAreaRemovals()
     await doc.flush()
-    const pending = orderedAreaChanges(doc.pendingOutbox(), doc.get).slice(0, PUSH_CHUNK)
+    // One request carries at most PUSH_CHUNK changes and about 2000 keys: a table's fields go
+    // over consecutive pushes, and ackOutbox below removes only what each one carried.
+    const { send: pending, complete } = budgetChanges(orderedAreaChanges(doc.pendingOutbox(), doc.get))
     if (!pending.length) return
     try {
       const res = await api<{ detachedIds?: string[] }>('/api/sync', { method: 'POST', json: { changes: pending.map((p) => ({ id: p.id, patch: { ...p.patch, id: p.id } })) } })
@@ -95,7 +97,7 @@ async function push() {
     doc.ackOutbox(pending)
     conflictRetries = 0
     setPendingCount(doc.outboxSize())
-    if (pending.length < PUSH_CHUNK) return
+    if (complete) return
   }
 }
 

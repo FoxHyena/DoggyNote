@@ -69,9 +69,12 @@ export function beginEdit(id: Id, opts: { isNew?: boolean } = {}) {
   endEdit()
   // Notes have author-local CRDT undo; a whole-content snapshot would undo peers too.
   // A sketch's title and paper are fields of their own, so a rename never carries a stale paper colour.
-  const type = doc.getCard(id)?.type
-  editSnapshot = { [id]: type === 'note' ? {} : doc.snapshot(id, type === 'sketch' ? ['sketchTitle', 'sketchPaper'] : ['content']) }
-  doc.markBusy([id])
+  // A table's cells are fields of their own: every action is its own undo step, so it takes the
+  // same empty snapshot, and it is never busy, so other people's cell edits keep arriving.
+  const type = doc.getCard(id)?.type as string | undefined
+  const perField = type === 'note' || type === 'table'
+  editSnapshot = { [id]: perField ? {} : doc.snapshot(id, type === 'sketch' ? ['sketchTitle', 'sketchPaper'] : ['content']) }
+  if (type !== 'table') doc.markBusy([id])
   // A board card's title lives on the board object.
   const card = doc.getCard(id)
   if (card?.type === 'board') {
@@ -107,7 +110,7 @@ export function endEdit() {
   if (editSnapshot && card && !card.purged) {
     // A brand-new card's typing folds into its creation step, so one undo
     // removes the card and redo brings it back with its text.
-    if (editIsNew) for (const [oid, snap] of Object.entries(editSnapshot)) doc.amendOrCommit(oid, snap)
+    if (editIsNew) for (const [oid, snap] of Object.entries(editSnapshot)) { if (Object.keys(snap).length) doc.amendOrCommit(oid, snap) }
     else doc.commitFrom(editSnapshot)
   }
   doc.unmarkBusy(Object.keys(editSnapshot ?? { [id]: 1 }))

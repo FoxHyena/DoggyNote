@@ -7,6 +7,7 @@ import {
   changesPosition,
   positionLocks,
   isAreaItem, isArea,
+  isTableField,
   diff,
   type Board,
   type Card,
@@ -513,7 +514,11 @@ function historyAllowed(tx: Transaction): boolean {
     if (!current || (writeGuard && !writeGuard(current))) return false
     if (current.kind !== 'card' || (current.purged && change.before.purged === true)) return true
     // Geometry undo is conditional: don't overwrite a newer collaborator move.
-    return [...POSITION_FIELDS, 'h'].every((key) => !(key in change.after) || JSON.stringify((current as unknown as Record<string, unknown>)[key] ?? null) === JSON.stringify((change.before as Record<string, unknown>)[key] ?? null))
+    // So is a table's: every row, column and cell is a field of its own, and undo must not
+    // put back a value over what someone else has since written to that same field.
+    const now = current as unknown as Record<string, unknown>, expected = change.before as Record<string, unknown>
+    const unchanged = (key: string) => JSON.stringify(now[key] ?? null) === JSON.stringify(expected[key] ?? null)
+    return [...POSITION_FIELDS, 'h'].every((key) => !(key in change.after) || unchanged(key)) && Object.keys(change.after).every((key) => !isTableField(key) || unchanged(key))
   })
 }
 
