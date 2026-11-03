@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import type { AppEnv } from './env.ts'
 import { auth, requireUser, users } from './auth.ts'
 import { stickers, telegramWebhook } from './stickers.ts'
+import { boardPreferences } from './boardPreferences.ts'
 import { sync } from './sync.ts'
 import { assets } from './assets.ts'
 import { shares } from './shares.ts'
@@ -98,6 +99,7 @@ authed.use('/notes/*', async (c, next) => {
 authed.route('/', users)
 authed.route('/', sync)
 authed.route('/', stickers)
+authed.route('/', boardPreferences)
 authed.route('/', movies)
 authed.get('/unfurl', async (c) => {
   const target = isFetchableUrl(c.req.query('url') ?? '')

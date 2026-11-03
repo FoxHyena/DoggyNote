@@ -9,6 +9,7 @@ import { boardId, openBoard, renamingBoardId, setRenamingBoardId } from '../stat
 import { BoardNavigation } from './BoardNavigation.tsx'
 import { installMenu } from './menu.ts'
 import { phone, touch } from '../state/device.ts'
+import { FavouriteButton } from './FavouriteButton.tsx'
 
 export function breadcrumbs(id: Id, root: Id = HOME_BOARD_ID): Board[] {
   const out: Board[] = []
@@ -108,7 +109,7 @@ export function TopBar(props: { readOnly: boolean; navigation?: boolean; root?: 
             />
           </Show>
         </Show>
-      </nav>{props.status}{props.permission}</div></div>
+      </nav><Show when={props.navigation && !phone() && current() && !current()!.id.startsWith('toybox:')}><FavouriteButton boardId={current()!.id} class="topbar-favourite" /></Show>{props.status}{props.permission}</div></div>
       <div class="topbar-right">
         {props.right}
       </div>
