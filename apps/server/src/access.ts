@@ -98,10 +98,10 @@ accessRoutes.get('/access', requireUser, async (c) => {
   await ensureHome(c.env.DB, c.get('user'))
   const a = await loadAccess(c.env.DB, c.get('user'))
   // When, and by whom, each board was last shared with this user directly. Navigation lists newest shares first.
-  const { results: shared } = await c.env.DB.prepare('SELECT g.board_id, g.created_at, u.username FROM board_grants g LEFT JOIN users u ON u.id=g.created_by LEFT JOIN shares s ON s.token=g.source_token WHERE g.user_id=?1 AND g.revoked_at IS NULL AND (g.source_token IS NULL OR (s.token IS NOT NULL AND s.revoked_at IS NULL)) ORDER BY g.created_at').bind(c.get('user').id).all<{ board_id: string; created_at: number; username: string | null }>()
+  const { results: shared } = await c.env.DB.prepare('SELECT g.board_id, g.created_at, g.created_by, u.username FROM board_grants g LEFT JOIN users u ON u.id=g.created_by LEFT JOIN shares s ON s.token=g.source_token WHERE g.user_id=?1 AND g.revoked_at IS NULL AND (g.source_token IS NULL OR (s.token IS NOT NULL AND s.revoked_at IS NULL)) ORDER BY g.created_at').bind(c.get('user').id).all<{ board_id: string; created_at: number; created_by: string; username: string | null }>()
   const grants = new Map(shared.map((g) => [g.board_id, g]))
   return c.json({ revision: a.revision, homeBoardId: a.homeBoardId, legacyShared: a.legacyShared, boards: [...a.boards.values()].filter((b) => a.canRead(b.id)).map((b) => {
     const g = grants.get(b.id)
-    return { ...b, canEdit: a.canEdit(b.id), canManage: a.canManage(b.id), ...(g && { sharedAt: g.created_at, sharedBy: g.username }) }
+    return { ...b, canEdit: a.canEdit(b.id), canManage: a.canManage(b.id), ...(g && { sharedAt: g.created_at, sharedBy: g.username, sharedById: g.created_by }) }
   }) })
 })

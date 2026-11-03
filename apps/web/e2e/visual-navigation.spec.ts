@@ -42,9 +42,13 @@ test('Boards empty descriptions align with labels in both appearances and short 
       await contained(menu, width, 480)
       const personal = page.getByTestId('personal-home')
       const labelX = await x(personal.locator('.nav-menu-label'))
-      expect(await x(personal.locator('svg'))).toBeLessThan(labelX)
-      for (const supporting of [menu.locator('.nav-menu-description').first(), menu.locator('.nav-menu-description').last(), menu.locator('.nav-menu-section-label')]) {
-        expect(Math.abs(await x(supporting) + await supporting.evaluate((el) => parseFloat(getComputedStyle(el).paddingLeft)) - labelX)).toBeLessThanOrEqual(1)
+      const iconX = await x(personal.locator('svg'))
+      expect(iconX).toBeLessThan(labelX)
+      const start = (el: Locator) => el.evaluate((node) => node.getBoundingClientRect().x + parseFloat(getComputedStyle(node).paddingLeft))
+      // A place's description sits under its name; list headings and their empty text line up with the icons.
+      expect(Math.abs(await start(menu.locator('.nav-menu-description').first()) - labelX)).toBeLessThanOrEqual(1)
+      for (const heading of [...await menu.locator('.nav-menu-section-label').all(), menu.locator('.nav-menu-description').last()]) {
+        expect(Math.abs(await start(heading) - iconX)).toBeLessThanOrEqual(1)
       }
       const row = await personal.boundingBox()
       expect(row!.height).toBeGreaterThanOrEqual(36)

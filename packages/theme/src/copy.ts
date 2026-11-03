@@ -112,6 +112,8 @@ export const COPY = {
     /** A shared board's fallback title before its title has synced. */
     sharedUntitled: 'Shared board',
     viewOnly: 'View only',
+    /** "Shared by luna": the avatar on a shared board's row. */
+    sharedBy: 'Shared by',
     /** "Show all (12)": expands the shared list past its first few boards. */
     showAll: 'Show all',
   },

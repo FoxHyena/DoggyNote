@@ -5,11 +5,13 @@ import { boardPermissions, homeBoardId, legacyShared } from '../state/access.ts'
 import { user } from '../state/session.ts'
 import { boardId, openBoard, recentBoards, setRenamingBoardId } from '../state/ui.ts'
 import { phone } from '../state/device.ts'
-import { canReadBoard } from '../state/access.ts'
+import { canReadBoard, type BoardPermission } from '../state/access.ts'
 import { sharedRoots } from '../state/sharedBoards.ts'
+import { initials, personStyle } from '../state/realtime.ts'
 import * as doc from '../state/doc.ts'
 import { BoardIconSvg, Icon } from './icons.tsx'
 import './navigation.css'
+import './collaboration.css'
 import { installMenu } from './menu.ts'
 
 const SHARED_PREVIEW = 5
@@ -31,6 +33,8 @@ export function BoardNavigation(props: { renderTrigger?: (state: { open: Accesso
     sharedList.querySelectorAll<HTMLButtonElement>('[data-testid="shared-board-link"]')[SHARED_PREVIEW]?.focus()
   }
   createEffect(() => { if (!open()) setShowAll(false) })
+  // The avatar only shows initials, so the row's name says who shared it and whether it's view only.
+  const sharedLabel = (b: BoardPermission) => [sharedTitle(b), b.sharedBy && `${COPY.boards.sharedBy} ${b.sharedBy}`, !b.canEdit && COPY.boards.viewOnly].filter(Boolean).join(', ')
   function go(id: string) { openBoard(id); setOpen(false); trigger.focus() }
   const canRename = () => phone() && !boardId().startsWith('toybox:') && doc.canWriteObject(doc.getBoard(boardId()))
   const rename = () => {
@@ -49,19 +53,20 @@ export function BoardNavigation(props: { renderTrigger?: (state: { open: Accesso
       <div class="nav-menu-head"><strong>{COPY.boards.heading}</strong><button class="icon-btn" aria-label={COPY.boards.close} onClick={() => { setOpen(false); trigger.focus() }}><Icon size={16} name="close" /></button></div>
       <div class="board-nav-scroll" data-testid="board-navigation-list">
         <Show when={canRename()}><button class="menu-item nav-menu-row" data-testid="rename-current-board" onClick={rename}><Icon name="edit" size={18} /><span class="nav-menu-label">{COPY.boards.rename}</span></button><div class="menu-sep" role="separator" /></Show>
+        <button class="menu-item nav-menu-row" data-testid="personal-home" onClick={() => go(homeBoardId())}><BoardIconSvg icon="kennel" size={18} /><span class="nav-menu-label">My {COPY.home}</span></button>
+        <Show when={legacyShared()}><div class="nav-menu-group"><button class="menu-item nav-menu-row" data-testid="legacy-space" aria-describedby={`${menuId}-legacy-description`} onClick={() => go('home')}><BoardIconSvg icon="paw" size={18} /><span class="nav-menu-label">{COPY.boards.legacy}</span></button><p id={`${menuId}-legacy-description`} class="nav-menu-description">{COPY.boards.legacyHint}</p></div></Show>
+        <div class="menu-sep" role="separator" />
         <Show when={recent().length}>
           <section class="nav-menu-recent" aria-labelledby={`${menuId}-recent-heading`}>
             <strong id={`${menuId}-recent-heading`} class="nav-menu-section-label">{COPY.boards.recent}</strong>
             <For each={recent()}>{(id) => <button class="menu-item nav-menu-row" data-testid="recent-board" onClick={() => go(id)}><BoardIconSvg icon={doc.getBoard(id)?.icon ?? 'paw'} size={18} /><span class="nav-menu-label">{boardDisplayTitle(doc.getBoard(id), id.startsWith('home') ? `My ${COPY.home}` : 'Untitled board')}</span></button>}</For>
           </section>
         </Show>
-        <button class="menu-item nav-menu-row" data-testid="personal-home" onClick={() => go(homeBoardId())}><BoardIconSvg icon="kennel" size={18} /><span class="nav-menu-label">My {COPY.home}</span></button>
-        <Show when={legacyShared()}><div class="nav-menu-group"><button class="menu-item nav-menu-row" data-testid="legacy-space" aria-describedby={`${menuId}-legacy-description`} onClick={() => go('home')}><BoardIconSvg icon="paw" size={18} /><span class="nav-menu-label">{COPY.boards.legacy}</span></button><p id={`${menuId}-legacy-description`} class="nav-menu-description">{COPY.boards.legacyHint}</p></div></Show>
         <section ref={sharedList} class="nav-menu-section" aria-labelledby={`${menuId}-shared-heading`}>
           <strong id={`${menuId}-shared-heading`} class="nav-menu-section-label">{COPY.boards.shared}</strong>
           <Show when={shared().length} fallback={<p class="nav-menu-description">{COPY.boards.sharedEmpty}</p>}>
-            <For each={visibleShared()}>{(b) => <button class="menu-item nav-menu-row" data-testid="shared-board-link" onClick={() => go(b.id)}><BoardIconSvg icon={doc.getBoard(b.id)?.icon ?? 'paw'} size={18} /><span class="nav-menu-label">{sharedTitle(b)}</span><Show when={b.sharedBy || !b.canEdit}><small class="nav-menu-meta"><Show when={b.sharedBy}><span class="nav-menu-who" title={b.sharedBy ?? undefined}>{b.sharedBy}</span></Show>{b.sharedBy && !b.canEdit ? ' · ' : ''}{b.canEdit ? '' : COPY.boards.viewOnly}</small></Show></button>}</For>
-            <Show when={!showAll() && shared().length > SHARED_PREVIEW}><button class="menu-item nav-menu-row nav-menu-more" data-testid="shared-show-all" onClick={expandShared}><Icon size={18} name="chevronDown" /><span class="nav-menu-label">{COPY.boards.showAll} ({shared().length})</span></button></Show>
+            <For each={visibleShared()}>{(b) => <button class="menu-item nav-menu-row" data-testid="shared-board-link" aria-label={sharedLabel(b)} onClick={() => go(b.id)}><BoardIconSvg icon={doc.getBoard(b.id)?.icon ?? 'paw'} size={18} /><span class="nav-menu-label">{sharedTitle(b)}</span><Show when={b.sharedBy || !b.canEdit}><span class="nav-menu-meta"><Show when={!b.canEdit}><small>{COPY.boards.viewOnly}</small></Show><Show when={b.sharedBy}>{(name) => <span class="person-avatar nav-menu-avatar" data-testid="shared-by" style={personStyle(b.sharedById ?? name())} title={`${COPY.boards.sharedBy} ${name()}`} aria-hidden="true">{initials(name())}</span>}</Show></span></Show></button>}</For>
+            <Show when={!showAll() && shared().length > SHARED_PREVIEW}><button class="menu-item nav-menu-row nav-menu-more" data-testid="shared-show-all" onClick={expandShared}><span aria-hidden="true" /><span class="nav-menu-label">{COPY.boards.showAll} ({shared().length})</span></button></Show>
           </Show>
         </section>
       </div>

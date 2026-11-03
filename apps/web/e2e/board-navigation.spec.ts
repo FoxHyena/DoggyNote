@@ -48,8 +48,14 @@ test('Shared with me lists the top of each shared tree, newest first, with who s
     const rows = menu.getByTestId('shared-board-link')
     await expect(rows).toHaveCount(3)
     await expect(rows.locator('.nav-menu-label')).toHaveText(['Newer treat ideas', 'Look but no chew', 'Older walk plans'])
-    await expect(rows.nth(0).locator('.nav-menu-meta')).toHaveText(alice.username)
-    await expect(rows.nth(1).locator('.nav-menu-meta')).toHaveText(`${alice.username} · View only`)
+    // Who shared it is an avatar in their colour; the row's name spells it out.
+    await expect(rows.nth(0).getByTestId('shared-by')).toHaveText(alice.username.slice(0, 2).toUpperCase())
+    await expect(rows.nth(0).getByTestId('shared-by')).toHaveAttribute('title', `Shared by ${alice.username}`)
+    await expect(rows.nth(0)).toHaveAccessibleName(`Newer treat ideas, Shared by ${alice.username}`)
+    await expect(rows.nth(1).locator('.nav-menu-meta')).toContainText('View only')
+    await expect(rows.nth(1)).toHaveAccessibleName(`Look but no chew, Shared by ${alice.username}, View only`)
+    // Places come first, then the lists under their headings.
+    await expect(menu.locator('.nav-menu-row, .nav-menu-section-label').first()).toHaveAttribute('data-testid', 'personal-home')
     await expect(menu).not.toContainText('Inner walk route')
     await expect(menu).not.toContainText('Alice’s bench')
     await expect(menu).not.toContainText('Can edit')

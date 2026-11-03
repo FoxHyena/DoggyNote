@@ -16,8 +16,6 @@
 .nav-menu-row > svg { width: 18px; height: 18px; flex-shrink: 0; }
 .nav-menu-label { min-width: 0; text-align: left; overflow-wrap: anywhere; }
 .nav-menu-meta { margin-left: auto; color: var(--dn-text-muted); font-size: 12px; white-space: nowrap; }
-/* Who shared a board: a long username shortens, the board's name keeps the room. */
-.nav-menu-who { display: inline-block; max-width: 10em; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
 .nav-menu-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 4px 8px 12px; }
 .nav-menu-head strong { font-size: 13px; font-weight: 600; line-height: 20px; }
 .nav-menu-head .icon-btn { flex-shrink: 0; }
@@ -27,8 +25,15 @@
 .board-nav-menu { display: flex; flex-direction: column; width: 340px; min-width: 0; overflow: hidden; }
 .board-nav-menu .nav-menu-head { flex-shrink: 0; }
 .board-nav-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
-.board-nav-menu .nav-menu-section-label { padding-left: 38px; }
-.nav-menu-recent { padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--dn-border); }
+/* Your spaces: fixed places on top, one rule, then lists under real headings
+   (text colour, aligned with the icons, more room above than below). */
+.board-nav-menu .nav-menu-section { padding-top: 0; margin-top: 0; border-top: 0; }
+.board-nav-menu .nav-menu-section-label { padding: 16px 12px 4px; color: var(--dn-text); font-size: 13px; font-weight: 600; line-height: 20px; }
+.board-nav-menu .menu-sep + section > .nav-menu-section-label { padding-top: 8px; }
+.board-nav-menu .nav-menu-section > .nav-menu-description { padding-left: 12px; }
+.board-nav-menu .nav-menu-meta { display: inline-flex; align-items: center; gap: 8px; }
+/* Who shared a board: their initials in their cursor colour. */
+.nav-menu-avatar { width: 20px; height: 20px; font-size: 9px; }
 .nav-menu-more { color: var(--dn-text-muted); }
 .topbar .board-navigation { display: flex; min-width: 0; }
 .ancestor-menu .nav-menu { width: 320px; }

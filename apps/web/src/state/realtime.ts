@@ -29,6 +29,7 @@ export function personColor(id: string) {
   for (const ch of id) hash = ((hash * 31) + ch.charCodeAt(0)) | 0
   return ['sky', 'ball', 'lilac', 'collar', 'gold', 'peach'][Math.abs(hash) % 6]!
 }
+export const initials = (name: string) => name.slice(0, 2).toUpperCase()
 export function personStyle(id: string) {
   const color = personColor(id)
   return { '--person-color': `var(--dn-person-${color})`, '--person-ink': 'var(--dn-person-ink)' }
