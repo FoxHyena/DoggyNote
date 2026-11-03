@@ -60,3 +60,10 @@ a.menu-item { color: var(--dn-text); text-decoration: none; box-sizing: border-b
   .nav-menu .icon-btn { min-width: 44px; }
   .account-menu-appearance .icon-btn { width: 44px; }
 }
+/* Favourites: a star turns gold when on. In the menu, starred rows reveal their star on hover or focus (always on touch). */
+.favourite-btn[aria-pressed='true'], .favourite-on { color: var(--dn-accent); }
+.topbar-favourite { width: 32px; padding: 0; justify-content: center; flex-shrink: 0; }
+.nav-menu-starred { position: relative; }
+.nav-menu-starred > .nav-menu-row { width: 100%; padding-right: 44px; }
+.nav-menu-star { position: absolute; top: 50%; right: 4px; translate: 0 -50%; opacity: 0; }
+.nav-menu-starred:hover .nav-menu-star, .nav-menu-star:focus-visible, html[data-input='touch'] .nav-menu-star { opacity: 1; }

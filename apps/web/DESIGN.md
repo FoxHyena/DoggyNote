@@ -248,6 +248,8 @@ Spacing runs on small steps: 2, 4, 6, 8, 12, 16 and 24px. Gaps inside controls a
 
 For signed-in phone users, the board title and the dock's Boards button open the same Your spaces sheet. Rename current board is an explicit action for editable boards. Desktop title clicks still rename; anonymous share viewers have no personal-board navigation.
 
+Your spaces puts fixed places first (My Doghouse, Shared space), then one rule, then lists under real headings (13px semibold, text colour, aligned with the icons, more room above than below): Favourites in star order, Recent (newest first on any device, five, without favourites or the current board), and Shared with me (the top board of each shared tree, newest share first, five before a plain Show all row). A shared row names who shared it with a 20px avatar in that person's cursor colour; View only appears only when it applies. A gold filled star next to the desktop board title adds or removes a favourite; in the menu a starred row reveals its star on hover or focus, and always on touch. Phones get Add to Favourites beside Rename current board.
+
 Connector bodies remain behind cards. Their arrowheads and a short matching end segment paint above column backgrounds, below stickers, without receiving pointer input. Multiplayer cursors occupy a separate screen-space layer above board content through pan, zoom and overview transitions.
 
 ## Elevation & Depth

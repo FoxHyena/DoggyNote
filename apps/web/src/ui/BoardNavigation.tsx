@@ -7,6 +7,9 @@ import { boardId, openBoard, recentBoards, setRenamingBoardId } from '../state/u
 import { phone } from '../state/device.ts'
 import { canReadBoard, type BoardPermission } from '../state/access.ts'
 import { sharedRoots } from '../state/sharedBoards.ts'
+import { favouriteIds, recentIds } from '../state/boardLists.ts'
+import { boardPrefs, isFavourite, setFavourite } from '../state/boardPrefs.ts'
+import { FavouriteButton } from './FavouriteButton.tsx'
 import { initials, personStyle } from '../state/realtime.ts'
 import * as doc from '../state/doc.ts'
 import { BoardIconSvg, Icon } from './icons.tsx'
@@ -43,8 +46,20 @@ export function BoardNavigation(props: { renderTrigger?: (state: { open: Accesso
     // Remain in the tap so installed iOS can raise its keyboard.
     document.querySelector<HTMLInputElement>('[data-testid="board-name-input"]')?.focus({ preventScroll: true })
   }
-  // The last few boards, one tap away (phones have no breadcrumbs to hop back with).
-  const recent = () => recentBoards().filter((id) => id !== boardId() && !id.startsWith('toybox:') && doc.getBoard(id) && canReadBoard(id)).slice(0, 5)
+  const reachable = (id: string) => !id.startsWith('toybox:') && !!doc.getBoard(id) && !doc.getBoard(id)!.deletedAt && canReadBoard(id)
+  const rowTitle = (id: string) => boardDisplayTitle(doc.getBoard(id), id.startsWith('home') ? `My ${COPY.home}` : 'Untitled board')
+  // Starred boards, in the order you starred them. Stars from your other devices arrive when you come back to the app.
+  const favourites = () => favouriteIds(boardPrefs()).filter(reachable)
+  // The last few boards you opened on any device, one tap away. Favourites already have their own place.
+  const recent = () => recentIds(boardPrefs(), recentBoards()).filter((id) => id !== boardId() && reachable(id) && !isFavourite(id)).slice(0, 5)
+  const canFavourite = () => phone() && reachable(boardId())
+  let favouriteList: HTMLElement | undefined
+  /** Unstarring removes the row; keep focus in the menu on the next starred board, or My Doghouse. */
+  const keepFocus = (index: number) => setTimeout(() => {
+    // After the row has gone: a microtask can still find (and focus) the row on its way out.
+    const rows = favouriteList?.isConnected ? [...favouriteList.querySelectorAll<HTMLButtonElement>('[data-testid="favourite-board-link"]')] : []
+    ;(rows[Math.min(index, rows.length - 1)] ?? root.querySelector<HTMLButtonElement>('[data-testid="personal-home"]'))?.focus()
+  })
   return <div class="zoom board-navigation" ref={root}>
     <Show when={props.renderTrigger} fallback={
     <button ref={trigger} class="icon-btn" data-testid="board-navigation" data-tooltip={COPY.boards.triggerHint} title={COPY.boards.triggerHint} aria-label={COPY.boards.triggerHint} aria-haspopup="dialog" aria-controls={open() ? menuId : undefined} aria-expanded={open()} onClick={() => setOpen(!open())}><BoardIconSvg icon="kennel" size={19} /><span class="icon-btn-label">{COPY.boards.trigger}</span><span class="boards-caret" aria-hidden="true"><Icon size={14} name="chevronDown" /></span></button>
@@ -52,14 +67,27 @@ export function BoardNavigation(props: { renderTrigger?: (state: { open: Accesso
     <Show when={open()}><div id={menuId} class="menu nav-menu board-nav-menu" role="dialog" aria-label={COPY.boards.heading} data-testid="board-navigation-menu"><SheetGrip onDismiss={() => { setOpen(false); trigger.focus() }} />
       <div class="nav-menu-head"><strong>{COPY.boards.heading}</strong><button class="icon-btn" aria-label={COPY.boards.close} onClick={() => { setOpen(false); trigger.focus() }}><Icon size={16} name="close" /></button></div>
       <div class="board-nav-scroll" data-testid="board-navigation-list">
-        <Show when={canRename()}><button class="menu-item nav-menu-row" data-testid="rename-current-board" onClick={rename}><Icon name="edit" size={18} /><span class="nav-menu-label">{COPY.boards.rename}</span></button><div class="menu-sep" role="separator" /></Show>
+        <Show when={canRename() || canFavourite()}>
+          <Show when={canRename()}><button class="menu-item nav-menu-row" data-testid="rename-current-board" onClick={rename}><Icon name="edit" size={18} /><span class="nav-menu-label">{COPY.boards.rename}</span></button></Show>
+          <Show when={canFavourite()}><button class="menu-item nav-menu-row" data-testid="favourite-current-board" aria-pressed={isFavourite(boardId())} onClick={() => setFavourite(boardId(), !isFavourite(boardId()))}><Icon name={isFavourite(boardId()) ? 'starFilled' : 'star'} size={18} class={isFavourite(boardId()) ? 'favourite-on' : undefined} /><span class="nav-menu-label">{isFavourite(boardId()) ? COPY.boards.unfavourite : COPY.boards.favourite}</span></button></Show>
+          <div class="menu-sep" role="separator" />
+        </Show>
         <button class="menu-item nav-menu-row" data-testid="personal-home" onClick={() => go(homeBoardId())}><BoardIconSvg icon="kennel" size={18} /><span class="nav-menu-label">My {COPY.home}</span></button>
         <Show when={legacyShared()}><div class="nav-menu-group"><button class="menu-item nav-menu-row" data-testid="legacy-space" aria-describedby={`${menuId}-legacy-description`} onClick={() => go('home')}><BoardIconSvg icon="paw" size={18} /><span class="nav-menu-label">{COPY.boards.legacy}</span></button><p id={`${menuId}-legacy-description`} class="nav-menu-description">{COPY.boards.legacyHint}</p></div></Show>
         <div class="menu-sep" role="separator" />
+        <Show when={favourites().length}>
+          <section ref={favouriteList} class="nav-menu-favourites" aria-labelledby={`${menuId}-favourites-heading`}>
+            <strong id={`${menuId}-favourites-heading`} class="nav-menu-section-label">{COPY.boards.favourites}</strong>
+            <For each={favourites()}>{(id, i) => <div class="nav-menu-starred">
+              <button class="menu-item nav-menu-row" data-testid="favourite-board-link" onClick={() => go(id)}><BoardIconSvg icon={doc.getBoard(id)?.icon ?? 'paw'} size={18} /><span class="nav-menu-label">{rowTitle(id)}</span></button>
+              <FavouriteButton boardId={id} class="nav-menu-star" onChange={() => keepFocus(i())} />
+            </div>}</For>
+          </section>
+        </Show>
         <Show when={recent().length}>
           <section class="nav-menu-recent" aria-labelledby={`${menuId}-recent-heading`}>
             <strong id={`${menuId}-recent-heading`} class="nav-menu-section-label">{COPY.boards.recent}</strong>
-            <For each={recent()}>{(id) => <button class="menu-item nav-menu-row" data-testid="recent-board" onClick={() => go(id)}><BoardIconSvg icon={doc.getBoard(id)?.icon ?? 'paw'} size={18} /><span class="nav-menu-label">{boardDisplayTitle(doc.getBoard(id), id.startsWith('home') ? `My ${COPY.home}` : 'Untitled board')}</span></button>}</For>
+            <For each={recent()}>{(id) => <button class="menu-item nav-menu-row" data-testid="recent-board" onClick={() => go(id)}><BoardIconSvg icon={doc.getBoard(id)?.icon ?? 'paw'} size={18} /><span class="nav-menu-label">{rowTitle(id)}</span></button>}</For>
           </section>
         </Show>
         <section ref={sharedList} class="nav-menu-section" aria-labelledby={`${menuId}-shared-heading`}>

@@ -1,27 +1,7 @@
-import { expect, test, type APIRequestContext, type Browser, type BrowserContext, type Page } from '@playwright/test'
-import { postSync, waitForSync } from './helpers.ts'
+import { expect, test, type Page } from '@playwright/test'
+import { waitForSync } from './helpers.ts'
+import { boards, grant, person } from './people.ts'
 
-type Person = { id: string; username: string; context: BrowserContext; api: APIRequestContext; home: string }
-async function person(admin: Page, browser: Browser, prefix: string): Promise<Person> {
-  const username = `${prefix}_${crypto.randomUUID().slice(0, 8)}`
-  const created = await admin.request.post('/api/users', { data: { username, password: 'boardsmenu123' } })
-  expect(created.status()).toBe(201)
-  const { user } = await created.json()
-  const context = await browser.newContext({ storageState: { cookies: [], origins: [] }, extraHTTPHeaders: { 'x-doggynote-protocol': '4' } })
-  expect((await context.request.post('/api/auth/login', { data: { username, password: 'boardsmenu123' } })).ok()).toBe(true)
-  const access = await (await context.request.get('/api/access')).json()
-  return { id: user.id, username, context, api: context.request, home: access.homeBoardId }
-}
-/** Makes the boards in one sync: every board made bumps the server's access revision. */
-async function boards(owner: Person, list: { title: string; parentId?: string }[]) {
-  const ids = list.map(() => crypto.randomUUID())
-  const response = await postSync(owner.api, { data: { changes: list.map(({ title, parentId = owner.home }, i) => ({ id: ids[i], patch: { id: ids[i], kind: 'board', parentId, title, icon: 'paw', color: 'gold', createdAt: Date.now() } })) } })
-  expect(response.ok(), await response.text()).toBe(true)
-  return ids
-}
-async function grant(owner: Person, boardId: string, recipient: Person, permission: 'view' | 'edit' = 'edit') {
-  expect((await owner.api.post(`/api/boards/${boardId}/members`, { data: { username: recipient.username, permission, includeChildren: true } })).status()).toBe(201)
-}
 async function openMenu(page: Page) {
   await page.getByTestId('board-navigation').click()
   return page.getByTestId('board-navigation-menu')
