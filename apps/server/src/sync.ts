@@ -7,7 +7,7 @@ import { checkPositionLocks, dropLockedLayout, positionWriteGuards } from './pos
 import { checkAreaRemovals } from './areas.ts'
 import { notifyRooms } from './realtime.ts'
 import { planSyncedNotes } from './synced.ts'
-import { CARD_TYPES, LABEL_FIELD, isBoardInkSize, isSketchContent, isSketchPaper, isSketchTitle, validLabelField, decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
+import { CARD_TYPES, LABEL_FIELD, TABLE_FIELD, tableLimitError, validTableField, withoutTableTombstones, isBoardInkSize, isSketchContent, isSketchPaper, isSketchTitle, validLabelField, decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
 import * as Y from 'yjs'
 
 // Push: field patches, merged per top-level field (last write to arrive wins).
@@ -19,7 +19,15 @@ const KEY = /^[a-zA-Z][a-zA-Z0-9]{0,31}$/
 const ID = /^[a-zA-Z0-9_:-]{1,64}$/
 export const MAX_CHANGES = 200
 // Each key is one bound SQL parameter (plus 7 fixed); D1 allows 100 per statement.
+// Ordinary objects stay under this. A table spreads its rows, columns and cells over
+// top-level fields, so those are counted apart and written in several statements.
 const MAX_KEYS = 90
+const MAX_PATCH_KEYS = 5000
+/** Keys per json_set / json_remove statement: 88 values + 7 fixed parameters stays under D1's 100. */
+const SET_CHUNK = 88
+// The editor can't make a table card yet, but the server already stores them; drop this
+// when 'table' joins CARD_TYPES.
+const SERVER_CARD_TYPES: readonly unknown[] = [...CARD_TYPES, 'table']
 const MAX_OBJECT_BYTES = 256 * 1024
 const PULL_LIMIT = 1000
 
@@ -39,11 +47,12 @@ export function parseChanges(body: unknown): IncomingChange[] | string {
     seen.add(id)
     if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return `bad patch for ${id}`
     const keys = Object.keys(patch)
-    if (!keys.length || keys.length > MAX_KEYS || !keys.every((k) => KEY.test(k))) return `bad keys for ${id}`
+    if (!keys.length || keys.length > MAX_PATCH_KEYS || keys.filter((k) => !TABLE_FIELD.test(k)).length > MAX_KEYS || !keys.every((k) => KEY.test(k))) return `bad keys for ${id}`
     const p = patch as Record<string, unknown>
     for (const key of keys) {
       const label = LABEL_FIELD.exec(key)
       if (label && !validLabelField(label[1] === 'label' ? 'card' : 'board', key, p[key])) return `bad label field for ${id}`
+      if (TABLE_FIELD.test(key) && !validTableField(key, p[key])) return `bad table field for ${id}`
     }
     if ('id' in p && p.id !== id) return `id mismatch for ${id}`
     if ('burialId' in p && p.burialId !== null && (typeof p.burialId !== 'string' || !ID.test(p.burialId) || isReservedId(p.burialId))) return `bad burial operation for ${id}`
@@ -55,23 +64,49 @@ export function parseChanges(body: unknown): IncomingChange[] | string {
   return out
 }
 
+export type Statement = { sql: string; args: unknown[] }
+
 /**
  * SQL for one change. New objects insert the whole patch; existing ones get
  * json_set per top-level key, which replaces values (unlike json_patch, which
  * deep-merges and would keep stale nested fields).
+ *
+ * D1 allows 100 bound parameters per statement, so a patch with many keys (a
+ * table) is split: the first statement carries the first 88 keys and the object's
+ * bookkeeping (seq, owner, ...), and `more` holds UPDATEs for the rest. Run them
+ * in the same `db.batch` right after it, so the write stays atomic and `seq` is
+ * bumped once. A table key set to null is removed with json_remove (the key is
+ * regex-checked and written into the path, so no parameter is used) so deleted
+ * rows and cells leave nothing behind.
  */
-export function upsertSql(patch: Record<string, unknown>): { sql: string; args: unknown[] } {
+export function upsertSql(patch: Record<string, unknown>): Statement & { more: Statement[] } {
   const keys = Object.keys(patch).filter((k) => k !== 'id')
-  const sets = keys.map((k, i) => `'$.${k}', json(?${8 + i})`).join(', ')
+  for (const k of keys) if (!KEY.test(k)) throw new Error('bad key')
+  const removed = (k: string) => patch[k] == null && TABLE_FIELD.test(k)
+  const sets = keys.filter((k) => !removed(k))
+  const removes = keys.filter(removed)
+  const expr = (base: string, set: string[], remove: string[], first: number) => {
+    let e = base
+    if (set.length) e = `json_set(${e}, ${set.map((k, i) => `'$.${k}', json(?${first + i})`).join(', ')})`
+    if (remove.length) e = `json_remove(${e}, ${remove.map((k) => `'$.${k}'`).join(', ')})`
+    return e
+  }
+  const json = (k: string) => JSON.stringify(patch[k] ?? null)
+  const head = sets.slice(0, SET_CHUNK)
   const sql = `INSERT INTO objects (id, kind, board_id, data, seq, updated_at, updated_by, owner_id)
     VALUES (?1, ?2, ?3, ?4, (SELECT value FROM counters WHERE name = 'seq'), ?5, ?6, ?7)
     ON CONFLICT(id) DO UPDATE SET
-      data = ${keys.length ? `json_set(objects.data, ${sets})` : 'objects.data'},
+      data = ${expr('objects.data', head, removes.slice(0, SET_CHUNK), 8)},
       board_id = CASE WHEN ?3 IS NULL THEN objects.board_id ELSE ?3 END,
       owner_id = ?7,
       seq = excluded.seq, updated_at = excluded.updated_at, updated_by = excluded.updated_by`
-  const args = keys.map((k) => JSON.stringify(patch[k] ?? null))
-  return { sql, args }
+  const more: Statement[] = []
+  for (let i = SET_CHUNK; i < sets.length; i += SET_CHUNK) {
+    const chunk = sets.slice(i, i + SET_CHUNK)
+    more.push({ sql: `UPDATE objects SET data = ${expr('data', chunk, [], 2)} WHERE id = ?1`, args: chunk.map(json) })
+  }
+  for (let i = SET_CHUNK; i < removes.length; i += SET_CHUNK) more.push({ sql: `UPDATE objects SET data = ${expr('data', [], removes.slice(i, i + SET_CHUNK), 2)} WHERE id = ?1`, args: [] })
+  return { sql, args: head.map(json), more }
 }
 
 // ---- privacy: personal Toy boxes ----------------------------------------------
@@ -223,9 +258,11 @@ async function pushSync(c: Context<AppEnv>) {
     const toybox = ownerFor(id, boardId ?? prev?.board_id ?? null)
     if (toybox && toybox !== user) return c.json({ error: "You can't put things in someone else's Inbox" }, 403)
     const owner = toybox ?? deletedCommentOwner(kind, patch, prev, user)
-    const { sql, args } = upsertSql(patch)
+    const { sql, args, more } = upsertSql(patch)
     stmts.push(db.prepare("UPDATE counters SET value = value + 1 WHERE name = 'seq'"))
-    stmts.push(db.prepare(sql).bind(id, kind, boardId, JSON.stringify({ ...patch, id }), now, user, owner, ...args))
+    // A new object is inserted whole, so removed table fields must not be in it.
+    stmts.push(db.prepare(sql).bind(id, kind, boardId, JSON.stringify(withoutTableTombstones({ ...patch, id })), now, user, owner, ...args))
+    for (const extra of more) stmts.push(db.prepare(extra.sql).bind(id, ...extra.args))
     if (note) stmts.push(note.write)
     if (kind === 'board' && !prev && !id.startsWith('toybox:')) stmts.push(newBoardAccess(db, id, user))
     if ((kind === 'board' && (!prev || 'parentId' in patch)) || (prev && boardId && boardId !== prev.board_id) || (kind === 'comment' && ('deletedAt' in patch || 'purged' in patch))) stmts.push(bumpAccess(db))
@@ -322,6 +359,8 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
     if (prev && o.kind !== prev.data.kind) ok = false
     if (!prev && !KINDS.has(o.kind as string)) ok = false
     if ('ownerId' in patch || 'owner_id' in patch || 'legacy' in patch) ok = false
+    // Table fields belong to table cards only, and each must be well formed.
+    for (const key of Object.keys(patch)) if (TABLE_FIELD.test(key) && (o.kind !== 'card' || o.type !== 'table' || !validTableField(key, patch[key]))) ok = false
     // Label names and colours live on boards, memberships on cards.
     for (const key of Object.keys(patch)) if (LABEL_FIELD.test(key) && !validLabelField(o.kind, key, patch[key])) ok = false
     if (id.startsWith('home:') && (!prev || ('parentId' in patch && (patch.parentId ?? null) !== (prev.data.parentId ?? null)) || patch.deletedAt || patch.purged)) ok = false
@@ -344,7 +383,9 @@ export async function deniedChanges(db: D1Database, access: Access, userId: stri
       if (prev && (typeof prev.data.boardId !== 'string' || !editable(prev.data.boardId))) ok = false
       if (o.kind === 'card') {
         if (prev && prev.data.type !== o.type) ok = false
-        if (!(CARD_TYPES as readonly unknown[]).includes(o.type)) ok = false
+        if (!SERVER_CARD_TYPES.includes(o.type)) ok = false
+        // A table's rows, columns and cells are fields of the card itself, within the caps.
+        if (o.type === 'table' && !o.purged && (!o.content || typeof o.content !== 'object' || Array.isArray(o.content) || ('title' in o.content && typeof (o.content as { title?: unknown }).title !== 'string') || (Object.keys(patch).some((k) => TABLE_FIELD.test(k)) && tableLimitError(o)))) ok = false
         // A sketch's paper colour goes straight into CSS on every device: only canonical #RRGGBB.
         if (o.type === 'sketch' && !o.purged && (!isSketchContent(o.content) || (o.sketchPaper != null && !isSketchPaper(o.sketchPaper)) || (o.sketchTitle != null && !isSketchTitle(o.sketchTitle)))) ok = false
         // Only sketches carry a sketch title or paper.
