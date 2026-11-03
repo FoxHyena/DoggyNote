@@ -10,6 +10,7 @@ import { revealCard } from '../state/columns.ts'
 import { hasLabel, labelsOn } from '../state/labels.ts'
 import { inTemplate } from '../state/copies.ts'
 import { BoardIconSvg, Icon } from './icons.tsx'
+import { boardTitle as shortcutTitle, favouriteBoards, recentBoardIds } from '../state/boardShortcuts.ts'
 import { installModalKeys } from './agentDialog.ts'
 
 // ⌘K "Fetch": search every board title and card text, jump to the result.
@@ -67,7 +68,12 @@ export function jumpTo(hit: Hit) {
 export function FetchPalette() {
   const [q, setQ] = createSignal('')
   const [active, setActive] = createSignal(0)
-  const hits = createMemo(() => search(q()))
+  // Nothing typed yet: your Favourites, then Recent, so ⌘K then Enter jumps to the first.
+  const suggestions = createMemo((): Hit[] => [
+    ...favouriteBoards().map((id) => ({ kind: 'board' as const, id, boardId: id, title: shortcutTitle(id), snippet: COPY.boards.favouriteTag, score: 0 })),
+    ...recentBoardIds(5).map((id) => ({ kind: 'board' as const, id, boardId: id, title: shortcutTitle(id), snippet: COPY.boards.recent, score: 0 })),
+  ].slice(0, 8))
+  const hits = createMemo(() => q().trim() ? search(q()) : suggestions())
   let input!: HTMLInputElement
   let panel!: HTMLDivElement
   const previousFocus = (document.activeElement && document.activeElement !== document.body ? document.activeElement : document.querySelector('[data-testid="open-fetch"]')) as HTMLElement | null
@@ -107,7 +113,7 @@ export function FetchPalette() {
             class="fetch-input"
             role="combobox"
             aria-label={COPY.search}
-            aria-expanded={!!q().trim()}
+            aria-expanded={!!hits().length}
             aria-controls="fetch-results"
             aria-activedescendant={hits()[active()] ? `fetch-hit-${active()}` : undefined}
             data-testid="fetch-input"
@@ -121,10 +127,10 @@ export function FetchPalette() {
           />
           <button class="fetch-close" aria-label="Close search" onClick={() => setPaletteOpen(false)}>{touch() ? 'Cancel' : <kbd>esc</kbd>}</button>
         </div>
-        <Show when={!q().trim() && touch()}>
+        <Show when={!q().trim() && touch() && !suggestions().length}>
           <p class="fetch-empty fetch-hint">{COPY.fetchHint}</p>
         </Show>
-        <Show when={q().trim()}>
+        <Show when={q().trim() || suggestions().length}>
           <ul ref={results} id="fetch-results" class="fetch-results" role="listbox" aria-label="Search results">
             <For each={hits()} fallback={<li class="fetch-empty">No bones found for “{q()}”.</li>}>
               {(h, i) => (

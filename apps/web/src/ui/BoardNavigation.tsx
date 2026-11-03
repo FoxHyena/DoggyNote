@@ -3,12 +3,12 @@ import { For, Show, createEffect, createSignal, createUniqueId, type Accessor, t
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import { boardPermissions, homeBoardId, legacyShared } from '../state/access.ts'
 import { user } from '../state/session.ts'
-import { boardId, openBoard, recentBoards, setRenamingBoardId } from '../state/ui.ts'
-import { phone } from '../state/device.ts'
-import { canReadBoard, type BoardPermission } from '../state/access.ts'
+import { boardId, openBoard, setRenamingBoardId } from '../state/ui.ts'
+import { phone, touch } from '../state/device.ts'
+import { type BoardPermission } from '../state/access.ts'
 import { sharedRoots } from '../state/sharedBoards.ts'
-import { favouriteIds, recentIds } from '../state/boardLists.ts'
-import { boardPrefs, isFavourite, setFavourite } from '../state/boardPrefs.ts'
+import { isFavourite, setFavourite } from '../state/boardPrefs.ts'
+import { boardTitle, favouriteBoards, reachable, recentBoardIds, searchBoards } from '../state/boardShortcuts.ts'
 import { FavouriteButton } from './FavouriteButton.tsx'
 import { initials, personStyle } from '../state/realtime.ts'
 import * as doc from '../state/doc.ts'
@@ -35,7 +35,20 @@ export function BoardNavigation(props: { renderTrigger?: (state: { open: Accesso
     setShowAll(true)
     sharedList.querySelectorAll<HTMLButtonElement>('[data-testid="shared-board-link"]')[SHARED_PREVIEW]?.focus()
   }
-  createEffect(() => { if (!open()) setShowAll(false) })
+  // Find a board: typing swaps the lists for matching titles. Focused on open with a keyboard only,
+  // so a tap on a phone doesn't raise the keyboard over the lists.
+  const [query, setQuery] = createSignal('')
+  const matches = () => searchBoards(query(), 30)
+  let search: HTMLInputElement | undefined, list: HTMLDivElement | undefined
+  createEffect(() => {
+    if (!open()) { setShowAll(false); setQuery(''); return }
+    // After installMenu's own first focus, which is queued first.
+    if (!touch()) queueMicrotask(() => search?.focus())
+  })
+  const onSearchKey = (e: KeyboardEvent) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); list?.querySelector<HTMLButtonElement>('button')?.focus() }
+    else if (e.key === 'Enter' && query().trim()) { e.preventDefault(); const first = matches()[0]; if (first) go(first.id) }
+  }
   // The avatar only shows initials, so the row's name says who shared it and whether it's view only.
   const sharedLabel = (b: BoardPermission) => [sharedTitle(b), b.sharedBy && `${COPY.boards.sharedBy} ${b.sharedBy}`, !b.canEdit && COPY.boards.viewOnly].filter(Boolean).join(', ')
   function go(id: string) { openBoard(id); setOpen(false); trigger.focus() }
@@ -46,12 +59,11 @@ export function BoardNavigation(props: { renderTrigger?: (state: { open: Accesso
     // Remain in the tap so installed iOS can raise its keyboard.
     document.querySelector<HTMLInputElement>('[data-testid="board-name-input"]')?.focus({ preventScroll: true })
   }
-  const reachable = (id: string) => !id.startsWith('toybox:') && !!doc.getBoard(id) && !doc.getBoard(id)!.deletedAt && canReadBoard(id)
-  const rowTitle = (id: string) => boardDisplayTitle(doc.getBoard(id), id.startsWith('home') ? `My ${COPY.home}` : 'Untitled board')
-  // Starred boards, in the order you starred them. Stars from your other devices arrive when you come back to the app.
-  const favourites = () => favouriteIds(boardPrefs()).filter(reachable)
+  const rowTitle = boardTitle
+  // Starred boards, in star order; stars from your other devices arrive when you come back to the app.
+  const favourites = favouriteBoards
   // The last few boards you opened on any device, one tap away. Favourites already have their own place.
-  const recent = () => recentIds(boardPrefs(), recentBoards()).filter((id) => id !== boardId() && reachable(id) && !isFavourite(id)).slice(0, 5)
+  const recent = () => recentBoardIds(5)
   const canFavourite = () => phone() && reachable(boardId())
   let favouriteList: HTMLElement | undefined
   /** Unstarring removes the row; keep focus in the menu on the next starred board, or My Doghouse. */
@@ -66,7 +78,13 @@ export function BoardNavigation(props: { renderTrigger?: (state: { open: Accesso
     }>{(render) => render()({ open, toggle: () => setOpen(!open()), menuId, ref: (el) => { trigger = el } })}</Show>
     <Show when={open()}><div id={menuId} class="menu nav-menu board-nav-menu" role="dialog" aria-label={COPY.boards.heading} data-testid="board-navigation-menu"><SheetGrip onDismiss={() => { setOpen(false); trigger.focus() }} />
       <div class="nav-menu-head"><strong>{COPY.boards.heading}</strong><button class="icon-btn" aria-label={COPY.boards.close} onClick={() => { setOpen(false); trigger.focus() }}><Icon size={16} name="close" /></button></div>
-      <div class="board-nav-scroll" data-testid="board-navigation-list">
+      <label class="board-nav-search"><Icon size={16} name="search" /><input ref={search} type="search" data-testid="board-search" aria-label={COPY.boards.find} placeholder={COPY.boards.findPlaceholder} autocomplete="off" enterkeyhint="go" value={query()} onInput={(e) => setQuery(e.currentTarget.value)} onKeyDown={onSearchKey} /></label>
+      <div ref={list} class="board-nav-scroll" data-testid="board-navigation-list">
+        <Show when={!query().trim()} fallback={
+          <div role="group" aria-label={COPY.boards.findResults}>
+            <For each={matches()} fallback={<p class="nav-menu-description board-nav-no-match">{COPY.boards.noMatch}</p>}>{(m) => <button class="menu-item nav-menu-row" data-testid="board-search-result" onClick={() => go(m.id)}><BoardIconSvg icon={doc.getBoard(m.id)?.icon ?? 'paw'} size={18} /><span class="nav-menu-label">{m.title}</span><Show when={m.parent}><small class="nav-menu-meta board-nav-parent">{COPY.boards.inParent} {m.parent}</small></Show></button>}</For>
+          </div>
+        }>
         <Show when={canRename() || canFavourite()}>
           <Show when={canRename()}><button class="menu-item nav-menu-row" data-testid="rename-current-board" onClick={rename}><Icon name="edit" size={18} /><span class="nav-menu-label">{COPY.boards.rename}</span></button></Show>
           <Show when={canFavourite()}><button class="menu-item nav-menu-row" data-testid="favourite-current-board" aria-pressed={isFavourite(boardId())} onClick={() => setFavourite(boardId(), !isFavourite(boardId()))}><Icon name={isFavourite(boardId()) ? 'starFilled' : 'star'} size={18} class={isFavourite(boardId()) ? 'favourite-on' : undefined} /><span class="nav-menu-label">{isFavourite(boardId()) ? COPY.boards.unfavourite : COPY.boards.favourite}</span></button></Show>
@@ -97,6 +115,7 @@ export function BoardNavigation(props: { renderTrigger?: (state: { open: Accesso
             <Show when={!showAll() && shared().length > SHARED_PREVIEW}><button class="menu-item nav-menu-row nav-menu-more" data-testid="shared-show-all" onClick={expandShared}><span aria-hidden="true" /><span class="nav-menu-label">{COPY.boards.showAll} ({shared().length})</span></button></Show>
           </Show>
         </section>
+        </Show>
       </div>
     </div></Show>
   </div>
