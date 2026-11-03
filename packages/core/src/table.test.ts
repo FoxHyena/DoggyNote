@@ -3,7 +3,7 @@ import {
   TABLE_CAPS, TABLE_FIELD, addColumn, addRows, cellKey, cellOf, cellDisplay, cellValue, clearCells, colKey, compareCells, deleteColumns, deleteRows, guessHeader,
   looksTabular, moveColumn, moveRow, optionId, parseInput, parseNumber, parseTableKey, parseTsv, resizeBoundary, retype, rowKey, setCells, setRowFill, setStyle,
   sortRows, starterTable, tableColumns, tableFromGrid, tableId, tableLimitError, tableRows, tableText, toTsv, updateColumn, validTableField, withoutTableTombstones,
-  readCell, type TablePatch,
+  readCell, isBlankTable, type TablePatch,
 } from './index.ts'
 
 const apply = (card: Record<string, unknown>, patch: TablePatch) => ({ ...card, ...patch })
@@ -411,5 +411,24 @@ describe('validation and copying', () => {
     // Removed rows don't count.
     expect(tableLimitError(apply(t, Object.fromEntries(Object.keys(t).slice(0, 5).map((k) => [k, null]))))).toBeNull()
     expect(tableLimitError({ big: 'x'.repeat(1024 * 1024) })).toBe('table too large')
+  })
+})
+
+describe('isBlankTable', () => {
+  const names = ['Name', 'Treats', 'Notes']
+  it('is true for a fresh starter table and false once anything is written', () => {
+    const card = { content: { title: '' }, ...starterTable(names) }
+    expect(isBlankTable(card, names)).toBe(true)
+    const [row] = tableRows(card)
+    const [col] = tableColumns(card)
+    expect(isBlankTable({ ...card, content: { title: 'Dogs' } }, names)).toBe(false)
+    expect(isBlankTable({ ...card, ...setCells(card, [{ row: row!.id, col: col!.id, value: 'Rex' }]) }, names)).toBe(false)
+    expect(isBlankTable({ ...card, ...updateColumn(card, col!.id, { n: 'Pup' }) }, names)).toBe(false)
+  })
+  it('ignores empty and removed cells', () => {
+    const card = { content: { title: '' }, ...starterTable(names) }
+    const [row] = tableRows(card)
+    const [col] = tableColumns(card)
+    expect(isBlankTable({ ...card, [cellKey(row!.id, col!.id)]: null }, names)).toBe(true)
   })
 })

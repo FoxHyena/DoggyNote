@@ -128,6 +128,41 @@ export const COPY = {
     /** "Show all (12)": expands the shared list past its first few boards. */
     showAll: 'Show all',
   },
+  /** Table cards: starter names, hints and the screen reader's words. */
+  table: {
+    label: 'Table',
+    starterColumns: ['Name', 'Treats', 'Notes'],
+    titlePlaceholder: 'Name this table',
+    columnFallback: 'Column',
+    /** Grid: aria-label for the editable grid. */
+    gridLabel: 'Table',
+    cellLabel: (row: number, column: string) => `Row ${row}, ${column}`,
+    headerLabel: (column: number) => `Column ${column}`,
+    addRow: 'Add row',
+    addColumn: 'Add column',
+    insertRowAbove: 'Insert row above',
+    insertRowBelow: 'Insert row below',
+    insertColumnLeft: 'Insert column left',
+    insertColumnRight: 'Insert column right',
+    deleteRows: (n: number) => (n === 1 ? 'Delete row' : `Delete ${n} rows`),
+    deleteColumns: (n: number) => (n === 1 ? 'Delete column' : `Delete ${n} columns`),
+    clear: 'Clear cells',
+    cells: 'Table cells',
+    previousCell: 'Previous cell',
+    nextCell: 'Next cell',
+    moreActions: 'More table actions',
+    /** Shown at the row cap. */
+    rowsFull: "This table's kennel is full: 100 rows is the most it can hold.",
+    columnsFull: "This table's kennel is full: 26 columns is the most it can hold.",
+    /** Live region text. */
+    announceCell: (row: number, rows: number, column: string, value: string) => `Row ${row} of ${rows}, ${column}${value ? `: ${value}` : ', empty'}`,
+    announceHeader: (column: string) => `Column header, ${column}`,
+    announceRowAdded: 'Row added',
+    announceColumnAdded: 'Column added',
+    announceRowsDeleted: (n: number) => (n === 1 ? 'Row deleted' : `${n} rows deleted`),
+    announceColumnsDeleted: (n: number) => (n === 1 ? 'Column deleted' : `${n} columns deleted`),
+    announceCleared: 'Cells cleared',
+  },
   /** The public guides at /docs. */
   guides: {
     /** Account menu and sign-in link. */
