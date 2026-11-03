@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 import { cellKey, rowKey, colKey, starterTable, tableColumns, tableRows } from '@doggynote/core'
 import { MOD } from './helpers.ts'
+import { seedCards } from './touch.ts'
 
 // Shared by the table specs: building tables, reading what they show.
 
@@ -49,3 +50,30 @@ export async function activeCell(page: Page): Promise<{ row: number; col: number
     return { row: inHead ? -1 : [...tr.parentElement!.children].indexOf(tr), col: [...tr.children].indexOf(el) }
   })
 }
+
+/** A table seeded through the API, clear of the viewport edge so the grips outside it show. */
+export async function seedTable(page: Page, header: string[], rows: string[][], opts: { title?: string; w?: number; x?: number; y?: number } = {}) {
+  const t = tableFields(header, rows)
+  await seedCards(page, [{ type: 'table', x: opts.x ?? 100, y: opts.y ?? 100, w: opts.w ?? 560, content: { title: opts.title ?? 'The pack' }, fields: t.fields }])
+  await expect(table(page)).toBeVisible()
+  return t
+}
+
+/** Select the table, then click a cell again to edit it: the grips and the bar appear. */
+export async function openEditing(page: Page, row = 0, col = 0) {
+  await cell(page, row, col).click()
+  await cell(page, row, col).click()
+  await expect(input(page)).toBeFocused()
+}
+
+/** A real pointer drag with a few steps in between, so move handlers see it. */
+export async function dragMouse(page: Page, from: { x: number; y: number }, to: { x: number; y: number }, opts: { release?: boolean; steps?: number } = {}) {
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  await page.mouse.move(to.x, to.y, { steps: opts.steps ?? 10 })
+  if (opts.release !== false) await page.mouse.up()
+}
+
+export const rowGrip = (page: Page, i: number) => page.getByTestId('table-row-grip').nth(i)
+export const columnGrip = (page: Page, i: number) => page.getByTestId('table-column-grip').nth(i)
+export const centerOf = async (loc: Locator) => { const b = (await loc.boundingBox())!; return { x: b.x + b.width / 2, y: b.y + b.height / 2 } }

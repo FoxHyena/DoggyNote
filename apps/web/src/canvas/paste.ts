@@ -1,5 +1,6 @@
 import { areaAt } from '../state/areas.ts'
-import { DEFAULT_SIZE, movieRefFromUrl, safeHref, type Id, type MovieRef, type Vec } from '@doggynote/core'
+import { DEFAULT_SIZE, guessHeader, looksTabular, movieRefFromUrl, parseTsv, safeHref, tableFromGrid, tableColumns, type Card, type Id, type MovieRef, type Vec } from '@doggynote/core'
+import { COPY } from '@doggynote/theme'
 import { createCard, createNoteWithText, type Placement } from '../state/actions.ts'
 import { importImage } from '../state/assets.ts'
 import { unfurl } from '../state/unfurl.ts'
@@ -57,10 +58,20 @@ export function addMovie(ref: MovieRef, place: Placement, onBoard?: Id): Id {
   return id
 }
 
-/** A movie link becomes a movie card, any other URL a link card, anything else a note. */
+/** Tab-separated text (copied from a spreadsheet) becomes a table card, its first row the column names if it reads like names. */
+export function addTable(text: string, place: Placement, onBoard?: Id): Id {
+  const grid = parseTsv(text)
+  const patch = tableFromGrid(grid, { header: guessHeader(grid), fallbackName: (i) => `${COPY.table.columnFallback} ${i + 1}` })
+  // Wider grids get a wider card, so columns start out readable.
+  const w = Math.min(960, Math.max(DEFAULT_SIZE.table.w, tableColumns(patch).length * 140))
+  return createCard('table', place, { content: { title: '' }, edit: false, extra: { ...patch, w } as Partial<Card>, boardId: onBoard })
+}
+
+/** Tab-separated text becomes a table, a movie link a movie card, any other URL a link card, anything else a note. */
 export function addText(text: string, at: Vec, onBoard?: Id, title?: string) {
   const t = text.trim()
   if (!t) return
+  if (looksTabular(text)) return void addTable(text, { at }, onBoard)
   const href = safeHref(t)
   const movie = href && !/\s/.test(t) ? movieRefFromUrl(href) : null
   if (movie) addMovie(movie, { at }, onBoard)

@@ -88,6 +88,10 @@ import scribbleSvg from '@phosphor-icons/core/regular/scribble.svg?raw'
 import pencilSimpleLineSvg from '@phosphor-icons/core/regular/pencil-simple-line.svg?raw'
 import penSvg from '@phosphor-icons/core/regular/pen.svg?raw'
 import highlighterSvg from '@phosphor-icons/core/regular/highlighter.svg?raw'
+import arrowUpSvg from '@phosphor-icons/core/regular/arrow-up.svg?raw'
+import arrowDownSvg from '@phosphor-icons/core/regular/arrow-down.svg?raw'
+import arrowLeftSvg from '@phosphor-icons/core/regular/arrow-left.svg?raw'
+import arrowRightSvg from '@phosphor-icons/core/regular/arrow-right.svg?raw'
 import eraserSvg from '@phosphor-icons/core/regular/eraser.svg?raw'
 import pawPrintFillSvg from '@phosphor-icons/core/fill/paw-print-fill.svg?raw'
 import starFillSvg from '@phosphor-icons/core/fill/star-fill.svg?raw'
@@ -195,6 +199,10 @@ export const ICONS = {
   pen: body(penSvg),
   highlighter: body(highlighterSvg),
   eraser: body(eraserSvg),
+  arrowUp: body(arrowUpSvg),
+  arrowDown: body(arrowDownSvg),
+  arrowLeft: body(arrowLeftSvg),
+  arrowRight: body(arrowRightSvg),
   paw: body(pawPrintFillSvg),
   starFilled: body(starFillSvg),
   pinFilled: body(pushPinFillSvg),
