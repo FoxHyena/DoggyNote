@@ -106,6 +106,14 @@ export const COPY = {
     rename: 'Rename current board',
     recent: 'Recent',
     favourites: 'Favourites',
+    /** Beside a starred board in Fetch's suggestions. */
+    favouriteTag: 'Favourite',
+    find: 'Find a board',
+    findPlaceholder: 'Sniff out a board…',
+    findResults: 'Matching boards',
+    /** "in Van Camper Conversion": the board a search result lives in. */
+    inParent: 'in',
+    noMatch: 'No board by that name.',
     favourite: 'Add to Favourites',
     unfavourite: 'Remove from Favourites',
     legacy: 'Shared space',

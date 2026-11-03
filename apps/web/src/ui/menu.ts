@@ -11,6 +11,8 @@ export function installMenu(open: Accessor<boolean>, close: () => void, root: ()
       if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); close(); trigger().focus() }
       else if (!root().contains(e.target as Node)) return
       else if ((e.target as Element)?.closest('[role="radio"]')) return
+      // A search field in a menu keeps its own keys (caret, Home/End, Enter).
+      else if ((e.target as Element)?.matches?.('input, textarea')) return
       else if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) {
         e.preventDefault(); e.stopImmediatePropagation()
         const items = [...root().querySelectorAll<HTMLButtonElement>('.menu button:not(:disabled)')]

@@ -67,3 +67,12 @@ a.menu-item { color: var(--dn-text); text-decoration: none; box-sizing: border-b
 .nav-menu-starred > .nav-menu-row { width: 100%; padding-right: 44px; }
 .nav-menu-star { position: absolute; top: 50%; right: 4px; translate: 0 -50%; opacity: 0; }
 .nav-menu-starred:hover .nav-menu-star, .nav-menu-star:focus-visible, html[data-input='touch'] .nav-menu-star { opacity: 1; }
+/* Find a board: a quiet field under the heading, fixed while the lists scroll. */
+.board-nav-search { flex-shrink: 0; display: flex; align-items: center; gap: 8px; margin: 0 4px 4px; padding: 0 8px; min-height: 32px; border: 1px solid var(--dn-border); border-radius: 8px; background: var(--dn-bg); color: var(--dn-text-muted); }
+.board-nav-search:focus-within { outline: 2px solid var(--dn-selection); outline-offset: -1px; }
+.board-nav-search input { flex: 1; min-width: 0; border: 0; padding: 0; background: transparent; color: var(--dn-text); font-size: 13px; outline: none; }
+.board-nav-search input::placeholder { color: var(--dn-text-muted); opacity: 1; }
+.board-nav-search input::-webkit-search-cancel-button { display: none; }
+.board-nav-no-match { padding: 8px 12px; }
+.board-nav-menu .board-nav-parent { display: block; max-width: 12em; overflow: hidden; text-overflow: ellipsis; }
+@media (pointer: coarse) { .board-nav-search { min-height: 44px; } }
