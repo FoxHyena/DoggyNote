@@ -97,6 +97,24 @@ export const COPY = {
     /** The server unsynced your copy: you can't edit every copy. */
     detached: "This note stopped syncing: you can't edit every copy. Your edit is kept here.",
   },
+  /** The Boards menu: your Doghouse, recent boards and boards shared with you. */
+  boards: {
+    trigger: 'Boards',
+    triggerHint: 'My boards and shared boards',
+    heading: 'Your spaces',
+    close: 'Close boards',
+    rename: 'Rename current board',
+    recent: 'Recent',
+    legacy: 'Shared space',
+    legacyHint: 'Boards everyone from the original group can open and edit.',
+    shared: 'Shared with me',
+    sharedEmpty: 'Boards shared with your account will appear here.',
+    /** A shared board's fallback title before its title has synced. */
+    sharedUntitled: 'Shared board',
+    viewOnly: 'View only',
+    /** "Show all (12)": expands the shared list past its first few boards. */
+    showAll: 'Show all',
+  },
   /** The public guides at /docs. */
   guides: {
     /** Account menu and sign-in link. */

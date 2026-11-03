@@ -56,7 +56,7 @@ test('Boards empty descriptions align with labels in both appearances and short 
   }
 })
 
-test('Boards long shared names keep permissions separate and scroll below a visible header', async ({ page }, info) => {
+test('Boards long shared names keep who shared them separate and scroll below a visible header', async ({ page }, info) => {
   await freshBoard(page)
   const ids = Array.from({ length: 18 }, () => crypto.randomUUID())
   const response = await postSync(page.request, { data: { changes: ids.map((id, i) => ({ id, patch: { id, kind: 'board', parentId: 'home', title: `${title} ${i + 1}`, icon: 'paw', color: 'none', createdAt: Date.now() } })) } })
@@ -66,7 +66,7 @@ test('Boards long shared names keep permissions separate and scroll below a visi
     const access = await response.json()
     await route.fulfill({ json: { ...access, legacyShared: true, boards: [
       ...access.boards.filter((board: { id: string }) => !ids.includes(board.id)).map((board: object) => ({ ...board, legacy: true })),
-      ...ids.map((id, i) => ({ id, parentId: null, ownerId: 'visual-fixture-owner', legacy: false, canEdit: i % 2 === 0, canManage: false })),
+      ...ids.map((id, i) => ({ id, parentId: null, ownerId: 'visual-fixture-owner', legacy: false, canEdit: i % 2 === 0, canManage: false, sharedAt: 1000 - i, sharedBy: 'a_rather_long_username_for_sharing' })),
     ] } })
   })
   await page.reload()
@@ -78,7 +78,10 @@ test('Boards long shared names keep permissions separate and scroll below a visi
       await page.getByTestId('board-navigation').click()
       const menu = page.getByTestId('board-navigation-menu')
       await contained(menu, width, 480)
+      await expect(page.getByTestId('shared-board-link')).toHaveCount(5)
+      await page.getByTestId('shared-show-all').click()
       await expect(page.getByTestId('shared-board-link')).toHaveCount(18)
+      await expect(page.getByTestId('shared-board-link').nth(5)).toBeFocused()
       const first = page.getByTestId('shared-board-link').first()
       const label = await first.locator('.nav-menu-label').boundingBox()
       const permission = await first.locator('.nav-menu-meta').boundingBox()
