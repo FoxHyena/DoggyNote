@@ -1,5 +1,5 @@
 import { For, Match, Show, Switch, createMemo } from 'solid-js'
-import { cardColorVars, COPY } from '@doggynote/theme'
+import { COPY, tableFillVars } from '@doggynote/theme'
 import { cellDisplay, cellKey, cellValue, effectiveAlign, isBlankTable, readCell, setCells, tableColumns, tableRows, tableTitle, unreadText, type Card, type Cell, type TableColumn } from '@doggynote/core'
 import * as doc from '../../state/doc.ts'
 import { Icon } from '../../ui/icons.tsx'
@@ -78,12 +78,12 @@ function TableGrid(props: { card: Card<'table'>; editing: boolean; readOnly: boo
             </thead>
             <tbody>
               <For each={rowIds()}>
-                {(rowId) => {
+                {(rowId, rowNo) => {
                   const bg = () => rows().find((r) => r.id === rowId)?.bg
                   return (
                     <tr data-row={rowId}>
                       <For each={colIds()}>
-                        {(colId) => <BodyCell card={fields} rowId={rowId} colId={colId} rowBg={bg} live={live} toggle={toggle} column={() => columns().find((c) => c.id === colId) ?? NO_COLUMN} />}
+                        {(colId) => <BodyCell card={fields} rowId={rowId} rowNo={() => rowNo() + 1} first={() => columns()[0]} colId={colId} rowBg={bg} live={live} toggle={toggle} column={() => columns().find((c) => c.id === colId) ?? NO_COLUMN} />}
                       </For>
                     </tr>
                   )
@@ -101,9 +101,14 @@ function TableGrid(props: { card: Card<'table'>; editing: boolean; readOnly: boo
 }
 
 function HeaderCell(props: { id: string; column: () => TableColumn }) {
+  // A sort is applied once, but the column keeps a small arrow until the rows are moved or added to again.
+  const sorted = () => props.column().s
   return (
-    <th scope="col" data-col={props.id} data-row="" data-align={effectiveAlign(props.column(), undefined)} data-type={props.column().t}>
+    <th scope="col" data-col={props.id} data-row="" data-align={effectiveAlign(props.column(), undefined)} data-type={props.column().t} data-sorted={sorted()} aria-sort={sorted() === 'a' ? 'ascending' : sorted() === 'd' ? 'descending' : undefined}>
       {props.column().n}
+      <Show when={sorted()}>
+        <span class="table-sort" data-testid="table-sort-mark" data-dir={sorted()} data-tip={COPY.table.sortedBy(sorted() === 'a' ? 'asc' : 'desc')}><Icon name={sorted() === 'a' ? 'sortAsc' : 'sortDesc'} size={14} /></span>
+      </Show>
     </th>
   )
 }
@@ -111,6 +116,8 @@ function HeaderCell(props: { id: string; column: () => TableColumn }) {
 function BodyCell(props: {
   card: () => Record<string, unknown>
   rowId: string
+  rowNo: () => number
+  first: () => TableColumn | undefined
   colId: string
   rowBg: () => string | undefined
   column: () => TableColumn
@@ -122,10 +129,17 @@ function BodyCell(props: {
   // Cell beats row; the row beats the card.
   const fill = () => {
     const bg = cell().bg ?? props.rowBg()
-    return bg ? cardColorVars(bg) : null
+    return bg ? tableFillVars(bg) : null
   }
   // Text a number or date column could not read stays visible, muted.
   const unread = () => unreadText(props.column(), cell())
+  // A box is named by its column and the row's first cell ("Good boy, Rex"); its state is aria-checked's to say.
+  // Only a box reads the first cell, so a text cell never subscribes to it.
+  const label = () => {
+    const head = props.first()
+    const who = head && head.id !== props.colId ? cellDisplay(head, readCell(props.card()[cellKey(props.rowId, head.id)])).trim() : ''
+    return who ? COPY.table.checkLabel(props.column().n || COPY.table.columnFallback, who) : COPY.table.cellLabel(props.rowNo(), props.column().n || COPY.table.columnFallback)
+  }
   return (
     <td
       data-row={props.rowId}
@@ -137,13 +151,13 @@ function BodyCell(props: {
       data-fill={fill() ? '' : undefined}
       style={fill() ? { '--cell-bg': fill()!.bg, '--cell-text': fill()!.text } : undefined}
     >
-      <CellContent column={props.column()} cell={cell()} unread={unread()} live={props.live()} toggle={(on) => props.toggle(props.rowId, props.colId, on)} />
+      <CellContent column={props.column()} cell={cell()} unread={unread()} live={props.live()} label={label} toggle={(on) => props.toggle(props.rowId, props.colId, on)} />
     </td>
   )
 }
 
 /** What a cell shows for its column's type. Anything the type can't read draws nothing (or, for numbers and dates, muted text). */
-function CellContent(props: { column: TableColumn; cell: Cell; unread: string | null; live: boolean; toggle: (on: boolean) => void }) {
+function CellContent(props: { column: TableColumn; cell: Cell; unread: string | null; live: boolean; label: () => string; toggle: (on: boolean) => void }) {
   const value = () => cellValue(props.column, props.cell)
   return (
     <Switch fallback={cellDisplay(props.column, props.cell)}>
@@ -157,7 +171,7 @@ function CellContent(props: { column: TableColumn; cell: Cell; unread: string | 
           role="checkbox"
           aria-checked={value() === true}
           aria-readonly={!props.live || undefined}
-          aria-label={value() === true ? COPY.table.ticked : COPY.table.unticked}
+          aria-label={props.label()}
           data-nodrag={props.live ? '' : undefined}
           onClick={() => props.live && props.toggle(value() !== true)}
         />
@@ -165,7 +179,7 @@ function CellContent(props: { column: TableColumn; cell: Cell; unread: string | 
       <Match when={props.column.t === 'rating'}>
         <span class="table-rating" data-testid="table-rating" role="img" data-n={(value() as number | null) ?? 0} aria-label={COPY.table.pawsLabel((value() as number | null) ?? 0)}>
           <For each={[1, 2, 3, 4, 5]}>
-            {(i) => <span class="table-paw" data-paw={i} data-on={i <= ((value() as number | null) ?? 0) ? '' : undefined}><Icon name="paw" size={14} /></span>}
+            {(i) => <span class="table-paw" data-paw={i} data-on={i <= ((value() as number | null) ?? 0) ? '' : undefined}><Icon name={i <= ((value() as number | null) ?? 0) ? 'paw' : 'pawOutline'} size={14} /></span>}
           </For>
         </span>
       </Match>

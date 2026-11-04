@@ -1,12 +1,12 @@
 import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, onMount } from 'solid-js'
 import {
-  TABLE_CAPS, addColumn, addOption, addRows, cellOf, effectiveAlign, cellValue, clearCells, copyGrid, deleteColumns, deleteRows, duplicateRows, moveColumns, moveOption, moveRows, parseInput, parseTsv, pasteGrid,
+  TABLE_CAPS, colKey, addColumn, addOption, addRows, cellOf, effectiveAlign, cellValue, clearCells, copyGrid, deleteColumns, deleteRows, duplicateRows, moveColumns, moveOption, moveRows, parseInput, parseTsv, pasteGrid,
   removeOption, resizeBoundary, retype, setCells, setRowFill, setStyle, sortRows, tableRows, tableTitle, toTsv, updateColumn, updateOption,
   type Align, type Card, type ColumnType, type TableColumn, type TablePatch,
 } from '@doggynote/core'
 import { COPY, type PresetColor } from '@doggynote/theme'
 import * as doc from '../../state/doc.ts'
-import { endEdit, onFlushEdit } from '../../state/ui.ts'
+import { editIsNewCard, endEdit, onFlushEdit } from '../../state/ui.ts'
 import { touch } from '../../state/device.ts'
 import { showToast } from '../../state/toast.ts'
 import { revealEditCaret, takeEditCaret } from '../../canvas/Canvas.tsx'
@@ -15,6 +15,7 @@ import { TableLineMenu } from '../../ui/TableMenus.tsx'
 import { SelectPopover } from './SelectPopover.tsx'
 import { OptionsPopover } from './OptionsPopover.tsx'
 import { editText, inputLocale } from './format.ts'
+import { finishHint, takeHint } from './hint.ts'
 import { activeTable, setActiveTable, type SelectionKind, type TableControl } from './tableControl.ts'
 import { bodyRows, confine, edge, enterDown, homeEnd, rangeOf, step, tab, type Cursor, type Dir } from './tableNav.ts'
 
@@ -45,6 +46,8 @@ const ARROWS: Record<string, Dir> = { ArrowUp: 'up', ArrowDown: 'down', ArrowLef
 /** Touch: the field is 16px (iOS zooms into smaller ones) and scaled down to the card's 14px. */
 const TOUCH_SCALE = 0.875
 const TITLE_MAX = 200
+/** One press of Alt+Shift+< or > moves a boundary this far. */
+const KEY_RESIZE_PX = 16
 
 export function TableEditor(props: {
   card: Card<'table'>
@@ -74,6 +77,8 @@ export function TableEditor(props: {
   const [select, setSelect] = createSignal<{ row: string; col: string; query: string } | null>(null)
   /** The options editor, open on a tag column. */
   const [optionsCol, setOptionsCol] = createSignal<string | null>(null)
+  /** The first-run hint under a brand-new table: gone after the first change made here. */
+  const [hint, setHint] = createSignal(false)
   let dp: HTMLInputElement | undefined
   let editTarget: Target = { kind: 'title' }
   let initial = ''
@@ -150,7 +155,9 @@ export function TableEditor(props: {
   }
   const run = (...patches: (TablePatch | null)[]) => {
     const merged = Object.assign({}, ...patches.filter(Boolean)) as TablePatch
-    if (Object.keys(merged).length) doc.update({ [id]: merged as Partial<Card> })
+    if (!Object.keys(merged).length) return
+    doc.update({ [id]: merged as Partial<Card> })
+    if (hint()) { setHint(false); finishHint() }
   }
 
   // ---- the draft ------------------------------------------------------------------
@@ -667,6 +674,14 @@ export function TableEditor(props: {
       return
     }
     const dir = ARROWS[key]
+    // Alt+Shift+< and > (the comma and period keys) narrow or widen the selected column. `code`, because Alt
+    // changes what the key types on a Mac. Always handled, so the field never takes the character.
+    if (e.altKey && e.shiftKey && !mod && (e.code === 'Comma' || e.code === 'Period')) {
+      e.preventDefault()
+      e.stopPropagation()
+      resizeByKey(e.code === 'Period' ? 1 : -1)
+      return
+    }
     // Alt+Shift+arrows move the selected rows (up, down) or columns (left, right).
     if (dir && e.altKey && e.shiftKey && !mod) {
       e.preventDefault()
@@ -924,7 +939,7 @@ export function TableEditor(props: {
   const crowdedHeader = (index: number, colId: string) => {
     const col = column(colId)
     const box = layout().cols[index]
-    return !!col && !!box && effectiveAlign(col) === 'c' && box.w < col.n.length * 7 + 2 * 32
+    return !!col && !!box && effectiveAlign(col) === 'c' && box.w < col.n.length * 7 + 2 * 32 + (col.s ? 18 : 0)
   }
 
   type Resize = { id: number; left: string; x0: number; k: number; width: number; total: number; patch: TablePatch; el: HTMLElement }
@@ -962,6 +977,29 @@ export function TableEditor(props: {
     if (e.type === 'pointerup' && Object.keys(r.patch).length) run(r.patch)
     else showWeights({})
     ta.focus({ preventScroll: true })
+  }
+  /**
+   * Alt+Shift+< and >: the column picked (the last, if several) gets narrower or wider by a step, taking the
+   * room from its right neighbour; the last column trades with the one before it. One press is one change.
+   */
+  function resizeByKey(dir: -1 | 1) {
+    if (kind() !== 'cols' || titleActive()) return
+    const cols = props.columns()
+    const last = props.colIds()[range().c1]
+    const i = cols.findIndex((c) => c.id === last)
+    if (i < 0 || cols.length < 2) return
+    const total = cols.reduce((a, c) => a + c.w, 0) || 1
+    const step = (KEY_RESIZE_PX / (layout().table?.w || 1)) * total
+    let patch = resizeBoundary(props.card, last!, dir * step)
+    if (!Object.keys(patch).length && i === cols.length - 1) patch = resizeBoundary(props.card, cols[i - 1]!.id, -dir * step)
+    if (!Object.keys(patch).length) {
+      // The same words twice would not be read again.
+      setAnnouncement('')
+      return void queueMicrotask(() => setAnnouncement(COPY.table.announceResizeLimit(dir > 0)))
+    }
+    run(patch)
+    const w = (patch[colKey(last!)] as { w?: number } | undefined)?.w ?? cols[i]!.w
+    setAnnouncement(COPY.table.announceResized(cols[i]!.n, Math.round((w / total) * 100)))
   }
   /** Double-click a boundary: the two columns share their width equally. */
   function evenOut(left: string) {
@@ -1113,6 +1151,7 @@ export function TableEditor(props: {
     const table = props.table()
     if (table) ro.observe(table)
     setActiveTable(control)
+    setHint(editIsNewCard() && takeHint())
     syncInputMode()
     ta.focus({ preventScroll: true })
     announce()
@@ -1155,6 +1194,7 @@ export function TableEditor(props: {
         data-kind={kind()}
         rows={1}
         aria-label={label()}
+        aria-keyshortcuts={kind() === 'cols' ? 'Alt+Shift+< Alt+Shift+>' : undefined}
         autocomplete="off"
         autocapitalize="off"
         spellcheck={false}
@@ -1215,7 +1255,7 @@ export function TableEditor(props: {
                     data-col={colId}
                     data-testid="table-column-grip"
                     aria-label={COPY.table.columnGrip(column(colId)?.n ?? '')}
-                    data-tip={COPY.table.columnGrip(column(colId)?.n ?? '')}
+                    data-tip={COPY.table.columnGripTip(column(colId)?.n ?? '')}
                     style={{ left: `${box().x}px`, width: `${box().w}px` }}
                     onPointerDown={(e) => gripDown(e, 'cols', i())}
                     onPointerMove={gripMove}
@@ -1336,6 +1376,9 @@ export function TableEditor(props: {
           }}
           close={() => { setOptionsCol(null); ta.focus({ preventScroll: true }) }}
         />
+      </Show>
+      <Show when={hint()}>
+        <p class="table-hint" data-testid="table-hint" aria-hidden="true">{touch() ? COPY.table.firstRunHintTouch : COPY.table.firstRunHint}</p>
       </Show>
       <div class="table-live" role="status" aria-live="polite">{announcement()}</div>
     </div>

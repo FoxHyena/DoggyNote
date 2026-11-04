@@ -204,7 +204,7 @@ A warm, low-chroma brown family lit by a single golden retriever amber, plus six
 - **Wet Nose Brown** and **Paw Pad Brown**: light theme text and muted text. **Scolded Red** is light theme error text.
 
 ### Card swatches
-Six colours a person can give a note or column header, each with a background and a matched text colour per theme: **Gold**, **Collar**, **Ball**, **Sky**, **Lilac** and **Peach**, plus **None** (the plain card). Dark-theme swatches (`-den`) are muted mid-tones; light-theme swatches (`-day`) are pale pastels. Their text pairs live in `tokens.ts` and are not repeated here. Synced colour values always pass through `cardColor()` before reaching CSS.
+Six colours a person can give a note or column header, each with a background and a matched text colour per theme: **Gold**, **Collar**, **Ball**, **Sky**, **Lilac** and **Peach**, plus **None** (the plain card). Dark-theme swatches (`-den`) are muted mid-tones; light-theme swatches (`-day`) are pale pastels. Their text pairs live in `tokens.ts` and are not repeated here. Table cell, row and tag fills use their own `tableFills` pairs: the same pastels in light, and in dark a softer tint (about 30% of the swatch over the card) with the theme's light text, so a grid of fills does not outshine the board. Synced colour values always pass through `cardColor()` before reaching CSS.
 
 The same family supplies the **diff** colours (added, changed, removed) shown when previewing an agent's proposal, and the seven **person** colours for collaborator cursors and presence. Both reuse the Ball, Sky, Collar, Lilac, Gold and Peach hues, so collaboration reads as part of the den rather than an overlay.
 

@@ -209,8 +209,8 @@ test('a tag is a chip in the card colours, an unknown id shows nothing, and pick
   await seedTyped(page, COLS, [...ROWS.slice(0, 3), { cells: ['Fido', null, null, null, 'zz99', null] }])
   const chip = cell(page, 0, STATUS).getByTestId('table-chip')
   await expect(chip).toHaveText('Walked')
-  expect(await chip.getAttribute('style')).toContain('--dn-card-ball-bg')
-  expect(await chip.getAttribute('style')).toContain('--dn-card-ball-text')
+  expect(await chip.getAttribute('style')).toContain('--dn-table-ball-bg')
+  expect(await chip.getAttribute('style')).toContain('--dn-table-ball-text')
   await expect(cell(page, 3, STATUS).getByTestId('table-chip')).toHaveCount(0)
   expect(await text(page, 3, STATUS)).toBe('')
   await openAt(page, 0, STATUS)
@@ -233,7 +233,7 @@ test('creating a tag: Enter on the typed name adds it with the next unused colou
   const chip = cell(page, 3, STATUS).getByTestId('table-chip')
   await expect(chip).toHaveText('Zoomies')
   // ball, gold and sky are taken: the next preset in line.
-  expect(await chip.getAttribute('style')).toContain('--dn-card-collar-bg')
+  expect(await chip.getAttribute('style')).toContain('--dn-table-collar-bg')
   // Another cell can pick it, by name, without creating a second one.
   await page.keyboard.press('ArrowUp')
   await page.keyboard.press('ArrowUp')
@@ -277,7 +277,7 @@ test('a column menu edits the options: rename, recolour with the presets, reorde
   await expect(panel.locator('input[type=color]')).toHaveCount(0)
   await expect(panel.locator('.color-dot')).toHaveCount(7)
   await panel.getByTestId('table-option-colour-lilac').click()
-  expect(await cell(page, 1, STATUS).getByTestId('table-chip').getAttribute('style')).toContain('--dn-card-lilac-bg')
+  expect(await cell(page, 1, STATUS).getByTestId('table-chip').getAttribute('style')).toContain('--dn-table-lilac-bg')
   // Reorder: Dinner moves above Walked.
   await rows.nth(1).getByTestId('table-option-up').click()
   await expect(rows.nth(0)).toHaveAttribute('data-option', 'Dinner')
@@ -321,11 +321,13 @@ test('paws: keys 1 to 5 set, 0 and Delete clear, a click sets a paw and the same
   expect(await activeCell(page)).toEqual({ row: 3, col: PAWS })
   await cell(page, 3, PAWS).locator('[data-paw="4"]').click()
   expect(await ratingOf(page, 3, PAWS)).toBe(0)
-  // Empty paws are faint, set ones are the text colour.
+  // Empty paws are outlines at the tested strength (3:1 on any cell); set ones are solid paws in the full text colour.
   const faint = await cell(page, 1, PAWS).locator('[data-paw="5"]').evaluate((el) => Number(getComputedStyle(el).opacity))
   const set = await cell(page, 1, PAWS).locator('[data-paw="1"]').evaluate((el) => Number(getComputedStyle(el).opacity))
-  expect(faint).toBeLessThan(0.4)
+  expect(faint).toBeCloseTo(0.7, 2)
   expect(set).toBe(1)
+  await expect(cell(page, 1, PAWS).locator('[data-paw="5"] svg')).toHaveAttribute('data-icon', 'pawOutline')
+  await expect(cell(page, 1, PAWS).locator('[data-paw="1"] svg')).toHaveAttribute('data-icon', 'paw')
   // A range takes the key together.
   await page.keyboard.press('ArrowUp')
   await page.keyboard.press('Shift+ArrowUp')
@@ -382,6 +384,50 @@ test('the column menu holds Type and Sort too, and the header shows the type', a
   expect(await ratingOf(page, 1, AGE)).toBe(0)
 })
 
+test('each box is named by its column and its row\'s first cell, and its state is the box\'s own to say', async ({ page, browser }) => {
+  await seedTyped(page, COLS, [
+    { cells: ['Rex', 4, true, null, null, null] },
+    { cells: ['Mochi', 12, false, null, null, null] },
+    { cells: ['', 7, true, null, null, null] },
+  ])
+  const card = page.locator('[data-type=table]')
+  const box = (name: string) => card.getByRole('checkbox', { name, exact: true })
+  // Read view: "Good boy, Rex" with the state on aria-checked, and no row without a name is left as a bare "Good boy".
+  await expect(box('Good boy, Rex')).toHaveAttribute('aria-checked', 'true')
+  await expect(box('Good boy, Mochi')).toHaveAttribute('aria-checked', 'false')
+  await expect(box('Row 3, Good boy')).toHaveAttribute('aria-checked', 'true')
+  // Ticking while editing changes the state and not the name.
+  await openAt(page, 1, GOOD)
+  await page.keyboard.press('Space')
+  await expect(box('Good boy, Mochi')).toHaveAttribute('aria-checked', 'true')
+  // A new first-cell value renames its row's boxes.
+  await openAt(page, 0, PUP)
+  await page.keyboard.type('Rexy')
+  await page.keyboard.press('Enter')
+  await expect(box('Good boy, Rexy')).toHaveCount(1)
+  await expect(box('Good boy, Rex')).toHaveCount(0)
+  // The read-only viewer has the same names.
+  await page.getByTestId('share').click()
+  const panel = page.getByTestId('share-panel')
+  await panel.getByTestId('create-share').click()
+  const url = await panel.getByTestId('share-url').first().inputValue()
+  const ctx = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+  try {
+    const v = await ctx.newPage()
+    await v.goto(url)
+    const shared = v.locator('[data-type=table]')
+    await expect(shared.getByRole('checkbox', { name: 'Good boy, Rexy', exact: true })).toHaveAttribute('aria-checked', 'true')
+    await expect(shared.getByRole('checkbox', { name: 'Row 3, Good boy', exact: true })).toBeVisible()
+  } finally { await ctx.close() }
+})
+
+test('a box in the first column is named by its row number', async ({ page }) => {
+  await seedTyped(page, [{ n: 'Walked', t: 'checkbox' }, { n: 'Pup' }], [{ cells: [true, 'Rex'] }, { cells: [false, 'Mochi'] }])
+  const card = page.locator('[data-type=table]')
+  await expect(card.getByRole('checkbox', { name: 'Row 1, Walked', exact: true })).toHaveAttribute('aria-checked', 'true')
+  await expect(card.getByRole('checkbox', { name: 'Row 2, Walked', exact: true })).toHaveAttribute('aria-checked', 'false')
+})
+
 test('a read-only viewer draws every type and nothing in it can be changed', async ({ page, browser }) => {
   await seedTyped(page, COLS, ROWS)
   await page.getByTestId('share').click()
@@ -425,7 +471,7 @@ test('zoomed out, fills and tags are drawn on the overview canvas', async ({ pag
   await page.keyboard.up('Control')
   await expect(page.getByTestId('lod-layer')).toBeVisible()
   await expect(page.getByTestId('table-grid')).toHaveCount(0)
-  // The canvas holds the fills' colours (any pixel that is clearly blue-ish or red-ish and not the card).
+  // The canvas holds the table's own fills (the dark theme's softer ones): exact pixels of the sky and collar fills.
   const colours = await page.getByTestId('lod-layer').evaluate((el) => {
     const c = el as HTMLCanvasElement
     const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data
@@ -433,8 +479,8 @@ test('zoomed out, fills and tags are drawn on the overview canvas', async ({ pag
     for (let i = 0; i < d.length; i += 4) {
       const [r, g, b, a] = [d[i]!, d[i + 1]!, d[i + 2]!, d[i + 3]!]
       if (a < 250) continue
-      if (b > 190 && b > r + 40) sky++
-      if (r > 190 && r > g + 60 && r > b + 60) collar++
+      if (r === 0x45 && g === 0x50 && b === 0x5a) sky++
+      if (r === 0x66 && g === 0x3a && b === 0x3e) collar++
     }
     return { sky, collar }
   })

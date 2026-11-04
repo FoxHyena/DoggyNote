@@ -54,6 +54,11 @@
 .table-grid td[data-type='number'] { font-variant-numeric: tabular-nums; }
 .table-grid td[data-bold] { font-weight: 600; }
 .table-grid td[data-fill] { background: var(--cell-bg); color: var(--cell-text); }
+/* The arrow a sorted column keeps in its header until the rows move again. */
+.table-sort { display: inline-block; flex: none; width: 14px; height: 14px; margin-left: 4px; vertical-align: -3px; color: inherit; white-space: nowrap; }
+/* A centred name stays centred: the arrow hangs off its right end. */
+.table-grid th[data-align='c'] .table-sort { margin-right: -18px; }
+.table-sort .dn-icon { display: block; }
 /* Text its column's type couldn't read (a word in a number column) is kept, and shown quieter. */
 .table-grid td[data-muted]:not([data-fill]) { color: var(--dn-text-muted); }
 .table-grid td[data-muted][data-fill] { font-style: italic; }
@@ -73,11 +78,13 @@ html[data-input='mouse'] .card-table.editing:has(.table-range) td[data-fill]:hov
   height: 15px;
   margin-top: 2px;
   vertical-align: top;
-  border: 1.5px solid color-mix(in srgb, currentColor 55%, transparent);
+  border: 1.5px solid currentColor;
   border-radius: 4px;
+  /* Empty, it keeps part of its ink (tested to clear 3:1 on every cell); ticked it is the full lamp. */
+  opacity: var(--dn-table-empty-ink, 0.7);
 }
 /* As a to-do's done box: the lamp's colour on a plain cell, the cell's own ink on a filled one. */
-.table-check[aria-checked='true'] { border-color: var(--dn-accent); background: var(--dn-accent); }
+.table-check[aria-checked='true'] { border-color: var(--dn-accent); background: var(--dn-accent); opacity: 1; }
 .table-grid td[data-fill] .table-check[aria-checked='true'] { border-color: var(--cell-text); background: var(--cell-text); }
 .table-grid td[data-fill] .table-check[aria-checked='true']::before { border-color: var(--cell-bg); }
 .table-check[aria-checked='true']::before {
@@ -94,7 +101,8 @@ html[data-input='mouse'] .card-table.editing:has(.table-range) td[data-fill]:hov
 html[data-input='touch'] .table-check::after { inset: -14px; }
 .table-check[data-nodrag] { cursor: pointer; }
 .table-rating { display: inline-flex; align-items: center; gap: 1px; max-width: 100%; height: 14px; margin-top: 3px; vertical-align: top; overflow: hidden; }
-.table-paw { display: grid; flex: 0 1 14px; min-width: 6px; opacity: 0.22; }
+/* An empty paw is an outline at part of the ink (tested to clear 3:1 on every cell, filled or not); a set one is solid and full. */
+.table-paw { display: grid; flex: 0 1 14px; min-width: 6px; opacity: var(--dn-table-empty-ink, 0.7); }
 .table-paw[data-on] { opacity: 1; }
 .table-paw .dn-icon { width: 100%; height: auto; max-width: 14px; }
 .card-table.editing .table-paw { cursor: pointer; }
@@ -177,6 +185,26 @@ html[data-input='touch'] .table-input {
 }
 html[data-input='touch'] .table-input[data-target='title'] { padding: calc(11px / 0.875) calc(14px / 0.875) calc(6px / 0.875); }
 html[data-input='touch'] .table-input[data-target='header'] { font-size: 16px; }
+
+/* The first-run hint: one quiet line under a brand-new table, below the add-row pill, never inside the card. */
+.table-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 30px);
+  overflow: hidden;
+  color: var(--dn-text-muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  /* In line with the title's text: always in view where the card starts, however wide the card runs. */
+  padding: 0 14px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+html[data-input='touch'] .table-hint { top: calc(100% + 48px); }
 
 /* Adding a row or column happens outside the card, so its height never jumps. Quiet pills: a plus,
    visible but faint until the pointer is near. Touch gets a 44px target drawing a 28px dot. */

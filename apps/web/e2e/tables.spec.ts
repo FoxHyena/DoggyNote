@@ -302,3 +302,57 @@ test('zoomed out, a table is drawn on the overview canvas and has no DOM', async
   })
   expect(painted).toBe(true)
 })
+
+test('a brand-new table shows one quiet hint outside the card, gone at the first change and never again', async ({ page }) => {
+  const card = await addTable(page)
+  const hint = page.getByTestId('table-hint')
+  await expect(hint).toBeVisible()
+  await expect(hint).toHaveText('Type to fill · Tab for the next cell · drag ⋮⋮ to reorder')
+  // Muted 12px, below the card and its "+ row" pill, and the card does not grow to make room.
+  const box = (await card.boundingBox())!, h = (await hint.boundingBox())!, pill = (await page.getByTestId('table-add-row').boundingBox())!
+  expect(h.y).toBeGreaterThanOrEqual(box.y + box.height)
+  expect(h.y).toBeGreaterThanOrEqual(pill.y + pill.height - 1)
+  expect(await hint.evaluate((el) => getComputedStyle(el).fontSize)).toBe('12px')
+  expect(await hint.evaluate((el) => getComputedStyle(el).pointerEvents)).toBe('none')
+  // The card does not grow to make room: taking the hint away changes nothing.
+  await hint.evaluate((el) => { (el as HTMLElement).style.display = 'none' })
+  expect(Math.abs((await card.boundingBox())!.height - box.height)).toBeLessThan(0.5)
+  await hint.evaluate((el) => { (el as HTMLElement).style.display = '' })
+  // It is only a hint: moving around does not end it, filling a cell does.
+  await page.keyboard.press('ArrowRight')
+  await expect(hint).toBeVisible()
+  await page.keyboard.type('Rex')
+  await page.keyboard.press('Enter')
+  await expect(hint).toHaveCount(0)
+  await page.keyboard.press('Escape')
+  await page.keyboard.press('Escape')
+  // Seen: not again, for this table or the next, or after a reload.
+  await addTable(page)
+  await expect(page.getByTestId('table-hint')).toHaveCount(0)
+  await page.reload()
+  await expect(table(page)).toBeVisible()
+  expect(await page.evaluate(() => localStorage.getItem('doggynote.tableHint'))).toBe('3')
+})
+
+test('someone who never fills a new table sees the hint three times, and an old table never shows it', async ({ page }) => {
+  for (let i = 0; i < 4; i++) {
+    await addTable(page)
+    await expect(page.getByTestId('table-hint')).toHaveCount(i < 3 ? 1 : 0)
+    // Left alone, the table is discarded.
+    await page.keyboard.press('Escape')
+    await page.keyboard.press('Escape')
+    await expect(page.locator('[data-type=table]')).toHaveCount(0)
+  }
+  await page.evaluate(() => localStorage.removeItem('doggynote.tableHint'))
+  // A table that was not just made has nothing to teach.
+  await addTable(page)
+  await page.keyboard.type('Rex')
+  await page.keyboard.press('Enter')
+  await page.keyboard.press('Escape')
+  await page.keyboard.press('Escape')
+  await page.evaluate(() => localStorage.removeItem('doggynote.tableHint'))
+  await cell(page, 0, 0).click()
+  await cell(page, 0, 0).click()
+  await expect(input(page)).toBeFocused()
+  await expect(page.getByTestId('table-hint')).toHaveCount(0)
+})

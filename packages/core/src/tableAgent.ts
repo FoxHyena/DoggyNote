@@ -23,7 +23,12 @@ export type AgentAlign = 'left' | 'center' | 'right'
 export type AgentCellStyle = { value?: Prim | null; bold?: boolean; align?: AgentAlign; color?: PresetColor }
 export type AgentValue = Prim | AgentCellStyle | null
 export type AgentOption = { id?: string; name: string; color?: PresetColor }
-export type AgentColumn = { id?: string; name: string; type?: ColumnType; width?: number; align?: AgentAlign; options?: AgentOption[] }
+/**
+ * `sorted` is read-only: read_board says which column the rows were last sorted by and which way, until
+ * something moves or adds rows. Sending it does nothing. A replace that keeps every row in the order it
+ * was read in keeps the mark; any other rows or order drop it.
+ */
+export type AgentColumn = { id?: string; name: string; type?: ColumnType; width?: number; align?: AgentAlign; options?: AgentOption[]; sorted?: 'asc' | 'desc' }
 export type AgentRow = { id?: string; color?: PresetColor; cells: AgentValue[] }
 export type AgentTable = { title: string; columns: AgentColumn[]; rows: AgentRow[] }
 
@@ -51,6 +56,7 @@ export function toAgentTable(card: object): AgentTable {
     columns: cols.map((c) => ({
       id: c.id, name: c.n, type: c.t, width: c.w,
       ...(c.a ? { align: ALIGN_OUT[c.a] } : {}),
+      ...(c.s ? { sorted: c.s === 'a' ? 'asc' as const : 'desc' as const } : {}),
       ...(c.t === 'select' ? { options: c.opts.map((o) => ({ id: o.id, name: o.n, ...(o.c !== 'none' ? { color: o.c } : {}) })) } : {}),
     })),
     rows: tableRows(card).map((r) => ({
@@ -287,8 +293,14 @@ function build(agent: unknown, prev: object | undefined): TablePatch & { content
       if (stored !== null && stored !== undefined) patch[cellKey(id, col.id)] = stored
     })
   })
+  // The sort mark is the app's, not the agent's: it survives only while the rows are exactly as they were.
+  const prevRows = [...oldRows.keys()]
+  const sameRows = !!prev && givenRows.length === prevRows.length && givenRows.every((id, i) => id === prevRows[i])
   // Options may have grown while reading cells; write the columns last.
-  for (const c of built) patch[colKey(c.id)] = { ...c.field, ...(c.opts.length ? { opts: c.opts } : {}) }
+  for (const c of built) {
+    const was = oldCols.get(c.id)
+    patch[colKey(c.id)] = { ...c.field, ...(c.opts.length ? { opts: c.opts } : {}), ...(sameRows && was?.s && was.t === c.field.t ? { s: was.s } : {}) }
+  }
   return patch as TablePatch & { content: { title: string } }
 }
 

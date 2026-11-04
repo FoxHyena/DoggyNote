@@ -47,6 +47,7 @@ A table card (`type: "table"`) reads and writes as plain columns and rows, not a
 ```
 
 - Cells are in column order and rows are in display order. A cell is a string, number, boolean or `null`, or `{ "value", "bold", "align", "color" }` to style it.
+- A column read from the app may carry `sorted: "asc"` or `"desc"`: the column the rows were last sorted by, until rows move or are added. It is read-only. Sending it does nothing, and a replace keeps the mark only when every row is sent back in the order it was read.
 - Types are `text`, `number`, `checkbox`, `date` (`YYYY-MM-DD`), `select` and `rating` (whole number 1-5). A select cell holds the option's name; an unknown name adds a new option.
 - At most 100 rows and 26 columns, 2,000 characters per cell. A value that does not fit its column is refused with its place, for example `Row 3, "Next visit": use YYYY-MM-DD`.
 - Ids are optional. On a replace, keep the ids from `read_board` so unchanged rows and columns keep their place; leave them out for new rows and columns. Only rows that moved are reordered.

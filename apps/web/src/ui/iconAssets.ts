@@ -231,6 +231,7 @@ export const ICONS = {
   arrowLeft: body(arrowLeftSvg),
   arrowRight: body(arrowRightSvg),
   paw: body(pawPrintFillSvg),
+  pawOutline: body(pawPrintSvg),
   starFilled: body(starFillSvg),
   pinFilled: body(pushPinFillSvg),
 } as const

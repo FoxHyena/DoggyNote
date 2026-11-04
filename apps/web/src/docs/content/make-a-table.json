@@ -92,7 +92,7 @@
       "paragraphs": [
         "While you edit a table, small grips appear beside every row and above every column. Click a grip to pick that row or column and the bar above the table switches to what you can do with it. Drag a grip to move the row or column, and a line shows where it will land.",
         "The + at the bottom edge adds a row and the + at the right edge adds a column. A column header's ⋯ opens the column menu, which renames the column, changes its type, inserts a column on either side, moves it and deletes it. Drag the edge between two headers to give one column more room and the next one less, or drag the card's corner to scale every column together.",
-        "No mouse? Shift+Space picks the row you are in and Ctrl+Space picks the column. Then Alt+Shift with an arrow key moves it."
+        "No mouse? Shift+Space picks the row you are in and Ctrl+Space picks the column. Then Alt+Shift with an arrow key moves it, and with a picked column Alt+Shift+< or Alt+Shift+> makes it narrower or wider."
       ],
       "figures": [
         {
@@ -134,7 +134,7 @@
       "title": "Bold, align, fill and sort",
       "paragraphs": [
         "Select some cells and the bar above the table offers Bold, Align and Fill. Align sets the cells you picked, or choose a column's header to set a default for the whole column. Fill paints cells or a whole row with one of six colours; a ticked box and the text inside take the colour's matching ink so they stay easy to read.",
-        "Sort is a one-off. Pick a column with its grip, choose Sort, then A to Z, Z to A or the number version, and the rows are rearranged once. Empty cells go last, everyone sees the same order, and one undo puts the rows back. The table isn't kept sorted, so rows never jump while you or a friend are typing."
+        "Sort is a one-off. Pick a column with its grip, choose Sort, then A to Z, Z to A or the number version, and the rows are rearranged once. Empty cells go last, everyone sees the same order, and one undo puts the rows back. The table isn't kept sorted, so rows never jump while you or a friend are typing. The sorted column keeps a small arrow in its header, until you move rows, add a row or sort another column."
       ],
       "figures": [
         {

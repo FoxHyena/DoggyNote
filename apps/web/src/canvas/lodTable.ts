@@ -12,9 +12,9 @@ const ROW_H = 32
 
 type Pal = Record<string, string>
 
-/** A preset fill as canvas colours; 'none' and anything unknown draw nothing. */
+/** A preset fill as canvas colours, the table's own (see tableFills); 'none' and anything unknown draw nothing. */
 const fillOf = (pal: Pal, color: unknown): { bg: string; text: string } | null =>
-  isPresetColor(color) && color !== 'none' && pal[`${color}-bg`] ? { bg: pal[`${color}-bg`]!, text: pal[`${color}-text`] ?? pal.muted! } : null
+  isPresetColor(color) && color !== 'none' && pal[`table-${color}-bg`] ? { bg: pal[`table-${color}-bg`]!, text: pal[`table-${color}-text`] ?? pal.muted! } : null
 
 /** Read every table field, so the overview redraws when any cell, row or column changes. */
 export function trackTable(card: Card) {
@@ -125,7 +125,7 @@ export function drawTable(
             const on = cellValue(col, cell) === true
             const size = Math.min(room, 10 * z)
             const bx = place(size)
-            ctx.globalAlpha = on ? 0.8 : 0.45
+            ctx.globalAlpha = on ? 0.9 : Number(pal.emptyInk) || 0.7
             if (on) ctx.fillRect(bx, mid - size / 2, size, size)
             else { ctx.lineWidth = Math.max(1, z); ctx.strokeStyle = ink2; ctx.strokeRect(bx + 0.5, mid - size / 2 + 0.5, size, size) }
             ctx.globalAlpha = 1

@@ -250,3 +250,44 @@ describe('table keys', () => {
     expect(f[cellKey(row!.id, col!.id)]).toBe('a')
   })
 })
+
+describe('the sort mark for agents', () => {
+  const cols = { a: '100001', b: '100002' }, rows = ['200001', '200002']
+  const sortedCard = () => card({
+    content: { title: 'T' },
+    [colKey(cols.a)]: { n: 'Dog', o: 1, w: 1, t: 'text', s: 'd' }, [colKey(cols.b)]: { n: 'Age', o: 2, w: 1, t: 'number' },
+    [rowKey(rows[0]!)]: { o: 1 }, [rowKey(rows[1]!)]: { o: 2 },
+    [cellKey(rows[0]!, cols.a)]: 'Rex', [cellKey(rows[1]!, cols.a)]: 'Fido',
+  })
+  it('is read as sorted: asc or desc, and left out when the table is not sorted', () => {
+    const t = toAgentTable(sortedCard())
+    expect(t.columns[0]!.sorted).toBe('desc')
+    expect(t.columns[1]).not.toHaveProperty('sorted')
+  })
+  it('is ignored on the way in, and kept only while the rows are exactly as read', () => {
+    const prev = sortedCard()
+    const read = toAgentTable(prev)
+    const keep = must(read, prev)
+    expect(tableColumns(keep).find((c) => c.id === cols.a)!.s).toBe('d')
+    // Sending it for a column that was not sorted does nothing.
+    const claimed = structuredClone(read)
+    claimed.columns[1]!.sorted = 'asc'
+    expect(tableColumns(must(claimed, prev)).find((c) => c.id === cols.b)!.s).toBeUndefined()
+    // A new row, a different order, or a removed row drops it.
+    const added = structuredClone(read)
+    added.rows.push({ cells: ['Biscuit', 3] })
+    expect(tableColumns(must(added, prev)).some((c) => c.s)).toBe(false)
+    const swapped = structuredClone(read)
+    swapped.rows.reverse()
+    expect(tableColumns(must(swapped, prev)).some((c) => c.s)).toBe(false)
+    const removed = structuredClone(read)
+    removed.rows.pop()
+    expect(tableColumns(must(removed, prev)).some((c) => c.s)).toBe(false)
+    // A new table has none.
+    expect(tableColumns(must(read)).some((c) => c.s)).toBe(false)
+    // …and a retyped column loses it too.
+    const retyped = structuredClone(read)
+    retyped.columns[0]!.type = 'select'
+    expect(tableColumns(must(retyped, prev)).some((c) => c.s)).toBe(false)
+  })
+})
