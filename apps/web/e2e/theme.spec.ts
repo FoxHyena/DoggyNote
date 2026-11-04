@@ -69,7 +69,7 @@ test('system mode follows OS appearance changes live', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
 })
 
-test('account appearance works from the keyboard and dismisses without losing focus', async ({ page }) => {
+test('account appearance works from the keyboard and dismisses without losing focus', async ({ page, browserName }) => {
   await page.goto('/')
   const account = page.getByTestId('account')
   await expect(account).toHaveAccessibleName('Account')
@@ -80,7 +80,9 @@ test('account appearance works from the keyboard and dismisses without losing fo
   const menu = accountMenu(page)
   await expect(menu.getByText('rex', { exact: true })).toBeVisible()
   const toggle = menu.getByTestId('theme-toggle')
-  // The appearance icon is the first control, so it has focus when the menu opens.
+  // Photo controls lead the identity row; use Safari's all-controls tab shortcut.
+  await expect(menu.getByTestId('photo-options-trigger')).toBeFocused()
+  await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab')
   await expect(toggle).toBeFocused()
   await page.keyboard.press('Enter')
   await expect(toggle).toHaveAccessibleName('Appearance: System')
@@ -93,7 +95,7 @@ test('account appearance works from the keyboard and dismisses without losing fo
   await expect(account).toBeFocused()
   await expect(account).toHaveAttribute('aria-expanded', 'false')
   await page.keyboard.press('ArrowDown')
-  await expect(menu.getByTestId('theme-toggle')).toBeFocused()
+  await expect(menu.getByTestId('photo-options-trigger')).toBeFocused()
   await page.getByTestId('canvas').click({ position: { x: 15, y: 100 } })
   await expect(menu).toHaveCount(0)
   await expect(account).toHaveAttribute('aria-expanded', 'false')

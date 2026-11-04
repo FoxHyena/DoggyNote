@@ -4,7 +4,6 @@
 .people-count { font-size: 12px; font-variant-numeric: tabular-nums; }
 .people-avatars { display: flex; justify-content: center; width: 40px; flex-shrink: 0; }
 .people-avatars .person-avatar { width: 24px; height: 24px; border: 1px solid var(--dn-panel); margin-left: -5px; }
-.person-avatar { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: var(--person-color); color: var(--person-ink); font-size: 10px; font-weight: 650; }
 .people-menu { position: absolute; right: 0; top: calc(100% + 10px); width: 320px; padding: 8px; z-index: 60; }
 .people-status { color: var(--dn-text-muted); font-size: 11px; }
 .people-status[data-state='live'] { color: var(--dn-person-ball); }

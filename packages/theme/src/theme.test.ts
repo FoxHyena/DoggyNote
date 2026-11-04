@@ -20,6 +20,9 @@ describe('contrast', () => {
     it(`${t}: body text clears 4.5:1 on canvas, panel and card`, () => {
       for (const bg of [s.bg, s.panel, s.card, s.cardHover]) expect(contrast(s.text, bg)).toBeGreaterThanOrEqual(4.5)
     })
+    it(`${t}: photographic crop guides have a contrasting outline in either appearance`, () => {
+      expect(contrast(s.cropGuide, s.cropShade)).toBeGreaterThanOrEqual(4.5)
+    })
     it(`${t}: muted text clears 4.5:1 on card`, () => {
       expect(contrast(s.textMuted, s.card)).toBeGreaterThanOrEqual(4.5)
       expect(contrast(s.textMuted, s.bg)).toBeGreaterThanOrEqual(4.5)

@@ -7,9 +7,9 @@ export const SESSION_COOKIE = 'dn_session'
 const SESSION_DAYS = 90
 const DAY = 86_400_000
 
-type UserRow = { id: string; username: string; pw_hash: string; is_admin: number }
+type UserRow = { id: string; username: string; pw_hash: string; is_admin: number; avatar_id?: string | null }
 
-const toUser = (r: { id: string; username: string; is_admin: number }): User => ({ id: r.id, username: r.username, isAdmin: !!r.is_admin })
+const toUser = (r: { id: string; username: string; is_admin: number; avatar_id?: string | null }): User => ({ id: r.id, username: r.username, isAdmin: !!r.is_admin, avatarId: r.avatar_id ?? null })
 
 function tokenFrom(c: Context<AppEnv>): string | null {
   const h = c.req.header('authorization')
@@ -23,11 +23,11 @@ export async function sessionUser(c: Context<AppEnv>): Promise<{ user: User; has
   if (!token) return null
   const hash = await sha256Hex(token)
   const row = await c.env.DB.prepare(
-    `SELECT u.id, u.username, u.is_admin FROM sessions s JOIN users u ON u.id = s.user_id
+    `SELECT u.id, u.username, u.is_admin, u.avatar_id FROM sessions s JOIN users u ON u.id = s.user_id
      WHERE s.token_hash = ?1 AND s.expires_at > ?2`,
   )
     .bind(hash, Date.now())
-    .first<{ id: string; username: string; is_admin: number }>()
+    .first<{ id: string; username: string; is_admin: number; avatar_id?: string | null }>()
   return row ? { user: toUser(row), hash } : null
 }
 
@@ -88,7 +88,7 @@ auth.post('/login', async (c) => {
   const now = Date.now()
   const keys = loginKeys(c, username.slice(0, 64))
   if (await loginLocked(db, keys, now)) return c.json({ error: 'Too many sign-in attempts. Try again in 15 minutes.' }, 429)
-  const row = await db.prepare('SELECT id, username, pw_hash, is_admin FROM users WHERE username = ?1').bind(username).first<UserRow>()
+  const row = await db.prepare('SELECT id, username, pw_hash, is_admin, avatar_id FROM users WHERE username = ?1').bind(username).first<UserRow>()
   // Verify against a dummy hash when the user doesn't exist so timing doesn't reveal usernames.
   const ok = await verifyPassword(password, row?.pw_hash ?? 'pbkdf2$100000$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
   if (!row || !ok) {
@@ -129,7 +129,7 @@ users.post('/me/password', async (c) => {
 })
 
 users.get('/users', requireAdmin, async (c) => {
-  const { results } = await c.env.DB.prepare('SELECT id, username, is_admin, created_at FROM users ORDER BY created_at').all<{
+  const { results } = await c.env.DB.prepare('SELECT id, username, is_admin, avatar_id, created_at FROM users ORDER BY created_at').all<{
     id: string
     username: string
     is_admin: number
@@ -157,7 +157,7 @@ users.post('/users', requireAdmin, async (c) => {
 users.delete('/users/:id', requireAdmin, async (c) => {
   const id = c.req.param('id')
   if (id === c.get('user').id) return c.json({ error: "You can't remove yourself" }, 400)
-  const target = await c.env.DB.prepare('SELECT is_admin FROM users WHERE id = ?1').bind(id).first<{ is_admin: number }>()
+  const target = await c.env.DB.prepare('SELECT is_admin, avatar_id FROM users WHERE id = ?1').bind(id).first<{ is_admin: number; avatar_id?: string | null }>()
   if (!target) return c.json({ error: 'Person not found' }, 404)
   if (target.is_admin) {
     const count = await c.env.DB.prepare('SELECT COUNT(*) AS n FROM users WHERE is_admin = 1').first<{ n: number }>()
@@ -167,6 +167,7 @@ users.delete('/users/:id', requireAdmin, async (c) => {
     c.env.DB.prepare('DELETE FROM sessions WHERE user_id = ?1').bind(id),
     c.env.DB.prepare('DELETE FROM users WHERE id = ?1').bind(id),
   ])
+  if (target.avatar_id) await c.env.BUCKET.delete(`avatars/${target.avatar_id}.png`).catch(() => console.warn('[avatar] cleanup_failed'))
   return c.json({ ok: true })
 })
 

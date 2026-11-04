@@ -14,6 +14,8 @@ colors:
   oat-biscuit: "#f3efe9"
   milk-bowl: "#fbf9f6"
   paper-white: "#ffffff"
+  crop-guide: "#ffffff"
+  crop-shade: "#0b0a09"
   oat-hover: "#f7f3ee"
   oat-border: "#ddd5ca"
   oat-dot: "#d3cabe"
@@ -202,6 +204,7 @@ A warm, low-chroma brown family lit by a single golden retriever amber, plus six
 - **Collar Coral** (dark error text): inline field errors only.
 - **Oat Biscuit**, **Milk Bowl**, **Paper White**, **Oat Hover**, **Oat Border**, **Oat Dot**: the light twin of floor, shelf, card, hover, border and grid dots.
 - **Wet Nose Brown** and **Paw Pad Brown**: light theme text and muted text. **Scolded Red** is light theme error text.
+- **Photo Guide** and **Photo Shade** (`--dn-crop-guide`, `--dn-crop-shade`): theme-independent photographic framing materials, present in both themes. A white guide over a dark outline stays legible across supplied photos; the dark material also shades excluded image regions. The same pair frames the account avatar's camera affordance. Their use stays local to profile photos, without adding app accents.
 
 ### Card swatches
 Six colours a person can give a note or column header, each with a background and a matched text colour per theme: **Gold**, **Collar**, **Ball**, **Sky**, **Lilac** and **Peach**, plus **None** (the plain card). Dark-theme swatches (`-den`) are muted mid-tones; light-theme swatches (`-day`) are pale pastels. Their text pairs live in `tokens.ts` and are not repeated here. Table cell, row and tag fills use their own `tableFills` pairs: the same pastels in light, and in dark a softer tint (about 30% of the swatch over the card) with the theme's light text, so a grid of fills does not outshine the board. Synced colour values always pass through `cardColor()` before reaching CSS.
@@ -317,6 +320,17 @@ Shelf background, 1px border, 10px radius, floating shadow, 4px inner padding. R
 
 ### Dialogs and sheets
 Shelf background, 14px radius, at most 460px wide, over a 45% black backdrop. Headings are 16px. On phones, dialogs and panels become bottom sheets over the scrim token.
+
+### Profile photos
+Circular identity images share the existing person-colour initials fallback. Avatars remain decorative within labelled account and identity controls. The standard avatar is 28px with the incumbent 10px, weight-600 initials; the account trigger image is 24px. Images fill the circle with cover cropping. Loading, absent and failed images return to initials.
+
+The desktop Account popover is 280px wide. Its identity row pairs a 56px avatar button, with 20px initials, and a vertically centred 15px semibold username. Padding and gap are 16px, with one separator before account actions. The avatar's camera overlay appears only while hovered with a mouse; it remains hidden for keyboard focus, open menus, empty photos and touch. The avatar retains its keyboard focus outline and labelled photo-options button. It opens a small anchored photo menu on desktop and phones: Add photo when empty, or Change photo and Remove photo when saved. Escape closes this child menu before Account; Tab leaves it for Appearance and Shift+Tab returns to the avatar. Cancelling the file picker retains Account. Closing the editor returns to Account and focuses the avatar.
+
+The photo editor inherits the shelf dialog and phone sheet. Its square preview has an 8px corner radius and keeps the entire oriented photograph fixed in view, with 44px clearance for outward-facing corner targets. The stage retains a 224px minimum where viewport width permits. Initial framing and Reset use a centred square at 80% of the source's shorter edge; crop size stays within 25–100% of that edge. The square and simultaneous circular guide move over the photo. The photograph never pans, zooms or automatically reframes, including for tiny selections or viewport changes.
+
+Dragging within the selection and arrow keys move it in the same direction; Shift increases the keyboard step. Spreading fingers enlarges the selection and two-finger movement translates it. Four transparent, disjoint 44px corner targets resize about the opposite corner; handle keys resize the same source crop. Each target contains its painted corner mark, so pressing the visible mark starts resizing. Below a displayed selection size of 44px, a separate 44px grip labelled Move crop on two lines and a leader provide a clear movement target outside the crop and corner targets. Guide marks scale proportionally so they do not cross. There is no visible zoom slider. A quiet checkerboard sits behind source bounds only, using existing shelf and hover tones; it identifies transparency and is excluded from export.
+
+Close photo editor takes focus immediately on mount. Preview and handle focus outlines sit inward to avoid clipping. Reset stays secondary and Save photo is the single primary action. Inline save errors preserve the crop for retry; the body scrolls while the action row stays accessible outside it. See `.impeccable/surfaces/profile-photos.md` for the feature contract and output format.
 
 ### Creation tools
 Note, To-do and Board lead the desktop rail and phone Add sheet. Note is the single accented choice. Occasional tools sit in a quieter More tier; desktop tools keep click and drag creation. Phone Add uses one three-column catalogue of identical 44px inline icon-and-label buttons, with 4px row gaps and 8px column gaps. The first three tools use weight 600; Note alone has the primary button fill. Occasional tools remain visible on the same column grid, without a second heading or button grammar. Add and palette sheets use 16px gutters and a 44px header; their centred 96px-wide grip retains its 28px drag target while sharing the noninteractive space above the heading text.

@@ -1,0 +1,37 @@
+{
+  "before": {
+    "point": "top-left visible horizontal arm: selection.left + 4, selection.top + 1",
+    "hit": "avatar-selection DIV",
+    "zoom_after_drag": 1.25
+  },
+  "after_manual_browser": [
+    {
+      "browser": "chromium",
+      "hit": "Resize crop from top left",
+      "zoom_after_drag": 1.4272211720226844
+    },
+    {
+      "browser": "webkit",
+      "hit": "Resize crop from top left",
+      "zoom_after_drag": 1.4272211720226844
+    }
+  ],
+  "production_regression": {
+    "case": "profile visible corner marks themselves resize the crop",
+    "engines": [
+      "chromium",
+      "webkit"
+    ],
+    "corners_per_engine": 4,
+    "result": "pass",
+    "input": "elementFromPoint on the painted arm followed by real mouse drag"
+  },
+  "focused_checks": {
+    "passed": 24,
+    "presence_checks_retested_with_dedicated_observers": 2,
+    "presence_result": "both pass",
+    "reason": "shared rex observer accumulated the full-suite board set and exceeded startup readiness budget"
+  },
+  "unit_tests": 442,
+  "capture_inventory": "stationary-final/capture-inventory.json"
+}

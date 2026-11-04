@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test'
 import { addNote, cardByText, freshBoard } from './helpers.ts'
 import { API_PORT, DESKTOP_PORT } from './ports.ts'
 import { openStickerTray } from './sticker-helpers.ts'
+import { openPhoto } from './avatar-checks.ts'
 
 // The desktop app's code path: no cookies, a bearer token kept by the native
 // side (Keychain), API calls cross-origin to the server. We stand in for the
@@ -52,6 +53,28 @@ test.beforeEach(async ({ page }) => {
       },
     }
   })
+})
+
+test('desktop: profile photo saves cross-origin and loads with a session-bound image token', async ({ page, context, request }) => {
+  const base = `http://localhost:${API_PORT}`
+  const login = await request.post(`${base}/api/auth/login`, { data: { username: 'rex', password: 'goodboy123', bearer: true } })
+  const { token } = await login.json() as { token: string }
+  const username = `avatar-${crypto.randomUUID().slice(0, 12)}`
+  expect((await request.post(`${base}/api/users`, { headers: { authorization: `Bearer ${token}` }, data: { username, password: 'phototest123' } })).ok()).toBe(true)
+  await page.goto('/')
+  await page.getByLabel('Username').fill(username)
+  await page.getByLabel('Password').fill('phototest123')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page.getByTestId('canvas')).toBeVisible()
+  await openPhoto(page)
+  await page.getByRole('button', { name: 'Save photo', exact: true }).click()
+  const avatar = page.getByTestId('account').locator('img')
+  await expect(avatar).toBeVisible()
+  await expect(avatar).toHaveAttribute('src', /\/api\/avatars\/.*\?t=/)
+  expect((await context.cookies()).filter((c) => c.name === 'dn_session')).toHaveLength(0)
+  await expect.poll(() => avatar.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth)).toBe(512)
+  await page.reload()
+  await expect(avatar).toBeVisible()
 })
 
 test('desktop: sign in with a Keychain token, sync cross-origin, open links in the browser', async ({ page, context }) => {

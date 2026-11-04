@@ -85,11 +85,11 @@ export class BoardRoom {
     // One session lookup per broadcast, rather than N authorization walks per
     // incoming pointer. Revoked sessions still disappear before any broadcast.
     const hashes = [...new Set(candidates.map(([, a]) => a.hash))]
-    const sessions = new Map<string, { id: string; username: string; is_admin: number }>()
+    const sessions = new Map<string, { id: string; username: string; avatar_id?: string | null; is_admin: number }>()
     const revision = Number((await this.env.DB.prepare("SELECT value FROM counters WHERE name='access_revision'").first<{ value: number }>())?.value ?? 0)
     for (let i = 0; i < hashes.length; i += 90) {
       const chunk = hashes.slice(i, i + 90)
-      const { results } = await this.env.DB.prepare(`SELECT s.token_hash,u.id,u.username,u.is_admin FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.expires_at>?1 AND s.token_hash IN (${chunk.map((_, j) => `?${j + 2}`).join(',')})`).bind(Date.now(), ...chunk).all<{ token_hash: string; id: string; username: string; is_admin: number }>()
+      const { results } = await this.env.DB.prepare(`SELECT s.token_hash,u.id,u.username,u.avatar_id,u.is_admin FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.expires_at>?1 AND s.token_hash IN (${chunk.map((_, j) => `?${j + 2}`).join(',')})`).bind(Date.now(), ...chunk).all<{ token_hash: string; id: string; username: string; avatar_id?: string | null; is_admin: number }>()
       for (const row of results) sessions.set(row.token_hash, row)
     }
     const peers: [WebSocket, Attachment][] = []
@@ -105,7 +105,7 @@ export class BoardRoom {
       }
       if (!permission.read) { closeSocket(socket, 1008, 'Access changed'); continue }
       const a = socket.deserializeAttachment() as Attachment
-      a.member.canEdit = permission.edit; a.member.username = session.username
+      a.member.canEdit = permission.edit; a.member.username = session.username; a.member.avatarId = session.avatar_id ?? null
       if (!permission.edit) { a.member.editing = null; a.member.previews = []; a.member.caret = null }
       peers.push([socket, a])
     }
@@ -151,7 +151,7 @@ export class BoardRoom {
         return value
       })
       if (!ticket || ticket.expires < Date.now()) { closeSocket(socket, 1008, 'Ticket expired'); return }
-      a = { hash: ticket.hash, board: ticket.board, seen: Date.now(), last: 0, member: { sessionId: crypto.randomUUID(), userId: ticket.user.id, username: ticket.user.username, canEdit: ticket.canEdit, pointer: null, selection: [], editing: null, camera: { x: 0, y: 0, zoom: 1 }, width: 1, height: 1, previews: [], caret: null } }
+      a = { hash: ticket.hash, board: ticket.board, seen: Date.now(), last: 0, member: { sessionId: crypto.randomUUID(), userId: ticket.user.id, username: ticket.user.username, avatarId: ticket.user.avatarId ?? null, canEdit: ticket.canEdit, pointer: null, selection: [], editing: null, camera: { x: 0, y: 0, zoom: 1 }, width: 1, height: 1, previews: [], caret: null } }
       if (!await this.authorized(a)) { closeSocket(socket, 1008, 'Access changed'); return }
       socket.serializeAttachment(a)
       try { socket.send(JSON.stringify({ type: 'ready', sessionId: a.member.sessionId })) } catch { return }

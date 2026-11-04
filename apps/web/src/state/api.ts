@@ -118,3 +118,12 @@ export async function fileUrl(assetId: string): Promise<string> {
   }
   return base
 }
+
+/** Profile photos are signed-in only; a share token never authorizes them. */
+export async function avatarUrl(userId: string, avatarId: string): Promise<string | undefined> {
+  if (shareToken) return undefined
+  const base = `${API_BASE}/api/avatars/${encodeURIComponent(userId)}/${encodeURIComponent(avatarId)}`
+  if (!bearer) return base
+  const token = await currentAssetToken()
+  return token ? `${base}?t=${encodeURIComponent(token)}` : undefined
+}

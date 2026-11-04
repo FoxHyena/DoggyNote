@@ -28,6 +28,7 @@ import plusSvg from '@phosphor-icons/core/regular/plus.svg?raw'
 import eyeSvg from '@phosphor-icons/core/regular/eye.svg?raw'
 import pushPinSvg from '@phosphor-icons/core/regular/push-pin.svg?raw'
 import arrowsOutSimpleSvg from '@phosphor-icons/core/regular/arrows-out-simple.svg?raw'
+import arrowsOutCardinalSvg from '@phosphor-icons/core/regular/arrows-out-cardinal.svg?raw'
 import arrowLineUpSvg from '@phosphor-icons/core/regular/arrow-line-up.svg?raw'
 import arrowLineDownSvg from '@phosphor-icons/core/regular/arrow-line-down.svg?raw'
 import stackSvg from '@phosphor-icons/core/regular/stack.svg?raw'
@@ -142,6 +143,7 @@ export const ICONS = {
   eye: body(eyeSvg),
   pin: body(pushPinSvg),
   resize: body(arrowsOutSimpleSvg),
+  move: body(arrowsOutCardinalSvg),
   forward: body(arrowLineUpSvg),
   backward: body(arrowLineDownSvg),
   layers: body(stackSvg),
