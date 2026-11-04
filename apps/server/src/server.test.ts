@@ -49,6 +49,15 @@ describe('sync validation', () => {
     expect(parseChanges({ changes: [{ id: 'b', patch: dense }] })).toHaveLength(1)
     expect(parseChanges({ changes: [{ id: 'b', patch: { ...dense, extra: 1 } }] })).toBe('bad keys for b')
   })
+  it('lets a table patch carry thousands of table keys, but not ordinary ones', () => {
+    const cells = Object.fromEntries(Array.from({ length: 3000 }, (_, i) => [`tc2${i.toString(36).padStart(5, '0')}1aaaaa`, `v${i}`]))
+    expect(parseChanges({ changes: [{ id: 't', patch: cells }] })).toHaveLength(1)
+    expect(parseChanges({ changes: [{ id: 't', patch: { ...cells, tr200000: null, tk1aaaaa: null } }] })).toHaveLength(1)
+    expect(parseChanges({ changes: [{ id: 't', patch: Object.fromEntries(Array.from({ length: 5001 }, (_, i) => [`tc2${i.toString(36).padStart(5, '0')}1aaaaa`, 'x'])) }] })).toBe('bad keys for t')
+    expect(parseChanges({ changes: [{ id: 't', patch: { ...cells, ...Object.fromEntries(Array.from({ length: 91 }, (_, i) => [`field${i}`, 1])) } }] })).toBe('bad keys for t')
+    expect(parseChanges({ changes: [{ id: 't', patch: { tc2000001aaaaa: { bg: 'url(x)' } } }] })).toBe('bad table field for t')
+    expect(parseChanges({ changes: [{ id: 't', patch: { tc2000001aaaaa: null } }] })).toHaveLength(1)
+  })
   it('accepts well-formed patches', () => {
     expect(parseChanges({ changes: [{ id: 'abc-1', patch: { x: 1, content: { a: 1 } } }] })).toEqual([{ id: 'abc-1', patch: { x: 1, content: { a: 1 } } }])
   })
