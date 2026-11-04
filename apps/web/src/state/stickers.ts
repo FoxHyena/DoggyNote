@@ -134,8 +134,14 @@ export function reorderSticker(s: Sticker, direction: 1 | -1) {
   doc.update(Object.fromEntries(sorted.map((o, index) => [o.id, { z: index + 1 }])))
 }
 export async function favoriteSticker(s: StickerAsset) {
-  const favorite = !preferences().find((p) => p.assetId === s.assetId)?.favorite
-  await api(`/api/stickers/preferences/${s.assetId}`, { method: 'POST', json: { favorite } })
+  const before = preferences(), favorite = !before.find((p) => p.assetId === s.assetId)?.favorite
+  // The star answers at once; a refresh already in flight predates this write, so it is dropped.
+  refreshRequest++
+  setPreferences(before.some((p) => p.assetId === s.assetId)
+    ? before.map((p) => p.assetId === s.assetId ? { ...p, favorite: favorite ? 1 : 0 } : p)
+    : [...before, { assetId: s.assetId, favorite: favorite ? 1 : 0, recentAt: null }])
+  try { await api(`/api/stickers/preferences/${s.assetId}`, { method: 'POST', json: { favorite } }) }
+  catch (e) { setPreferences(before); throw e }
   await refreshStickers()
 }
 export function stickerCenter(s: Sticker): Vec { const p = doc.get(s.id) === s ? worldPosition(s) : { x: s.x, y: s.y }; return { x: p.x + s.w / 2, y: p.y + stickerHeight(s) / 2 } }
