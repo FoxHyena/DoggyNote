@@ -1,6 +1,6 @@
 import { SheetGrip } from './SheetGrip.tsx'
 import { For, Show, createEffect, createResource, createSignal, on, onCleanup, onMount, type Accessor, type JSX } from 'solid-js'
-import { cardLabel, type Card, type Obj } from '@doggynote/core'
+import { cardLabel, isTableField, tableChangeSummary, toAgentTable, type Card, type Obj } from '@doggynote/core'
 import { boardDisplayTitle } from '@doggynote/theme'
 import { api } from '../state/api.ts'
 import { openPreview, proposalsChanged, type Badge, type ProposalDetail } from '../state/preview.ts'
@@ -50,7 +50,11 @@ export function AgentProposals(props: { boardId: string; renderTrigger?: (contro
 
 const VERB: Record<Badge, string> = { added: 'New', changed: 'Edited', moved: 'Moved', removed: 'Buried' }
 
-const TYPE_WORD: Record<string, string> = { note: 'Note', todo: 'To-do list', board: 'Board', image: 'Picture', link: 'Link', column: 'Column', file: 'File', movie: 'Movie', swatch: 'Colour', sketch: 'Sketch', ink: 'Drawing' }
+const TYPE_WORD: Record<string, string> = { note: 'Note', todo: 'To-do list', board: 'Board', image: 'Picture', link: 'Link', column: 'Column', file: 'File', movie: 'Movie', swatch: 'Colour', sketch: 'Sketch', ink: 'Drawing', table: 'Table' }
+
+const isTable = (o: unknown): o is Card => !!o && (o as Card).kind === 'card' && (o as Card).type === 'table'
+/** A table as the agent wrote and reads it (columns and rows), not as its stored row, column and cell fields. */
+const asAgent = (o: Obj): unknown => (isTable(o) ? { ...Object.fromEntries(Object.entries(o).filter(([k]) => !isTableField(k) && k !== 'content')), content: toAgentTable(o) } : o)
 
 /** One line per change, in plain words: "New · Note · Snack budget". */
 function describe(change: Detail['proposal']['changes'][number], titleOf: (id: string) => string): { badge: Badge | null; text: string } {
@@ -58,8 +62,10 @@ function describe(change: Detail['proposal']['changes'][number], titleOf: (id: s
   const badge: Badge | null = after.deletedAt || after.purged ? 'removed' : !change.before ? 'added' : 'changed'
   if (after.kind === 'card') {
     const moved = change.before && ['x', 'y', 'columnId', 'order', 'boardId'].some((k) => JSON.stringify((change.before as Record<string, unknown>)[k]) !== JSON.stringify((after as unknown as Record<string, unknown>)[k]))
-    const edited = change.before && JSON.stringify((change.before as { content?: unknown }).content) !== JSON.stringify((after as Card).content)
-    return { badge: badge === 'changed' && moved && !edited ? 'moved' : badge, text: `${TYPE_WORD[after.type] ?? 'Card'} · ${cardLabel(after as Card, titleOf)}` }
+    // A table's cells are fields of the card, so its edits show in the summary, not in `content`.
+    const summary = isTable(after) ? tableChangeSummary(isTable(change.before) ? toAgentTable(change.before) : null, toAgentTable(after)) : ''
+    const edited = change.before && (isTable(after) ? !!summary : JSON.stringify((change.before as { content?: unknown }).content) !== JSON.stringify((after as Card).content))
+    return { badge: badge === 'changed' && moved && !edited ? 'moved' : badge, text: [`${TYPE_WORD[after.type] ?? 'Card'} · ${cardLabel(after as Card, titleOf)}`, summary].filter(Boolean).join(' · ') }
   }
   if (after.kind === 'board') return { badge, text: `Board · ${boardDisplayTitle(after, 'Untitled board')}` }
   if (after.kind === 'connection') return { badge, text: 'Line between cards' }
@@ -104,7 +110,7 @@ function ProposalPanel(props: { proposals: Summary[]; loading: boolean; failed: 
           <h3>{d().proposal.label}</h3><p class="agents-hint">{d().proposal.changes.length} {d().proposal.changes.length === 1 ? 'change' : 'changes'} · {d().proposal.status}</p>
           <ul class="agents-change-list" data-testid="agent-change-list"><For each={d().proposal.changes}>{(c) => { const line = describe(c, titleOf(d().after as Obj[])); return <li><Show when={line.badge}><span class={`proposal-count proposal-count-${line.badge}`}>{VERB[line.badge!]}</span></Show><span>{line.text}</span></li> }}</For></ul>
           <Show when={d().proposal.status !== 'reversed'}><button class={d().proposal.status === 'pending' ? 'primary-btn agents-preview-button' : 'icon-btn agents-preview-button'} data-testid="preview-on-board" onClick={() => props.onPreview(d().proposal.id)}>Preview on the board</button></Show>
-          <details class="agents-changes"><summary>Technical details</summary><For each={d().proposal.changes}>{(c) => <div><strong>{c.before ? c.after.deletedAt || c.after.purged ? 'Remove' : 'Update' : 'Create'} {c.after.kind === 'card' ? c.after.type : c.after.kind}</strong><pre>{JSON.stringify(c.after, null, 2)}</pre></div>}</For></details>
+          <details class="agents-changes"><summary>Technical details</summary><For each={d().proposal.changes}>{(c) => <div><strong>{c.before ? c.after.deletedAt || c.after.purged ? 'Remove' : 'Update' : 'Create'} {c.after.kind === 'card' ? c.after.type : c.after.kind}</strong><pre>{JSON.stringify(asAgent(c.after as Obj), null, 2)}</pre></div>}</For></details>
           <Show when={error()}><p class="form-error" role="alert">{error()}</p></Show>
           <div class="agents-decisions"><Show when={d().proposal.status === 'pending'}><button class="icon-btn" disabled={busy()} onClick={() => void decide('reject')}>Reject</button><button class="icon-btn" data-testid="approve-agent-proposal" disabled={busy()} onClick={() => void decide('approve')}>{busy() ? 'Applying…' : 'Approve without previewing'}</button></Show><Show when={d().proposal.status === 'applied'}><button class="icon-btn" data-testid="reverse-agent-proposal" disabled={busy()} onClick={() => void decide('reverse')}>Reverse these changes</button><span class="agents-hint">Available while affected objects have no newer edits.</span></Show></div>
         </>}</Show></Show></div>

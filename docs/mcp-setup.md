@@ -25,7 +25,32 @@ The connector works with local MCP clients that launch a stdio command. The desk
 
 Use the configuration format supported by your MCP client. The executable and environment values above are the connector's complete setup contract. A local development server may use `http://localhost:8787`; other servers require HTTPS.
 
-The tools are `list_boards`, `read_board`, `propose_board`, `propose_changes`, and `proposal_status`. A board read includes revisions and a pagination cursor. A proposal supports notes/markdown, todo lists, columns, links, nested boards, connectors, comments, layout changes, trash/restore, movie and show cards (name the title by `tmdbId` and `kind`, or `imdbId`, with `status: 'pending'`; DoggyNote fetches the poster and details after approval), and reuse of existing scoped image/file asset IDs. Uploading new image/file bytes is not part of this version.
+The tools are `list_boards`, `read_board`, `propose_board`, `propose_changes`, and `proposal_status`. A board read includes revisions and a pagination cursor. A proposal supports notes/markdown, todo lists, columns, links, nested boards, connectors, comments, layout changes, trash/restore, movie and show cards (name the title by `tmdbId` and `kind`, or `imdbId`, with `status: 'pending'`; DoggyNote fetches the poster and details after approval), and table cards, and reuse of existing scoped image/file asset IDs. Uploading new image/file bytes is not part of this version.
+
+### Tables
+
+A table card (`type: "table"`) reads and writes as plain columns and rows, not as the app's stored fields:
+
+```json
+{
+  "title": "Vet visits",
+  "columns": [
+    { "id": "1k3m9a", "name": "Dog", "type": "text", "width": 2 },
+    { "id": "1k3m9b", "name": "Status", "type": "select", "options": [{ "id": "1x2y", "name": "Healthy", "color": "sky" }] },
+    { "id": "1k3m9c", "name": "Next visit", "type": "date", "align": "right" }
+  ],
+  "rows": [
+    { "id": "1r4n8d", "cells": [{ "value": "Rex", "bold": true }, "Healthy", "2026-12-01"] },
+    { "id": "1r4n8e", "color": "gold", "cells": ["Fido", "Sleepy", null] }
+  ]
+}
+```
+
+- Cells are in column order and rows are in display order. A cell is a string, number, boolean or `null`, or `{ "value", "bold", "align", "color" }` to style it.
+- Types are `text`, `number`, `checkbox`, `date` (`YYYY-MM-DD`), `select` and `rating` (whole number 1-5). A select cell holds the option's name; an unknown name adds a new option.
+- At most 100 rows and 26 columns, 2,000 characters per cell. A value that does not fit its column is refused with its place, for example `Row 3, "Next visit": use YYYY-MM-DD`.
+- Ids are optional. On a replace, keep the ids from `read_board` so unchanged rows and columns keep their place; leave them out for new rows and columns. Only rows that moved are reordered.
+- A replace sends the whole table, with its revision. Rows, columns and cells left out are removed (the review shows "3 cells changed · 1 row added · 1 column removed", and reversing the proposal restores them).
 
 Agent changes stay pending until you open **Agent proposals** on the affected board. Inspect the proposed layout and individual changes, then approve or reject. Proposals apply atomically through normal synchronization. An object edited since the proposal was prepared causes a conflict instead of an overwrite; ask the agent to read the latest board and stage a fresh proposal. Reuse the exact same idempotency key and request when retrying an interrupted request.
 

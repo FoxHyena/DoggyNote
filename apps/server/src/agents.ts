@@ -8,13 +8,22 @@ import { loadAccess, type Access } from './access.ts'
 import { deniedChanges, ownerFor, deletedCommentOwner, stampComment } from './sync.ts'
 import { checkPositionLocks, positionWriteGuards } from './position.ts'
 import { checkAreaRemovals } from './areas.ts'
-import { LABEL_FIELD } from '@doggynote/core'
+import { LABEL_FIELD, TABLE_FIELD, fromAgentTable, tableLimitError, toAgentTable } from '@doggynote/core'
 
 // Agents don't handle labels yet: they never see label fields, and a whole-object
 // replacement keeps the ones already there.
 const labelFields = (o: object) => Object.fromEntries(Object.entries(o).filter(([key]) => LABEL_FIELD.test(key)))
-/** Labels and sync membership stay app-only: agents neither read nor write them. */
-const withoutLabels = <T extends object>(o: T): T => Object.fromEntries(Object.entries(o).filter(([key]) => !LABEL_FIELD.test(key) && key !== 'syncId')) as T
+/** Labels and sync membership stay app-only: agents neither read nor write them. Tables read as the agent shape. */
+const withoutLabels = <T extends object>(o: T): T => {
+  const clean = Object.fromEntries(Object.entries(o).filter(([key]) => !LABEL_FIELD.test(key) && key !== 'syncId')) as T
+  return isTable(clean) ? agentTable(clean) as T : clean
+}
+const isTable = (o: object): o is AgentObject & { kind: 'card'; type: 'table' } => (o as { kind?: string }).kind === 'card' && (o as { type?: string }).type === 'table'
+/** A table card with its stored row, column and cell fields replaced by the agent's `content`. */
+const agentTable = (o: object): object => {
+  const keep = Object.fromEntries(Object.entries(o).filter(([key]) => !TABLE_FIELD.test(key) && key !== 'content'))
+  return { ...keep, content: toAgentTable(o) }
+}
 
 const assetOf = (o: { kind: string; content?: unknown }): string | undefined => (o.kind === 'card' ? (o.content as { assetId?: string } | undefined)?.assetId : undefined)
 
@@ -91,7 +100,18 @@ export async function prepareAgentChanges(db: D1Database, access: Access, creden
     if (previous && !readable(access, credential, user.id, previous)) error('Object is outside this connection’s scope')
     if (operation.action === 'create' && /^(home|toybox)(:|$)/.test(id)) error('Reserved board identifier')
     let after: AgentObject
-    if ('object' in operation) after = { ...(previous ? labelFields(previous.object) : {}), ...structuredClone(operation.object) } as AgentObject
+    if ('object' in operation) {
+      after = { ...(previous ? labelFields(previous.object) : {}), ...structuredClone(operation.object) } as AgentObject
+      // A table arrives as columns and rows; it is stored (and proposed) as its flat fields, so approving,
+      // rebasing, reversing and comparing work as for any card. Fields the agent left out are gone.
+      if (isTable(after)) {
+        const flat = fromAgentTable(after.content, previous && isTable(previous.object) ? previous.object : undefined)
+        if (!flat.ok) error(flat.error)
+        else after = { ...Object.fromEntries(Object.entries(after).filter(([key]) => key !== 'content')), ...flat.fields } as unknown as AgentObject
+        const tooBig = tableLimitError(after)
+        if (tooBig) error(`Table: ${tooBig}`)
+      }
+    }
     else after = { ...previous!.object, deletedAt: operation.action === 'trash' ? Date.now() : null }
     if (operation.action === 'create') after.createdAt = Date.now()
     if (after.purged) error('Permanent deletion is unavailable to agents')
