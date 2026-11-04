@@ -31,8 +31,8 @@ The independent finish reviewer previously approved the corrected visual flow, t
 | Check | Latest result |
 | --- | --- |
 | Workspace typecheck | Pass |
-| Unit/integration suite | 442 passed in 52 files |
-| Focused browser checks | 24 final fresh-data production-browser checks passed, including both engines, phone emulation and desktop bearer/image-token access. Four capture cases also passed, producing 184 final screenshots. Includes all four visible-corner drags in both engines. |
+| Unit/integration suite | 626 passed in 59 files after rebasing onto current main |
+| Focused browser checks | 24 final fresh-data production-browser checks passed again after rebasing onto current main, including both engines, phone emulation and desktop bearer/image-token access. Four capture cases also passed, producing 184 final screenshots. Includes all four visible-corner drags in both engines. |
 | Full browser regression suite | 1,226 passed, 13 flaky, 17 skipped, 18 failed. Fresh-data rerun: 17 passed, 1 skipped. See [regression details](stationary-regression-results.md); full run predates the late corner fix. |
 | Production build | Pass, including Mac app and disk image packaging; no native interaction run |
 | Diff whitespace check | Pass |
@@ -53,6 +53,10 @@ E2E_PORT_OFFSET=180 E2E_PERSIST_DIR=/private/tmp/doggynote-avatar-refinement-ful
 ```
 
 Capture commands regenerate QA artifacts. The full-suite command initializes fresh isolated test data.
+
+## PR integration verification
+
+Rebased cleanly onto current main `fb636b1a`, including the table feature. Workspace typecheck (13 published docs), 626 unit/integration tests across 59 files, and all 24 focused production-browser checks passed on the integrated branch. These browser checks include the user's hover-only camera correction. Earlier screenshot source fingerprints and the full-suite run describe their earlier snapshots; the entire expanded suite was not rerun after integrating main. CI will cover the proposed branch. Production packaging after integration is recorded in the PR.
 
 ## Historical feature verification
 
