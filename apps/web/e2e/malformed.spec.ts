@@ -91,18 +91,25 @@ test('a table with wrong-typed rows, columns and cells still draws and zooms out
     [rowKey(rows[2]!)]: { o: 'later', bg: 7 },
     content: { title: 7 },
   }
+  let fromStart = false
   await page.route('**/api/sync?*', async (route) => {
     if (route.request().method() !== 'GET') return route.continue()
-    const response = await route.fetch()
-    const body = await response.json() as { objects: Record<string, unknown>[] }
-    for (const o of body.objects) {
-      if (o.id === table) Object.assign(o, junk)
-      if (o.id === broken) o.content = null
-    }
-    await route.fulfill({ response, json: body })
+    try {
+      // The app keeps its pull cursor across a reload, so the first pull after it may skip the table. Ask that one from the start
+      // (later pages carry on from there), so the table is in the answer however long ago it synced.
+      const response = await route.fetch(fromStart ? { url: route.request().url().replace(/since=\d+/, 'since=0') } : {})
+      fromStart = false
+      const body = await response.json() as { objects: Record<string, unknown>[] }
+      for (const o of body.objects) {
+        if (o.id === table) Object.assign(o, junk)
+        if (o.id === broken) o.content = null
+      }
+      await route.fulfill({ response, json: body })
+    } catch { /* the test ended with a pull in flight */ }
   })
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message))
+  fromStart = true
   await page.reload()
   await expect(page.getByTestId('table-grid').first()).toContainText('Injected')
   // The good cells show; the broken ones are empty, not crashes. The card with no content is the only one that can't be shown.
