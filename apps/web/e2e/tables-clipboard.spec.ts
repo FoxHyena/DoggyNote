@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { clickEmpty, freshBoard, waitForSync } from './helpers.ts'
+import { at, clickEmpty, freshBoard, runCardAction, waitForSync } from './helpers.ts'
 import { MOD, bodyRows, cell, grid, headerCells, input, openEditing, rowGrip, seedTable, table } from './tables.ts'
 
 // Copy, cut and paste inside a table, and tab-separated text pasted onto the
@@ -242,4 +242,66 @@ test('⌘V pastes a copied sheet as a table; ⌘⇧V keeps it a note', async ({ 
   await page.keyboard.press(`${MOD}+Shift+V`)
   await expect(page.locator('[data-type=note]')).toHaveCount(1)
   await expect(page.locator('[data-type=table]')).toHaveCount(1)
+})
+
+// The right-click menu's Cut, Copy and Paste, next to the table's own clipboard.
+
+const menu = (page: Page) => page.getByTestId('canvas-context-menu')
+
+test('Copy from a table card menu, then Paste from the canvas menu: a second table with the same cells, one undo', async ({ page }) => {
+  await seedTable(page, COLS, PACK)
+  await table(page).click()
+  await runCardAction(page, 'Copy', page.locator('[data-testid=card][data-type=table]').first())
+  const p = await at(page, 0.7, 0.75)
+  await page.mouse.click(p.x, p.y, { button: 'right' })
+  await menu(page).getByRole('menuitem', { name: 'Paste', exact: true }).click()
+  await expect(page.locator('[data-type=table]')).toHaveCount(2)
+  expect(await grid(page, page.locator('[data-type=table]').nth(1))).toEqual([COLS, ...PACK])
+  await page.keyboard.press(`${MOD}+z`)
+  await expect(page.locator('[data-type=table]')).toHaveCount(1)
+})
+
+test('Cut from a table card menu buries it, and Paste brings it back with its cells', async ({ page }) => {
+  await seedTable(page, COLS, PACK)
+  await table(page).click()
+  await runCardAction(page, 'Cut', page.locator('[data-testid=card][data-type=table]').first())
+  await expect(page.locator('[data-type=table]')).toHaveCount(0)
+  const p = await at(page, 0.6, 0.6)
+  await page.mouse.click(p.x, p.y, { button: 'right' })
+  await menu(page).getByRole('menuitem', { name: 'Paste', exact: true }).click()
+  await expect(page.locator('[data-type=table]')).toHaveCount(1)
+  expect(await grid(page)).toEqual([COLS, ...PACK])
+})
+
+test('with a cell active the table keeps ⌘C and ⌘V: the cells are copied, not the card', async ({ page }) => {
+  await seedTable(page, COLS, PACK)
+  await openEditing(page, 0, 0)
+  await page.keyboard.press(`${MOD}+c`)
+  await page.keyboard.press('ArrowDown')
+  await page.keyboard.press(`${MOD}+v`)
+  await expect(page.locator('[data-type=table]')).toHaveCount(1)
+  expect(await body(page)).toEqual([PACK[0], ['Rex', ...PACK[1]!.slice(1)], PACK[2], PACK[3]])
+})
+
+test('right-clicking a cell of the table being edited opens the card menu, and Copy takes the whole card', async ({ page }) => {
+  await seedTable(page, COLS, PACK)
+  await openEditing(page, 1, 1)
+  await cell(page, 2, 0).click({ button: 'right' })
+  await expect(menu(page)).toBeVisible()
+  await menu(page).getByRole('menuitem', { name: 'Copy', exact: true }).click()
+  const p = await at(page, 0.7, 0.8)
+  await page.mouse.click(p.x, p.y, { button: 'right' })
+  await menu(page).getByRole('menuitem', { name: 'Paste', exact: true }).click()
+  await expect(page.locator('[data-type=table]')).toHaveCount(2)
+  expect(await grid(page, page.locator('[data-type=table]').nth(1))).toEqual([COLS, ...PACK])
+})
+
+test('Paste from the canvas menu turns a copied sheet into a table', async ({ page, browserName }) => {
+  test.skip(browserName !== 'chromium', 'Writing the system clipboard needs Chromium permissions')
+  await page.evaluate(() => navigator.clipboard.writeText('Pup\tAge\r\nRex\t4\r\nMochi\t7'))
+  const p = await at(page, 0.5, 0.5)
+  await page.mouse.click(p.x, p.y, { button: 'right' })
+  await menu(page).getByRole('menuitem', { name: 'Paste', exact: true }).click()
+  await expect(page.locator('[data-type=table]')).toHaveCount(1)
+  expect(await grid(page)).toEqual([['Pup', 'Age'], ['Rex', '4'], ['Mochi', '7']])
 })
