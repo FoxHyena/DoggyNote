@@ -20,7 +20,12 @@ test('profile photo: crop, retry, persist, replace and remove', async ({ page })
     const image = await createImageBitmap(await (await fetch(`data:image/png;base64,${data}`)).blob())
     const output = new OffscreenCanvas(512, 512), ctx = output.getContext('2d')!, side = 600 / zoom
     ctx.imageSmoothingQuality = 'high'; ctx.drawImage(image, x - side / 2, y - side / 2, side, side, 0, 0, 512, 512); image.close()
-    return [...new Uint8Array(await crypto.subtle.digest('SHA-256', ctx.getImageData(0, 0, 512, 512).data))]
+    // Compare decoded PNGs on both sides: Linux WebKit can round interpolated
+    // channel values during a PNG round trip, even for an unchanged canvas.
+    const encoded = await createImageBitmap(await output.convertToBlob({ type: 'image/png' }))
+    const decoded = new OffscreenCanvas(512, 512), decodedCtx = decoded.getContext('2d')!
+    decodedCtx.drawImage(encoded, 0, 0); encoded.close()
+    return [...new Uint8Array(await crypto.subtle.digest('SHA-256', decodedCtx.getImageData(0, 0, 512, 512).data))]
   }, { data: file.buffer.toString('base64'), x: moved, y: Number(await crop.getAttribute('data-y')), zoom: Number(await crop.getAttribute('data-zoom')) })
   // A failed request keeps the crop and has an immediate retry path.
   await page.route('**/api/me/avatar', (route) => route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Could not save your photo. Try again.' }) }), { times: 1 })

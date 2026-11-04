@@ -1,0 +1,156 @@
+{
+  "environment": {
+    "image": "mcr.microsoft.com/playwright:v1.64.0-noble",
+    "platform": "linux/amd64",
+    "node": "24.21.0"
+  },
+  "independent_canvas_png_roundtrips": [
+    {
+      "side": 240,
+      "count": 110,
+      "max": 1,
+      "sample": [
+        {
+          "x": 365,
+          "y": 355,
+          "channel": 0,
+          "expected": 42,
+          "actual": 41
+        },
+        {
+          "x": 365,
+          "y": 355,
+          "channel": 1,
+          "expected": 37,
+          "actual": 36
+        },
+        {
+          "x": 365,
+          "y": 355,
+          "channel": 2,
+          "expected": 33,
+          "actual": 32
+        },
+        {
+          "x": 493,
+          "y": 355,
+          "channel": 0,
+          "expected": 42,
+          "actual": 41
+        },
+        {
+          "x": 493,
+          "y": 355,
+          "channel": 1,
+          "expected": 37,
+          "actual": 36
+        },
+        {
+          "x": 493,
+          "y": 355,
+          "channel": 2,
+          "expected": 33,
+          "actual": 32
+        }
+      ]
+    },
+    {
+      "side": 230.76923076923077,
+      "count": 162,
+      "max": 1,
+      "sample": [
+        {
+          "x": 373,
+          "y": 366,
+          "channel": 0,
+          "expected": 42,
+          "actual": 41
+        },
+        {
+          "x": 373,
+          "y": 366,
+          "channel": 1,
+          "expected": 37,
+          "actual": 36
+        },
+        {
+          "x": 373,
+          "y": 366,
+          "channel": 2,
+          "expected": 33,
+          "actual": 32
+        },
+        {
+          "x": 373,
+          "y": 372,
+          "channel": 0,
+          "expected": 42,
+          "actual": 41
+        },
+        {
+          "x": 373,
+          "y": 372,
+          "channel": 1,
+          "expected": 37,
+          "actual": 36
+        },
+        {
+          "x": 373,
+          "y": 372,
+          "channel": 2,
+          "expected": 33,
+          "actual": 32
+        }
+      ]
+    },
+    {
+      "side": 224.578965,
+      "count": 117,
+      "max": 1,
+      "sample": [
+        {
+          "x": 381,
+          "y": 375,
+          "channel": 0,
+          "expected": 42,
+          "actual": 41
+        },
+        {
+          "x": 381,
+          "y": 375,
+          "channel": 1,
+          "expected": 37,
+          "actual": 36
+        },
+        {
+          "x": 381,
+          "y": 375,
+          "channel": 2,
+          "expected": 33,
+          "actual": 32
+        },
+        {
+          "x": 390,
+          "y": 375,
+          "channel": 0,
+          "expected": 42,
+          "actual": 41
+        },
+        {
+          "x": 390,
+          "y": 375,
+          "channel": 1,
+          "expected": 37,
+          "actual": 36
+        },
+        {
+          "x": 390,
+          "y": 375,
+          "channel": 2,
+          "expected": 33,
+          "actual": 32
+        }
+      ]
+    }
+  ]
+}

@@ -26,6 +26,10 @@ Two isolated first assessments found a tiny touch movement target, overlapping t
 
 The independent finish reviewer previously approved the corrected visual flow, then reopened approval after a visible-corner hit test exposed a resize mismatch. Corner targets now contain their painted marks; both-engine actual-mark regressions pass. The reviewer reverified all refreshed screenshots, six source hashes, visible-mark interaction evidence and final documentation before returning ship. The canonical final disposition is recorded separately in [stationary finish review](stationary-finish-review.md), with a narrow [documentation check](stationary-documentation-check.md).
 
+## CI follow-up
+
+The first PR run exposed a Linux WebKit pixel-oracle mismatch. The expected crop now uses the same PNG encode/decode stage as the downloaded image while retaining exact full-image SHA comparison. See [root cause and verification](ci-png-roundtrip.md).
+
 ## Verification
 
 | Check | Latest result |
