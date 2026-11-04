@@ -520,6 +520,22 @@ test('personal packs and favorites refresh across two devices while placed stick
   } finally { await ctx.close() }
 })
 
+test('the favorite star answers before the server does, and flips back if the save fails', async ({ page, request }) => {
+  await stickerBoard(page, request); await importFixturePack(page)
+  const tray = page.getByTestId('sticker-tray'); await previewSticker(page)
+  let release!: () => void; const held = new Promise<void>((done) => { release = done })
+  await page.route('**/api/stickers/preferences/**', async (route) => { await held; await route.continue() })
+  await tray.getByRole('button', { name: 'Favorite', exact: true }).click()
+  await expect(tray.getByRole('button', { name: 'Unfavorite', exact: true })).toBeVisible()
+  const saved = page.waitForResponse((r) => r.url().includes('/api/stickers/preferences/') && r.request().method() === 'POST')
+  release(); await saved; await page.unroute('**/api/stickers/preferences/**')
+  await expect.poll(async () => (await (await page.request.get('/api/stickers')).json()).preferences.some((p: { favorite: number }) => p.favorite)).toBe(true)
+  await page.route('**/api/stickers/preferences/**', (route) => route.fulfill({ status: 500, json: { error: 'The kennel door stuck.' } }))
+  await tray.getByRole('button', { name: 'Unfavorite', exact: true }).click()
+  await expect(tray.getByRole('alert')).toContainText('The kennel door stuck.')
+  await expect(tray.getByRole('button', { name: 'Unfavorite', exact: true })).toBeVisible()
+})
+
 test('an agent proposal that adds a sticker is labelled in review and drawn by the board preview', async ({ page, request }) => {
   const { id } = await stickerBoard(page, request); await importFixturePack(page)
   await page.getByRole('button', { name: 'Close stickers', exact: true }).click()

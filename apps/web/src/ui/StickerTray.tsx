@@ -112,7 +112,13 @@ export function StickerTray() {
   const previewPackTitle = () => packs().find((p) => p.name === large()?.packName)?.title
     ?? (preview()?.name === large()?.packName ? preview()?.title : undefined)
     ?? large()?.packName ?? ''
-  const doFavorite = (s: StickerAsset) => void action(() => favoriteSticker(s))
+  // Personal and independent of pack loading, so a slow Add pack never swallows the tap.
+  const [favoriting, setFavoriting] = createSignal(false)
+  const doFavorite = async (s: StickerAsset) => {
+    if (favoriting()) return
+    setFavoriting(true); setError('')
+    try { await favoriteSticker(s) } catch (e) { setError(e instanceof Error ? e.message : 'Try again.') } finally { setFavoriting(false) }
+  }
   const choosePack = (name: string) => {
     saveScroll(); setSelectedPack(name); setQuery(''); setLarge(null)
     queueMicrotask(() => { restoreScroll(name) })
@@ -252,7 +258,7 @@ export function StickerTray() {
         </div>
         <div class="sticker-actions">
           <button class="primary-btn sticker-place-button" disabled={!large()!.available || !packs().some((p) => p.name === large()!.packName)} onClick={() => { saveScroll(); armSticker(large()!); setLarge(null) }}>Place sticker</button>
-          <button class="icon-btn sticker-favorite-button" disabled={!packs().some((p) => p.name === large()!.packName)} aria-label={favorite(large()!) ? 'Unfavorite' : 'Favorite'} title={favorite(large()!) ? 'Unfavorite' : 'Favorite'} aria-pressed={favorite(large()!)} onClick={() => doFavorite(large()!)}><BoardIconSvg icon="star" filled={favorite(large()!)} /></button>
+          <button class="icon-btn sticker-favorite-button" disabled={!packs().some((p) => p.name === large()!.packName)} aria-label={favorite(large()!) ? 'Unfavorite' : 'Favorite'} title={favorite(large()!) ? 'Unfavorite' : 'Favorite'} aria-pressed={favorite(large()!)} onClick={() => void doFavorite(large()!)}><BoardIconSvg icon="star" filled={favorite(large()!)} /></button>
           <Show when={large()!.format !== 'static'}>{(_) => { const key = () => `preview:${large()!.assetId}`, paused = () => playbackPaused(key())
             return <button class="icon-btn sticker-favorite-button" data-testid="sticker-preview-play" aria-label={paused() ? 'Play animation' : 'Pause animation'} title={paused() ? 'Play animation' : 'Pause animation'} onClick={() => togglePlayback(key())}><Icon name={paused() ? 'play' : 'pause'} /></button> }}</Show>
         </div>
