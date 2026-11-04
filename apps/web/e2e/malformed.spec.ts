@@ -163,16 +163,23 @@ test('a typed table with wrong-typed values still draws, and nothing injected re
     // A column whose options and alignment are junk.
     [colKey(mood)]: { n: 'Mood', o: 5, w: 1, t: 'select', a: 'upside-down', opts: [{ id: t.opts[4]![0]!.id, n: 'Happy', c: 'url(x)' }, { id: t.opts[4]![0]!.id, n: 'Dup', c: 'ball' }, { id: 7, n: 'Num', c: 'ball' }, { id: '2abc', n: 5, c: 'gold' }, 'nope', null] },
   }
+  let fromStart = false
   await page.route('**/api/sync?*', async (route) => {
     if (route.request().method() !== 'GET') return route.continue()
-    const response = await route.fetch()
-    const body = await response.json() as { objects: Record<string, unknown>[] }
-    for (const o of body.objects) if (o.id === id) Object.assign(o, junk)
-    await route.fulfill({ response, json: body })
+    try {
+      // The app keeps its pull cursor across a reload, so the first pull after it may skip the table. Ask that one from the start
+      // (later pages carry on from there), so the table is in the answer however long ago it synced.
+      const response = await route.fetch(fromStart ? { url: route.request().url().replace(/since=\d+/, 'since=0') } : {})
+      fromStart = false
+      const body = await response.json() as { objects: Record<string, unknown>[] }
+      for (const o of body.objects) if (o.id === id) Object.assign(o, junk)
+      await route.fulfill({ response, json: body })
+    } catch { /* the test ended with a pull in flight */ }
   })
   const errors: string[] = []
   page.on('pageerror', (e) => errors.push(e.message))
   page.on('console', (m) => { if (m.type() === 'error') console.log('console error:', m.text()) })
+  fromStart = true
   await page.reload()
   const card = page.locator(`[data-card-id="${id}"]`)
   await expect(card.getByTestId('table-grid')).toContainText('Injected')
