@@ -115,16 +115,18 @@ export function SelectionBar() {
       const p = worldToScreen(cam, r)
       return [{ x: p.x, y: p.y, w: r.w * cam.zoom, h: COLUMN_HEADER * cam.zoom }]
     })
+    // A table being edited has its grips just outside: the bar floats beyond them.
+    const grips = editingGrid() ? 30 * cam.zoom : 0
     const tl = worldToScreen(cam, u)
     const br = worldToScreen(cam, { x: u.x + u.w, y: u.y + u.h })
     const size = { width: Math.min(barSize().width, v.width - 16), height: barSize().height }
     const x = (tl.x + br.x - size.width) / 2
     const controls = canvasControlsSize()
     const at = placeFloating(size, { x: 8, y: 8, w: v.width - 16, h: v.height - 16 }, [
-      { x, y: tl.y - size.height - 14 },
+      { x, y: tl.y - grips - size.height - 14 },
       { x, y: br.y + 14 },
       { x: br.x + 14, y: tl.y },
-      { x: tl.x - size.width - 14, y: tl.y },
+      { x: tl.x - grips - size.width - 14, y: tl.y },
     ], cardObstacles(cards().map((c) => c.id)), 8, {
       maxShift: 64,
       protectedObstacles: [

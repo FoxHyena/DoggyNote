@@ -2,6 +2,7 @@ import { For, Show, createMemo } from 'solid-js'
 import { cardColorVars, COPY } from '@doggynote/theme'
 import { cellDisplay, cellKey, isBlankTable, readCell, tableColumns, tableRows, tableTitle, type Align, type Card, type TableColumn } from '@doggynote/core'
 import * as doc from '../../state/doc.ts'
+import { Icon } from '../../ui/icons.tsx'
 import { editIsNewCard, onEndEdit } from '../../state/ui.ts'
 import { TableEditor } from './TableEditor.tsx'
 import type { CardProps } from '../../canvas/CardView.tsx'
@@ -49,10 +50,10 @@ function TableGrid(props: { card: Card<'table'>; editing: boolean }) {
       <div class="table-clip">
         <Show when={showTitle()}>
           <div class="table-title" data-table-title data-testid="table-title">
-            <Show when={title()} fallback={<span class="table-placeholder" aria-hidden="true">{COPY.table.titlePlaceholder}</span>}>{title()}</Show>
+            <Show when={title()} fallback={<span class="table-placeholder" aria-hidden="true"><Icon name="paw" size={20} />{COPY.table.titlePlaceholder}</span>}>{title()}</Show>
           </div>
         </Show>
-        <Show when={colIds().length}>
+        <Show when={colIds().length} fallback={<div class="table-empty" data-testid="table-empty"><Icon name="paw" size={20} />{COPY.table.empty}</div>}>
           <table
             ref={tableEl}
             class="table-grid"

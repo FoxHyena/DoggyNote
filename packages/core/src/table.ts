@@ -418,6 +418,59 @@ export function moveColumn(card: Source, colId: string, toIndex: number): TableP
   return { [colKey(colId)]: columnField(col, { o: orderBetween(others[i - 1]?.o, others[i]?.o) }) }
 }
 
+/**
+ * Move a block of rows (the selected ones, in display order) so that they end up
+ * together, in order, before the `toIndex`th of the rows that stay. One patch.
+ */
+export function moveRows(card: Source, rowIds: readonly string[], toIndex: number): TablePatch {
+  return moveBlock(card, rowIds, toIndex, tableRows, moveRow)
+}
+
+/** Like `moveRows`, for columns. */
+export function moveColumns(card: Source, colIds: readonly string[], toIndex: number): TablePatch {
+  return moveBlock(card, colIds, toIndex, tableColumns, moveColumn)
+}
+
+function moveBlock(card: Source, ids: readonly string[], toIndex: number, list: (c: Source) => { id: string }[], move: (c: Source, id: string, to: number) => TablePatch): TablePatch {
+  const block = new Set(ids)
+  const order = list(card).map((x) => x.id)
+  const picked = order.filter((id) => block.has(id))
+  if (!picked.length) return {}
+  const stay = order.filter((id) => !block.has(id))
+  const t = Math.max(0, Math.min(toIndex, stay.length))
+  // Already there: nothing to write.
+  if (order.slice(t, t + picked.length).join() === picked.join() && order.indexOf(picked[0]!) === t) return {}
+  const patch: TablePatch = {}
+  let virtual: Record<string, unknown> = { ...(card as Record<string, unknown>) }
+  let after: string | undefined = stay[t - 1]
+  for (const id of picked) {
+    const others = list(virtual).map((x) => x.id).filter((x) => x !== id)
+    const p = move(virtual, id, after === undefined ? 0 : others.indexOf(after) + 1)
+    Object.assign(patch, p)
+    virtual = { ...virtual, ...p }
+    after = id
+  }
+  return patch
+}
+
+/** Copies of rows (cells and fill) placed right after the last of them. Nothing at the row cap. */
+export function duplicateRows(card: Source, rowIds: readonly string[]): { patch: TablePatch; ids: string[] } {
+  const rows = tableRows(card)
+  const src = rows.filter((r) => rowIds.includes(r.id))
+  if (!src.length || rows.length + src.length > TABLE_CAPS.rows) return { patch: {}, ids: [] }
+  const last = rows.findIndex((r) => r.id === src[src.length - 1]!.id)
+  const { patch, ids } = addRows(card, src.length, last + 1)
+  const f = fields(card)
+  src.forEach((row, i) => {
+    if (row.bg) patch[rowKey(ids[i]!)] = { ...(patch[rowKey(ids[i]!)] as object), bg: row.bg }
+    for (const col of tableColumns(card)) {
+      const v = f[cellKey(row.id, col.id)]
+      if (v != null) patch[cellKey(ids[i]!, col.id)] = structuredClone(v)
+    }
+  })
+  return { patch, ids }
+}
+
 /** Rename, re-align, re-weight or change the options of one column (not its type: see `retype`). */
 export function updateColumn(card: Source, colId: string, change: { n?: string; w?: number; a?: Align | null; opts?: SelectOption[] }): TablePatch {
   const col = tableColumns(card).find((c) => c.id === colId)
@@ -662,6 +715,74 @@ export function guessHeader(rows: readonly (readonly string[])[]): boolean {
   const names = first.map((s) => s.trim().toLowerCase())
   if (names.some((s) => !s || parseNumber(s) !== null || parseDate(s) !== null)) return false
   return new Set(names).size === names.length
+}
+
+/** The text of rows and columns as copied: the cells' display text, with the column names first when `header` is set. */
+export function copyGrid(card: Source, rowIds: readonly string[], colIds: readonly string[], header: boolean): string[][] {
+  const cols = colIds.map((id) => tableColumns(card).find((c) => c.id === id)).filter((c): c is TableColumn => !!c)
+  const out = rowIds.map((r) => cols.map((c) => cellDisplay(c, cellOf(card, r, c.id))))
+  return header ? [cols.map((c) => c.n), ...out] : out
+}
+
+export type PasteResult = {
+  patch: TablePatch
+  /** Some of the text did not fit under the row or column limits. */
+  clipped: boolean
+  /** The cells written, as indices after the paste (rows from -1 for the header). */
+  range: { r0: number; r1: number; c0: number; c1: number }
+}
+
+/**
+ * Paste a grid of text with its top-left cell at `at` (row -1 is the header),
+ * growing the table up to the caps. One value pasted over a range of several
+ * cells fills it. Text goes through `parseInput` for its column; a header takes
+ * the text as its name. Ragged lines leave the cells they don't reach alone.
+ */
+export function pasteGrid(card: Source, grid: readonly (readonly string[])[], at: { r: number; c: number }, fill?: { r0: number; r1: number; c0: number; c1: number }): PasteResult {
+  const patch: TablePatch = {}
+  let virtual: Record<string, unknown> = { ...(card as Record<string, unknown>) }
+  const apply = (p: TablePatch) => { Object.assign(patch, p); virtual = { ...virtual, ...p } }
+  const single = grid.length === 1 && grid[0]!.length === 1 && !!fill && (fill.r1 > fill.r0 || fill.c1 > fill.c0)
+  const r0 = single ? fill!.r0 : at.r
+  const c0 = single ? fill!.c0 : at.c
+  const height = single ? fill!.r1 - fill!.r0 + 1 : grid.length
+  const width = single ? fill!.c1 - fill!.c0 + 1 : Math.max(0, ...grid.map((l) => l.length))
+  let clipped = false
+  for (let n = tableColumns(virtual).length; n < c0 + width; n++) {
+    const { patch: p, ids } = addColumn(virtual, {}, n)
+    if (!ids.length) { clipped = true; break }
+    apply(p)
+  }
+  const have = tableRows(virtual).length
+  if (have < r0 + height) {
+    const { patch: p, ids } = addRows(virtual, r0 + height - have, have)
+    if (ids.length < r0 + height - have) clipped = true
+    apply(p)
+  }
+  const cols = tableColumns(virtual), rows = tableRows(virtual)
+  const entries: (CellRef & { value: CellValue })[] = []
+  const written = { r1: r0 - 1, c1: c0 - 1 }
+  for (let i = 0; i < height; i++) {
+    const r = r0 + i
+    if (r >= rows.length) { clipped = true; break }
+    const line = single ? grid[0]! : grid[i]!
+    for (let j = 0; j < (single ? width : line.length); j++) {
+      const c = c0 + j
+      if (c >= cols.length) { clipped = true; break }
+      const text = single ? line[0]! : line[j]!
+      const col = cols[c]!
+      written.r1 = Math.max(written.r1, r)
+      written.c1 = Math.max(written.c1, c)
+      if (r < 0) { apply(updateColumn(virtual, col.id, { n: text.replace(/\s*[\r\n]+\s*/g, ' ').trim() })); continue }
+      const value = parseInput(col, text)
+      const key = cellKey(rows[r]!.id, col.id)
+      // Nothing to blank in a cell that has no field.
+      if (value === null && fields(virtual)[key] == null) continue
+      entries.push({ row: rows[r]!.id, col: col.id, value })
+    }
+  }
+  apply(setCells(virtual, entries))
+  return { patch, clipped, range: { r0, r1: Math.max(r0, written.r1), c0, c1: Math.max(c0, written.c1) } }
 }
 
 // ---- validation and copying ---------------------------------------------------

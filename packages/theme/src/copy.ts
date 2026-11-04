@@ -162,6 +162,30 @@ export const COPY = {
     announceRowsDeleted: (n: number) => (n === 1 ? 'Row deleted' : `${n} rows deleted`),
     announceColumnsDeleted: (n: number) => (n === 1 ? 'Column deleted' : `${n} columns deleted`),
     announceCleared: 'Cells cleared',
+    /** Row and column grips and their menus. */
+    rowGrip: (row: number) => `Row ${row}: select, drag to move`,
+    columnGrip: (name: string) => `${name || 'Column'}: select, drag to move`,
+    columnMenu: (name: string) => `${name || 'Column'}: column actions`,
+    columnActions: 'Column actions',
+    rowActions: 'Row actions',
+    resizeColumn: 'Resize column',
+    renameColumn: 'Rename column',
+    moveRowUp: 'Move up',
+    moveRowDown: 'Move down',
+    moveColumnLeft: 'Move left',
+    moveColumnRight: 'Move right',
+    duplicateRows: (n: number) => (n === 1 ? 'Duplicate row' : `Duplicate ${n} rows`),
+    announceRowsSelected: (n: number) => (n === 1 ? 'Row selected' : `${n} rows selected`),
+    announceColumnsSelected: (n: number) => (n === 1 ? 'Column selected' : `${n} columns selected`),
+    announceMoved: 'Moved',
+    announceDuplicated: 'Duplicated',
+    announcePasted: (n: number) => (n === 1 ? 'Pasted 1 cell' : `Pasted ${n} cells`),
+    announceCopied: 'Copied',
+    announceCut: 'Cut',
+    /** A paste that didn't all fit. */
+    pasteClipped: "That didn't all fit: this table's kennel holds 100 rows and 26 columns, so the rest stayed in the bag.",
+    /** A table with nothing in it to look at. */
+    empty: 'An empty bowl. Add a column to start.',
   },
   /** The public guides at /docs. */
   guides: {

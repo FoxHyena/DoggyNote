@@ -23,6 +23,12 @@ describe('clips', () => {
     expect(clip.objects.map((o) => o.id).sort()).toEqual(['a', 'ab', 'b'])
   })
 
+  it('copies a table without its removed rows and cells', () => {
+    const t = card('t', 'table', 0, 0, { title: 'Pack' }, { tk100001: { n: 'A', o: 1, w: 1, t: 'text' }, tr200001: { o: 1 }, tr200002: null, tc200001100001: 'x', tc200002100001: null } as never)
+    const clip = collectClip(['t'], store([t])) as ClipPayload
+    expect(Object.keys(clip.objects[0]!).filter((k) => /^t[rkc]\d/.test(k)).sort()).toEqual(['tc200001100001', 'tk100001', 'tr200001'])
+  })
+
   it('pastes with new ids, the layout centred on the point, stacking kept above the board', () => {
     const clip = collectClip(['a', 'b'], store([a, b, ab])) as ClipPayload
     const { objects, roots } = materialise(clip, { at: { x: 1000, y: 1000 }, boardId: 'T', maxZ: 10, now: 5, newId: fresh })

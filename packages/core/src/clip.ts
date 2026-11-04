@@ -58,7 +58,7 @@ export function collectClip(ids: Id[], src: ClipSource, opts: { allowBuried?: bo
   let points = 0
   const add = (o: Obj) => {
     if (o.kind === 'stroke' && !objects.has(o.id)) { strokes++; points += Array.isArray(o.points) ? o.points.length : 0 }
-    objects.set(o.id, structuredClone(o))
+    objects.set(o.id, structuredClone(withoutTableTombstones(o)))
   }
   const tooBig = () => objects.size - strokes > limit || strokes > CLIP_STROKE_LIMIT || points > CLIP_INK_POINT_LIMIT
   // Roots, flattened to world positions.
