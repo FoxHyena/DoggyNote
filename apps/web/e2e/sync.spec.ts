@@ -164,7 +164,7 @@ test.describe('auth', () => {
     await form.getByRole('button', { name: 'Sign in' }).click()
     await expect(page.getByTestId('canvas')).toBeVisible()
     await page.getByTestId('account').click()
-    await expect(page.locator('.account-menu-identity')).toHaveText('rex')
+    await expect(page.locator('.account-menu-identity strong')).toHaveText('rex')
     await page.keyboard.press('Escape')
 
     await page.getByTestId('account').click()

@@ -13,7 +13,7 @@ function fixture() {
   sql.exec('PRAGMA foreign_keys=ON')
   const dir = new URL('../migrations/', import.meta.url)
   for (const file of readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) sql.exec(readFileSync(new URL(file, dir), 'utf8'))
-  sql.exec("INSERT INTO users VALUES('rex','rex','hash',0,1),('fido','fido','hash',0,1),('stranger','stranger','hash',1,1)")
+  sql.exec("INSERT INTO users(id,username,pw_hash,is_admin,created_at) VALUES('rex','rex','hash',0,1),('fido','fido','hash',0,1),('stranger','stranger','hash',1,1)")
   sql.prepare('INSERT INTO sessions(token_hash,user_id,created_at,expires_at) VALUES(?,?,?,?)').run('room-session', 'rex', Date.now(), Date.now() + 60_000)
   sql.exec(`INSERT INTO objects(id,kind,data,seq,updated_at) VALUES('root','board','{"id":"root","kind":"board","parentId":null,"title":"Root"}',1,1);
     INSERT INTO board_access VALUES('root','rex',0);

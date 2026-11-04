@@ -38,10 +38,10 @@
 .topbar .board-navigation { display: flex; min-width: 0; }
 .ancestor-menu .nav-menu { width: 320px; }
 .ancestor-menu .menu-item { overflow-wrap: anywhere; }
-.account-popover { width: 240px; }
+.account-popover { width: 280px; }
 .account-menu-identity { padding: 8px 12px 12px; color: var(--dn-text); font-weight: 600; overflow-wrap: anywhere; line-height: 20px; }
 /* Appearance is one icon button at the end of its row (ThemeToggle cycles System, Light, Dark). */
-.account-menu-appearance { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px 8px 12px; margin-bottom: 4px; border-bottom: 1px solid var(--dn-border); color: var(--dn-text-muted); font-size: 13px; }
+.account-menu-appearance { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px 0 12px; margin-bottom: 0; min-height: 36px; color: var(--dn-text-muted); font-size: 13px; }
 .account-menu-appearance .icon-btn { width: 32px; padding: 0; justify-content: center; }
 /* Guides is a link (it opens a new tab) dressed as a menu row. */
 a.menu-item { color: var(--dn-text); text-decoration: none; box-sizing: border-box; }

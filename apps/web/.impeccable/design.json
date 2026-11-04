@@ -580,6 +580,40 @@
           "oklch(83.6% 0.06 59.5)",
           "oklch(95% 0.06 59.5)"
         ]
+      },
+      "crop-guide": {
+        "role": "neutral",
+        "displayName": "Photo Guide",
+        "theme": "both",
+        "cssVar": "--dn-crop-guide",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15.0% 0.000 0.0)",
+          "oklch(26.4% 0.000 0.0)",
+          "oklch(37.9% 0.000 0.0)",
+          "oklch(49.3% 0.000 0.0)",
+          "oklch(60.7% 0.000 0.0)",
+          "oklch(72.1% 0.000 0.0)",
+          "oklch(83.6% 0.000 0.0)",
+          "oklch(95.0% 0.000 0.0)"
+        ]
+      },
+      "crop-shade": {
+        "role": "neutral",
+        "displayName": "Photo Shade",
+        "theme": "both",
+        "cssVar": "--dn-crop-shade",
+        "canonical": "#0b0a09",
+        "tonalRamp": [
+          "oklch(15.0% 0.003 68.6)",
+          "oklch(26.4% 0.003 68.6)",
+          "oklch(37.9% 0.003 68.6)",
+          "oklch(49.3% 0.003 68.6)",
+          "oklch(60.7% 0.003 68.6)",
+          "oklch(72.1% 0.003 68.6)",
+          "oklch(83.6% 0.003 68.6)",
+          "oklch(95.0% 0.003 68.6)"
+        ]
       }
     },
     "typographyMeta": {

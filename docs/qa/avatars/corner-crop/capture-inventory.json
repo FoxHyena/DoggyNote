@@ -1,0 +1,502 @@
+[
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/desktop-dark-crop.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/desktop-light-crop.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/narrow-dark-crop.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/narrow-light-crop.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/phone-dark-crop.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/phone-light-crop.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/short-dark-crop.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/short-light-crop.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/tablet-dark-crop.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/tablet-light-crop.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/desktop-dark-error.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/desktop-light-error.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/narrow-dark-error.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/narrow-light-error.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/phone-dark-error.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/phone-light-error.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/short-dark-error.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/short-light-error.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/tablet-dark-error.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/tablet-light-error.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/desktop-dark-saving.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/desktop-light-saving.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/narrow-dark-saving.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/narrow-light-saving.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/phone-dark-saving.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/phone-light-saving.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/short-dark-saving.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/short-light-saving.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/tablet-dark-saving.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/tablet-light-saving.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/desktop-dark-account.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/desktop-light-account.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/narrow-dark-account.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/narrow-light-account.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/phone-dark-account.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/phone-light-account.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/short-dark-account.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/short-light-account.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/tablet-dark-account.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/tablet-light-account.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/desktop-dark-saved.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/desktop-light-saved.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/narrow-dark-saved.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/narrow-light-saved.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/phone-dark-saved.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/phone-light-saved.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/short-dark-saved.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/short-light-saved.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/tablet-dark-saved.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/webkit/tablet-light-saved.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/desktop-dark-crop.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/desktop-light-crop.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/narrow-dark-crop.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/narrow-light-crop.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/phone-dark-crop.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/phone-light-crop.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/short-dark-crop.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/short-light-crop.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/tablet-dark-crop.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/tablet-light-crop.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/desktop-dark-error.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/desktop-light-error.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/narrow-dark-error.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/narrow-light-error.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/phone-dark-error.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/phone-light-error.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/short-dark-error.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/short-light-error.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/tablet-dark-error.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/tablet-light-error.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/desktop-dark-saving.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/desktop-light-saving.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/narrow-dark-saving.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/narrow-light-saving.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/phone-dark-saving.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/phone-light-saving.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/short-dark-saving.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/short-light-saving.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/tablet-dark-saving.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/tablet-light-saving.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/desktop-dark-account.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/desktop-light-account.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/narrow-dark-account.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/narrow-light-account.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/phone-dark-account.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/phone-light-account.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/short-dark-account.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/short-light-account.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/tablet-dark-account.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/tablet-light-account.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/desktop-dark-saved.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/desktop-light-saved.png",
+    "width": 1440,
+    "height": 900
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/narrow-dark-saved.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/narrow-light-saved.png",
+    "width": 320,
+    "height": 568
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/phone-dark-saved.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/phone-light-saved.png",
+    "width": 393,
+    "height": 659
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/short-dark-saved.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/short-light-saved.png",
+    "width": 720,
+    "height": 480
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/tablet-dark-saved.png",
+    "width": 768,
+    "height": 720
+  },
+  {
+    "path": "docs/qa/avatars/corner-crop/chromium/tablet-light-saved.png",
+    "width": 768,
+    "height": 720
+  }
+]

@@ -1,0 +1,41 @@
+disposition: ship
+
+## persistence
+
+Pass: `apps/web/PRODUCT.md`, the current surface brief and `apps/web/DESIGN.md` exist. Reread the completed documentation correction: DESIGN now records the 56px identity, 280px popover, stationary fully visible source, crop movement/pinch resizing, conditional Move crop grip, checkerboard and focus behavior. Reread the final late documentation update: it now states that painted corner marks sit within their resize targets and records the exact two-line Move crop label. The QA README now identifies stationary-final as current, explicitly marks the older interaction/ship reports historical, and separates the ongoing full suite/pending build from passing focused checks. `stationary-documentation-check.md` records the narrow scope. The first documentation correction was verified before approval was reopened by actual visible-corner hit-test evidence. This report now uses the refreshed captures and current six source fingerprints after that functional correction, rather than inheriting the earlier ship verdict. The code-led local-extension exemption applies to concept seeds; there is no replacement world, approved generated comp, or comp-led state/diff obligation. No separate quality-bar card was supplied; the surface brief's explicit QUALITY BAR is the authority.
+
+Evidence passes: independently decoded all 184 refreshed final PNGs, checked their dimensions against the inventory and the complete requested matrix (160 state captures plus 24 source-shape captures), and verified all six inventory SHA256 values against current source. No missing or extra matrix files. Inspected all 22 contact sheets, all seven canonical images and full-resolution examples of desktop, tablet, phone, 320px, short-window, both themes, both engines, minimum panorama/portrait, transparency, error, saving and saved/options states. Captures represent their named state; no blank or malformed viewport was found. The latest unit suite reports 442 passing checks. The corrected-bundle browser run passed 24 cases initially; its two viewer-startup failures passed with dedicated observer accounts, with application behavior unchanged. I read the raw visible-corner and observer-rerun logs. The full browser suite is still running and is not reported green. Native interactions remain outside the authorized verification scope.
+
+## fidelity
+
+This is a fresh full review prompted by user counter-evidence, not a scoring pass on the prior ship verdict. Before reading builder summaries, the supplied references establish: the entire background image stays visible; the circle and corner-bracket square move over it; the old account header separates Rex and Add photo awkwardly; Telegram makes the avatar itself the camera affordance and anchors photo choices to it; Milanote provides secondary compact account grouping. Telegram's full settings window, telephone details and extra photo commands were not requested for this product.
+
+| Salient element / promise | Finding | Evidence |
+| --- | --- | --- |
+| THESIS: stationary source, movable square/circle | match | Initial and framed captures retain identical source placement while the crop changes; source canvas drawing depends on image/projection, not crop. No photo pan, zoom slider or automatic reframing. |
+| Account identity topology and scale | match | 280px desktop popover, 56px avatar, 16px padding/gap and vertically centred 15px semibold username form one row; separator precedes account actions. Loose Add photo link is removed. |
+| Avatar camera and anchored commands | match | Camera overlay is present for empty/touch/focus/open states; saved desktop resting avatar can remain clean. Small Add or Change/Remove menu anchors below the avatar, including on phones. |
+| Telegram setting-window composition | adaptation | User explicitly chose refinement of the compact existing menu, not a new settings window; surface FIRST VIEWPORT preserves that menu/phone-sheet structure. |
+| TYPE | match | Small system sans, firm 600 emphasis, 13px menu labels and restrained heading scale preserve OWN-WORLD and the incumbent Operate surface. No display-face substitution is introduced. |
+| MATERIAL | match | Real source bitmap remains the focal content; SVG performs exact framing geometry. Flat warm surfaces, official icons and soft floating elevation belong to the incumbent world. No imitation physical material. |
+| GROUND | match | Warm Den dark panel and floor, milk/oat light twin and amber primary remain aligned with named OWN-WORLD and DESIGN tokens; no cool slate or replacement palette. |
+| FORM: initial crop, corners and range | match | Centred 80% default, 25–100% square, source-bound clamping and opposite-corner resize are expressed by source geometry and the ordinary/framed/extreme captures. |
+| Visible corner marks receive resize input | match | Corrected `cropHandle` rectangles contain the white arms and remain disjoint. New `avatars.spec.ts` regression hit-tests the painted arm and drags all four corners in each engine; both runs pass in the raw log. Manual top-left evidence also changes zoom from 1.25 to 1.4272 in both engines. The old result moved the crop; that result is superseded. |
+| Tiny selection movement | adaptation | Surface FORM explicitly authorizes the conditional labelled 44px Move crop grip and leader. Full-resolution panorama/portrait cases show the separate control; proportional corner marks no longer collapse into the former cross. After the user asked what the button does, its visible label now says “Move crop” on two lines. The move icon and leader connect this one conditional control to the real selection, while ordinary crops have no added button. Photo projection remains unchanged. |
+| Transparency | match | Quiet checkerboard is confined behind source bounds, visible in both themes, with the crop guide still distinct. Export draws the bitmap, not the checkerboard. |
+| Keyboard and touch model | match | Source has initial Close focus, arrow/Shift movement, handle keys, pinch-out enlargement, isolated pointer capture, nested Escape/Tab handling and return-to-avatar focus. Provided functional/pixel/touch results support these behaviors; no live rerun or native claim is added by this review. |
+| STORY: busy, failure, retry and saved return | match | Saving disables controls with a readable status; inline error preserves framing with Save available; saved/options captures return to Account with the resulting image. Error and footer stay inside narrow/short viewports. |
+| FIRST VIEWPORT memory test | match | Account reads as one identity row and quiet destinations; editor reads as one bounded photo-framing task with one amber Save action. |
+| Truth and scope | match | QA uses authored image fixtures and test accounts; production copy introduces no invented claims. The inspected implementation retains existing avatar endpoints and 512px transparent PNG output; no new schema, storage, privacy or public-photo behavior is introduced by this refinement. |
+
+## ceiling
+
+Reached for the approved Operate refinement. The chosen world's useful native devices are present: precise compact grouping, one amber next action, familiar camera/menu disclosure, protected editor focus, clear direct manipulation, warm paired themes and restrained floating depth. Additional ornament, material effects or a larger settings frame would not advance the user's approved task. The craft floor reveals no new material violation on this surface; the supplied detector result is empty. Existing empty-board contrast and canvas-zoom overlay findings are outside this feature. No second detector was run.
+
+## material_fixes
+
+None. Resolved: visible corner marks now hit their own resize sliders, with four actual-mark drags per engine passing. Resolved: the conditional tiny-selection fallback visibly says “Move crop” and retains the leader, icon and 44px target. No regression was found in the refreshed full contact set, seven canonical captures or full-resolution extrema. The original persistence correction remains resolved.
+
+## keep
+
+Keep the fully visible stationary photo, moving square/circle, disjoint 44px targets and tiny-crop grip, balanced compact account identity, anchored camera menu, recoverable failures and visible action footer.

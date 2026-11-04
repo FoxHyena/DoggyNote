@@ -18,6 +18,7 @@ export const SURFACE_TOKENS = [
   'selection',
   'gridDot', // background dots: quiet, but visible
   'scrim', // dims the app behind a phone sheet (translucent)
+  'cropGuide', 'cropShade', // photographic crop guides, independent of the surrounding theme
   'stickerShadow', // hard, offset shadow under placed stickers (translucent)
   'stickerOutline', // the die-cut border drawn around every sticker
   'diffAdded', // previewing an agent proposal: a card it adds
@@ -47,6 +48,8 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     scrim: '#0b0a0999',
     stickerShadow: '#00000099',
     stickerOutline: '#ffffff',
+    cropGuide: '#ffffff',
+    cropShade: '#0b0a09',
     diffAdded: '#62c48c',
     diffChanged: '#74a9e6',
     diffRemoved: '#ee7f6f',
@@ -70,6 +73,8 @@ export const surfaces: Record<ThemeName, Record<SurfaceToken, string>> = {
     scrim: '#2a252159',
     stickerShadow: '#2a252129',
     stickerOutline: '#ffffff',
+    cropGuide: '#ffffff',
+    cropShade: '#0b0a09',
     diffAdded: '#2d7a4c',
     diffChanged: '#2c66a8',
     diffRemoved: '#b0392b',

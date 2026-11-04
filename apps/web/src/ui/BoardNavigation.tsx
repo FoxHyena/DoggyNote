@@ -10,7 +10,7 @@ import { sharedRoots } from '../state/sharedBoards.ts'
 import { isFavourite, setFavourite } from '../state/boardPrefs.ts'
 import { boardTitle, favouriteBoards, reachable, recentBoardIds, searchBoards } from '../state/boardShortcuts.ts'
 import { FavouriteButton } from './FavouriteButton.tsx'
-import { initials, personStyle } from '../state/realtime.ts'
+import { Avatar } from './Avatar.tsx'
 import * as doc from '../state/doc.ts'
 import { BoardIconSvg, Icon } from './icons.tsx'
 import './navigation.css'
@@ -111,7 +111,7 @@ export function BoardNavigation(props: { renderTrigger?: (state: { open: Accesso
         <section ref={sharedList} class="nav-menu-section" aria-labelledby={`${menuId}-shared-heading`}>
           <strong id={`${menuId}-shared-heading`} class="nav-menu-section-label">{COPY.boards.shared}</strong>
           <Show when={shared().length} fallback={<p class="nav-menu-description">{COPY.boards.sharedEmpty}</p>}>
-            <For each={visibleShared()}>{(b) => <button class="menu-item nav-menu-row" data-testid="shared-board-link" aria-label={sharedLabel(b)} onClick={() => go(b.id)}><BoardIconSvg icon={doc.getBoard(b.id)?.icon ?? 'paw'} size={18} /><span class="nav-menu-label">{sharedTitle(b)}</span><Show when={b.sharedBy || !b.canEdit}><span class="nav-menu-meta"><Show when={!b.canEdit}><small>{COPY.boards.viewOnly}</small></Show><Show when={b.sharedBy}>{(name) => <span class="person-avatar nav-menu-avatar" data-testid="shared-by" style={personStyle(b.sharedById ?? name())} title={`${COPY.boards.sharedBy} ${name()}`} aria-hidden="true">{initials(name())}</span>}</Show></span></Show></button>}</For>
+            <For each={visibleShared()}>{(b) => <button class="menu-item nav-menu-row" data-testid="shared-board-link" aria-label={sharedLabel(b)} onClick={() => go(b.id)}><BoardIconSvg icon={doc.getBoard(b.id)?.icon ?? 'paw'} size={18} /><span class="nav-menu-label">{sharedTitle(b)}</span><Show when={b.sharedBy || !b.canEdit}><span class="nav-menu-meta"><Show when={!b.canEdit}><small>{COPY.boards.viewOnly}</small></Show><Show when={b.sharedBy}>{(name) => <Avatar userId={b.sharedById ?? name()} name={name()} avatarId={b.sharedByAvatarId} class="nav-menu-avatar" testid="shared-by" title={`${COPY.boards.sharedBy} ${name()}`} />}</Show></span></Show></button>}</For>
             <Show when={!showAll() && shared().length > SHARED_PREVIEW}><button class="menu-item nav-menu-row nav-menu-more" data-testid="shared-show-all" onClick={expandShared}><span aria-hidden="true" /><span class="nav-menu-label">{COPY.boards.showAll} ({shared().length})</span></button></Show>
           </Show>
         </section>

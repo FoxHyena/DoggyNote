@@ -1,10 +1,11 @@
+import { Avatar } from './Avatar.tsx'
 import { Icon } from '../ui/icons.tsx'
 import { SheetGrip } from './SheetGrip.tsx'
 import './collaboration.css'
 import { For, Show, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
 import { COPY } from '@doggynote/theme'
 import { noteMarkdown, type Card } from '@doggynote/core'
-import { initials, liveState, members, peers, personStyle, sessionName, following, follow, stopFollowing, pingAt, pings, installRealtime } from '../state/realtime.ts'
+import { liveState, members, peers, personStyle, sessionName, following, follow, stopFollowing, pingAt, pings, installRealtime } from '../state/realtime.ts'
 import { boardId, camera, viewport } from '../state/ui.ts'
 import * as doc from '../state/doc.ts'
 import { rectOf } from '../canvas/layout.ts'
@@ -26,13 +27,13 @@ export function Collaborators() {
     <button ref={trigger} class="people-trigger" data-testid="collaborators" aria-label={`People on this board${people().length ? `: ${people().length}` : ''}. ${liveState() === 'live' ? 'Live' : liveState() === 'connecting' ? 'Connecting' : 'Reconnecting'}`} aria-expanded={open()} onClick={() => setOpen(!open())}>
       <Icon name="people" size={19} />
       <span class="people-count">{liveState() === 'live' ? people().length || 1 : '…'}</span>
-      <span class="people-avatars" aria-hidden="true"><For each={people().slice(0, 2)}>{(p) => <span class="person-avatar" style={personStyle(p.userId)}>{initials(p.username)}</span>}</For></span>
+      <span class="people-avatars" aria-hidden="true"><For each={people().slice(0, 2)}>{(p) => <Avatar userId={p.userId} name={p.username} avatarId={p.avatarId} />}</For></span>
     </button>
     <Show when={open()}><div class="menu nav-menu people-menu" role="region" aria-label="People on this board"><SheetGrip onDismiss={closeAction} />
       <div class="nav-menu-head"><strong>On this board</strong><span class="people-status" data-state={liveState()} data-testid="live-status">{liveState() === 'live' ? 'Live' : liveState() === 'connecting' ? 'Connecting…' : 'Reconnecting…'}</span></div>
       <Show when={people().length} fallback={<p class="people-hint">{liveState() === 'live' ? 'Just you for now.' : 'Live presence is unavailable. Your edits still save and sync.'}</p>}>
         <ul class="people-list"><For each={people()}>{(p) => <li class="person-row" data-testid="participant" style={personStyle(p.userId)}>
-          <span class="person-avatar" aria-hidden="true">{initials(p.username)}</span>
+          <Avatar userId={p.userId} name={p.username} avatarId={p.avatarId} />
           <div class="person-info"><strong>{p.username}{p.userId === user()?.id ? ' (you)' : ''}</strong><small>{members().some((m) => m.userId === p.userId && m.editing) ? 'Editing a note' : p.canEdit ? 'Can edit' : 'View only'}{members().filter((m) => m.userId === p.userId).length > 1 ? ' · multiple sessions' : ''}</small></div>
           <Show when={peers().some((m) => m.userId === p.userId)}><button class="person-follow" aria-label={`Follow ${p.username}`} onClick={() => { const session = peers().find((m) => m.userId === p.userId && m.editing) ?? peers().find((m) => m.userId === p.userId); if (session) follow(session.sessionId); closeAction() }}>Follow</button></Show>
         </li>}</For></ul>

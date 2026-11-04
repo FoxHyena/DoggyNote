@@ -1,0 +1,5 @@
+{
+  "apps/web/src/ui/avatar.css": "6b137d5ac392259b7f0653653b48f692ad94afaa244a9cbd49004202d39d173e",
+  "apps/web/e2e/avatars.spec.ts": "f16b207eaab1237043709aade36ba2ae2a4f092525f95d8fda5815b356e5bfa1",
+  "apps/web/e2e/mobile-avatars.spec.ts": "c536ef1fdf4d9ade5220d797fdee741b1f064e68b8869c24954fa41521df2f97"
+}

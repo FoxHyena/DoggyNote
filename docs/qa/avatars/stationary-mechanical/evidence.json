@@ -1,0 +1,2236 @@
+{
+  "runs": [
+    {
+      "engine": "chromium",
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "theme": "light",
+      "account": {
+        "x": 1150,
+        "y": 43.5,
+        "width": 280,
+        "height": 319
+      },
+      "options": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 54
+      },
+      "optionsFocus": {
+        "tag": "BUTTON",
+        "text": "Add photo",
+        "role": "menuitem"
+      },
+      "firstEscape": {
+        "account": "true",
+        "options": 0,
+        "focus": true
+      },
+      "secondEscape": "false",
+      "initialFocus": {
+        "tag": "BUTTON",
+        "label": "Account",
+        "inside": false
+      },
+      "dialogAria": "- dialog \"Profile photo\":\n  - banner:\n    - heading \"Profile photo\" [level=2]\n    - button \"Close photo editor\"\n  - paragraph: Drag the circle to position it. Drag a corner to resize.\n  - group \"Crop position\":\n    - slider \"Resize crop from top left\"\n    - slider \"Resize crop from top right\"\n    - slider \"Resize crop from bottom left\"\n    - slider \"Resize crop from bottom right\"\n  - text: Use arrow keys to move the selection. Hold Shift for larger steps. Use arrow keys to resize the square. Right or up makes it larger; left or down makes it smaller. Hold Shift for larger steps.\n  - contentinfo:\n    - button \"Reset\"\n    - button \"Cancel\"\n    - button \"Save photo\"",
+      "move": {
+        "before": {
+          "x": "450",
+          "y": "300",
+          "z": "1.25"
+        },
+        "after": {
+          "x": "479.80132450331126",
+          "y": "311.92052980132445",
+          "z": "1.25"
+        }
+      },
+      "outsideDragUnchanged": true,
+      "canvasStationary": true,
+      "boardStationary": true,
+      "keyboardRight": true,
+      "tabSequence": [
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Reset",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Cancel",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Save photo",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Close photo editor",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "DIV",
+          "label": "Crop position",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        }
+      ],
+      "handles": [
+        {
+          "label": "Resize crop from top left",
+          "x": 605.453125,
+          "y": 340.203125,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from top right",
+          "x": 792.53125,
+          "y": 340.203125,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom left",
+          "x": 605.453125,
+          "y": 527.28125,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom right",
+          "x": 792.53125,
+          "y": 527.28125,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        }
+      ],
+      "stage": {
+        "x": 525,
+        "y": 265.75,
+        "width": 390,
+        "height": 390
+      },
+      "selection": {
+        "x": 649.453125,
+        "y": 384.203125,
+        "width": 143.0625,
+        "height": 143.0625
+      },
+      "footer": {
+        "x": 507,
+        "y": 667.75,
+        "width": 426,
+        "height": 44
+      },
+      "cancelReturnsFocus": true
+    },
+    {
+      "engine": "chromium",
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "theme": "dark",
+      "account": {
+        "x": 1150,
+        "y": 43.5,
+        "width": 280,
+        "height": 319
+      },
+      "options": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 54
+      },
+      "optionsFocus": {
+        "tag": "BUTTON",
+        "text": "Add photo",
+        "role": "menuitem"
+      },
+      "firstEscape": {
+        "account": "true",
+        "options": 0,
+        "focus": true
+      },
+      "secondEscape": "false",
+      "initialFocus": {
+        "tag": "BUTTON",
+        "label": "Account",
+        "inside": false
+      },
+      "dialogAria": "- dialog \"Profile photo\":\n  - banner:\n    - heading \"Profile photo\" [level=2]\n    - button \"Close photo editor\"\n  - paragraph: Drag the circle to position it. Drag a corner to resize.\n  - group \"Crop position\":\n    - slider \"Resize crop from top left\"\n    - slider \"Resize crop from top right\"\n    - slider \"Resize crop from bottom left\"\n    - slider \"Resize crop from bottom right\"\n  - text: Use arrow keys to move the selection. Hold Shift for larger steps. Use arrow keys to resize the square. Right or up makes it larger; left or down makes it smaller. Hold Shift for larger steps.\n  - contentinfo:\n    - button \"Reset\"\n    - button \"Cancel\"\n    - button \"Save photo\"",
+      "move": {
+        "before": {
+          "x": "450",
+          "y": "300",
+          "z": "1.25"
+        },
+        "after": {
+          "x": "479.80132450331126",
+          "y": "311.92052980132445",
+          "z": "1.25"
+        }
+      },
+      "outsideDragUnchanged": true,
+      "canvasStationary": true,
+      "boardStationary": true,
+      "keyboardRight": true,
+      "tabSequence": [
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Reset",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Cancel",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Save photo",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Close photo editor",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "DIV",
+          "label": "Crop position",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        }
+      ],
+      "handles": [
+        {
+          "label": "Resize crop from top left",
+          "x": 597.0625,
+          "y": 336.203125,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from top right",
+          "x": 802.140625,
+          "y": 336.203125,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom left",
+          "x": 597.0625,
+          "y": 541.28125,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom right",
+          "x": 802.140625,
+          "y": 541.28125,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        }
+      ],
+      "stage": {
+        "x": 525,
+        "y": 265.75,
+        "width": 390,
+        "height": 390
+      },
+      "selection": {
+        "x": 641.0625,
+        "y": 380.203125,
+        "width": 161.0625,
+        "height": 161.0625
+      },
+      "footer": {
+        "x": 507,
+        "y": 667.75,
+        "width": 426,
+        "height": 44
+      },
+      "cancelReturnsFocus": true
+    },
+    {
+      "engine": "chromium",
+      "name": "narrow",
+      "width": 320,
+      "height": 480,
+      "theme": "light",
+      "account": {
+        "x": 0,
+        "y": 62,
+        "width": 320,
+        "height": 418
+      },
+      "options": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 54
+      },
+      "optionsFocus": {
+        "tag": "BUTTON",
+        "text": "Add photo",
+        "role": "menuitem"
+      },
+      "firstEscape": {
+        "account": "true",
+        "options": 0,
+        "focus": true
+      },
+      "secondEscape": "false",
+      "initialFocus": {
+        "tag": "BUTTON",
+        "label": "Account",
+        "inside": false
+      },
+      "dialogAria": "- dialog \"Profile photo\":\n  - banner:\n    - heading \"Profile photo\" [level=2]\n    - button \"Close photo editor\"\n  - paragraph: Drag the circle to position it. Drag a corner to resize.\n  - group \"Crop position\":\n    - slider \"Resize crop from top left\"\n    - slider \"Resize crop from top right\"\n    - slider \"Resize crop from bottom left\"\n    - slider \"Resize crop from bottom right\"\n  - text: Use arrow keys to move the selection. Hold Shift for larger steps. Use arrow keys to resize the square. Right or up makes it larger; left or down makes it smaller. Hold Shift for larger steps.\n  - contentinfo:\n    - button \"Reset\"\n    - button \"Cancel\"\n    - button \"Save photo\"",
+      "move": {
+        "before": {
+          "x": "450",
+          "y": "300",
+          "z": "1.25"
+        },
+        "after": {
+          "x": "538.2352941176471",
+          "y": "335.2941176470588",
+          "z": "1.25"
+        }
+      },
+      "outsideDragUnchanged": true,
+      "canvasStationary": true,
+      "boardStationary": true,
+      "keyboardRight": true,
+      "tabSequence": [
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Reset",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Cancel",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Save photo",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Close photo editor",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "DIV",
+          "label": "Crop position",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        }
+      ],
+      "handles": [
+        {
+          "label": "Resize crop from top left",
+          "x": 98.796875,
+          "y": 245.796875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from top right",
+          "x": 179.1875,
+          "y": 245.796875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom left",
+          "x": 98.796875,
+          "y": 326.1875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom right",
+          "x": 179.1875,
+          "y": 326.1875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        }
+      ],
+      "stage": {
+        "x": 65,
+        "y": 218,
+        "width": 190,
+        "height": 190
+      },
+      "selection": {
+        "x": 142.796875,
+        "y": 289.796875,
+        "width": 36.390625,
+        "height": 36.390625
+      },
+      "footer": {
+        "x": 16,
+        "y": 420,
+        "width": 288,
+        "height": 44
+      },
+      "cancelReturnsFocus": true
+    },
+    {
+      "engine": "chromium",
+      "name": "narrow",
+      "width": 320,
+      "height": 480,
+      "theme": "dark",
+      "account": {
+        "x": 0,
+        "y": 62,
+        "width": 320,
+        "height": 418
+      },
+      "options": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 54
+      },
+      "optionsFocus": {
+        "tag": "BUTTON",
+        "text": "Add photo",
+        "role": "menuitem"
+      },
+      "firstEscape": {
+        "account": "true",
+        "options": 0,
+        "focus": true
+      },
+      "secondEscape": "false",
+      "initialFocus": {
+        "tag": "BUTTON",
+        "label": "Account",
+        "inside": false
+      },
+      "dialogAria": "- dialog \"Profile photo\":\n  - banner:\n    - heading \"Profile photo\" [level=2]\n    - button \"Close photo editor\"\n  - paragraph: Drag the circle to position it. Drag a corner to resize.\n  - group \"Crop position\":\n    - slider \"Resize crop from top left\"\n    - slider \"Resize crop from top right\"\n    - slider \"Resize crop from bottom left\"\n    - slider \"Resize crop from bottom right\"\n  - text: Use arrow keys to move the selection. Hold Shift for larger steps. Use arrow keys to resize the square. Right or up makes it larger; left or down makes it smaller. Hold Shift for larger steps.\n  - contentinfo:\n    - button \"Reset\"\n    - button \"Cancel\"\n    - button \"Save photo\"",
+      "move": {
+        "before": {
+          "x": "450",
+          "y": "300",
+          "z": "1.25"
+        },
+        "after": {
+          "x": "538.2352941176471",
+          "y": "335.2941176470588",
+          "z": "1.25"
+        }
+      },
+      "outsideDragUnchanged": true,
+      "canvasStationary": true,
+      "boardStationary": true,
+      "keyboardRight": true,
+      "tabSequence": [
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Reset",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Cancel",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Save photo",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Close photo editor",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "DIV",
+          "label": "Crop position",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        }
+      ],
+      "handles": [
+        {
+          "label": "Resize crop from top left",
+          "x": 98.796875,
+          "y": 245.796875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from top right",
+          "x": 179.1875,
+          "y": 245.796875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom left",
+          "x": 98.796875,
+          "y": 326.1875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom right",
+          "x": 179.1875,
+          "y": 326.1875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        }
+      ],
+      "stage": {
+        "x": 65,
+        "y": 218,
+        "width": 190,
+        "height": 190
+      },
+      "selection": {
+        "x": 142.796875,
+        "y": 289.796875,
+        "width": 36.390625,
+        "height": 36.390625
+      },
+      "footer": {
+        "x": 16,
+        "y": 420,
+        "width": 288,
+        "height": 44
+      },
+      "cancelReturnsFocus": true
+    },
+    {
+      "engine": "chromium",
+      "name": "short",
+      "width": 720,
+      "height": 480,
+      "theme": "light",
+      "account": {
+        "x": 430,
+        "y": 43.5,
+        "width": 280,
+        "height": 319
+      },
+      "options": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 54
+      },
+      "optionsFocus": {
+        "tag": "BUTTON",
+        "text": "Add photo",
+        "role": "menuitem"
+      },
+      "firstEscape": {
+        "account": "true",
+        "options": 0,
+        "focus": true
+      },
+      "secondEscape": "false",
+      "initialFocus": {
+        "tag": "BUTTON",
+        "label": "Account",
+        "inside": false
+      },
+      "dialogAria": "- dialog \"Profile photo\":\n  - banner:\n    - heading \"Profile photo\" [level=2]\n    - button \"Close photo editor\"\n  - paragraph: Drag the circle to position it. Drag a corner to resize.\n  - group \"Crop position\":\n    - slider \"Resize crop from top left\"\n    - slider \"Resize crop from top right\"\n    - slider \"Resize crop from bottom left\"\n    - slider \"Resize crop from bottom right\"\n  - text: Use arrow keys to move the selection. Hold Shift for larger steps. Use arrow keys to resize the square. Right or up makes it larger; left or down makes it smaller. Hold Shift for larger steps.\n  - contentinfo:\n    - button \"Reset\"\n    - button \"Cancel\"\n    - button \"Save photo\"",
+      "move": {
+        "before": {
+          "x": "450",
+          "y": "300",
+          "z": "1.25"
+        },
+        "after": {
+          "x": "513.3802816901409",
+          "y": "325.3521126760563",
+          "z": "1.25"
+        }
+      },
+      "outsideDragUnchanged": true,
+      "canvasStationary": true,
+      "boardStationary": true,
+      "keyboardRight": true,
+      "tabSequence": [
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Reset",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Cancel",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Save photo",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Close photo editor",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "DIV",
+          "label": "Crop position",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        }
+      ],
+      "handles": [
+        {
+          "label": "Resize crop from top left",
+          "x": 288.125,
+          "y": 172.875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from top right",
+          "x": 389.859375,
+          "y": 172.875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom left",
+          "x": 288.125,
+          "y": 274.609375,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom right",
+          "x": 389.859375,
+          "y": 274.609375,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        }
+      ],
+      "stage": {
+        "x": 245,
+        "y": 135.75,
+        "width": 230,
+        "height": 230
+      },
+      "selection": {
+        "x": 332.125,
+        "y": 216.875,
+        "width": 57.71875,
+        "height": 57.71875
+      },
+      "footer": {
+        "x": 147,
+        "y": 377.75,
+        "width": 426,
+        "height": 44
+      },
+      "cancelReturnsFocus": true
+    },
+    {
+      "engine": "chromium",
+      "name": "short",
+      "width": 720,
+      "height": 480,
+      "theme": "dark",
+      "account": {
+        "x": 430,
+        "y": 43.5,
+        "width": 280,
+        "height": 319
+      },
+      "options": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 54
+      },
+      "optionsFocus": {
+        "tag": "BUTTON",
+        "text": "Add photo",
+        "role": "menuitem"
+      },
+      "firstEscape": {
+        "account": "true",
+        "options": 0,
+        "focus": true
+      },
+      "secondEscape": "false",
+      "initialFocus": {
+        "tag": "BUTTON",
+        "label": "Account",
+        "inside": false
+      },
+      "dialogAria": "- dialog \"Profile photo\":\n  - banner:\n    - heading \"Profile photo\" [level=2]\n    - button \"Close photo editor\"\n  - paragraph: Drag the circle to position it. Drag a corner to resize.\n  - group \"Crop position\":\n    - slider \"Resize crop from top left\"\n    - slider \"Resize crop from top right\"\n    - slider \"Resize crop from bottom left\"\n    - slider \"Resize crop from bottom right\"\n  - text: Use arrow keys to move the selection. Hold Shift for larger steps. Use arrow keys to resize the square. Right or up makes it larger; left or down makes it smaller. Hold Shift for larger steps.\n  - contentinfo:\n    - button \"Reset\"\n    - button \"Cancel\"\n    - button \"Save photo\"",
+      "move": {
+        "before": {
+          "x": "450",
+          "y": "300",
+          "z": "1.25"
+        },
+        "after": {
+          "x": "513.3802816901409",
+          "y": "325.3521126760563",
+          "z": "1.25"
+        }
+      },
+      "outsideDragUnchanged": true,
+      "canvasStationary": true,
+      "boardStationary": true,
+      "keyboardRight": true,
+      "tabSequence": [
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Reset",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Cancel",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Save photo",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Close photo editor",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "DIV",
+          "label": "Crop position",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        }
+      ],
+      "handles": [
+        {
+          "label": "Resize crop from top left",
+          "x": 288.125,
+          "y": 172.875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from top right",
+          "x": 389.859375,
+          "y": 172.875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom left",
+          "x": 288.125,
+          "y": 274.609375,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom right",
+          "x": 389.859375,
+          "y": 274.609375,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        }
+      ],
+      "stage": {
+        "x": 245,
+        "y": 135.75,
+        "width": 230,
+        "height": 230
+      },
+      "selection": {
+        "x": 332.125,
+        "y": 216.875,
+        "width": 57.71875,
+        "height": 57.71875
+      },
+      "footer": {
+        "x": 147,
+        "y": 377.75,
+        "width": 426,
+        "height": 44
+      },
+      "cancelReturnsFocus": true
+    },
+    {
+      "engine": "webkit",
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "theme": "light",
+      "account": {
+        "x": 1150,
+        "y": 43.5,
+        "width": 280,
+        "height": 319
+      },
+      "options": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 54
+      },
+      "optionsFocus": {
+        "tag": "BUTTON",
+        "text": "Add photo",
+        "role": "menuitem"
+      },
+      "firstEscape": {
+        "account": "true",
+        "options": 0,
+        "focus": true
+      },
+      "secondEscape": "false",
+      "initialFocus": {
+        "tag": "BUTTON",
+        "label": "Account",
+        "inside": false
+      },
+      "dialogAria": "- dialog \"Profile photo\":\n  - banner:\n    - heading \"Profile photo\" [level=2]\n    - button \"Close photo editor\"\n  - paragraph: Drag the circle to position it. Drag a corner to resize.\n  - group \"Crop position\":\n    - slider \"Resize crop from top left\"\n    - slider \"Resize crop from top right\"\n    - slider \"Resize crop from bottom left\"\n    - slider \"Resize crop from bottom right\"\n  - text: Use arrow keys to move the selection. Hold Shift for larger steps. Use arrow keys to resize the square. Right or up makes it larger; left or down makes it smaller. Hold Shift for larger steps.\n  - contentinfo:\n    - button \"Reset\"\n    - button \"Cancel\"\n    - button \"Save photo\"",
+      "move": {
+        "before": {
+          "x": "450",
+          "y": "300",
+          "z": "1.25"
+        },
+        "after": {
+          "x": "479.8013245033112",
+          "y": "311.92052980132445",
+          "z": "1.25"
+        }
+      },
+      "outsideDragUnchanged": true,
+      "canvasStationary": true,
+      "boardStationary": true,
+      "keyboardRight": true,
+      "tabSequence": [
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Reset",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Cancel",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Save photo",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Close photo editor",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "DIV",
+          "label": "Crop position",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        }
+      ],
+      "handles": [
+        {
+          "label": "Resize crop from top left",
+          "x": 605.453125,
+          "y": 340.203125,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from top right",
+          "x": 792.53125,
+          "y": 340.203125,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom left",
+          "x": 605.453125,
+          "y": 527.28125,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom right",
+          "x": 792.53125,
+          "y": 527.28125,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        }
+      ],
+      "stage": {
+        "x": 525,
+        "y": 265.75,
+        "width": 390,
+        "height": 390
+      },
+      "selection": {
+        "x": 641.0625,
+        "y": 380.203125,
+        "width": 161.0625,
+        "height": 161.0625
+      },
+      "footer": {
+        "x": 507,
+        "y": 667.75,
+        "width": 426,
+        "height": 44
+      },
+      "cancelReturnsFocus": true
+    },
+    {
+      "engine": "webkit",
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "theme": "dark",
+      "account": {
+        "x": 1150,
+        "y": 43.5,
+        "width": 280,
+        "height": 319
+      },
+      "options": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 54
+      },
+      "optionsFocus": {
+        "tag": "BUTTON",
+        "text": "Add photo",
+        "role": "menuitem"
+      },
+      "firstEscape": {
+        "account": "true",
+        "options": 0,
+        "focus": true
+      },
+      "secondEscape": "false",
+      "initialFocus": {
+        "tag": "BUTTON",
+        "label": "Account",
+        "inside": false
+      },
+      "dialogAria": "- dialog \"Profile photo\":\n  - banner:\n    - heading \"Profile photo\" [level=2]\n    - button \"Close photo editor\"\n  - paragraph: Drag the circle to position it. Drag a corner to resize.\n  - group \"Crop position\":\n    - slider \"Resize crop from top left\"\n    - slider \"Resize crop from top right\"\n    - slider \"Resize crop from bottom left\"\n    - slider \"Resize crop from bottom right\"\n  - text: Use arrow keys to move the selection. Hold Shift for larger steps. Use arrow keys to resize the square. Right or up makes it larger; left or down makes it smaller. Hold Shift for larger steps.\n  - contentinfo:\n    - button \"Reset\"\n    - button \"Cancel\"\n    - button \"Save photo\"",
+      "move": {
+        "before": {
+          "x": "450",
+          "y": "300",
+          "z": "1.25"
+        },
+        "after": {
+          "x": "479.8013245033112",
+          "y": "311.92052980132445",
+          "z": "1.25"
+        }
+      },
+      "outsideDragUnchanged": true,
+      "canvasStationary": true,
+      "boardStationary": true,
+      "keyboardRight": true,
+      "tabSequence": [
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Reset",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Cancel",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Save photo",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Close photo editor",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "DIV",
+          "label": "Crop position",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        }
+      ],
+      "handles": [
+        {
+          "label": "Resize crop from top left",
+          "x": 597.0625,
+          "y": 336.203125,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from top right",
+          "x": 802.140625,
+          "y": 336.203125,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom left",
+          "x": 597.0625,
+          "y": 541.28125,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom right",
+          "x": 802.140625,
+          "y": 541.28125,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        }
+      ],
+      "stage": {
+        "x": 525,
+        "y": 265.75,
+        "width": 390,
+        "height": 390
+      },
+      "selection": {
+        "x": 641.0625,
+        "y": 380.203125,
+        "width": 161.0625,
+        "height": 161.0625
+      },
+      "footer": {
+        "x": 507,
+        "y": 667.75,
+        "width": 426,
+        "height": 44
+      },
+      "cancelReturnsFocus": true
+    },
+    {
+      "engine": "webkit",
+      "name": "narrow",
+      "width": 320,
+      "height": 480,
+      "theme": "light",
+      "account": {
+        "x": 0,
+        "y": 62,
+        "width": 320,
+        "height": 418
+      },
+      "options": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 54
+      },
+      "optionsFocus": {
+        "tag": "BUTTON",
+        "text": "Add photo",
+        "role": "menuitem"
+      },
+      "firstEscape": {
+        "account": "true",
+        "options": 0,
+        "focus": true
+      },
+      "secondEscape": "false",
+      "initialFocus": {
+        "tag": "BUTTON",
+        "label": "Account",
+        "inside": false
+      },
+      "dialogAria": "- dialog \"Profile photo\":\n  - banner:\n    - heading \"Profile photo\" [level=2]\n    - button \"Close photo editor\"\n  - paragraph: Drag the circle to position it. Drag a corner to resize.\n  - group \"Crop position\":\n    - slider \"Resize crop from top left\"\n    - slider \"Resize crop from top right\"\n    - slider \"Resize crop from bottom left\"\n    - slider \"Resize crop from bottom right\"\n  - text: Use arrow keys to move the selection. Hold Shift for larger steps. Use arrow keys to resize the square. Right or up makes it larger; left or down makes it smaller. Hold Shift for larger steps.\n  - contentinfo:\n    - button \"Reset\"\n    - button \"Cancel\"\n    - button \"Save photo\"",
+      "move": {
+        "before": {
+          "x": "450",
+          "y": "300",
+          "z": "1.25"
+        },
+        "after": {
+          "x": "538.2352941176471",
+          "y": "335.2941176470588",
+          "z": "1.25"
+        }
+      },
+      "outsideDragUnchanged": true,
+      "canvasStationary": true,
+      "boardStationary": true,
+      "keyboardRight": true,
+      "tabSequence": [
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Reset",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Cancel",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Save photo",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Close photo editor",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "DIV",
+          "label": "Crop position",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        }
+      ],
+      "handles": [
+        {
+          "label": "Resize crop from top left",
+          "x": 89.34375,
+          "y": 241.796875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from top right",
+          "x": 187.734375,
+          "y": 241.796875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom left",
+          "x": 89.34375,
+          "y": 340.1875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom right",
+          "x": 187.734375,
+          "y": 340.1875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        }
+      ],
+      "stage": {
+        "x": 65,
+        "y": 218,
+        "width": 190,
+        "height": 190
+      },
+      "selection": {
+        "x": 133.34375,
+        "y": 285.796875,
+        "width": 54.390625,
+        "height": 54.390625
+      },
+      "footer": {
+        "x": 16,
+        "y": 420,
+        "width": 288,
+        "height": 44
+      },
+      "cancelReturnsFocus": true
+    },
+    {
+      "engine": "webkit",
+      "name": "narrow",
+      "width": 320,
+      "height": 480,
+      "theme": "dark",
+      "account": {
+        "x": 0,
+        "y": 62,
+        "width": 320,
+        "height": 418
+      },
+      "options": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 54
+      },
+      "optionsFocus": {
+        "tag": "BUTTON",
+        "text": "Add photo",
+        "role": "menuitem"
+      },
+      "firstEscape": {
+        "account": "true",
+        "options": 0,
+        "focus": true
+      },
+      "secondEscape": "false",
+      "initialFocus": {
+        "tag": "BUTTON",
+        "label": "Account",
+        "inside": false
+      },
+      "dialogAria": "- dialog \"Profile photo\":\n  - banner:\n    - heading \"Profile photo\" [level=2]\n    - button \"Close photo editor\"\n  - paragraph: Drag the circle to position it. Drag a corner to resize.\n  - group \"Crop position\":\n    - slider \"Resize crop from top left\"\n    - slider \"Resize crop from top right\"\n    - slider \"Resize crop from bottom left\"\n    - slider \"Resize crop from bottom right\"\n  - text: Use arrow keys to move the selection. Hold Shift for larger steps. Use arrow keys to resize the square. Right or up makes it larger; left or down makes it smaller. Hold Shift for larger steps.\n  - contentinfo:\n    - button \"Reset\"\n    - button \"Cancel\"\n    - button \"Save photo\"",
+      "move": {
+        "before": {
+          "x": "450",
+          "y": "300",
+          "z": "1.25"
+        },
+        "after": {
+          "x": "538.2352941176471",
+          "y": "335.2941176470588",
+          "z": "1.25"
+        }
+      },
+      "outsideDragUnchanged": true,
+      "canvasStationary": true,
+      "boardStationary": true,
+      "keyboardRight": true,
+      "tabSequence": [
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Reset",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Cancel",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Save photo",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Close photo editor",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "DIV",
+          "label": "Crop position",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        }
+      ],
+      "handles": [
+        {
+          "label": "Resize crop from top left",
+          "x": 89.34375,
+          "y": 241.796875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from top right",
+          "x": 187.734375,
+          "y": 241.796875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom left",
+          "x": 89.34375,
+          "y": 340.1875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom right",
+          "x": 187.734375,
+          "y": 340.1875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        }
+      ],
+      "stage": {
+        "x": 65,
+        "y": 218,
+        "width": 190,
+        "height": 190
+      },
+      "selection": {
+        "x": 133.34375,
+        "y": 285.796875,
+        "width": 54.390625,
+        "height": 54.390625
+      },
+      "footer": {
+        "x": 16,
+        "y": 420,
+        "width": 288,
+        "height": 44
+      },
+      "cancelReturnsFocus": true
+    },
+    {
+      "engine": "webkit",
+      "name": "short",
+      "width": 720,
+      "height": 480,
+      "theme": "light",
+      "account": {
+        "x": 430,
+        "y": 43.5,
+        "width": 280,
+        "height": 319
+      },
+      "options": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 54
+      },
+      "optionsFocus": {
+        "tag": "BUTTON",
+        "text": "Add photo",
+        "role": "menuitem"
+      },
+      "firstEscape": {
+        "account": "true",
+        "options": 0,
+        "focus": true
+      },
+      "secondEscape": "false",
+      "initialFocus": {
+        "tag": "BUTTON",
+        "label": "Account",
+        "inside": false
+      },
+      "dialogAria": "- dialog \"Profile photo\":\n  - banner:\n    - heading \"Profile photo\" [level=2]\n    - button \"Close photo editor\"\n  - paragraph: Drag the circle to position it. Drag a corner to resize.\n  - group \"Crop position\":\n    - slider \"Resize crop from top left\"\n    - slider \"Resize crop from top right\"\n    - slider \"Resize crop from bottom left\"\n    - slider \"Resize crop from bottom right\"\n  - text: Use arrow keys to move the selection. Hold Shift for larger steps. Use arrow keys to resize the square. Right or up makes it larger; left or down makes it smaller. Hold Shift for larger steps.\n  - contentinfo:\n    - button \"Reset\"\n    - button \"Cancel\"\n    - button \"Save photo\"",
+      "move": {
+        "before": {
+          "x": "450",
+          "y": "300",
+          "z": "1.25"
+        },
+        "after": {
+          "x": "513.3802816901408",
+          "y": "325.3521126760563",
+          "z": "1.25"
+        }
+      },
+      "outsideDragUnchanged": true,
+      "canvasStationary": true,
+      "boardStationary": true,
+      "keyboardRight": true,
+      "tabSequence": [
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Reset",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Cancel",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Save photo",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Close photo editor",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "DIV",
+          "label": "Crop position",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        }
+      ],
+      "handles": [
+        {
+          "label": "Resize crop from top left",
+          "x": 278.890625,
+          "y": 168.875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from top right",
+          "x": 398.609375,
+          "y": 168.875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom left",
+          "x": 278.890625,
+          "y": 288.609375,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom right",
+          "x": 398.609375,
+          "y": 288.609375,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        }
+      ],
+      "stage": {
+        "x": 245,
+        "y": 135.75,
+        "width": 230,
+        "height": 230
+      },
+      "selection": {
+        "x": 322.890625,
+        "y": 212.875,
+        "width": 75.71875,
+        "height": 75.71875
+      },
+      "footer": {
+        "x": 147,
+        "y": 377.75,
+        "width": 426,
+        "height": 44
+      },
+      "cancelReturnsFocus": true
+    },
+    {
+      "engine": "webkit",
+      "name": "short",
+      "width": 720,
+      "height": 480,
+      "theme": "dark",
+      "account": {
+        "x": 430,
+        "y": 43.5,
+        "width": 280,
+        "height": 319
+      },
+      "options": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 54
+      },
+      "optionsFocus": {
+        "tag": "BUTTON",
+        "text": "Add photo",
+        "role": "menuitem"
+      },
+      "firstEscape": {
+        "account": "true",
+        "options": 0,
+        "focus": true
+      },
+      "secondEscape": "false",
+      "initialFocus": {
+        "tag": "BUTTON",
+        "label": "Account",
+        "inside": false
+      },
+      "dialogAria": "- dialog \"Profile photo\":\n  - banner:\n    - heading \"Profile photo\" [level=2]\n    - button \"Close photo editor\"\n  - paragraph: Drag the circle to position it. Drag a corner to resize.\n  - group \"Crop position\":\n    - slider \"Resize crop from top left\"\n    - slider \"Resize crop from top right\"\n    - slider \"Resize crop from bottom left\"\n    - slider \"Resize crop from bottom right\"\n  - text: Use arrow keys to move the selection. Hold Shift for larger steps. Use arrow keys to resize the square. Right or up makes it larger; left or down makes it smaller. Hold Shift for larger steps.\n  - contentinfo:\n    - button \"Reset\"\n    - button \"Cancel\"\n    - button \"Save photo\"",
+      "move": {
+        "before": {
+          "x": "450",
+          "y": "300",
+          "z": "1.25"
+        },
+        "after": {
+          "x": "513.3802816901408",
+          "y": "325.3521126760563",
+          "z": "1.25"
+        }
+      },
+      "outsideDragUnchanged": true,
+      "canvasStationary": true,
+      "boardStationary": true,
+      "keyboardRight": true,
+      "tabSequence": [
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Reset",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Cancel",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": null,
+          "text": "Save photo",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Close photo editor",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "DIV",
+          "label": "Crop position",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top left",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from top right",
+          "text": "",
+          "inside": true
+        },
+        {
+          "tag": "BUTTON",
+          "label": "Resize crop from bottom left",
+          "text": "",
+          "inside": true
+        }
+      ],
+      "handles": [
+        {
+          "label": "Resize crop from top left",
+          "x": 288.125,
+          "y": 172.875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from top right",
+          "x": 389.859375,
+          "y": 172.875,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom left",
+          "x": 288.125,
+          "y": 274.609375,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        },
+        {
+          "label": "Resize crop from bottom right",
+          "x": 389.859375,
+          "y": 274.609375,
+          "width": 44,
+          "height": 44,
+          "hit": true,
+          "value": "80"
+        }
+      ],
+      "stage": {
+        "x": 245,
+        "y": 135.75,
+        "width": 230,
+        "height": 230
+      },
+      "selection": {
+        "x": 322.890625,
+        "y": 212.875,
+        "width": 75.71875,
+        "height": 75.71875
+      },
+      "footer": {
+        "x": 147,
+        "y": 377.75,
+        "width": 426,
+        "height": 44
+      },
+      "cancelReturnsFocus": true
+    }
+  ],
+  "overlay": [
+    {
+      "state": "account",
+      "injected": true,
+      "logs": [
+        {
+          "type": "startGroup",
+          "text": "%c[impeccable] 3 anti-patterns found color: oklch(84% 0.19 80.46); font-weight: bold"
+        }
+      ],
+      "overlayNodes": 0
+    },
+    {
+      "state": "options",
+      "injected": true,
+      "logs": [
+        {
+          "type": "startGroup",
+          "text": "%c[impeccable] 3 anti-patterns found color: oklch(84% 0.19 80.46); font-weight: bold"
+        }
+      ],
+      "overlayNodes": 0
+    },
+    {
+      "state": "editor",
+      "injected": true,
+      "logs": [
+        {
+          "type": "startGroup",
+          "text": "%c[impeccable] 3 anti-patterns found color: oklch(84% 0.19 80.46); font-weight: bold"
+        }
+      ],
+      "overlayNodes": 0
+    }
+  ],
+  "blockedProfileWrites": []
+}

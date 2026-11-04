@@ -3,7 +3,7 @@ import { ApiError, api, clearAssetToken, setBearer } from './api.ts'
 import * as doc from './doc.ts'
 import { isTauri, tokenStore } from './platform.ts'
 
-export type User = { id: string; username: string; isAdmin: boolean }
+export type User = { id: string; username: string; isAdmin: boolean; avatarId?: string | null }
 
 const USER_KEY = 'doggynote.user'
 /** Survives sign-out and expired sessions, so signing in as someone else clears the local copy. */
@@ -26,6 +26,13 @@ function cacheUser(u: User | null) {
   } catch {
     // ignore
   }
+}
+
+/** Install acknowledged profile changes in memory and the offline identity cache. */
+export function updateProfile(next: User) {
+  if (user()?.id !== next.id) return
+  setUser(next)
+  cacheUser(next)
 }
 
 /**

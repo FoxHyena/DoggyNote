@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { AppEnv } from './env.ts'
+import { avatars } from './avatars.ts'
 import { auth, requireUser, users } from './auth.ts'
 import { stickers, telegramWebhook } from './stickers.ts'
 import { boardPreferences } from './boardPreferences.ts'
@@ -79,6 +80,7 @@ app.post('/diag', async (c) => {
 app.route('/', telegramWebhook)
 app.route('/auth', auth)
 app.route('/', assets)
+app.route('/', avatars)
 app.route('/', shares)
 app.route('/', accessRoutes)
 app.route('/', agents)

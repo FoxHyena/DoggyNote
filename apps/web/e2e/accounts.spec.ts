@@ -38,7 +38,7 @@ test('admin invitation lets a recipient choose credentials, signs in, and cannot
     await form.getByRole('button', { name: 'Create account' }).click()
     await expect(p.getByTestId('canvas')).toBeVisible()
     await p.getByTestId('account').click()
-    await expect(p.locator('.account-menu-identity')).toHaveText(username)
+    await expect(p.locator('.account-menu-identity strong')).toHaveText(username)
     await p.keyboard.press('Escape')
     await expect(cardByText(p, privateMarker)).toHaveCount(0)
     await p.goto(path(url))
