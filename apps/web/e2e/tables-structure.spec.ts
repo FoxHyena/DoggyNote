@@ -41,7 +41,7 @@ test('grips sit outside the table being edited only, and edit mode moves nothing
 test('a row grip selects the whole row and the bar switches to row actions', async ({ page }) => {
   await seedTable(page, COLS, PACK)
   await openEditing(page)
-  await expect(page.getByTestId('table-clear')).toBeVisible()
+  await expect(page.getByTestId('table-bold')).toBeVisible()
   await rowGrip(page, 1).click()
   const range = (await page.getByTestId('table-range').boundingBox())!
   const a = (await cell(page, 1, 0).boundingBox())!, b = (await cell(page, 1, 2).boundingBox())!
@@ -50,7 +50,8 @@ test('a row grip selects the whole row and the bar switches to row actions', asy
   expect(Math.abs(range.height - a.height)).toBeLessThan(2)
   const bar = page.getByTestId('table-bar')
   await expect(bar).toHaveAttribute('data-kind', 'rows')
-  await expect(page.getByTestId('table-clear')).toHaveCount(0)
+  await expect(page.getByTestId('table-bold')).toHaveCount(0)
+  await expect(page.getByTestId('table-fill')).toBeVisible()
   await expect(page.getByTestId('table-row-below')).toBeVisible()
   await expect(page.getByTestId('table-delete')).toBeVisible()
   expect(await bar.locator('button').count()).toBeLessThanOrEqual(4)
@@ -79,9 +80,8 @@ test('a column grip selects the whole column, header included, with column actio
   await columnGrip(page, 2).click({ modifiers: ['Shift'] })
   await page.getByTestId('table-more').click()
   await expect(page.getByTestId('table-delete-columns')).toContainText('Delete 2 columns')
-  await page.keyboard.press('Escape')
   // Insert right of the selection: a new column after Treat, ready to be named.
-  await page.getByTestId('table-column-right').click()
+  await page.getByTestId('table-menu-column-right').click()
   await expect(headerCells(page)).toHaveCount(4)
   await expect(input(page)).toBeFocused()
   await page.keyboard.type('Walks')

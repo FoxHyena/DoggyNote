@@ -757,5 +757,6 @@ html[data-input='touch'] .selection-phone-actions > .selection-primary:active:no
 .table-dock .bar-btn { border: 0; background: transparent; }
 .table-dock-slots { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .table-dock-menu { display: contents; }
-.table-dock-menu > .bar-btn { margin-left: auto; }
+.table-dock > .table-dock-menu > .bar-btn { margin-left: auto; }
+.table-dock .bar-btn[aria-pressed='true'], .table-dock-btn[aria-pressed='true'] { color: var(--dn-accent); background: var(--dn-card-hover); }
 html[data-input='touch'] .menu-item kbd { display: none; }

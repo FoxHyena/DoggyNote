@@ -343,7 +343,9 @@ export function Canvas(props: { readOnly: boolean }) {
         // A finger on the board: the tap decides what happens to the edit.
         if (editingId() !== id || fingers.size) return
         const active = document.activeElement
-        if (active && active !== document.body && (cardEl(id)?.contains(active) || active.closest('.edit-dock, .selection-bar, .menu'))) return
+        if (active && active !== document.body && (cardEl(id)?.contains(active) || active.closest('.edit-dock, .selection-bar, .menu, .table-pop'))) return
+        // A table's panel (fill, tags) is open: a tap in it may leave nothing focused, and the edit goes on.
+        if (document.querySelector('.table-pop')) return
         done()
       })
     }

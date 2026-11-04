@@ -65,3 +65,36 @@ Pixel sampling of `round-1/light-range-bar.png` and `dark-range-bar.png` shows t
 - Bold, Align, Fill, Type and Sort (PR 4) join the bar and dock before ⋯, in the dock's middle slots.
 - The card's own resize handle is still a full-strength gold square: the second lamp while editing.
 - Copy on a phone goes through the system's selection menu, which no test can drive; paste is tested with a synthetic paste event.
+
+## Round 2a (PR 4: column types, formatting, sort, the full bar and dock)
+
+Screenshots in `round-2a/`: dark and light, desktop 1440 (a table with every type and some fills; the cells bar; the fill panel; the align menu; the tag picker, filtered and in full; the type menu; the cols bar with its sort menu; the column menu; the options editor with a recolour open; the rows bar) and phone 390 (read view; the cells dock; the fill sheet; the rows dock; the type sheet; the tag sheet).
+
+Method: impeccable critique + audit as a single context (no sub-agents, as in the earlier rounds; the detector over the table files and the bar, dock and format components was clean), a hand pass through every flow with Playwright, and the screenshots above as evidence. Metrics held: 8px gaps, 12px panel padding, 32px fields, 24px dots (32px on a phone with 44px targets), icons rather than text in the bar and dock.
+
+### What the review found, and the fixes
+
+| Finding | Fix |
+|---|---|
+| The fill panel inherited Labels' 280px width, so seven dots sat left with a 60px blank on the right | It is as wide as its dots (240px with padding) |
+| "Edit options" wore the same tag icon as "Column type" two rows above it | A list icon of its own |
+| The tag picker marked the current tag with a checkbox square, which reads as multi-select; a tag is one choice | A bare tick, no box |
+| The header's ⋯ sat on top of a right-aligned header ("Age"), and over centred ones on narrow columns | A right-aligned header keeps its ⋯ at the left of the column; centred ones on very narrow columns still overlap (see below) |
+| Text a type couldn't read, in a filled cell, was dimmed with opacity, which could drop below 4.5:1 on the pastel fills | Italic instead; unfilled cells keep the (tested) muted colour |
+| A draft typed into a right-aligned or bold cell started left-aligned and regular, then jumped back | The draft takes its cell's alignment and weight |
+| The active cell in a range read slightly darker (round 1b follow-up) | The cause was the hover tint: the pointer rests on the active cell after Shift+arrows. No hover tint is painted while a range exists, and a test hovers the active cell and compares every cell in the range |
+| On WebKit a tap on a dock button blurs the field, and a panel with nothing focused ended the edit | The canvas keeps the edit going while a table panel is open |
+
+### Behaviour worth knowing
+
+- A tag cell opens its picker on Enter, F2, a double click, a second tap, or the first letter typed (it lands in the filter). A new name is created with the next unused preset colour, together with the cell's value, as one undo step.
+- A box ticks on Space or Enter, on a click on it while editing, and on one click when the table is only selected (like a to-do); never in the viewer. A range of boxes follows the opposite of the active one.
+- Paws: 1 to 5 set, 0 or Delete clears, a click sets a paw and the same paw again clears. Letters and 6 to 9 do nothing, and the field takes no keyboard (`inputmode=none`, as for boxes and tags).
+- Numbers and dates are typed in the browser's locale (`1.234,5` and `25.12.2018` in German) and always stored plain (a number, `YYYY-MM-DD`). A draft starts from the plain form, so typing it back changes nothing.
+- Text a number or date column can't read is kept and drawn muted; changing the type back shows every value again.
+
+### Left for later
+
+- A centred header on a column narrower than about 80px still shares its space with the ⋯ on a phone; widening the column or turning the header left clears it.
+- The native date wheel can't be driven in a test: the specs set the input's value, which is its whole contract with the table. Check the wheel on a real iPhone.
+- On iOS, whether a tap on a dock button keeps the keyboard up depends on the browser; the emulated WebKit run keeps the edit going either way.

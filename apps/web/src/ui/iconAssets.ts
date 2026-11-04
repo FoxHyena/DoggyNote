@@ -93,6 +93,19 @@ import arrowDownSvg from '@phosphor-icons/core/regular/arrow-down.svg?raw'
 import arrowLeftSvg from '@phosphor-icons/core/regular/arrow-left.svg?raw'
 import arrowRightSvg from '@phosphor-icons/core/regular/arrow-right.svg?raw'
 import eraserSvg from '@phosphor-icons/core/regular/eraser.svg?raw'
+import listBulletsSvg from '@phosphor-icons/core/regular/list-bullets.svg?raw'
+import textTSvg from '@phosphor-icons/core/regular/text-t.svg?raw'
+import hashSvg from '@phosphor-icons/core/regular/hash.svg?raw'
+import checkSquareSvg from '@phosphor-icons/core/regular/check-square.svg?raw'
+import calendarBlankSvg from '@phosphor-icons/core/regular/calendar-blank.svg?raw'
+import pawPrintSvg from '@phosphor-icons/core/regular/paw-print.svg?raw'
+import sortAscendingSvg from '@phosphor-icons/core/regular/sort-ascending.svg?raw'
+import sortDescendingSvg from '@phosphor-icons/core/regular/sort-descending.svg?raw'
+import textAlignLeftSvg from '@phosphor-icons/core/regular/text-align-left.svg?raw'
+import textAlignCenterSvg from '@phosphor-icons/core/regular/text-align-center.svg?raw'
+import textAlignRightSvg from '@phosphor-icons/core/regular/text-align-right.svg?raw'
+import textBSvg from '@phosphor-icons/core/regular/text-b.svg?raw'
+import paintBucketSvg from '@phosphor-icons/core/regular/paint-bucket.svg?raw'
 import pawPrintFillSvg from '@phosphor-icons/core/fill/paw-print-fill.svg?raw'
 import starFillSvg from '@phosphor-icons/core/fill/star-fill.svg?raw'
 import pushPinFillSvg from '@phosphor-icons/core/fill/push-pin-fill.svg?raw'
@@ -199,6 +212,20 @@ export const ICONS = {
   pen: body(penSvg),
   highlighter: body(highlighterSvg),
   eraser: body(eraserSvg),
+  listBullets: body(listBulletsSvg),
+  typeText: body(textTSvg),
+  typeNumber: body(hashSvg),
+  typeCheckbox: body(checkSquareSvg),
+  typeDate: body(calendarBlankSvg),
+  typeSelect: body(tagSvg),
+  typeRating: body(pawPrintSvg),
+  sortAsc: body(sortAscendingSvg),
+  sortDesc: body(sortDescendingSvg),
+  textAlignLeft: body(textAlignLeftSvg),
+  textAlignCenter: body(textAlignCenterSvg),
+  textAlignRight: body(textAlignRightSvg),
+  bold: body(textBSvg),
+  fill: body(paintBucketSvg),
   arrowUp: body(arrowUpSvg),
   arrowDown: body(arrowDownSvg),
   arrowLeft: body(arrowLeftSvg),

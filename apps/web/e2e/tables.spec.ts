@@ -177,11 +177,12 @@ test('rows and columns are added and deleted from the bar menu', async ({ page }
   await addTable(page)
   await page.keyboard.type('keep')
   await page.keyboard.press('Enter')
-  // The bar holds the cell actions only.
+  // The bar holds the cell actions only: Bold, Align, Fill and the menu for everything else.
   const bar = page.getByTestId('selection-bar')
   await expect(bar.getByTestId('table-bar')).toBeVisible()
   expect((await bar.boundingBox())!.width).toBeLessThanOrEqual(220)
-  await bar.getByTestId('table-row-below').click()
+  await bar.getByTestId('table-more').click()
+  await page.getByTestId('table-menu-row-below').click()
   await expect(bodyRows(page)).toHaveCount(4)
   expect(await activeCell(page)).toEqual({ row: 2, col: 0 })
   await bar.getByTestId('table-more').click()

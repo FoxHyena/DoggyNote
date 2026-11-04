@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { MOD, addNote, cardByText, cards, clickEmpty, freshBoard } from './helpers.ts'
 import { note, seedCards } from './touch.ts'
+import { columnGrip, openEditing, rowGrip, seedTyped } from './tables.ts'
 
 test.use({ screenshot: 'only-on-failure', trace: 'retain-on-failure' })
 
@@ -175,4 +176,23 @@ test('a column header centres its title and count, and collapse slides', async (
   // The body slides shut before the column shortens.
   expect(await column.getByTestId('column-body').evaluate((el) => el.getAnimations().length)).toBeGreaterThan(0)
   await expect.poll(async () => (await column.boundingBox())!.height).toBeLessThan(expanded)
+})
+
+test('the bar of a table being edited stays within 220px whatever is selected', async ({ page }) => {
+  await freshBoard(page)
+  await seedTyped(page, [{ n: 'Pup' }, { n: 'Age', t: 'number' }, { n: 'Done', t: 'checkbox' }, { n: 'Paws', t: 'rating' }], [{ cells: ['Rex', 4, true, 3] }, { cells: ['Mochi', 12, false, 5] }])
+  await openEditing(page, 0, 0)
+  const bar = page.getByTestId('selection-bar')
+  const widths: number[] = []
+  const measure = async () => { widths.push((await bar.boundingBox())!.width) }
+  await expect(page.getByTestId('table-bar')).toHaveAttribute('data-kind', 'cells')
+  await measure()
+  await rowGrip(page, 0).click()
+  await expect(page.getByTestId('table-bar')).toHaveAttribute('data-kind', 'rows')
+  await measure()
+  await columnGrip(page, 1).click()
+  await expect(page.getByTestId('table-bar')).toHaveAttribute('data-kind', 'cols')
+  await measure()
+  expect(widths).toHaveLength(3)
+  for (const w of widths) expect(w).toBeLessThanOrEqual(220)
 })

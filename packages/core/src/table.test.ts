@@ -4,6 +4,7 @@ import {
   looksTabular, moveColumn, moveRow, optionId, parseInput, parseNumber, parseTableKey, parseTsv, resizeBoundary, retype, rowKey, setCells, setRowFill, setStyle,
   sortRows, starterTable, tableColumns, tableFromGrid, tableId, tableLimitError, tableRows, tableText, toTsv, updateColumn, validTableField, withoutTableTombstones,
   readCell, isBlankTable, copyGrid, duplicateRows, moveColumns, moveRows, pasteGrid, type TablePatch,
+  addOption, effectiveAlign, findOption, moveOption, nextOptionColor, parseDate, removeOption, unreadText, updateOption,
 } from './index.ts'
 
 const apply = (card: Record<string, unknown>, patch: TablePatch) => ({ ...card, ...patch })
@@ -517,5 +518,127 @@ describe('moving blocks, duplicating and pasting', () => {
     const { card } = fixture()
     const r = pasteGrid(card, [['', 'a']], { r: 0, c: 0 })
     expect(Object.keys(r.patch).filter((k) => k.startsWith('tc'))).toHaveLength(1)
+  })
+})
+
+describe('typing in the reader\'s locale', () => {
+  it('reads a comma as the decimal mark, and dots as grouping, when asked', () => {
+    expect(parseNumber('1,5', ',')).toBe(1.5)
+    expect(parseNumber('1.234,5', ',')).toBe(1234.5)
+    expect(parseNumber('1,234.5', '.')).toBe(1234.5)
+    expect(parseNumber('1.234', ',')).toBe(1234)
+    expect(parseNumber('1.5', ',')).toBe(1.5)
+    expect(parseNumber('1.5.2', ',')).toBeNull()
+    expect(parseInput({ t: 'number' }, '3,25', { decimal: ',', dates: 'dmy' })).toBe(3.25)
+    expect(parseInput({ t: 'number' }, '3,25')).toBe(325)
+  })
+  it('reads dates in the locale\'s order, and always ISO or year first', () => {
+    expect(parseDate('3/14/2026', 'mdy')).toBe('2026-03-14')
+    expect(parseDate('14/03/2026', 'dmy')).toBe('2026-03-14')
+    expect(parseDate('14.3.26', 'dmy')).toBe('2026-03-14')
+    expect(parseDate('2026-3-4', 'mdy')).toBe('2026-03-04')
+    expect(parseDate('2026/03/04')).toBe('2026-03-04')
+    expect(parseDate('2026-03-04')).toBe('2026-03-04')
+    // Not a day, or not knowable without a locale.
+    expect(parseDate('31/02/2026', 'dmy')).toBeNull()
+    expect(parseDate('13/13/2026', 'mdy')).toBeNull()
+    expect(parseDate('3/4/2026')).toBeNull()
+    expect(parseDate('tomorrow', 'mdy')).toBeNull()
+    expect(parseInput({ t: 'date' }, '25/12/2026', { decimal: '.', dates: 'dmy' })).toBe('2026-12-25')
+    expect(parseInput({ t: 'date' }, '25/12/2026')).toBe('25/12/2026')
+  })
+})
+
+describe('what a type cannot read', () => {
+  it('keeps text a number or date column can not read, and nothing else', () => {
+    const n = { t: 'number' as const }, d = { t: 'date' as const }
+    expect(unreadText(n, readCell('lots'))).toBe('lots')
+    expect(unreadText(n, readCell('12'))).toBeNull()
+    expect(unreadText(n, readCell(12))).toBeNull()
+    expect(unreadText(d, readCell('next week'))).toBe('next week')
+    expect(unreadText(d, readCell('2026-03-04'))).toBeNull()
+    expect(unreadText({ t: 'checkbox' }, readCell('yes please'))).toBeNull()
+    expect(unreadText({ t: 'rating' }, readCell(9))).toBeNull()
+  })
+  it('aligns by cell, then column, then type', () => {
+    expect(effectiveAlign({ t: 'text' })).toBe('l')
+    expect(effectiveAlign({ t: 'number' })).toBe('r')
+    expect(effectiveAlign({ t: 'checkbox' })).toBe('c')
+    expect(effectiveAlign({ t: 'rating' })).toBe('c')
+    expect(effectiveAlign({ t: 'number', a: 'l' })).toBe('l')
+    expect(effectiveAlign({ t: 'number', a: 'l' }, 'c')).toBe('c')
+  })
+})
+
+describe('select options', () => {
+  const sel = () => fixture(['select', 'text', 'text'])
+  it('adds an option with the next unused colour, or returns the one with that name', () => {
+    const { card, cols } = sel()
+    const a = addOption(card, cols[0]!, '  Doing  ')!
+    expect(a.option).toMatchObject({ n: 'Doing', c: 'gold' })
+    expect(a.option.id).toMatch(/^[0-9][0-9a-z]{3}$/)
+    const c1 = apply(card, a.patch)
+    expect(tableColumns(c1)[0]!.opts).toEqual([a.option])
+    const b = addOption(c1, cols[0]!, 'Done')!
+    expect(b.option.c).toBe('collar')
+    const again = addOption(apply(c1, b.patch), cols[0]!, 'doing')!
+    expect(again.option.id).toBe(a.option.id)
+    expect(again.patch).toEqual({})
+    expect(addOption(c1, cols[0]!, '   ')).toBeNull()
+    expect(addOption(c1, 'nope', 'x')).toBeNull()
+    expect(validTableField(colKey(cols[0]!), b.patch[colKey(cols[0]!)])).toBe(true)
+  })
+  it('stops at the option cap', () => {
+    let { card } = sel()
+    const col = tableColumns(card)[0]!.id
+    for (let i = 0; i < TABLE_CAPS.options; i++) card = apply(card, addOption(card, col, `o${i}`)!.patch)
+    expect(tableColumns(card)[0]!.opts).toHaveLength(TABLE_CAPS.options)
+    expect(addOption(card, col, 'one more')).toBeNull()
+    expect(findOption(tableColumns(card)[0]!.opts, 'O3')?.n).toBe('o3')
+  })
+  it('picks colours round again once the palette is used', () => {
+    const opts = ['gold', 'collar', 'ball', 'sky', 'lilac', 'peach'].map((c, i) => ({ id: `1abc`.slice(0, 3) + i, n: c, c: c as 'gold' }))
+    expect(nextOptionColor([])).toBe('gold')
+    expect(nextOptionColor(opts)).toBe('gold')
+    expect(nextOptionColor(opts.slice(0, 5))).toBe('peach')
+  })
+  it('renames and recolours without touching cells, and keeps the order', () => {
+    let { card, cols, rows } = sel()
+    const a = addOption(card, cols[0]!, 'Todo')!
+    card = apply(card, a.patch)
+    const b = addOption(card, cols[0]!, 'Done')!
+    card = apply(card, b.patch)
+    card = apply(card, setCells(card, [{ row: rows[0]!, col: cols[0]!, value: a.option.id }]))
+    const patch = updateOption(card, cols[0]!, a.option.id, { n: ' Next up ', c: 'sky' })
+    expect(Object.keys(patch)).toEqual([colKey(cols[0]!)])
+    card = apply(card, patch)
+    expect(tableColumns(card)[0]!.opts.map((o) => [o.n, o.c])).toEqual([['Next up', 'sky'], ['Done', 'collar']])
+    expect(cellDisplay(tableColumns(card)[0]!, cellOf(card, rows[0]!, cols[0]!))).toBe('Next up')
+    expect(updateOption(card, cols[0]!, 'zzzz', { n: 'x' })).toEqual({})
+  })
+  it('deleting an option empties its cells but keeps their styles', () => {
+    let { card, cols, rows } = sel()
+    const a = addOption(card, cols[0]!, 'Todo')!
+    card = apply(card, a.patch)
+    const b = addOption(card, cols[0]!, 'Done')!
+    card = apply(card, b.patch)
+    card = apply(card, setCells(card, [{ row: rows[0]!, col: cols[0]!, value: a.option.id }, { row: rows[1]!, col: cols[0]!, value: b.option.id }, { row: rows[2]!, col: cols[0]!, value: a.option.id }]))
+    card = apply(card, setStyle(card, [{ row: rows[2]!, col: cols[0]! }], { b: true }))
+    card = apply(card, removeOption(card, cols[0]!, a.option.id))
+    expect(tableColumns(card)[0]!.opts.map((o) => o.n)).toEqual(['Done'])
+    expect(cellOf(card, rows[0]!, cols[0]!).v).toBeNull()
+    expect(cellOf(card, rows[1]!, cols[0]!).v).toBe(b.option.id)
+    expect(cellOf(card, rows[2]!, cols[0]!)).toMatchObject({ v: null, b: true })
+  })
+  it('moves an option and does nothing when it would not move', () => {
+    let { card, cols } = sel()
+    for (const n of ['A', 'B', 'C']) card = apply(card, addOption(card, cols[0]!, n)!.patch)
+    const [x, y, z] = tableColumns(card)[0]!.opts
+    card = apply(card, moveOption(card, cols[0]!, z!.id, 0))
+    expect(tableColumns(card)[0]!.opts.map((o) => o.n)).toEqual(['C', 'A', 'B'])
+    expect(moveOption(card, cols[0]!, z!.id, 0)).toEqual({})
+    card = apply(card, moveOption(card, cols[0]!, z!.id, 99))
+    expect(tableColumns(card)[0]!.opts.map((o) => o.n)).toEqual(['A', 'B', 'C'])
+    expect([x, y].length).toBe(2)
   })
 })

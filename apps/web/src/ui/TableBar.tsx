@@ -1,15 +1,17 @@
-import { Match, Show, Switch } from 'solid-js'
+import { Match, Show, Switch, createSignal } from 'solid-js'
 import { COPY } from '@doggynote/theme'
 import { activeTable } from '../cards/table/tableControl.ts'
 import { BarMenu } from './BarMenu.tsx'
 import { Icon, IconButton } from './icons.tsx'
+import { AlignTool, BoldTool, FillTool, SortItems, SortTool, TYPE_ICONS, TypeItems, TypeTool, useAct } from './TableFormat.tsx'
 
 // The selection bar while a table's cells are being edited (a mouse; touch has
-// TableDock). Few controls on purpose: the bar stays narrow, and everything else
-// is in the ⋯ menu. Which buttons show follows what is selected (cells, whole
-// rows, whole columns); PR 4's Fill, Type, Sort and Align join each context
-// before ⋯. Pointer presses are kept from taking focus, so the grid's field keeps
-// the keyboard and a half-typed cell isn't saved early.
+// TableDock). Few controls on purpose: at most four buttons, so the bar stays
+// narrow, and everything else is in the ⋯ menu. Which buttons show follows what
+// is selected: cells (Bold, Align, Fill), whole rows (Fill, Insert below, Delete)
+// or whole columns (Type, Sort, Align). Pointer presses are kept from taking
+// focus, so the grid's field keeps the keyboard and a half-typed cell isn't
+// saved early.
 
 const keepFocus = (e: PointerEvent) => e.preventDefault()
 
@@ -21,20 +23,22 @@ export function TableBar() {
         <div class="bar-group bar-table" role="group" aria-label={COPY.table.cells} data-testid="table-bar" data-kind={t().kind()} onPointerDown={keepFocus}>
           <Switch>
             <Match when={t().kind() === 'rows'}>
+              <FillTool variant="bar" />
               <IconButton testid="table-row-below" icon="rowBelow" label={COPY.table.insertRowBelow} disabled={!t().canAddRow()} onClick={() => t().insertRow('below')} />
               <IconButton testid="table-delete" icon="trash" label={COPY.table.deleteRows(Math.max(1, t().rowSpan()))} disabled={!t().rowSpan()} onClick={() => t().removeRows()} />
             </Match>
             <Match when={t().kind() === 'cols'}>
-              <IconButton testid="table-column-right" icon="columnRight" label={COPY.table.insertColumnRight} disabled={!t().canAddColumn()} onClick={() => t().insertColumn('right')} />
-              <IconButton testid="table-delete" icon="trash" label={COPY.table.deleteColumns(Math.max(1, t().colSpan()))} disabled={!t().canRemoveColumns()} onClick={() => t().removeColumns()} />
+              <TypeTool variant="bar" />
+              <SortTool variant="bar" />
+              <AlignTool variant="bar" />
             </Match>
             <Match when={true}>
-              <IconButton testid="table-row-below" icon="rowBelow" label={COPY.table.insertRowBelow} disabled={!t().canAddRow()} onClick={() => t().insertRow('below')} />
-              <IconButton testid="table-column-right" icon="columnRight" label={COPY.table.insertColumnRight} disabled={!t().canAddColumn()} onClick={() => t().insertColumn('right')} />
-              <IconButton testid="table-clear" icon="eraser" label={COPY.table.clear} title={`${COPY.table.clear} (Delete)`} disabled={!t().rowSpan()} onClick={() => t().clear()} />
+              <BoldTool variant="bar" />
+              <AlignTool variant="bar" />
+              <FillTool variant="bar" />
             </Match>
           </Switch>
-          <BarMenu label="" title={COPY.table.moreActions} testId="table-more" menuTestId="table-more-menu" icon={<Icon name="more" size={18} />}>
+          <BarMenu label="" title={COPY.table.moreActions} tip={COPY.table.moreActions} testId="table-more" menuTestId="table-more-menu" icon={<Icon name="more" size={18} />}>
             {(close) => <TableMenuItems close={close} />}
           </BarMenu>
         </div>
@@ -58,8 +62,6 @@ export function TableMenuItems(props: { close: () => void }) {
     </Show>
   )
 }
-
-const useAct = (close: () => void) => (run: () => void) => () => { close(); run(); activeTable()?.refocus() }
 
 /** Selected cells: insert and delete around them, and clear. */
 function CellMenuItems(props: { close: () => void }) {
@@ -106,17 +108,35 @@ export function RowMenuItems(props: { close: () => void }) {
 export function ColumnMenuItems(props: { close: () => void }) {
   const table = activeTable
   const act = useAct(props.close)
+  // The type list replaces the menu in place, with a way back; picking one closes everything.
+  const [view, setView] = createSignal<'main' | 'type'>('main')
+  const swap = (to: 'main' | 'type') => (e: MouseEvent) => {
+    const menu = (e.currentTarget as HTMLElement).closest('.menu')
+    setView(to)
+    queueMicrotask(() => menu?.querySelector<HTMLButtonElement>('.menu-item:not(:disabled)')?.focus())
+  }
   return (
     <Show when={table()}>
-      {(t) => <>
+      {(t) => <Show when={view() === 'main'} fallback={<>
+        <button class="menu-item" role="menuitem" data-testid="table-type-back" onClick={swap('main')}><Icon name="chevronLeft" />{COPY.table.columnType}</button>
+        <div class="menu-sep" role="separator" />
+        <TypeItems close={props.close} />
+      </>}>
         <button class="menu-item" role="menuitem" data-testid="table-rename-column" disabled={t().colSpan() !== 1} onClick={() => { props.close(); t().renameColumn() }}><Icon name="edit" />{COPY.table.renameColumn}</button>
+        <button class="menu-item" role="menuitem" data-testid="table-menu-type" aria-haspopup="menu" disabled={!t().colSpan()} onClick={swap('type')}><Icon name={TYPE_ICONS[t().columnType() ?? 'text']} />{COPY.table.columnType}<span class="menu-hint">{t().columnType() ? COPY.table.types[t().columnType()!] : ''}</span></button>
+        <Show when={t().canEditOptions()}>
+          <button class="menu-item" role="menuitem" data-testid="table-edit-options" onClick={act(() => t().editOptions())}><Icon name="listBullets" />{COPY.table.editOptions}</button>
+        </Show>
+        <div class="menu-sep" role="separator" />
+        <SortItems close={props.close} />
+        <div class="menu-sep" role="separator" />
         <button class="menu-item" role="menuitem" data-testid="table-column-left" disabled={!t().canAddColumn()} onClick={act(() => t().insertColumn('left'))}><Icon name="columnLeft" />{COPY.table.insertColumnLeft}</button>
         <button class="menu-item" role="menuitem" data-testid="table-menu-column-right" disabled={!t().canAddColumn()} onClick={act(() => t().insertColumn('right'))}><Icon name="columnRight" />{COPY.table.insertColumnRight}</button>
         <button class="menu-item" role="menuitem" data-testid="table-move-left" disabled={!t().canMove(-1)} onClick={act(() => t().move(-1))}><Icon name="arrowLeft" />{COPY.table.moveColumnLeft}<kbd class="menu-hint">⌥⇧←</kbd></button>
         <button class="menu-item" role="menuitem" data-testid="table-move-right" disabled={!t().canMove(1)} onClick={act(() => t().move(1))}><Icon name="arrowRight" />{COPY.table.moveColumnRight}<kbd class="menu-hint">⌥⇧→</kbd></button>
         <div class="menu-sep" role="separator" />
         <button class="menu-item" role="menuitem" data-testid="table-delete-columns" disabled={!t().canRemoveColumns()} onClick={act(() => t().removeColumns())}><Icon name="trash" />{COPY.table.deleteColumns(Math.max(1, t().colSpan()))}</button>
-      </>}
+      </Show>}
     </Show>
   )
 }

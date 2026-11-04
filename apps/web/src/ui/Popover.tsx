@@ -14,7 +14,7 @@ import type { Rect } from '@doggynote/core'
  * `follow` is a reactive source to re-place on, e.g. the camera for a card.
  * `align: 'start'` lines it up with the anchor's left edge instead of its centre.
  */
-export function Popover(props: { anchor: () => HTMLElement; label: string; testid?: string; class?: string; close: () => void; follow?: () => unknown; align?: 'center' | 'start'; avoid?: () => Rect[]; children: JSX.Element }) {
+export function Popover(props: { anchor: () => HTMLElement; label: string; testid?: string; class?: string; close: () => void; follow?: () => unknown; align?: 'center' | 'start'; autofocus?: boolean; avoid?: () => Rect[]; children: JSX.Element }) {
   let panel!: HTMLDivElement
   const [pos, setPos] = createSignal({ left: 0, top: 0 })
   const place = () => {
@@ -42,7 +42,7 @@ export function Popover(props: { anchor: () => HTMLElement; label: string; testi
     const ro = new ResizeObserver(place)
     ro.observe(panel)
     // The content may focus its own field first, or mark one `data-autofocus`; otherwise the first control.
-    if (!panel.contains(document.activeElement)) (panel.querySelector<HTMLElement>('[data-autofocus]') ?? [...panel.querySelectorAll<HTMLElement>('input, select, textarea, button')].find((el) => el.tabIndex >= 0))?.focus({ preventScroll: true })
+    if (props.autofocus !== false && !panel.contains(document.activeElement)) (panel.querySelector<HTMLElement>('[data-autofocus]') ?? [...panel.querySelectorAll<HTMLElement>('input, select, textarea, button')].find((el) => el.tabIndex >= 0))?.focus({ preventScroll: true })
     const outside = (e: PointerEvent) => {
       if (!panel.contains(e.target as Node) && !props.anchor().contains(e.target as Node)) props.close()
     }
