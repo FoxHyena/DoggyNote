@@ -350,15 +350,17 @@ export function TableEditor(props: {
   /** A tick or paw under a point, with a roomier target than the glyph itself. */
   function glyphAt(td: Element | null, x: number, y: number): { check: true } | { paw: number } | null {
     if (!td) return null
+    // A finger's target is 44px: 15px glyphs get 14px more on each side, and paws 15px above and below.
+    const slop = document.documentElement.dataset.input === 'touch' ? 14 : 10
     const check = td.querySelector('.table-check')
     if (check) {
       const r = check.getBoundingClientRect()
-      return x >= r.left - 10 && x <= r.right + 10 && y >= r.top - 10 && y <= r.bottom + 10 ? { check: true } : null
+      return x >= r.left - slop && x <= r.right + slop && y >= r.top - slop && y <= r.bottom + slop ? { check: true } : null
     }
     const rating = td.querySelector('.table-rating')
     if (rating) {
       const r = rating.getBoundingClientRect()
-      if (x < r.left - 4 || x > r.right + 4 || y < r.top - 10 || y > r.bottom + 10) return null
+      if (x < r.left - 4 || x > r.right + 4 || y < r.top - slop - 1 || y > r.bottom + slop + 1) return null
       let best = 0, away = Infinity
       rating.querySelectorAll<HTMLElement>('[data-paw]').forEach((el) => {
         const b = el.getBoundingClientRect()
@@ -915,6 +917,15 @@ export function TableEditor(props: {
     setMenu({ kind: 'cols', x: r.left, y: r.bottom + 4 })
   }
   const columnSelected = (index: number) => inLine('cols', index)
+  /**
+   * A centred header too wide for its column to leave room at the right for the ⋯ would sit under it.
+   * Then there is no ⋯ on the header: the grip and the bar's ⋯ open the same menu.
+   */
+  const crowdedHeader = (index: number, colId: string) => {
+    const col = column(colId)
+    const box = layout().cols[index]
+    return !!col && !!box && effectiveAlign(col) === 'c' && box.w < col.n.length * 7 + 2 * 32
+  }
 
   type Resize = { id: number; left: string; x0: number; k: number; width: number; total: number; patch: TablePatch; el: HTMLElement }
   let resizing: Resize | null = null
@@ -1013,6 +1024,9 @@ export function TableEditor(props: {
     else delete ta.dataset.bold
     // A filled cell keeps its colour under the draft.
     ta.style.setProperty('--ta-bg', fill?.dataset.fill !== undefined ? fill.style.getPropertyValue('--cell-bg') : '')
+    // On a fill the gold ring alone can vanish (gold on gold in the dark theme): the cell's ink runs inside it.
+    if (fill?.dataset.fill !== undefined) ta.dataset.filled = ''
+    else delete ta.dataset.filled
     // The field's text lines up with the cell's: 14px at the card's edges.
     const ai = at(anchor()).c
     ta.style.setProperty('--ta-pl', !titleActive() && ai === 0 ? '14px' : '')
@@ -1172,6 +1186,7 @@ export function TableEditor(props: {
                     data-row={rowId}
                     data-testid="table-row-grip"
                     aria-label={COPY.table.rowGrip(i() + 1)}
+                    data-tip={COPY.table.rowGrip(i() + 1)}
                     style={{ top: `${box().y}px`, height: `${box().h}px` }}
                     onPointerDown={(e) => gripDown(e, 'rows', i())}
                     onPointerMove={gripMove}
@@ -1200,6 +1215,7 @@ export function TableEditor(props: {
                     data-col={colId}
                     data-testid="table-column-grip"
                     aria-label={COPY.table.columnGrip(column(colId)?.n ?? '')}
+                    data-tip={COPY.table.columnGrip(column(colId)?.n ?? '')}
                     style={{ left: `${box().x}px`, width: `${box().w}px` }}
                     onPointerDown={(e) => gripDown(e, 'cols', i())}
                     onPointerMove={gripMove}
@@ -1216,7 +1232,7 @@ export function TableEditor(props: {
         </div>
         <For each={props.colIds()}>
           {(colId, i) => (
-            <Show when={layout().cols[i()] && layout().head}>
+            <Show when={layout().cols[i()] && layout().head && !crowdedHeader(i(), colId)}>
               <button
                 type="button"
                 tabIndex={-1}
@@ -1226,6 +1242,7 @@ export function TableEditor(props: {
                 data-testid="table-column-menu"
                 aria-haspopup="menu"
                 aria-label={COPY.table.columnMenu(column(colId)?.n ?? '')}
+                data-tip={COPY.table.columnMenu(column(colId)?.n ?? '')}
                 style={{ left: `${layout().cols[i()]!.x + (column(colId) && effectiveAlign(column(colId)!) === 'r' ? 36 : layout().cols[i()]!.w)}px`, top: `${layout().head!.y}px`, height: `${layout().head!.h}px` }}
                 {...strip((e) => openColumnMenu(i(), e.currentTarget as HTMLElement))}
               >

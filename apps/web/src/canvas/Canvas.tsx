@@ -270,7 +270,7 @@ export function Canvas(props: { readOnly: boolean }) {
           movedWhileEditing = false
           resetPageScroll()
           const r = rectOf(id)
-          if (r) animateCamera(editCamera(r, editRoom(), camera()), 260, () => requestAnimationFrame(revealCaret))
+          if (r) animateCamera(editCamera(editRect(id, r), editRoom(), camera()), 260, () => requestAnimationFrame(revealCaret))
         } else if (!id && prev) {
           // Native text handles do not capture their pointer to the canvas.
           // Their editor may disappear before the release reaches us.
@@ -368,7 +368,7 @@ export function Canvas(props: { readOnly: boolean }) {
         if (!id || !focusEdits() || hasEditSelection()) return
         const r = rectOf(id)
         if (movedWhileEditing || !r || panelEdit(id)) return void requestAnimationFrame(revealCaret)
-        const aim = editCamera(r, editRoom(), camera())
+        const aim = editCamera(editRect(id, r), editRoom(), camera())
         aim.y += caretShift(aim) / aim.zoom
         const c = camera()
         if (Math.abs(aim.x - c.x) * c.zoom < 1 && Math.abs(aim.y - c.y) * c.zoom < 1 && Math.abs(aim.zoom - c.zoom) < 0.001) return
@@ -1652,6 +1652,10 @@ let movedWhileEditing = false
 /** Phones and short touch screens get the editing camera and keyboard handling. */
 const focusEdits = () => touch() && (phone() || visibleArea().height < 600)
 
+/** A table's grips hang this far (board px) over its top and left edges; the edit camera frames them with the card. */
+const GRIPS_OUTSIDE = 40
+const editRect = (id: Id, r: Rect): Rect => (doc.getCard(id)?.type === 'table' ? { x: r.x - GRIPS_OUTSIDE, y: r.y - GRIPS_OUTSIDE, w: r.w + GRIPS_OUTSIDE, h: r.h + GRIPS_OUTSIDE } : r)
+
 /** The part of the canvas the keyboard and the edit dock leave visible, in canvas px. */
 function editRoom() {
   const v = viewport()
@@ -1666,7 +1670,7 @@ function editRoom() {
 /** Edit a card from touch. Zoomed out it isn't DOM yet, so jump in first (no animation) to mount the editor now. */
 export function touchEdit(id: Id, caret?: Vec) {
   const r = rectOf(id)
-  if (r && focusEdits() && camera().zoom < LOD_ZOOM) setCamera(editCamera(r, editRoom(), camera()))
+  if (r && focusEdits() && camera().zoom < LOD_ZOOM) setCamera(editCamera(editRect(id, r), editRoom(), camera()))
   // Queue the caret first: the editor mounts (and reads it) inside beginEdit.
   if (caret) queueEditCaret(caret)
   beginEdit(id)

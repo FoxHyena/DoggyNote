@@ -98,3 +98,41 @@ Method: impeccable critique + audit as a single context (no sub-agents, as in th
 - A centred header on a column narrower than about 80px still shares its space with the ⋯ on a phone; widening the column or turning the header left clears it.
 - The native date wheel can't be driven in a test: the specs set the input's value, which is its whole contract with the table. Check the wheel on a real iPhone.
 - On iOS, whether a tap on a dock button keeps the keyboard up depends on the browser; the emulated WebKit run keeps the edit going either way.
+
+## Round 2 (PR 6: the final review) and a summary of every round
+
+Screenshots in `round-2/`: dark and light, desktop 1440 (a new table; the read view; editing with a range and the cells bar; the fill panel; the cols bar with its sort menu; the rows bar; the tag picker; zoomed out to 30%; the read-only viewer; an agent proposal in the review and previewed on the board), phone 390 (read; the cells dock; the fill sheet; the rows dock; the cols dock; the type sheet; the tag sheet) and tablet 1024 (read; editing with the dock; the column menu).
+
+Method: impeccable critique + audit as two isolated sub-agents (A: design review of the source and the screenshots; B: the detector and a code audit), then a hand pass through every flow with Playwright on desktop, phone and tablet as a first-time user. The detector was clean on every table file. The help article `make-a-table.json` is the other half of this PR.
+
+### Findings and fixes
+
+| Finding | Fix |
+|---|---|
+| A picked column's grip drew a column-wide grey tile that read as a stray box beside the open sort menu (the round 2a leftover) | The tint is a 36px pill behind the dots (28px tall for a row); the column's own tint shows which one is picked |
+| A centred header on a narrow column shared its space with the ⋯ (round 2a leftover) | The header ⋯ is left out where the name would not leave room for it (the grip and the bar's ⋯ open the same menu) |
+| On a phone, a table near the top or left edge put its grips under the top bar or off the screen (round 1b leftover) | The edit camera frames the card together with the 40px its grips hang over its top and left |
+| The grips looked like "‹:::›" in the dark shots | They are clean `dots-six` glyphs; the flanking marks were the canvas's dot grid lining up with the grip row. The grips keep 70% opacity and now carry a tooltip |
+| Ticked boxes were gold in every cell, against the One Lamp Rule | As a to-do's done box: the lamp's colour on a plain cell, the cell's own ink on a filled one |
+| The gold active-cell ring vanished on a gold fill in the dark theme (about 1.3:1) | An ink ring runs just inside it on filled cells |
+| The LOD drawing still had a header band and hard grid lines, from before round 1b | It draws the soft full grid with one full-strength rule under the header, as at full size |
+| Ticks and paws had 31 to 35px targets on a touch screen | 44px: the geometric test and the tick's hit area give a finger 14px more on each side |
+| Grips and the header ⋯ had labels but no tooltip, and no visible keyboard focus | Tooltips (the grips' text says "select, drag to move") and a 2px selection outline on `:focus-visible` |
+| The phone menu's Done button carried an English aria-label that differed from its text | The label is dropped; the text is the name. The grip tint's transition also respects reduced motion |
+
+### Everything, round by round
+
+- **Round 1 (grid, editing):** touch taps on WebKit, the dock's ⋯, new tables left untouched are discarded, 44px add strips on touch.
+- **Round 1b (structure, calmer look):** the soft full grid the user approved, quiet add pills, grips at 70%, a drop line that overshoots the card, keyboard row and column picking, the bar placed beyond the grips.
+- **Round 2a (types, formatting, sort):** the fill panel as wide as its dots, a bare tick for a single-choice tag, an icon of its own for Edit options, drafts that match their cell, italics for text a type cannot read, no hover tint over a range.
+- **Round 2 (this one):** the table above.
+
+### Consciously deferred
+
+- **Dark-theme fills** use the same full-strength swatches as notes, so a filled row is brighter than its card. Tinting them toward the panel would split the table's colours from every other card; revisit if it is still loud in real use.
+- **Unticked paws** are drawn at 22% and an unticked box at 55% of the ink, below 3:1 for non-text contrast. They are placeholders that every table shares; a real-use look will say whether they need to be firmer.
+- **Resizing a column by keyboard.** The strip is a pointer control; a "Column width" menu item or arrow-key resizing is the next step. On a phone the 16px strip is below the 24px target-size guide.
+- **First-run teaching.** A new table has no hint that the dots drag or that a header has a menu; the guide covers it. A one-line hint under a new table is an option.
+- **No sort state.** A sort is a one-off by design (rows never jump while someone types), so no column shows an arrow. The guide says so.
+- **The checkbox's accessible name** changes with its state while `aria-checked` already carries it; a constant name would be a little quieter in VoiceOver.
+- **Real-device checks** nobody can drive in a test: the native date wheel and whether a tap on a dock button keeps the keyboard up on iOS (rounds 2a), the system's selection menu for Copy, and the new edit camera on a real phone with the keyboard open.

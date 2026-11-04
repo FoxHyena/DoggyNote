@@ -328,3 +328,18 @@ test('a date cell: a tap on the selected cell focuses a real date input, and its
   // No on-screen keyboard for a date.
   await expect(input(page)).toHaveAttribute('inputmode', 'none')
 })
+
+test('editing a table near the top or left edge frames its grips, clear of the top bar and the screen edge', async ({ page }) => {
+  await freshBoard(page)
+  await seedTyped(page, TYPED, TYPED_ROWS, { x: 8, y: 8, w: 300 })
+  await tapOn(page, cell(page, 1, 0), { x: 6, y: 10 })
+  await tapOn(page, cell(page, 1, 0), { x: 6, y: 10 })
+  await expect(table(page)).toHaveClass(/editing/)
+  await page.waitForTimeout(500)
+  const bar = (await page.locator('.topbar').boundingBox())!
+  for (const grip of [page.getByTestId('table-column-grip').first(), page.getByTestId('table-row-grip').first()]) {
+    const b = (await grip.boundingBox())!
+    expect(b.y).toBeGreaterThanOrEqual(bar.y + bar.height - 0.5)
+    expect(b.x).toBeGreaterThanOrEqual(0)
+  }
+})

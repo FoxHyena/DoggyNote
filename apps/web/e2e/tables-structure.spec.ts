@@ -330,3 +330,32 @@ test('Shift+Space picks the row and Ctrl+Space the column, so the keyboard needs
   await page.keyboard.press('Alt+Shift+ArrowRight')
   expect((await grid(page))[0]).toEqual(['Age', 'Pup', 'Treat'])
 })
+
+test('a picked grip tints a small pill behind its dots, not the whole width of its column', async ({ page }) => {
+  await seedTable(page, COLS, PACK, { w: 760 })
+  await openEditing(page)
+  await columnGrip(page, 1).click()
+  await expect(columnGrip(page, 1)).toHaveClass(/\bon\b/)
+  const pill = () => columnGrip(page, 1).evaluate((el) => { const s = getComputedStyle(el, '::before'); return { w: parseFloat(s.width), bg: s.backgroundColor } })
+  const grip = (await columnGrip(page, 1).boundingBox())!
+  expect(grip.width).toBeGreaterThan(100)
+  expect((await pill()).w).toBeLessThanOrEqual(36)
+  await expect.poll(async () => (await pill()).bg).not.toBe('rgba(0, 0, 0, 0)')
+  await rowGrip(page, 1).click()
+  const row = await rowGrip(page, 1).evaluate((el) => parseFloat(getComputedStyle(el, '::before').height))
+  expect(row).toBeLessThanOrEqual(28)
+})
+
+test('a centred header too wide for its column leaves out the ⋯ that would sit on its name; the grip and the bar reach the same menu', async ({ page }) => {
+  await seedTable(page, ['Pup', 'A very long name', 'Treat'], PACK, { w: 300 })
+  await openEditing(page)
+  // Left-aligned headers keep theirs; centre the long one and it goes.
+  await expect(page.getByTestId('table-column-menu')).toHaveCount(3)
+  await columnGrip(page, 1).click()
+  await page.getByTestId('table-align').click()
+  await page.getByTestId('table-align-c').click()
+  await expect(page.getByTestId('table-column-menu')).toHaveCount(2)
+  await page.getByTestId('table-more').click()
+  await expect(page.getByTestId('table-more-menu')).toBeVisible()
+  await expect(page.getByTestId('table-rename-column')).toBeVisible()
+})

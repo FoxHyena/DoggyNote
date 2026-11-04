@@ -441,3 +441,37 @@ test('zoomed out, fills and tags are drawn on the overview canvas', async ({ pag
   expect(colours.sky).toBeGreaterThan(20)
   expect(colours.collar).toBeGreaterThan(5)
 })
+
+test('a ticked box is the lamp on a plain cell and the cell\'s own ink on a filled one, as a to-do\'s done box is', async ({ page }) => {
+  await seedTyped(page, COLS, [
+    { cells: ['Rex', 4, true, null, null, null] },
+    { cells: [{ v: 'Mochi', bg: 'sky' }, 12, { v: true, bg: 'sky' }, null, null, null] },
+    { bg: 'gold', cells: ['Biscuit', 2, true, null, null, null] },
+  ])
+  const paint = (row: number) => checkOf(page, row, GOOD).evaluate((el) => {
+    const td = el.closest('td')!, root = getComputedStyle(document.documentElement)
+    return { box: getComputedStyle(el).backgroundColor, text: getComputedStyle(td).color, accent: root.getPropertyValue('--dn-accent').trim(), cellBg: getComputedStyle(td).backgroundColor }
+  })
+  const plain = await paint(0)
+  const probe = await page.evaluate(() => { const d = document.createElement('i'); d.style.color = getComputedStyle(document.documentElement).getPropertyValue('--dn-accent'); document.body.append(d); const c = getComputedStyle(d).color; d.remove(); return c })
+  expect(plain.box).toBe(probe)
+  // A fill (a cell's or its row's) takes the box away from the lamp: it is drawn in the cell's text colour.
+  for (const row of [1, 2]) {
+    const filled = await paint(row)
+    expect(filled.box).toBe(filled.text)
+    expect(filled.box).not.toBe(probe)
+  }
+})
+
+test('the active cell keeps an inner ring in the cell\'s ink on a fill, so gold on gold never loses it', async ({ page }) => {
+  await seedTyped(page, COLS, [{ bg: 'gold', cells: ['Rex', 4, true, null, null, null] }, { cells: ['Mochi', 12, true, null, null, null] }])
+  await openAt(page, 0, PUP)
+  const ring = () => input(page).evaluate((el) => ({ filled: (el as HTMLElement).hasAttribute('data-filled'), shadow: getComputedStyle(el).boxShadow, ink: getComputedStyle(el).getPropertyValue('--ta-fg').trim() }))
+  const on = await ring()
+  expect(on.filled).toBe(true)
+  expect(on.shadow).not.toBe('none')
+  await page.keyboard.press('ArrowDown')
+  const off = await ring()
+  expect(off.filled).toBe(false)
+  expect(off.shadow).toBe('none')
+})
