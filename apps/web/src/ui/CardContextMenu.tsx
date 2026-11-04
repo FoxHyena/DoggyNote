@@ -28,7 +28,7 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
   const cards = createMemo(() => [...selection()].map((id) => doc.getCard(id)).filter((c): c is Card => !!c))
   const sole = () => selection().size === 1 ? card() : undefined
   const writable = () => selection().size > 0 && [...selection()].every((id) => doc.canWriteObject(doc.get(id)))
-  const canEdit = () => !!sole() && writable() && ['area', 'note', 'todo', 'column', 'image', 'swatch', 'board', 'link', 'movie', 'sketch'].includes(sole()!.type)
+  const canEdit = () => !!sole() && writable() && ['area', 'note', 'todo', 'column', 'image', 'swatch', 'board', 'link', 'movie', 'sketch', 'table'].includes(sole()!.type)
   const canLabel = () => writable() && cards().length > 0 && cards().every((c) => c.type !== 'column' && c.type !== 'area' && c.boardId === cards()[0].boardId)
   const canPing = () => liveState() === 'live' && peers().length > 0
   const canPaste = () => doc.canWriteObject(doc.getBoard(boardId()))

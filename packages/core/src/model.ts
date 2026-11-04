@@ -9,7 +9,7 @@ import type { InkMark } from './ink.ts'
 export type Id = string
 
 /** Every card type this build can draw. Anything else came from a newer app (see cardtext.ts). */
-export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'area', 'file', 'movie', 'swatch', 'sketch', 'ink', 'chat'] as const
+export const CARD_TYPES = ['note', 'todo', 'board', 'image', 'link', 'column', 'area', 'file', 'movie', 'swatch', 'sketch', 'ink', 'chat', 'table'] as const
 export type CardType = (typeof CARD_TYPES)[number]
 export const isKnownCardType = (t: unknown): t is CardType => (CARD_TYPES as readonly unknown[]).includes(t)
 
@@ -58,6 +58,8 @@ export type CardContent = {
   sketch: { title: string; width: number; height: number; background: string }
   /** One mark drawn straight on the board. Logical size of its box; the stroke is a `stroke` object. */
   ink: { width: number; height: number }
+  /** Only the title: every row, column and cell is a field of the card itself (see table.ts). */
+  table: { title: string }
 }
 
 /**
@@ -236,6 +238,8 @@ export const DEFAULT_SIZE: Record<CardType, { w: number; h: number }> = {
   sketch: { w: 320, h: 240 },
   ink: { w: 80, h: 80 },
   chat: { w: 380, h: 520 },
+  // Title line, header and three rows; the real height is measured.
+  table: { w: 420, h: 170 },
 }
 
 export const isAlive = (o: Obj | undefined): boolean => !!o && !o.purged && !o.deletedAt

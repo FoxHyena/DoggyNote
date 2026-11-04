@@ -9,7 +9,7 @@ test('Add uses one aligned compact button grid with three leading cards', async 
   await sheet.evaluate(el => Promise.all(el.getAnimations().map(a => a.finished.catch(() => undefined))))
   await expect(sheet.locator('.add-primary button')).toHaveText(['Note', 'To-do', 'Board'])
   await expect(sheet.locator('.add-primary-note')).toHaveCount(1)
-  await expect(sheet.getByRole('menuitem')).toHaveCount(16)
+  await expect(sheet.getByRole('menuitem')).toHaveCount(17)
   await expect(sheet.getByTestId('add-chat')).toBeVisible()
   for (const width of [page.viewportSize()!.width, 320]) {
     await page.setViewportSize({ width, height: page.viewportSize()!.height })

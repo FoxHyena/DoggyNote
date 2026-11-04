@@ -209,7 +209,7 @@ export async function tapEmpty(page: Page) {
 
 export const boardOf = (page: Page) => decodeURIComponent(page.url().match(/#\/b\/([^/?#]+)/)![1])
 
-type Seed = { type: string; x?: number; y?: number; w?: number; content: unknown; color?: string; columnId?: string; order?: number; id?: string }
+type Seed = { type: string; x?: number; y?: number; w?: number; content: unknown; color?: string; columnId?: string; order?: number; id?: string; /** More top-level fields of the card (a table's rows, columns and cells). */ fields?: Record<string, unknown> }
 
 /**
  * Put cards on the current board through the API, then reload with the camera at
@@ -219,7 +219,7 @@ export async function seedCards(page: Page, list: Seed[], origin = { x: 24, y: 2
   const boardId = boardOf(page)
   const changes = list.map((c, i) => {
     const id = c.id ?? crypto.randomUUID()
-    return { id, patch: { id, kind: 'card', boardId, x: c.x ?? 0, y: c.y ?? 0, w: c.w ?? 240, h: 80, z: i + 1, color: c.color ?? 'none', type: c.type, content: c.content, columnId: c.columnId ?? null, order: c.order, createdAt: Date.now() } }
+    return { id, patch: { id, kind: 'card', boardId, x: c.x ?? 0, y: c.y ?? 0, w: c.w ?? 240, h: 80, z: i + 1, color: c.color ?? 'none', type: c.type, content: c.content, columnId: c.columnId ?? null, order: c.order, createdAt: Date.now(), ...c.fields } }
   })
   let res = await page.request.post('/api/sync', { data: { changes } })
   for (let i = 0; res.status() === 409 && i < 10; i++) res = await page.request.post('/api/sync', { data: { changes } })

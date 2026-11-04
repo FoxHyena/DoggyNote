@@ -1,4 +1,4 @@
-import { DEFAULT_SIZE, copyBoardTree, findFreeSpot, newId, withoutLabelTombstones, type Board, type Card, type Id, type Obj, type Vec } from '@doggynote/core'
+import { DEFAULT_SIZE, copyBoardTree, findFreeSpot, newId, withoutLabelTombstones, withoutTableTombstones, type Board, type Card, type Id, type Obj, type Vec } from '@doggynote/core'
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
 import { unwrap } from 'solid-js/store'
 import * as doc from './doc.ts'
@@ -56,7 +56,7 @@ function copyTree(rootId: Id, onBoard: Id, at: Vec, like?: Card) {
     return null
   }
   // The caller names and places the new board through these same objects.
-  const objects = copy.objects.map((o) => (o.kind === 'board' || o.kind === 'card' ? (withoutLabelTombstones(o) as Obj) : o))
+  const objects = copy.objects.map((o) => (o.kind === 'board' || o.kind === 'card' ? (withoutTableTombstones(withoutLabelTombstones(o)) as Obj) : o))
   const card = objects.find((o) => o.id === copy.card.id) as Card<'board'>
   const board = objects.find((o) => o.id === copy.board.id) as Template
   delete board.template

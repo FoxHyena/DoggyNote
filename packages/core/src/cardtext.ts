@@ -6,6 +6,7 @@ import type { Card, Id } from './model.ts'
 import { mdToText, noteMarkdown } from './markdown.ts'
 import { swatchHex, swatchName } from './swatch.ts'
 import { sketchOf } from './sketch.ts'
+import { tableText, tableTitle } from './table.ts'
 
 // Cards are synced from everyone's devices: a malformed one must not break search
 // or the trash list for the whole workspace, so it degrades to a generic answer.
@@ -24,7 +25,7 @@ export const cardText = (c: Card): string => guarded(() => rawCardText(c), '')
 /** A one-line name for a card. `boardTitle` names the board a board card opens. */
 export const cardLabel = (c: Card, boardTitle: (boardId: Id) => string): string => guarded(() => rawCardLabel(c, boardTitle), 'Card')
 
-const KIND: Record<string, string> = { chat: 'Chat', note: 'Note', todo: 'To-do list', board: 'Board', image: 'Image', link: 'Link', column: 'Column', area: 'Area', file: 'File', movie: 'Movie', swatch: 'Colour' }
+const KIND: Record<string, string> = { chat: 'Chat', note: 'Note', todo: 'To-do list', board: 'Board', image: 'Image', link: 'Link', column: 'Column', area: 'Area', file: 'File', movie: 'Movie', swatch: 'Colour', table: 'Table' }
 
 /** What a screen reader says for a card: its kind, then its name ("Note: Trip to the coast"). */
 export const cardSpokenName = (c: Card, boardTitle: (boardId: Id) => string): string => guarded(() => {
@@ -62,6 +63,8 @@ function rawCardText(c: Card): string {
       return [swatchName(c as Card<'swatch'>), swatchHex(c as Card<'swatch'>)].filter(Boolean).join('\n')
     case 'sketch':
       return sketchOf(c).title
+    case 'table':
+      return tableText(c)
     default:
       return ''
   }
@@ -101,6 +104,8 @@ function rawCardLabel(c: Card, boardTitle: (boardId: Id) => string): string {
       return sketchOf(c).title || 'Sketch'
     case 'ink':
       return 'Drawing'
+    case 'table':
+      return tableTitle(c) || 'Table'
     default:
       return 'Card'
   }

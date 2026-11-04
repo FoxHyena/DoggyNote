@@ -23,6 +23,7 @@ export const TOOLS: Tool[] = [
   { id: 'link', label: 'Link', icon: 'link' },
   { id: 'line', label: 'Line', icon: 'line' },
   { id: 'column', label: 'Column', icon: 'column' },
+  { id: 'table', label: COPY.table.label, icon: 'table' },
   { id: 'area', label: 'Area', icon: 'multi' },
   { id: 'movie', label: 'Movie', icon: 'film' },
   { id: 'swatch', label: 'Colour', icon: 'swatch' },

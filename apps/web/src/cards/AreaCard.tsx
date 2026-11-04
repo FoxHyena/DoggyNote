@@ -1,5 +1,6 @@
 import { For, Show, onMount } from 'solid-js'
 import { AREA_HEADER, areaMembers, type CardType } from '@doggynote/core'
+import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { endEdit } from '../state/ui.ts'
 import { areaDropTarget, areaAddPoint, setAddingToArea, tidyArea, removeArea, buryArea } from '../state/areas.ts'
@@ -19,6 +20,7 @@ const choices: { type: CardType; title: string; icon: IconName }[] = [
   { type: 'todo', title: 'To-do', icon: 'todo' }, { type: 'board', title: 'Board', icon: 'board' },
   { type: 'link', title: 'Link', icon: 'link' }, { type: 'movie', title: 'Movie', icon: 'film' },
   { type: 'swatch', title: 'Colour', icon: 'swatch' }, { type: 'sketch', title: 'Sketch', icon: 'sketch' },
+  { type: 'table', title: COPY.table.label, icon: 'table' },
 ]
 export function AreaCard(props: CardProps<'area'>) {
   let file!: HTMLInputElement

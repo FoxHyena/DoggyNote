@@ -208,10 +208,31 @@ export function cellDisplay(col: ColLike, cell: Cell): string {
   return String(v)
 }
 
+/** The table's title (synced data: anything but text reads as empty). */
+export function tableTitle(card: Source): string {
+  const content = fields(card).content
+  return isRecord(content) && typeof content.title === 'string' ? content.title : ''
+}
+
+/**
+ * A table nobody has written anything in: no title, no cell with a value, and
+ * the columns still named as the starter table had them. A new one left like
+ * this is discarded when its edit ends.
+ */
+export function isBlankTable(card: Source, starterNames: readonly string[]): boolean {
+  if (tableTitle(card).trim()) return false
+  const names = tableColumns(card).map((c) => c.n)
+  if (names.length !== starterNames.length || names.some((n, i) => n !== starterNames[i])) return false
+  for (const key of Object.keys(card)) {
+    const p = parseTableKey(key)
+    if (p?.kind === 'cell' && readCell(fields(card)[key]).v !== null) return false
+  }
+  return true
+}
+
 /** Plain text of the whole table (title, header, rows as TSV), for search and cards' text. */
 export function tableText(card: Source): string {
-  const content = fields(card).content
-  const title = isRecord(content) && typeof content.title === 'string' ? content.title : ''
+  const title = tableTitle(card)
   const cols = tableColumns(card)
   if (!cols.length) return title
   const grid = [cols.map((c) => c.n), ...tableRows(card).map((r) => cols.map((c) => cellDisplay(c, cellOf(card, r.id, c.id))))]

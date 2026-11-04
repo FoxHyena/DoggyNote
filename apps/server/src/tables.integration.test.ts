@@ -147,7 +147,7 @@ it('builds the statements: 88 keys each, paths inlined for removals', () => {
   const { sql, args, more } = upsertSql(patch)
   expect(args).toHaveLength(88)
   expect(sql).toContain('json_set(objects.data')
-  expect(sql).toContain(`json_remove(json_set(objects.data`)
+  expect(sql).toContain(`json_remove(json_set(json_set(objects.data`)
   expect(more.map((m) => m.args.length)).toEqual([88, 25, 0])
   expect(more.every((m) => m.sql.startsWith('UPDATE objects SET data'))).toBe(true)
   expect(more.at(-1)!.sql).toContain(`'$.${gone[99]}'`)
