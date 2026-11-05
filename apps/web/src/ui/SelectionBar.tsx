@@ -229,7 +229,7 @@ export function SelectionBar() {
         <Show when={touch() && editable()}>
           <button class="bar-btn" data-testid="edit-card" onClick={() => beginEdit(sole()!.id)}>
             <Icon size={18} name="edit" />
-            Edit
+            {sole()?.type === 'image' ? 'Caption' : 'Edit'}
           </button>
         </Show>
         <Show when={sole()?.type === 'todo' && doc.canWriteObject(sole())}>
@@ -271,7 +271,7 @@ export function SelectionBar() {
             <button class="bar-btn" data-testid="selection-done" onClick={clearSelection}>Done<Icon name="close" size={18} /></button>
           </div>
           <div class="selection-phone-actions">
-            <Show when={soleBoard()} fallback={<Show when={editable()}><button class="bar-btn selection-primary" data-testid="edit-card" onClick={() => beginEdit(sole()!.id)}><Icon name="edit" size={20} /><span>Edit</span></button></Show>}>
+            <Show when={soleBoard()} fallback={<Show when={editable()}><button class="bar-btn selection-primary" data-testid="edit-card" onClick={() => beginEdit(sole()!.id)}><Icon name="edit" size={20} /><span>{sole()?.type === 'image' ? 'Caption' : 'Edit'}</span></button></Show>}>
               <button class="bar-btn selection-primary" data-testid="open-board" onClick={() => openBoard(soleBoard()!.id)}><Icon name="open" size={20} /><span>Open</span></button>
             </Show>
             <Show when={tintable()}>

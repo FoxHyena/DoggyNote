@@ -60,7 +60,7 @@ for (const width of [0, 360]) {
 
     const actions = bar.locator('.selection-phone-actions')
     expect(await actions.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true)
-    for (const [id, label] of [['edit-card', 'Edit'], ['selection-colour', 'Colour'], ['labels-button', 'Labels'], ['selection-more', 'More'], ['bury', 'Bury']] as const) {
+    for (const [id, label] of [['edit-card', 'Caption'], ['selection-colour', 'Colour'], ['labels-button', 'Labels'], ['selection-more', 'More'], ['bury', 'Bury']] as const) {
       const button = actions.getByTestId(id)
       await expect(button).toBeInViewport({ ratio: 1 })
       await expect(button).toContainText(label)

@@ -4,13 +4,13 @@ import { closeKeyboard, fakeKeyboard, tap, tapEmpty, tapOn } from './touch.ts'
 
 // On a phone: tap to select, tap again (a double-tap) to type the caption under
 // the image; closing the keyboard or tapping the board finishes. The selection
-// bar's Edit opens it too. No edit dock: that's for formatting notes.
+// bar's Caption button opens it too. No edit dock: that's for formatting notes.
 
 test.beforeEach(async ({ page }) => {
   await freshBoard(page)
 })
 
-test('double-tap an image to caption it; Edit in the selection bar opens it again', async ({ page }) => {
+test('double-tap an image to caption it; Caption in the selection bar opens it again', async ({ page }) => {
   const png = Buffer.from(await page.evaluate(async () => {
     const c = new OffscreenCanvas(200, 150)
     const ctx = c.getContext('2d')!
@@ -43,6 +43,8 @@ test('double-tap an image to caption it; Edit in the selection bar opens it agai
 
   await tapOn(page, card.getByTestId('card-image'))
   await expect(card).toHaveClass(/selected/)
+  // The button says what it does: an image's only edit is its caption.
+  await expect(page.getByTestId('edit-card')).toHaveText('Caption')
   await page.getByTestId('edit-card').tap()
   await expect(input).toHaveValue('Zoomies')
   await page.keyboard.type('!')
