@@ -129,3 +129,23 @@ test('Clear done from the List menu while typing in the list: shows at once, and
   await page.keyboard.press(`${MOD}+Z`)
   await expect(page.locator('[data-type=todo] .todo-item')).toHaveText([/Vacuum/, /Dishes/])
 })
+
+test('clearing a done task’s text makes it a blank open task, and Backspace then removes it', async ({ page }) => {
+  const list = await seedList(page, [item('Vacuum'), item('Kibble', true, Date.now())])
+  await list.locator('.todo-text', { hasText: 'Kibble' }).dblclick()
+  const kibble = page.getByTestId('todo-item-input').nth(1), row = list.locator('.todo-editing .todo-item').nth(1)
+  await expect(kibble).toHaveValue('Kibble')
+  await kibble.focus()
+  await page.keyboard.press(`${MOD}+a`)
+  await page.keyboard.press('Backspace')
+  await expect(kibble).toHaveValue('')
+  // Not a ticked, struck-through "Add a task…": an empty row is a fresh task.
+  await expect(row).not.toHaveClass(/\bdone\b/)
+  await expect(row.getByRole('checkbox')).not.toBeChecked()
+  await page.keyboard.press('Backspace')
+  await expect(page.getByTestId('todo-item-input')).toHaveCount(1)
+  await expect(page.getByTestId('todo-item-input').first()).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect.poll(() => texts(page)).toEqual(['Vacuum'])
+  await expect(list.locator('.todo-item')).toHaveCount(1)
+})

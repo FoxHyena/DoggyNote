@@ -13,7 +13,16 @@ import { rectOf } from '../canvas/layout.ts'
 
 const [room, setRoom] = createStore<{ members: LivePresence[] }>({ members: [] })
 export const members = () => room.members
-const setMembers = (next: LivePresence[]) => setRoom('members', reconcile(next, { key: 'sessionId' }))
+// This page's earlier sessions. A suspended page (iOS) can lose its socket
+// without the close reaching the room, which then lists the old session until
+// it times out; it is still us, so never draw it as another device.
+const pastSessions = new Set<string>()
+const setMembers = (next: LivePresence[]) => setRoom('members', reconcile(next.filter((m) => !pastSessions.has(m.sessionId)), { key: 'sessionId' }))
+/** The room's own list: once it stops naming an old session, that one has gone for good. */
+function roomMembers(next: LivePresence[]) {
+  for (const id of pastSessions) if (!next.some((m) => m.sessionId === id)) pastSessions.delete(id)
+  setMembers(next)
+}
 export const [liveState, setLiveState] = createSignal<'connecting' | 'live' | 'offline'>('connecting')
 export const [selfSession, setSelfSession] = createSignal('')
 export const [following, setFollowing] = createSignal<string | null>(null)
@@ -111,10 +120,13 @@ export function updateAwareness() {
 export function installRealtime() {
   return createRoot((dispose) => {
     let generation = 0, retry: ReturnType<typeof setTimeout> | null = null, activeBoard = ''
-    let blurred = false
+    // A window can open behind another app (a relaunch after an update) and
+    // never see a blur, so start from whether it actually has focus.
+    let blurred = !document.hasFocus()
     const disconnect = () => {
       generation++; if (retry) clearTimeout(retry)
       retry = null; socket?.close(); socket = null
+      if (selfSession()) pastSessions.add(selfSession())
       setMembers([]); setSelfSession(''); setPings([]); previews.clear(); pointer = null; caret = null; stopFollowing(); updateAwareness()
     }
     const connect = async () => {
@@ -125,6 +137,7 @@ export function installRealtime() {
       const failed = () => {
         if (current !== generation) return
         performance.clearMarks('doggynote.live.connection-failure'); performance.mark('doggynote.live.connection-failure')
+        if (selfSession()) pastSessions.add(selfSession())
         setLiveState('offline'); setMembers([]); setSelfSession(''); stopFollowing(); updateAwareness()
         retry = setTimeout(() => void connect(), 2000 + Math.random() * 1000)
       }
@@ -149,7 +162,7 @@ export function installRealtime() {
               performance.measure('doggynote.live.convergence', { start, end: performance.now() })
             })
           }
-          if (event.type === 'members') { setMembers(event.members); updateAwareness(); if (following()) applyFollow() }
+          if (event.type === 'members') { roomMembers(event.members); updateAwareness(); if (following()) applyFollow() }
           if (event.type === 'ping') {
             setPings((all) => [...all.filter((p) => p.until > Date.now()).slice(-9), { ...event, until: Date.now() + 3000 }])
             setTimeout(() => setPings((all) => all.filter((p) => p.until > Date.now())), 3000)
@@ -166,7 +179,7 @@ export function installRealtime() {
       if (blurred || document.hidden || !canvas || e.pointerType === 'touch') { pointer = null; schedulePresence(); return }
       pointer = { x: e.clientX, y: e.clientY }; schedulePresence()
     }
-    const manual = (e: Event) => { const target = e.target as Element; if (target?.closest?.('[data-testid="canvas"]') && !target.closest('.follow-banner')) stopFollowing() }
+    const manual = (e: Event) => { if (e.type === 'pointerdown') blurred = false; const target = e.target as Element; if (target?.closest?.('[data-testid="canvas"]') && !target.closest('.follow-banner')) stopFollowing() }
     const key = (e: KeyboardEvent) => { if (following() && (e.key === 'Escape' || e.key.startsWith('Arrow'))) stopFollowing(); if (e.key === 'Escape') { previews.clear(); schedulePresence() } }
     const finishGesture = clearLivePreviews
     const visibility = () => { if (document.hidden) { disconnect(); setLiveState('offline') } else void connect() }
