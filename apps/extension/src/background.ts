@@ -53,10 +53,14 @@ async function select(source: ImageSource) {
 }
 async function imageBytes(url: string) {
   const response = await fetch(url, { credentials: 'omit', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(25000) })
-  if (!response.ok) throw new Error('The source site would not provide this image. Try opening the image itself and saving again.')
   const type = (response.headers.get('content-type') ?? '').split(';')[0].toLowerCase().trim()
-  if (!IMAGE_TYPES.has(type)) throw new Error('Choose a JPEG, PNG, WebP, or GIF image.')
-  if (Number(response.headers.get('content-length')) > MAX_IMAGE_BYTES) throw new Error('This image exceeds the 15 MB image limit.')
+  const rejected = !response.ok ? 'The source site would not provide this image. Try opening the image itself and saving again.'
+    : !IMAGE_TYPES.has(type) ? 'Choose a JPEG, PNG, WebP, or GIF image.'
+      : Number(response.headers.get('content-length')) > MAX_IMAGE_BYTES ? 'This image exceeds the 15 MB image limit.' : ''
+  if (rejected) {
+    await response.body?.cancel().catch(() => {})
+    throw new Error(rejected)
+  }
   const reader = response.body?.getReader()
   if (!reader) throw new Error('The image could not be downloaded.')
   const parts: Uint8Array<ArrayBuffer>[] = []; let bytes = 0

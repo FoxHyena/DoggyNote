@@ -63,6 +63,7 @@ test('hover, capture, choose a board, save, restart, and open the board Inbox', 
     await panel.screenshot({ path: 'test-results/clipper-preview.png' })
     await panel.getByRole('button', { name: `Save to ${title}`, exact: true }).click()
     await expect(panel.locator('.saved')).toContainText(`Saved to ${title}`)
+    console.info('Clipper: initial capture saved')
     await panel.screenshot({ path: 'test-results/clipper-saved.png' })
     const destination = await context.newPage()
     await destination.goto(`${base}/?boardInbox=${boardId}`)
@@ -83,14 +84,17 @@ test('hover, capture, choose a board, save, restart, and open the board Inbox', 
     const devtools = await context.newCDPSession(panel)
     await devtools.send('ServiceWorker.enable')
     await devtools.send('ServiceWorker.stopAllWorkers')
+    await devtools.detach()
     await panel.reload()
     await panel.getByRole('button', { name: 'Resume interrupted save' }).click()
     await expect(panel.locator('.saved')).toContainText(`Saved to ${title}`)
     expect((await (await context.request.get(`${base}/api/boards/${boardId}/inbox`)).json()).count).toBe(1)
+    console.info('Clipper: worker restart resumed without duplicates')
     await expect(destination.getByTestId('card-image')).toHaveCount(0)
     await destination.getByTestId('board-inbox-item').getByRole('button', { name: 'Place', exact: true }).click()
     await expect(destination.getByTestId('card-image')).toHaveCount(1)
     await expect(destination.getByTestId('image-source')).toHaveAttribute('href', `${sourceBase}/art`)
+    console.info('Clipper: saved image placed on the canvas')
     // Delegated hover detection also handles images appended by an infinite feed.
     await source.evaluate(() => {
       const img = document.createElement('img'); img.id = 'dynamic-art'; img.src = '/dog.png'; img.style.cssText = 'display:block;width:280px;height:280px;margin-top:1000px'
@@ -101,23 +105,41 @@ test('hover, capture, choose a board, save, restart, and open the board Inbox', 
     blocked = true
     const secondButton = await overlay.boundingBox()
     await source.mouse.click(secondButton!.x + 35, secondButton!.y + 18)
+    console.info('Clipper: blocked-source capture selected')
     await expect(panel.getByRole('alert')).toContainText('source site would not provide')
     blocked = false
     await panel.getByRole('button', { name: 'Retry image download' }).click()
     await expect(panel.locator('.preview')).toBeVisible()
     await expect(panel.getByLabel('Save to board', { exact: true })).toHaveValue(boardId)
-    await context.setOffline(true)
+    console.info('Clipper: blocked-source download retried')
+    // Interrupt an actual upload while board discovery remains available. Going
+    // offline first can correctly disable Save during a concurrent board refresh.
+    const interruptedUpload = `${base}/api/clipper/assets/*/medium`
+    await context.route(interruptedUpload, (route) => route.abort('internetdisconnected'))
     await panel.getByRole('button', { name: `Save to ${title}`, exact: true }).click()
     await expect(panel.getByRole('alert')).toContainText('Cannot reach DoggyNote')
+    await context.unroute(interruptedUpload)
+    // Exercise manual board retry without an online event automatically healing
+    // the panel before the click. Global offline recovery is checked separately.
+    const unavailableBoards = `${base}/api/clipper/boards`
+    await context.route(unavailableBoards, (route) => route.abort('internetdisconnected'))
+    await panel.reload()
+    await expect(panel.locator('.preview')).toBeVisible()
+    await expect(panel.getByRole('button', { name: 'Retry boards' })).toBeVisible()
+    await expect(panel.getByRole('button', { name: 'Save to board', exact: true })).toBeDisabled()
+    await context.unroute(unavailableBoards)
+    await panel.getByRole('button', { name: 'Retry boards' }).click()
+    await expect(panel.getByRole('button', { name: `Save to ${title}`, exact: true })).toBeEnabled()
+    await context.setOffline(true)
     await panel.reload()
     await expect(panel.locator('.preview')).toBeVisible()
     await expect(panel.getByRole('button', { name: 'Retry boards' })).toBeVisible()
     await panel.screenshot({ path: '../web/.impeccable/review/clipper/clipper-offline.png', animations: 'disabled' })
     await context.setOffline(false)
-    await panel.getByRole('button', { name: 'Retry boards' }).click()
     await expect(panel.getByRole('button', { name: `Save to ${title}`, exact: true })).toBeEnabled()
     await panel.getByRole('button', { name: `Save to ${title}`, exact: true }).click()
     await expect(panel.locator('.saved')).toContainText(`Saved to ${title}`)
+    console.info('Clipper: offline capture recovered')
     await source.evaluate(() => {
       const img = document.createElement('img'); img.id = 'gif-art'; img.src = '/dog.gif'; img.style.cssText = 'display:block;width:280px;height:280px'
       document.body.append(img)
@@ -146,7 +168,17 @@ test('hover, capture, choose a board, save, restart, and open the board Inbox', 
     await source.mouse.click(oversizedButton!.x + 35, oversizedButton!.y + 18)
     await expect(panel.getByRole('alert')).toContainText('15 MB image limit')
     await expect(panel.getByRole('button', { name: 'Retry image download' })).toBeVisible()
-  } finally { await context.close(); await new Promise<void>((resolve) => server.close(() => resolve())); await rm(profile, { recursive: true, force: true }) }
+    console.info('Clipper: oversized download rejected; capture flow complete')
+  } catch (error) {
+    console.error('Clipper capture failed before cleanup:', error)
+    throw error
+  } finally {
+    console.info('Clipper: closing test context')
+    await context.close()
+    console.info('Clipper: closing fixture server')
+    await new Promise<void>((resolve) => { server.close(() => resolve()); server.closeAllConnections() })
+    await rm(profile, { recursive: true, force: true })
+  }
 })
 
 test('connects through DoggyNote sign-in and explicit approval', async () => {

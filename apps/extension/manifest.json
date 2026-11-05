@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "DoggyNote Clipper",
   "description": "Save images from the web to your DoggyNote boards’ Inboxes.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "minimum_chrome_version": "116",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApcDANnITGdZqFB0R1cRkZmqJ2IjooYAxMCNuqAFfKM/ejw0DX0RKxOGF98MF4I/8XbXojLimxnk6HwVi8pndEkLWSEvmutn4g4NO+CUA+09mlsGAPz4Sih7e9Hu83FpYdINt2R8OTRu9CKVOMoWBH8xNzAUvGO5wHHZtnARwhDPaXGNLk178+wfnzjDhBrI+agiu+TiJLgEDVMj0uOQL6w2hPeKL/U86i/Krv3znQROfFbhMXrCwnyI8zSBfTSQESmnfJZCGDJzXGgWnpcPsST2TB1vZ8TZq0OaSqNc8+dRtu7rfQD+evO7E60JCyIboECiSlLXSZ8iMZ7AWpThV2QIDAQAB",
   "permissions": ["sidePanel", "contextMenus", "identity", "storage"],

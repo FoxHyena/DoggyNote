@@ -7,7 +7,7 @@ The DoggyNote website and Mac app can be closed while you collect images.
 
 The server and web app must first be released with migration `0021_clipper.sql` using the repository’s normal release workflow. This extension uses the new clipper API; it cannot connect to a server that has not been updated. Deployment is a separate release action.
 
-1. Unzip `doggynote-clipper-0.1.0.zip` into a folder you will keep.
+1. Unzip `doggynote-clipper-0.1.1.zip` into a folder you will keep.
 2. Open `chrome://extensions`, turn on **Developer mode**, and choose **Load unpacked**.
 3. Select the unzipped folder containing `manifest.json`.
 4. Open the extension from Chrome’s Extensions menu. Choose **Connect DoggyNote**, sign in at `notepad.dog` if needed, and approve **Connect Chrome**.
