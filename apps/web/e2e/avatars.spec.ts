@@ -135,7 +135,7 @@ test('profile photo options: balanced identity, picker cancellation, nested keyb
   await page.getByTestId('account').click()
   const trigger = page.getByTestId('photo-options-trigger'), identity = page.locator('.account-photo-identity')
   await expect(trigger).toBeFocused()
-  const avatar = (await trigger.boundingBox())!, name = (await identity.locator('strong').boundingBox())!
+  const avatar = (await trigger.boundingBox())!, name = (await identity.locator('.account-profile-text').boundingBox())!
   expect(avatar.width).toBe(56)
   expect(name.x - (avatar.x + avatar.width)).toBe(16)
   expect(Math.abs(name.y + name.height / 2 - avatar.y - avatar.height / 2)).toBeLessThan(1)
@@ -148,7 +148,7 @@ test('profile photo options: balanced identity, picker cancellation, nested keyb
   await expect(page.getByRole('menuitem', { name: 'Add photo', exact: true })).toBeFocused()
   await expect(trigger.locator('.account-photo-camera')).toHaveCSS('opacity', '0')
   await page.keyboard.press('Tab')
-  await expect(page.getByTestId('theme-toggle')).toBeFocused()
+  await expect(page.getByTestId('edit-profile')).toBeFocused()
   await expect(page.getByTestId('photo-options')).toHaveCount(0)
   await trigger.focus(); await page.keyboard.press('Enter')
   await page.keyboard.press('Shift+Tab')

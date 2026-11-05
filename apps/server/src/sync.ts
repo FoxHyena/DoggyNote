@@ -1,3 +1,4 @@
+import { readableCommentProfiles } from './profiles.ts'
 import { Hono, type Context } from 'hono'
 import { stickerObjectSchema, strokeObjectSchema, isReservedId } from '@doggynote/core/agent'
 import type { AppEnv } from './env.ts'
@@ -7,7 +8,7 @@ import { checkPositionLocks, dropLockedLayout, positionWriteGuards } from './pos
 import { checkAreaRemovals } from './areas.ts'
 import { notifyRooms } from './realtime.ts'
 import { planSyncedNotes } from './synced.ts'
-import { CARD_TYPES, LABEL_FIELD, TABLE_FIELD, tableLimitError, validTableField, withoutTableTombstones, isBoardInkSize, isSketchContent, isSketchPaper, isSketchTitle, validLabelField, decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
+import { profileName, CARD_TYPES, LABEL_FIELD, TABLE_FIELD, tableLimitError, validTableField, withoutTableTombstones, isBoardInkSize, isSketchContent, isSketchPaper, isSketchTitle, validLabelField, decodeUpdate, encodeUpdate, normalizeSwatchHex, noteDocument, noteMarkdown, noteState, replaceText, type Card } from '@doggynote/core'
 import * as Y from 'yjs'
 
 // Push: field patches, merged per top-level field (last write to arrive wins).
@@ -143,12 +144,12 @@ export function stampComment(
   patch: Record<string, unknown>,
   prev: Pick<Existing, 'kind' | 'author_id'> | undefined,
   kind: string,
-  me: { id: string; username: string },
+  me: { id: string; username: string; displayName?: string | null },
 ): string | null {
   if (kind !== 'comment' && prev?.kind !== 'comment') return null
   if (!prev) {
     patch.authorId = me.id
-    patch.author = me.username
+    patch.author = profileName(me)
     return null
   }
   if (prev.kind !== 'comment') return 'bad kind'
@@ -325,7 +326,7 @@ sync.get('/sync', async (c) => {
   }
   const cursor = results.length ? results[results.length - 1].seq : since
   const epoch = (await c.env.DB.prepare("SELECT value FROM meta WHERE key = 'epoch'").first<{ value: string }>())?.value ?? ''
-  return c.json({ objects, cursor, more: results.length === PULL_LIMIT, epoch, accessRevision: a.revision, reset })
+  return c.json({ objects, profiles: await readableCommentProfiles(c.env.DB, a, c.get('user').id), cursor, more: results.length === PULL_LIMIT, epoch, accessRevision: a.revision, reset })
 })
 
 /** Shared by sync and agent proposals; checks the entire prospective batch. */

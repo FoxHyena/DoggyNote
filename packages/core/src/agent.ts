@@ -86,7 +86,7 @@ export const agentObjectSchema = z.discriminatedUnion('kind', [
     z.strictObject({ ...card, type: z.literal('swatch'), content: z.strictObject({ hex: z.string().regex(/^#[0-9A-F]{6}$/), name: z.string().max(1000).optional() }) }),
   ]),
   z.strictObject({ ...common, kind: z.literal('connection'), boardId: id, from: id, to: id, fromSide: z.enum(['top', 'right', 'bottom', 'left']).nullable().optional(), toSide: z.enum(['top', 'right', 'bottom', 'left']).nullable().optional(), arrow: z.enum(['end', 'none']) }),
-  z.strictObject({ ...common, kind: z.literal('comment'), boardId: id, cardId: id, authorId: id, author: z.string().max(32), text: z.string().max(20_000), editedAt: stamp.nullable().optional(), resolvedAt: stamp.nullable().optional() }),
+  z.strictObject({ ...common, kind: z.literal('comment'), boardId: id, cardId: id, authorId: id, author: z.string().max(64), text: z.string().max(20_000), editedAt: stamp.nullable().optional(), resolvedAt: stamp.nullable().optional() }),
 ])
 
 /** Full replacement shapes deliberately reject arbitrary sync metadata and unknown fields. */

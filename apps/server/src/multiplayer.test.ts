@@ -144,7 +144,7 @@ function roomFixture() {
   const room = new BoardRoom(ctx, { DB: f.db } as Env)
   const socket = () => {
     let attachment: unknown = { seen: Date.now(), last: 0 }
-    const messages: { type: string; members?: { username: string; canEdit: boolean }[] }[] = [], closed: number[] = []
+    const messages: { type: string; members?: { username: string; displayName?: string | null; canEdit: boolean }[] }[] = [], closed: number[] = []
     const ws = { readyState: 1, deserializeAttachment: () => structuredClone(attachment), serializeAttachment: (value: unknown) => { attachment = structuredClone(value) }, send: (message: string) => messages.push(JSON.parse(message)), close: (code = 1000) => { ws.readyState = 3; closed.push(code) } }
     sockets.push(ws as unknown as WebSocket)
     return { ws: ws as unknown as WebSocket, messages, closed, attachment: () => attachment }
@@ -247,5 +247,21 @@ it('keeps the newest of bunched presence frames, and caps a flood', async () => 
     for (let i = 3; i <= PRESENCE_PER_SECOND + 10; i++) await f.room.webSocketMessage(s.ws, frame(i))
     expect(cameraY()).toBe(PRESENCE_PER_SECOND)
     await new Promise((resolve) => setTimeout(resolve, 100))
+  } finally { f.sql.close() }
+})
+
+
+it('refreshes display names in existing room attachments without changing usernames', async () => {
+  const f = roomFixture()
+  try {
+    f.ticket('name-change')
+    const person = f.socket()
+    await f.room.webSocketMessage(person.ws, JSON.stringify({ type: 'auth', ticket: 'name-change' }))
+    f.sql.prepare('UPDATE users SET display_name=? WHERE id=?').run('Oreo 🐺', 'rex')
+    await f.room.alarm()
+    expect(person.messages.at(-1)?.members?.[0]).toMatchObject({ username: 'rex', displayName: 'Oreo 🐺' })
+    f.sql.prepare('UPDATE users SET display_name=NULL WHERE id=?').run('rex')
+    await f.restoreRoom().alarm()
+    expect(person.messages.at(-1)?.members?.[0]).toMatchObject({ username: 'rex', displayName: null })
   } finally { f.sql.close() }
 })

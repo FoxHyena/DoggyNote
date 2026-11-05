@@ -38,6 +38,7 @@ It's designed to stay fast on big boards. The Mac app is a small native app (abo
 - **Comment threads** on any card: replies, resolve/reopen, and edit or delete your own messages.
 - **View-only share links**: anyone can look, nobody can edit. Turn a link off at any time.
 - **Private personal boards**, with inherited access for nested boards. Share view or edit access by username, or send a seven-day editing invitation that requires sign-in. Link revocation removes access granted through that link.
+- **Profile names** separate your visible name from your sign-in username. Set one in Account → Edit profile or during signup; names support spaces and emoji, and clearing one falls back to your username.
 - **Account invitations** from the admin People dashboard: single-use signup links, password recovery and session revocation. New accounts start with their own personal home.
 - **Quiet save status**: changes save locally and sync quickly without flashing on every edit. Open Save status for pending work, retry and recovery copies if board access changes.
 - **Agent connections**: a scoped, revocable [local MCP connector](docs/mcp-setup.md) lets agents read boards and propose changes. Preview, approve, reject or reverse their edits inside the app.
@@ -95,6 +96,8 @@ pnpm test:e2e                     # Playwright end-to-end tests, WebKit + Chromi
 ```
 
 Every pull request runs typecheck, unit tests, the full end-to-end suite on WebKit and Chromium, and a performance check. After merging to `main`, manually run the Release workflow to stage signed Mac artifacts and deploy the server and web app. Each Worker advertises the staged updater matching its own version, so a new desktop is exposed together with its compatible server. The fallback updater and GitHub release publish after deployment. [`CLAUDE.md`](CLAUDE.md) holds the project's rules: colours, performance, privacy and API compatibility.
+
+Display names require `0020_display_names.sql` before deploying the updated Worker. The API changes are additive, so older desktop clients remain supported.
 
 For multiplayer, apply migrations through `0012_multiplayer.sql` and release the Worker, web app and compatible desktop updater together. Desktop versions below `0.3.0`, and clients without sync protocol 3, are prompted to update. Older queued note replacements become recovery drafts. [Multiplayer architecture, release ordering and rollback limits](docs/multiplayer.md) describe the coordinated release; deployment remains a separate action.
 

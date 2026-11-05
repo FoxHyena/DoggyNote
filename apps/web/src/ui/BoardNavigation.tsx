@@ -1,3 +1,4 @@
+import { profileName } from '@doggynote/core'
 import { SheetGrip } from './SheetGrip.tsx'
 import { For, Show, createEffect, createSignal, createUniqueId, type Accessor, type JSX } from 'solid-js'
 import { COPY, boardDisplayTitle } from '@doggynote/theme'
@@ -50,7 +51,7 @@ export function BoardNavigation(props: { renderTrigger?: (state: { open: Accesso
     else if (e.key === 'Enter' && query().trim()) { e.preventDefault(); const first = matches()[0]; if (first) go(first.id) }
   }
   // The avatar only shows initials, so the row's name says who shared it and whether it's view only.
-  const sharedLabel = (b: BoardPermission) => [sharedTitle(b), b.sharedBy && `${COPY.boards.sharedBy} ${b.sharedBy}`, !b.canEdit && COPY.boards.viewOnly].filter(Boolean).join(', ')
+  const sharedLabel = (b: BoardPermission) => [sharedTitle(b), b.sharedBy && `${COPY.boards.sharedBy} ${profileName({ username: b.sharedBy ?? '', displayName: b.sharedByDisplayName })}`, !b.canEdit && COPY.boards.viewOnly].filter(Boolean).join(', ')
   function go(id: string) { openBoard(id); setOpen(false); trigger.focus() }
   const canRename = () => phone() && !boardId().startsWith('toybox:') && doc.canWriteObject(doc.getBoard(boardId()))
   const rename = () => {
@@ -111,7 +112,7 @@ export function BoardNavigation(props: { renderTrigger?: (state: { open: Accesso
         <section ref={sharedList} class="nav-menu-section" aria-labelledby={`${menuId}-shared-heading`}>
           <strong id={`${menuId}-shared-heading`} class="nav-menu-section-label">{COPY.boards.shared}</strong>
           <Show when={shared().length} fallback={<p class="nav-menu-description">{COPY.boards.sharedEmpty}</p>}>
-            <For each={visibleShared()}>{(b) => <button class="menu-item nav-menu-row" data-testid="shared-board-link" aria-label={sharedLabel(b)} onClick={() => go(b.id)}><BoardIconSvg icon={doc.getBoard(b.id)?.icon ?? 'paw'} size={18} /><span class="nav-menu-label">{sharedTitle(b)}</span><Show when={b.sharedBy || !b.canEdit}><span class="nav-menu-meta"><Show when={!b.canEdit}><small>{COPY.boards.viewOnly}</small></Show><Show when={b.sharedBy}>{(name) => <Avatar userId={b.sharedById ?? name()} name={name()} avatarId={b.sharedByAvatarId} class="nav-menu-avatar" testid="shared-by" title={`${COPY.boards.sharedBy} ${name()}`} />}</Show></span></Show></button>}</For>
+            <For each={visibleShared()}>{(b) => <button class="menu-item nav-menu-row" data-testid="shared-board-link" aria-label={sharedLabel(b)} onClick={() => go(b.id)}><BoardIconSvg icon={doc.getBoard(b.id)?.icon ?? 'paw'} size={18} /><span class="nav-menu-label">{sharedTitle(b)}</span><Show when={b.sharedBy || !b.canEdit}><span class="nav-menu-meta"><Show when={!b.canEdit}><small>{COPY.boards.viewOnly}</small></Show><Show when={b.sharedBy}>{(name) => <Avatar userId={b.sharedById ?? name()} name={profileName({ username: name(), displayName: b.sharedByDisplayName })} avatarId={b.sharedByAvatarId} class="nav-menu-avatar" testid="shared-by" title={`${COPY.boards.sharedBy} ${profileName({ username: name(), displayName: b.sharedByDisplayName })}`} />}</Show></span></Show></button>}</For>
             <Show when={!showAll() && shared().length > SHARED_PREVIEW}><button class="menu-item nav-menu-row nav-menu-more" data-testid="shared-show-all" onClick={expandShared}><span aria-hidden="true" /><span class="nav-menu-label">{COPY.boards.showAll} ({shared().length})</span></button></Show>
           </Show>
         </section>

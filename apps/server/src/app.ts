@@ -41,7 +41,7 @@ app.use('*', async (c, next) => {
       status: 204,
       headers: {
         'access-control-allow-origin': origin,
-        'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
         'access-control-allow-headers': 'authorization, content-type, x-doggynote-protocol',
         'access-control-max-age': '86400',
         vary: 'origin',
@@ -60,7 +60,7 @@ app.use('*', async (c, next) => {
 // can't send without a CORS preflight. Together with SameSite=Lax cookies this
 // closes CSRF.
 app.use('*', async (c, next) => {
-  if (c.req.method === 'POST') {
+  if (c.req.method === 'POST' || c.req.method === 'PATCH') {
     const type = c.req.header('content-type') ?? ''
     if (!type.startsWith('application/json')) return c.json({ error: 'JSON body required' }, 415)
   }

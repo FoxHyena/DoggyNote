@@ -1,3 +1,4 @@
+import { commentProfiles } from './profiles.ts'
 import { Hono } from 'hono'
 import type { AppEnv } from './env.ts'
 import { requireUser } from './auth.ts'
@@ -46,9 +47,9 @@ shares.get('/shares', requireUser, async (c) => {
   if (!a.canManage(boardId)) return c.json({ error: 'Only the owner or an admin can manage sharing' }, 403)
   const [{ results: links }, { results: grants }] = await Promise.all([
     c.env.DB.prepare('SELECT * FROM shares WHERE board_id=?1 AND revoked_at IS NULL ORDER BY created_at DESC').bind(boardId).all<ShareRow>(),
-    c.env.DB.prepare('SELECT g.id,g.user_id,u.username,g.permission,g.source_token,g.created_at FROM board_grants g JOIN users u ON u.id=g.user_id LEFT JOIN shares s ON s.token=g.source_token WHERE g.board_id=?1 AND g.revoked_at IS NULL AND (g.source_token IS NULL OR s.revoked_at IS NULL) ORDER BY u.username').bind(boardId).all<{ id: string; user_id: string; username: string; permission: string; source_token: string | null; created_at: number }>(),
+    c.env.DB.prepare('SELECT g.id,g.user_id,u.username,u.display_name,g.permission,g.source_token,g.created_at FROM board_grants g JOIN users u ON u.id=g.user_id LEFT JOIN shares s ON s.token=g.source_token WHERE g.board_id=?1 AND g.revoked_at IS NULL AND (g.source_token IS NULL OR s.revoked_at IS NULL) ORDER BY u.username').bind(boardId).all<{ id: string; user_id: string; username: string; display_name: string | null; permission: string; source_token: string | null; created_at: number }>(),
   ])
-  return c.json({ shares: links.map(wire), members: grants.map((g) => ({ id: g.id, userId: g.user_id, username: g.username, permission: g.permission, viaLink: !!g.source_token, createdAt: g.created_at })), ownerId: a.boards.get(boardId)?.ownerId ?? null, legacy: a.boards.get(boardId)?.legacy ?? false })
+  return c.json({ shares: links.map(wire), members: grants.map((g) => ({ id: g.id, userId: g.user_id, username: g.username, displayName: g.display_name, permission: g.permission, viaLink: !!g.source_token, createdAt: g.created_at })), ownerId: a.boards.get(boardId)?.ownerId ?? null, legacy: a.boards.get(boardId)?.legacy ?? false })
 })
 shares.post('/shares', requireUser, async (c) => {
   const body = await c.req.json<Record<string, unknown>>().catch(() => ({} as Record<string, unknown>))
@@ -190,5 +191,5 @@ shares.get('/share/:token', async (c) => {
   }
   const res = await resolveShare(c.env.DB, c.req.param('token'))
   if (!res) return c.json({ error: 'This link has been turned off or expired' }, 404)
-  return c.json({ permission: 'view', rootBoardId: res.root.id, sharedBoards: [...res.sharedBoards], objects: res.objects.map((o) => publicChatCard(o)) })
+  return c.json({ permission: 'view', rootBoardId: res.root.id, sharedBoards: [...res.sharedBoards], objects: res.objects.map((o) => publicChatCard(o)), profiles: await commentProfiles(c.env.DB, res.objects) })
 })

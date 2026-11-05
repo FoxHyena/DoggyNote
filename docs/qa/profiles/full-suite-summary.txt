@@ -1,0 +1,45 @@
+Full CI browser suite
+Command: CI=1 E2E_PORT_OFFSET=100 pnpm --filter web exec playwright test --workers=6
+
+14 failed
+    [webkit] › e2e/multiplayer.spec.ts:125:1 › two authors type in one note, merge within one second, and undo only their own typing
+    [webkit] › e2e/profiles.spec.ts:37:1 › display names reach collaborators, sharing, old comments and public viewers
+    [webkit] › e2e/theme.spec.ts:72:1 › account appearance works from the keyboard and dismisses without losing focus
+    [chromium] › e2e/agents.spec.ts:301:1 › a card re-measured since the agent read it can still be approved, keeping its new height
+    [chromium] › e2e/multiplayer.spec.ts:125:1 › two authors type in one note, merge within one second, and undo only their own typing
+    [chromium] › e2e/multiplayer.spec.ts:169:1 › live drag previews clear on commit and committed changes arrive within one second
+    [chromium] › e2e/multiplayer.spec.ts:329:1 › competing drags and a resize converge, while cancellation and deletion clear previews
+    [chromium] › e2e/profiles.spec.ts:37:1 › display names reach collaborators, sharing, old comments and public viewers
+    [chromium] › e2e/sketches.spec.ts:178:1 › one person renames a sketch while another changes its paper: both changes survive
+    [chromium] › e2e/sticker-suggestions.spec.ts:28:1 › several sent packs list together by title, prepare in the background and preview while preparing
+    [chromium] › e2e/theme.spec.ts:72:1 › account appearance works from the keyboard and dismisses without losing focus
+    [mobile-webkit] › e2e/mobile-sketches.spec.ts:56:1 › after editing a sketch half off screen, Draw’s bar and the board stay in place
+    [mobile-webkit] › e2e/mobile-sketches.spec.ts:125:1 › quick finger strokes are kept, in a sketch and on the board
+    [mobile-chromium] › e2e/icon-checks.ts:5:3 › board icon choices keep their saved IDs and unknown icons fall back safely
+  22 flaky
+    [webkit] › e2e/accounts.spec.ts:80:1 › admin recovery resets password once, disconnects sessions and agent credentials, and session management revokes a device
+    [webkit] › e2e/agent-canvas-runtime.spec.ts:332:1 › saved-answer navigation reveals its originating turn in a long thread without starting work
+    [webkit] › e2e/agent-canvas.spec.ts:116:1 › completed answers branch at a chosen point and save as editable notes with undo and retry identity
+    [webkit] › e2e/multiplayer.spec.ts:169:1 › live drag previews clear on commit and committed changes arrive within one second
+    [webkit] › e2e/sync-poll.spec.ts:17:1 › a live board polls once a minute instead of every 10 seconds
+    [chromium] › e2e/agent-canvas-runtime.spec.ts:332:1 › saved-answer navigation reveals its originating turn in a long thread without starting work
+    [chromium] › e2e/icon-checks.ts:5:3 › board icon choices keep their saved IDs and unknown icons fall back safely
+    [chromium] › e2e/labels.spec.ts:258:1 › Remove takes a label off the board, and Undo in the toast brings it back on its cards
+    [chromium] › e2e/link-previews.spec.ts:10:1 › an image the site refuses to hot-link loads through our proxy
+    [chromium] › e2e/selection-toolbar-ux.spec.ts:42:1 › double-clicking a to-do or a column never drops a new note on it
+    [chromium] › e2e/sketches.spec.ts:497:1 › on the board, click then shift-click draws a straight line, kept after a reload
+    [mobile-webkit] › e2e/mobile-guides.spec.ts:53:1 › on a phone, the account sheet has the appearance icon and the guides link
+    [mobile-webkit] › e2e/mobile-movies.spec.ts:48:1 › opening the details of a tall card brings the details into view, above the bars
+    [mobile-webkit] › e2e/mobile-multiplayer.spec.ts:4:1 › people and pings are reachable by touch without crowding the phone header
+    [mobile-webkit] › e2e/mobile-shell.spec.ts:238:1 › a comment thread closes when you leave its board
+    [mobile-webkit] › e2e/mobile-sketches.spec.ts:84:1 › Draw from the + sheet puts ink on the board; its bar fits the phone
+    [mobile-chromium] › e2e/mobile-agent-canvas.spec.ts:13:1 › phone context picker, exact inspection and desktop-required state work with taps in both themes
+    [mobile-chromium] › e2e/mobile-movies.spec.ts:25:1 › the Watched button takes a fingertip, a little outside its outline
+    [mobile-chromium] › e2e/mobile-movies.spec.ts:48:1 › opening the details of a tall card brings the details into view, above the bars
+    [mobile-chromium] › e2e/mobile-sketches.spec.ts:84:1 › Draw from the + sheet puts ink on the board; its bar fits the phone
+    [tablet-webkit] › e2e/tablet-areas.spec.ts:4:1 › tablet canvas areas support disclosure, header dragging and pinch
+    [tablet-webkit] › e2e/tablet-areas.spec.ts:5:1 › area headers stay attached through horizontal panning and zoom
+  17 skipped
+  1468 passed (24.9m)
+
+This run began before the pagination and keyboard-order test corrections. The final focused run uses the corrected tests and final product code. See README.md for its result.

@@ -1,3 +1,4 @@
+import { profileName } from '@doggynote/core'
 import { SheetGrip } from './SheetGrip.tsx'
 import { For, Show, createResource, createSignal, onCleanup, onMount } from 'solid-js'
 import { api, ApiError, API_BASE } from '../state/api.ts'
@@ -85,18 +86,18 @@ export function AdminDashboard(props: { onClose: () => void }) {
           <Show when={people.loading}><p role="status">Loading people…</p></Show>
           <Show when={people.error}><p class="form-error" role="alert">Could not load people. <button class="bar-btn" onClick={() => void refreshPeople()}>Try again</button></p></Show>
           <ul class="admin-list"><For each={people.error ? [] : people() ?? []}>{(p) => <li>
-            <div><strong>{p.username}</strong><Show when={p.isAdmin}><span class="tag">admin</span></Show><small>Joined {date(p.createdAt)}</small></div>
+            <div><strong>{profileName(p)}</strong><Show when={p.isAdmin}><span class="tag">admin</span></Show><small>@{p.username} · Joined {date(p.createdAt)}</small></div>
             <div class="admin-actions"><button class="bar-btn" onClick={() => setSelected(selected()?.id === p.id ? null : p)}>Sessions</button>
-              <button class="bar-btn" disabled={busy()} onClick={() => void run(async () => { const r = await api<{ url: string; expiresAt: number }>(`/api/users/${p.id}/recovery`, { method: 'POST', json: {} }); setLink({ ...r, url: publicUrl(r.url), label: `Password reset for ${p.username}` }); setCopied(false) })}>Reset password</button>
-              <Show when={p.id !== user()?.id}><button class="bar-btn" disabled={busy()} onClick={() => { if (confirm(`Remove ${p.username}? They will lose account access and be signed out.`)) void run(async () => { await api(`/api/users/${p.id}`, { method: 'DELETE' }); if (selected()?.id === p.id) setSelected(null); await refreshPeople() }) }}>Remove</button></Show>
+              <button class="bar-btn" disabled={busy()} onClick={() => void run(async () => { const r = await api<{ url: string; expiresAt: number }>(`/api/users/${p.id}/recovery`, { method: 'POST', json: {} }); setLink({ ...r, url: publicUrl(r.url), label: `Password reset for ${profileName(p)} (@${p.username})` }); setCopied(false) })}>Reset password</button>
+              <Show when={p.id !== user()?.id}><button class="bar-btn" disabled={busy()} onClick={() => { if (confirm(`Remove ${profileName(p)} (@${p.username})? They will lose account access and be signed out.`)) void run(async () => { await api(`/api/users/${p.id}`, { method: 'DELETE' }); if (selected()?.id === p.id) setSelected(null); await refreshPeople() }) }}>Remove</button></Show>
             </div>
           </li>}</For></ul>
-          <Show when={selected()}>{(p) => <section class="admin-sessions" aria-label={`Sessions for ${p().username}`}>
-            <h3>Sessions for {p().username}</h3><p>Revoking all access also disconnects their agents. Reset links disconnect all devices and agents when used.</p>
+          <Show when={selected()}>{(p) => <section class="admin-sessions" aria-label={`Sessions for ${profileName(p())} (@${p().username})`}>
+            <h3>Sessions for {profileName(p())} (@{p().username})</h3><p>Revoking all access also disconnects their agents. Reset links disconnect all devices and agents when used.</p>
             <Show when={sessions.loading}><p role="status">Loading sessions…</p></Show><Show when={sessions.error}><p role="alert">Could not load sessions. <button class="bar-btn" onClick={() => void refreshSessions()}>Try again</button></p></Show>
             <Show when={!sessions.loading && !sessions.error && sessions()?.length === 0}><p>No active sessions.</p></Show>
             <ul class="admin-list"><For each={sessions.error || sessions.loading ? [] : sessions() ?? []}>{(s) => <li><div><strong>{s.current ? 'This device' : 'Signed-in device'}</strong><small class="admin-device">{s.device || 'Unknown device'}</small><small>Signed in {date(s.createdAt)}</small></div><button class="bar-btn" disabled={busy()} onClick={() => { if (confirm(`Sign out ${s.current ? 'this device' : 'this device session'}?`)) void run(async () => { await api(`/api/users/${p().id}/sessions/${s.id}`, { method: 'DELETE' }); if (s.current) location.assign('/'); else await refreshSessions() }) }}>Revoke session</button></li>}</For></ul>
-            <button class="danger-btn" disabled={busy()} onClick={() => { if (confirm(`Sign ${p().username} out of every device and disconnect all their agents?`)) void run(async () => { await api(`/api/users/${p().id}/sessions`, { method: 'DELETE' }); if (p().id === user()?.id) location.assign('/'); else await refreshSessions() }) }}>Revoke all device and agent access</button>
+            <button class="danger-btn" disabled={busy()} onClick={() => { if (confirm(`Sign ${profileName(p())} (@${p().username}) out of every device and disconnect all their agents?`)) void run(async () => { await api(`/api/users/${p().id}/sessions`, { method: 'DELETE' }); if (p().id === user()?.id) location.assign('/'); else await refreshSessions() }) }}>Revoke all device and agent access</button>
           </section>}</Show>
           <form class="admin-add" onSubmit={(e) => { e.preventDefault(); void run(async () => { await api('/api/users', { method: 'POST', json: { username: username().trim(), password: password(), isAdmin: isAdmin() } }); setUsername(''); setPassword(''); setIsAdmin(false); await refreshPeople() }) }}>
             <h3>Create an account directly</h3><p>For an easier handoff, create an invitation instead so they choose their own password.</p>

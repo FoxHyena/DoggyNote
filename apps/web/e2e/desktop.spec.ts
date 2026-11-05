@@ -1,3 +1,4 @@
+import { editProfile } from './profile-checks.ts'
 import { waitForSync } from './helpers.ts'
 import { expect, test } from '@playwright/test'
 import { addNote, cardByText, freshBoard } from './helpers.ts'
@@ -325,4 +326,26 @@ test('desktop: upload a file cross-origin; the download opens in the browser wit
   const res = await request.get(url, { headers: { cookie: '' } })
   expect(res.status()).toBe(200)
   expect(Buffer.compare(await res.body(), bytes)).toBe(0)
+})
+
+
+test('desktop: profile name saves cross-origin with a bearer token and survives reload', async ({ page, context, request }) => {
+  const base = `http://localhost:${API_PORT}`
+  const login = await request.post(`${base}/api/auth/login`, { data: { username: 'rex', password: 'goodboy123', bearer: true } })
+  const { token } = await login.json()
+  const username = `profile-${crypto.randomUUID().slice(0, 12)}`
+  expect((await request.post(`${base}/api/users`, { headers: { authorization: `Bearer ${token}` }, data: { username, password: 'profiletest123' } })).ok()).toBe(true)
+  await page.goto('/')
+  await page.getByLabel('Username').fill(username)
+  await page.getByLabel('Password').fill('profiletest123')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page.getByTestId('canvas')).toBeVisible()
+  await editProfile(page)
+  await page.getByLabel('Display name', { exact: true }).fill('Desktop Pup 🐾')
+  await page.getByRole('button', { name: 'Save', exact: true }).click()
+  await expect(page.locator('.account-menu-identity strong')).toHaveText('Desktop Pup 🐾')
+  expect((await context.cookies()).filter(c => c.name === 'dn_session')).toHaveLength(0)
+  await page.reload()
+  await page.getByTestId('account').click()
+  await expect(page.locator('.account-menu-identity strong')).toHaveText('Desktop Pup 🐾')
 })

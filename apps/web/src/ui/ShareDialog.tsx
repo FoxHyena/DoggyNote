@@ -1,3 +1,4 @@
+import { profileName } from '@doggynote/core'
 import { SheetGrip } from './SheetGrip.tsx'
 import { For, Show, createResource, createSignal, onCleanup, onMount } from 'solid-js'
 import type { Id } from '@doggynote/core'
@@ -11,7 +12,7 @@ import { agentDialogKeys } from './agentDialog.ts'
 import './sharing.css'
 
 type Share = { token: string; boardId: Id; includeChildren: boolean; permission: 'view' | 'edit'; createdAt: number; expiresAt: number | null; allowSignup: boolean; scopeVersion: number }
-type Member = { id: string; userId: string; username: string; permission: 'view' | 'edit'; viaLink: boolean }
+type Member = { id: string; userId: string; username: string; displayName?: string | null; permission: 'view' | 'edit'; viaLink: boolean }
 type Sharing = { shares: Share[]; members: Member[]; ownerId: string | null; legacy: boolean }
 export const shareUrl = (token: string, permission: 'view' | 'edit' = 'view') => {
   const base = (import.meta.env.VITE_API_BASE as string | undefined) || location.origin
@@ -120,7 +121,7 @@ function SharePanel(props: { boardId: Id; onClose: () => void }) {
       <Show when={sharing()?.members.length}>
         <section class="share-section share-existing" aria-label="People with access">
           <strong>People with access</strong>
-          <ul class="share-members"><For each={sharing()?.members ?? []}>{(m) => <li data-testid="share-member"><span>{m.username}<br /><small>{m.permission === 'edit' ? 'Can edit' : 'View only'}{m.viaLink ? ' · via invitation link' : ''}</small></span><button class="bar-btn" disabled={busy()} aria-label={`Remove access for ${m.username}`} onClick={() => void action(() => api(`/api/boards/${encodeURIComponent(props.boardId)}/members/${encodeURIComponent(m.id)}`, { method: 'DELETE' }))}>Remove</button></li>}</For></ul>
+          <ul class="share-members"><For each={sharing()?.members ?? []}>{(m) => <li data-testid="share-member"><span>{profileName(m)}<br /><small>@{m.username}</small><br /><small>{m.permission === 'edit' ? 'Can edit' : 'View only'}{m.viaLink ? ' · via invitation link' : ''}</small></span><button class="bar-btn" disabled={busy()} aria-label={`Remove access for ${profileName(m)} (@${m.username})`} onClick={() => void action(() => api(`/api/boards/${encodeURIComponent(props.boardId)}/members/${encodeURIComponent(m.id)}`, { method: 'DELETE' }))}>Remove</button></li>}</For></ul>
         </section>
       </Show>
       <Show when={sharing()?.shares.length}>

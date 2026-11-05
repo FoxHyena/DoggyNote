@@ -1,3 +1,4 @@
+import { normalizeDisplayName } from '@doggynote/core'
 import { Hono, type Context, type MiddlewareHandler } from 'hono'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import type { AppEnv, User } from './env.ts'
@@ -7,9 +8,9 @@ export const SESSION_COOKIE = 'dn_session'
 const SESSION_DAYS = 90
 const DAY = 86_400_000
 
-type UserRow = { id: string; username: string; pw_hash: string; is_admin: number; avatar_id?: string | null }
+type UserRow = { id: string; username: string; display_name?: string | null; pw_hash: string; is_admin: number; avatar_id?: string | null }
 
-const toUser = (r: { id: string; username: string; is_admin: number; avatar_id?: string | null }): User => ({ id: r.id, username: r.username, isAdmin: !!r.is_admin, avatarId: r.avatar_id ?? null })
+const toUser = (r: { id: string; username: string; display_name?: string | null; is_admin: number; avatar_id?: string | null }): User => ({ id: r.id, username: r.username, displayName: r.display_name ?? null, isAdmin: !!r.is_admin, avatarId: r.avatar_id ?? null })
 
 function tokenFrom(c: Context<AppEnv>): string | null {
   const h = c.req.header('authorization')
@@ -23,11 +24,11 @@ export async function sessionUser(c: Context<AppEnv>): Promise<{ user: User; has
   if (!token) return null
   const hash = await sha256Hex(token)
   const row = await c.env.DB.prepare(
-    `SELECT u.id, u.username, u.is_admin, u.avatar_id FROM sessions s JOIN users u ON u.id = s.user_id
+    `SELECT u.id, u.username, u.display_name, u.is_admin, u.avatar_id FROM sessions s JOIN users u ON u.id = s.user_id
      WHERE s.token_hash = ?1 AND s.expires_at > ?2`,
   )
     .bind(hash, Date.now())
-    .first<{ id: string; username: string; is_admin: number; avatar_id?: string | null }>()
+    .first<{ id: string; username: string; display_name?: string | null; is_admin: number; avatar_id?: string | null }>()
   return row ? { user: toUser(row), hash } : null
 }
 
@@ -88,7 +89,7 @@ auth.post('/login', async (c) => {
   const now = Date.now()
   const keys = loginKeys(c, username.slice(0, 64))
   if (await loginLocked(db, keys, now)) return c.json({ error: 'Too many sign-in attempts. Try again in 15 minutes.' }, 429)
-  const row = await db.prepare('SELECT id, username, pw_hash, is_admin, avatar_id FROM users WHERE username = ?1').bind(username).first<UserRow>()
+  const row = await db.prepare('SELECT id, username, display_name, pw_hash, is_admin, avatar_id FROM users WHERE username = ?1').bind(username).first<UserRow>()
   // Verify against a dummy hash when the user doesn't exist so timing doesn't reveal usernames.
   const ok = await verifyPassword(password, row?.pw_hash ?? 'pbkdf2$100000$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
   if (!row || !ok) {
@@ -111,7 +112,19 @@ auth.post('/logout', async (c) => {
 
 export const users = new Hono<AppEnv>()
 
-users.get('/me', (c) => c.json({ user: c.get('user') }))
+users.get('/me', (c) => { c.header('cache-control', 'no-store'); return c.json({ user: c.get('user') }) })
+
+users.patch('/me/profile', async (c) => {
+  const body: unknown = await c.req.json().catch(() => null)
+  if (!body || typeof body !== 'object' || Array.isArray(body) || !('displayName' in body)) return c.json({ error: 'Display name required' }, 400)
+  const displayName = normalizeDisplayName(body.displayName)
+  if (displayName === undefined) return c.json({ error: 'Display name must be a single line of up to 64 characters.' }, 400)
+  const row = await c.env.DB.prepare('UPDATE users SET display_name=?1 WHERE id=?2 RETURNING id,username,display_name,is_admin,avatar_id')
+    .bind(displayName, c.get('user').id).first<Parameters<typeof toUser>[0]>()
+  if (!row) return c.json({ error: 'Account unavailable' }, 404)
+  c.header('cache-control', 'no-store')
+  return c.json({ user: toUser(row) })
+})
 
 users.post('/me/password', async (c) => {
   const { current, next } = await c.req.json<{ current?: unknown; next?: unknown }>().catch(() => ({}) as Record<string, unknown>)
@@ -129,7 +142,7 @@ users.post('/me/password', async (c) => {
 })
 
 users.get('/users', requireAdmin, async (c) => {
-  const { results } = await c.env.DB.prepare('SELECT id, username, is_admin, avatar_id, created_at FROM users ORDER BY created_at').all<{
+  const { results } = await c.env.DB.prepare('SELECT id, username, display_name, is_admin, avatar_id, created_at FROM users ORDER BY created_at').all<{
     id: string
     username: string
     is_admin: number
@@ -194,7 +207,10 @@ for (const kind of ['invite', 'recovery'] as const) {
 }
 
 auth.post('/signup', async (c) => {
-  const body = await c.req.json<{ token?: unknown; boardToken?: unknown; username?: unknown; password?: unknown; bearer?: unknown }>().catch(() => ({} as Record<string, unknown>))
+  const body = await c.req.json<{ token?: unknown; boardToken?: unknown; username?: unknown; displayName?: unknown; password?: unknown; bearer?: unknown }>().catch(() => ({} as Record<string, unknown>))
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return c.json({ error: 'Account details required' }, 400)
+  const displayName = normalizeDisplayName(body.displayName === undefined ? null : body.displayName)
+  if (displayName === undefined) return c.json({ error: 'Display name must be a single line of up to 64 characters.' }, 400)
   if (!validUsername(body.username)) return c.json({ error: 'Username: 2–32 letters, numbers, . _ -' }, 400)
   if (!validPassword(body.password)) return c.json({ error: 'Password must be 8–200 characters' }, 400)
   const id = crypto.randomUUID()
@@ -208,10 +224,10 @@ auth.post('/signup', async (c) => {
     if (!(await activeLink(c, token, 'invite'))) return c.json({ error: linkError }, 410)
     const tokenHash = await sha256Hex(token)
     statements = [
-      c.env.DB.prepare(`INSERT INTO users (id, username, pw_hash, is_admin, created_at)
-        SELECT ?1, ?2, ?3, 0, ?4 FROM account_links
+      c.env.DB.prepare(`INSERT INTO users (id, username, pw_hash, is_admin, created_at, display_name)
+        SELECT ?1, ?2, ?3, 0, ?4, ?6 FROM account_links
         WHERE token_hash = ?5 AND kind = 'invite' AND expires_at > ?4 AND revoked_at IS NULL AND used_at IS NULL`)
-        .bind(id, body.username, passwordHash, now, tokenHash),
+        .bind(id, body.username, passwordHash, now, tokenHash, displayName),
       c.env.DB.prepare(`UPDATE account_links SET used_at = ?1, redeemed_by = ?2 WHERE token_hash = ?3 AND EXISTS (SELECT 1 FROM users WHERE id = ?2)`)
         .bind(now, id, tokenHash),
     ]
@@ -221,7 +237,7 @@ auth.post('/signup', async (c) => {
     if (!board) return c.json({ error: 'This board link does not allow signup or is no longer available.' }, 410)
     boardId = board.boardId
     try {
-      statements = [c.env.DB.prepare(`INSERT INTO users (id, username, pw_hash, is_admin, created_at) VALUES (?1, ?2, ?3, 0, ?4)`).bind(id, body.username, passwordHash, now),
+      statements = [c.env.DB.prepare(`INSERT INTO users (id, username, pw_hash, is_admin, created_at, display_name) VALUES (?1, ?2, ?3, 0, ?4, ?5)`).bind(id, body.username, passwordHash, now, displayName),
         ...await boardSignupStatements(c.env.DB, boardToken, id)]
     } catch (e) {
       if (String(e).includes('Board invitation is unavailable')) return c.json({ error: 'This board invitation is no longer available.' }, 410)
@@ -237,7 +253,7 @@ auth.post('/signup', async (c) => {
     throw e
   }
   // Navigation context is returned by the server; it never grants access itself.
-  return establishSession(c, { id, username: body.username, isAdmin: false }, body.bearer === true, { ...(boardId ? { boardId } : {}) })
+  return establishSession(c, { id, username: body.username, displayName, isAdmin: false }, body.bearer === true, { ...(boardId ? { boardId } : {}) })
 })
 
 auth.post('/reset', async (c) => {
