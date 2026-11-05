@@ -55,7 +55,7 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
           onPointerDown={(e) => e.stopPropagation()} onContextMenu={(e) => e.preventDefault()}>
           <SheetGrip onDismiss={close} />
           <Show when={card()}>
-            <button class="menu-item" role="menuitem" disabled={!canEdit()} onClick={() => run(() => beginEdit(card()!.id))}><Icon name="edit" size={18} />{card()?.type === 'board' ? 'Rename' : 'Edit'}</button>
+            <button class="menu-item" role="menuitem" disabled={!canEdit()} onClick={() => run(() => beginEdit(card()!.id))}><Icon name="edit" size={18} />{card()?.type === 'board' ? 'Rename' : card()?.type === 'image' ? 'Caption' : 'Edit'}</button>
             <div class="menu-sep" role="separator" />
             <button class="menu-item" role="menuitem" disabled={!writable()} aria-keyshortcuts="Meta+X" onClick={() => run(() => copySelection(true))}><Icon name="cut" size={18} />Cut<kbd aria-hidden="true">⌘X</kbd></button>
             <button class="menu-item" role="menuitem" aria-keyshortcuts="Meta+C" onClick={() => run(() => copySelection(false))}><Icon name="copy" size={18} />Copy<kbd aria-hidden="true">⌘C</kbd></button>

@@ -159,14 +159,18 @@ export function trashSelection(now = Date.now(), buryAreas = false) {
 /** Bury the selection and say so, with Undo. Every way of burying (bar, Delete key, sheet) goes through here. */
 export function burySelection() {
   const sink = prepareBuryMotion(selection())
-  let n = 0
+  let cards = 0, stickers = 0
   for (const id of selection()) {
     const kind = doc.get(id)?.kind
-    if (kind === 'card' || kind === 'sticker') n++
+    if (kind === 'card') cards++
+    else if (kind === 'sticker') stickers++
   }
   trashSelection()
   sink()
-  if (n) showToast(`${COPY.buried} ${n} ${n === 1 ? 'card' : 'cards'}`, 5000, { label: 'Undo', run: () => doc.undo() })
+  const n = cards + stickers
+  // Say what went: stickers alone are stickers, a mix is items.
+  const noun = !stickers ? 'card' : !cards ? 'sticker' : 'item'
+  if (n) showToast(`${COPY.buried} ${n} ${noun}${n === 1 ? '' : 's'}`, 5000, { label: 'Undo', run: () => doc.undo() })
 }
 
 export function restoreCard(id: Id) {

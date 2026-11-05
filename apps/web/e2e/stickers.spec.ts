@@ -41,6 +41,7 @@ test('link preview, one-shot placement, keyboard transforms, undo, reload, colle
   expect(copy.angle).toBe(32); expect(copy.w).toBe(210)
   await page.getByRole('button', { name: 'Bury', exact: true }).click()
   await expect(page.getByTestId('placed-sticker')).toHaveCount(1)
+  await expect(page.getByTestId('toast')).toContainText('Buried 1 sticker')
   await page.getByTestId('tool-trash').click()
   await page.getByTestId('restore').click()
   await page.keyboard.press('Escape')
@@ -428,6 +429,9 @@ test('several selected stickers share one ring that turns and scales them togeth
   await waitForSync(page)
   const saved = await placedStickers(page, id)
   expect(saved.find((s: { id: string }) => s.id === ids[2]).x).toBeCloseTo(before[2].x + 60, 0)
+  // Burying the pair names them as items, not cards.
+  await page.keyboard.press('Delete')
+  await expect(page.getByTestId('toast')).toContainText('Buried 2 items')
 })
 
 test('transparent padding selects the image underneath; explicit underneath and clipboard preserve overlay behavior', async ({ page, request }) => {
