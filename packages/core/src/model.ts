@@ -38,7 +38,7 @@ export type CardContent = {
   todo: { title: string; items: TodoItem[]; sortDone?: boolean; hideDone?: boolean }
   board: { boardId: Id }
   /** `sizes` lists stored renditions; images from before the 640 px tier have none (thumb/medium/full). */
-  image: { assetId: Id; width: number; height: number; caption?: string; sizes?: ('thumb' | 'small' | 'medium' | 'full')[] }
+  image: { assetId: Id; width: number; height: number; caption?: string; sizes?: ('thumb' | 'small' | 'medium' | 'full')[]; source?: import('./clipper.ts').ImageSource }
   link: { url: string; title?: string; description?: string; image?: string; siteName?: string; status?: 'pending' | 'ok' | 'error' }
   column: { title: string }
   area: { title: string }

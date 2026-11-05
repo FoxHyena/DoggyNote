@@ -1,0 +1,62 @@
+import { expect, test } from '@playwright/test'
+import { captureBoardImage as clip } from './clipper-helpers.ts'
+import { freshBoard, setAccountAppearance, waitForSync } from './helpers.ts'
+
+test('clips appear in the selected board Inbox, can be discarded/undone and placed once', async ({ page }) => {
+  await freshBoard(page, 'Clip collection')
+  const boardId = new URL(page.url()).hash.split('/b/')[1]
+  await clip(page.request, boardId)
+  await page.goto(`/?boardInbox=${boardId}`)
+  const inbox = page.getByTestId('board-inbox'), item = page.getByTestId('board-inbox-item')
+  await expect(inbox).toBeVisible()
+  await expect(item).toHaveCount(1)
+  await expect(item.locator('img')).toBeVisible()
+  await expect.poll(() => item.locator('img').evaluate((el: HTMLImageElement) => el.naturalWidth)).toBeGreaterThan(0)
+  await expect(page.getByTestId('card-image')).toHaveCount(0)
+  await item.getByRole('button', { name: 'Discard' }).click()
+  await expect(item).toHaveCount(0)
+  await page.getByTestId('toast').getByRole('button', { name: 'Undo' }).click()
+  await expect(item).toHaveCount(1)
+  await setAccountAppearance(page, 'Light')
+  await expect(item).toBeVisible()
+  await page.screenshot({ path: `test-results/board-inbox-light-${test.info().project.name}.png`, animations: 'disabled' })
+  await setAccountAppearance(page, 'Dark')
+  await page.screenshot({ path: `test-results/board-inbox-dark-${test.info().project.name}.png`, animations: 'disabled' })
+  await item.getByRole('button', { name: 'Place', exact: true }).click()
+  await expect(item).toHaveCount(0)
+  await page.getByRole('button', { name: 'Close', exact: true }).click()
+  await expect(page.getByTestId('card-image')).toHaveCount(1)
+  await expect(page.getByTestId('image-source')).toHaveAttribute('href', 'https://example.com/art')
+  await page.reload()
+  await expect(page.getByTestId('card-image')).toHaveCount(1)
+  await waitForSync(page)
+})
+
+test('dragging a clip places it on the canvas and keeps the private Inbox available', async ({ page }) => {
+  await freshBoard(page)
+  const boardId = new URL(page.url()).hash.split('/b/')[1]
+  await clip(page.request, boardId)
+  await page.goto(`/?boardInbox=${boardId}`)
+  const item = page.getByTestId('board-inbox-item')
+  await expect(item).toBeVisible()
+  const image = await item.locator('img').boundingBox(), canvas = await page.getByTestId('canvas').boundingBox()
+  await page.mouse.move(image!.x + 40, image!.y + 40); await page.mouse.down()
+  await page.mouse.move(canvas!.x + 200, canvas!.y + 160, { steps: 12 })
+  await expect(item).toHaveClass(/inbox-dragging/)
+  await page.mouse.up()
+  await expect(item).toHaveCount(0)
+  await expect(page.getByTestId('card-image')).toHaveCount(1)
+  await page.getByRole('tab', { name: /^Private/ }).click()
+  await expect(page.getByTestId('toybox-input')).toBeVisible()
+})
+
+test('Chrome connections can be revoked from Account', async ({ page }) => {
+  await freshBoard(page)
+  const { token, credentialId } = await clip(page.request, new URL(page.url()).hash.split('/b/')[1])
+  await page.getByTestId('account').click()
+  await page.getByTestId('manage-clipper').click()
+  const dialog = page.getByTestId('clipper-connections')
+  await expect(dialog).toBeVisible()
+  await dialog.locator(`[data-connection-id="${credentialId}"]`).getByRole('button', { name: 'Revoke', exact: true }).click()
+  await expect.poll(async () => (await page.request.get('/api/clipper/boards', { headers: { authorization: `Bearer ${token}` } })).status()).toBe(401)
+})

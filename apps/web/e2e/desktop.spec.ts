@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test'
 import { addNote, cardByText, freshBoard } from './helpers.ts'
 import { API_PORT, DESKTOP_PORT } from './ports.ts'
 import { openStickerTray } from './sticker-helpers.ts'
+import { captureBoardImage } from './clipper-helpers.ts'
 
 // The desktop app's code path: no cookies, a bearer token kept by the native
 // side (Keychain), API calls cross-origin to the server. We stand in for the
@@ -302,4 +303,25 @@ test('desktop: upload a file cross-origin; the download opens in the browser wit
   const res = await request.get(url, { headers: { cookie: '' } })
   expect(res.status()).toBe(200)
   expect(Buffer.compare(await res.body(), bytes)).toBe(0)
+})
+
+test('desktop: clipped images load in the board Inbox with signed asset URLs', async ({ page }) => {
+  await page.goto('/')
+  await page.getByLabel('Username').fill('rex')
+  await page.getByLabel('Password').fill('goodboy123')
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await freshBoard(page, 'Desktop clip collection')
+  const boardId = new URL(page.url()).hash.split('/b/')[1]
+  const token = await page.evaluate(() => sessionStorage.getItem('fake-keychain'))
+  await captureBoardImage(page.request, boardId, { sessionToken: token!, apiBase: `http://localhost:${API_PORT}` })
+  await page.goto(`/?boardInbox=${boardId}`)
+  const item = page.getByTestId('board-inbox-item')
+  await expect(item).toBeVisible()
+  await expect(item.locator('img')).toHaveAttribute('src', /\?t=/)
+  await expect.poll(() => item.locator('img').evaluate((el: HTMLImageElement) => el.naturalWidth)).toBeGreaterThan(0)
+  await item.getByRole('button', { name: 'Place', exact: true }).click()
+  await expect(item).toHaveCount(0)
+  await page.getByRole('button', { name: 'Close', exact: true }).click()
+  await expect(page.getByTestId('card-image')).toHaveCount(1)
+  await expect.poll(() => page.getByTestId('card-image').evaluate((el: HTMLImageElement) => el.naturalWidth)).toBeGreaterThan(0)
 })

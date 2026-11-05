@@ -6,6 +6,7 @@ import { logout, user } from '../state/session.ts'
 import { Icon } from './icons.tsx'
 import { AdminDashboard } from './AdminDashboard.tsx'
 import { AgentConnections } from './AgentConnections.tsx'
+import { ClipperConnections } from './ClipperConnections.tsx'
 import { AboutDialog } from './AboutDialog.tsx'
 import { ThemeToggle, type ThemeToggleProps } from '../ThemeToggle.tsx'
 import { COPY } from '@doggynote/theme'
@@ -20,6 +21,7 @@ export function AccountMenu(props: ThemeToggleProps) {
   const [open, setOpen] = createSignal(false)
   const [people, setPeople] = createSignal(false)
   const [agents, setAgents] = createSignal(false)
+  const [clipper, setClipper] = createSignal(false)
   const [about, setAbout] = createSignal(false)
   const [installHelp, setInstallHelp] = createSignal(false)
   const offerInstall = () => !isTauri && !installed() && (canPrompt() || (touch() && isIOS))
@@ -120,6 +122,7 @@ export function AccountMenu(props: ThemeToggleProps) {
             </Show>
           </Show>
           <button class="menu-item" data-testid="manage-agents" onClick={() => { close(); setAgents(true) }}>Agent connections</button>
+          <button class="menu-item" data-testid="manage-clipper" onClick={() => { close(); setClipper(true) }}>Chrome connections</button>
           <a class="menu-item" data-testid="open-guides" href={GUIDES_URL} target="_blank" rel="noopener" onClick={() => close()}>{COPY.guides.open}</a>
           <button class="menu-item" data-testid="about" onClick={() => { close(); setAbout(true) }}>About &amp; credits</button>
           <button class="menu-item" data-testid="sign-out" onClick={() => { close(); void logout().catch((error) => showToast(error instanceof Error ? error.message : 'Could not stop local work. Try signing out again.')) }}>
@@ -129,6 +132,7 @@ export function AccountMenu(props: ThemeToggleProps) {
       </Show>
       <Show when={about()}><AboutDialog onClose={() => { setAbout(false); trigger.focus() }} /></Show>
       <Show when={agents()}><AgentConnections onClose={() => { setAgents(false); trigger.focus() }} /></Show>
+      <Show when={clipper()}><ClipperConnections onClose={() => { setClipper(false); trigger.focus() }} /></Show>
       <Show when={people()}>
         <AdminDashboard onClose={() => { setPeople(false); trigger.focus() }} />
       </Show>

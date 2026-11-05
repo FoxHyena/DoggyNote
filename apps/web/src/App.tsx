@@ -53,6 +53,8 @@ import { phone } from './state/device.ts'
 import { installClipboard } from './state/clipboard.ts'
 import { isPreviewBoard } from './state/preview.ts'
 import { ProposalBanner } from './ui/ProposalBanner.tsx'
+import { startBoardInbox, setInboxTab } from './state/boardInbox.ts'
+import { ClipperConnect } from './ui/ClipperConnect.tsx'
 
 /** The board can be edited now: you may edit it, and no agent proposal is being previewed. */
 const editable = () => canEditBoard(boardId()) && !doc.previewing()
@@ -60,6 +62,7 @@ const editable = () => canEditBoard(boardId()) && !doc.previewing()
 export default function Root() {
   installLinkHandler()
   captureLaunch()
+  if (location.pathname === '/clipper/connect') return <ClipperConnect />
   const invitation = location.pathname.match(/^\/(signup|reset)\/([^/]+)/)
   if (invitation) return <Signup token={decodeURIComponent(invitation[2])} mode={invitation[1] === 'reset' ? 'reset' : 'signup'} />
   const join = location.pathname.match(/^\/join\/([^/]+)/)
@@ -118,6 +121,7 @@ function EditorApp() {
   })
 
   onMount(() => {
+    const inboxOff = startBoardInbox()
     const off = installShortcuts({ get readOnly() { return !editable() } })
     const clipOff = installClipboard({ get readOnly() { return !editable() } })
     let nativeOff: (() => void) | undefined
@@ -137,6 +141,7 @@ function EditorApp() {
       nativeOff?.()
       off()
       clipOff()
+      inboxOff()
       window.removeEventListener('pagehide', save)
       document.removeEventListener('visibilitychange', onVis)
     })
@@ -211,6 +216,11 @@ function openLaunchIntent() {
     showToast(COPY.fetchedToInbox)
   }
   if (launch.inbox) setToyboxOpen(true)
+  if (launch.boardInbox && canReadBoard(launch.boardInbox) && doc.getBoard(launch.boardInbox)) {
+    openBoard(launch.boardInbox)
+    setInboxTab('board')
+    setToyboxOpen(true)
+  }
 }
 
 /**

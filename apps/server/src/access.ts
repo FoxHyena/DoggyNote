@@ -15,6 +15,16 @@ export type Access = {
 }
 export const personalHome = (userId: string) => `home:${userId}`
 export const bumpAccess = (db: D1Database) => db.prepare("UPDATE counters SET value = value + 1 WHERE name = 'access_revision'")
+/** Whether the complete board ancestry is live. Cycles have no root and are refused. */
+export async function isLiveBoard(db: D1Database, id: string): Promise<boolean> {
+  const row = await db.prepare(`WITH RECURSIVE ancestors(id,data) AS (
+    SELECT id,data FROM objects WHERE id=?1 AND kind='board'
+    UNION SELECT p.id,p.data FROM objects p JOIN ancestors a ON p.id=json_extract(a.data,'$.parentId') WHERE p.kind='board'
+  ) SELECT 1 AS live WHERE EXISTS(SELECT 1 FROM ancestors WHERE json_extract(data,'$.parentId') IS NULL)
+    AND NOT EXISTS(SELECT 1 FROM ancestors WHERE COALESCE(json_extract(data,'$.deletedAt'),0)!=0 OR COALESCE(json_extract(data,'$.purged'),0)!=0)`)
+    .bind(id).first()
+  return !!row
+}
 export function accessGuard(db: D1Database, revision: string, absentIds: string[] = []): D1PreparedStatement {
   if (absentIds.length > 90) throw new Error('At most 90 new IDs per access guard')
   const absent = absentIds.length ? `NOT EXISTS(SELECT 1 FROM objects WHERE id IN (${absentIds.map((_, i) => `?${i + 2}`).join(',')}))` : '1'

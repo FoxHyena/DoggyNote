@@ -73,6 +73,39 @@ jobs:
             apps/web/test-results
           retention-days: 7
 
+  clipper:
+    name: Chrome Clipper
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Use HTTPS Ubuntu mirrors
+        run: sudo sed -i '\|http://azure\.archive\.ubuntu\.com/ubuntu/|d' /etc/apt/apt-mirrors.txt
+      - run: pnpm --filter extension exec playwright install --with-deps chromium
+      - name: Build and test the unpacked extension
+        run: |
+          DOGGYNOTE_URL=http://localhost:5215 pnpm --filter extension build
+          E2E_PORT_OFFSET=40 xvfb-run --auto-servernum pnpm --filter extension test:e2e
+      - name: Package the production extension
+        run: pnpm --filter extension package
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: doggynote-clipper
+          path: apps/extension/release/*.zip
+          retention-days: 30
+      - if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: clipper-test-results
+          path: apps/extension/test-results
+          retention-days: 7
+
   perf:
     name: Perf budget (informational)
     runs-on: ubuntu-latest
