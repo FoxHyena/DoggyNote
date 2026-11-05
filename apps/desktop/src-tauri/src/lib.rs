@@ -122,7 +122,17 @@ async fn save_recovery(app: tauri::AppHandle, json: String) -> Result<Option<Str
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  tauri::Builder::default()
+  let builder = tauri::Builder::default();
+  // Must be the first plugin: a second copy hands over and quits before anything else starts.
+  #[cfg(desktop)]
+  let builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+    if let Some(window) = app.get_webview_window("main") {
+      let _ = window.unminimize();
+      let _ = window.show();
+      let _ = window.set_focus();
+    }
+  }));
+  builder
     .manage(SaveBeforeExit::default())
     .manage(chat::ChatRuntime::default())
     .plugin(tauri_plugin_opener::init())
