@@ -536,3 +536,34 @@ test('a shared card offers its actions and a location ping for the other partici
   await expect(menu).toHaveCount(0)
   await expect(page.getByTestId('remote-ping')).toBeVisible()
 })
+
+test('a reconnect never shows this device its own earlier session, even when the old socket never closed', async ({ page }) => {
+  // iOS suspends a page without delivering the socket's close, so the server
+  // keeps the old session (still editing) until it times out.
+  await page.routeWebSocket(/\/api\/boards\/[^/]+\/live$/, (ws) => {
+    ws.connectToServer()
+    ws.onClose(() => {}) // Swallow the page's close: the server never hears it.
+  })
+  await freshBoard(page)
+  const card = await addNote(page, 'Still editing here')
+  await live(page)
+  await card.dblclick()
+  await expect(page.getByTestId('note-editor')).toBeVisible()
+  await expect.poll(() => page.evaluate(() => document.querySelectorAll('[data-testid="remote-selection"]').length)).toBe(0)
+  // Away and back: the page drops its socket and joins again as a new session.
+  const setHidden = (hidden: boolean) => page.evaluate((hidden) => {
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => hidden })
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (hidden ? 'hidden' : 'visible') })
+    document.dispatchEvent(new Event('visibilitychange'))
+  }, hidden)
+  await setHidden(true)
+  await setHidden(false)
+  await live(page)
+  await page.getByTestId('collaborators').click()
+  await expect(page.getByTestId('participant')).toHaveCount(1)
+  await page.keyboard.press('Escape')
+  // Give the room a few presence rounds to publish the stale session.
+  await page.waitForTimeout(1500)
+  await expect(page.getByTestId('remote-selection')).toHaveCount(0)
+  await expect(page.getByTestId('remote-cursor')).toHaveCount(0)
+})
