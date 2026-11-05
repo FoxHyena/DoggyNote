@@ -50,10 +50,17 @@ test('display names reach collaborators, sharing, old comments and public viewer
     ] } })
     expect((await page.request.post(`/api/boards/${board}/members`, { data: { username: friend, permission: 'edit' } })).ok()).toBe(true)
     await page.goto(`/#/b/${board}`)
+    // Navigation finishes before the app joins its live board. Join before the
+    // second window takes focus, so this assertion measures identities.
+    await expect(page.getByTestId('canvas')).toBeVisible()
+    await page.getByTestId('collaborators').click()
+    await expect(page.getByTestId('live-status')).toHaveText('Live', { timeout: 15000 })
+    await page.keyboard.press('Escape')
     const other = await ctx.newPage()
     await other.goto(`/#/b/${board}`)
     await expect(other.getByTestId('canvas')).toBeVisible()
     await other.getByTestId('collaborators').click()
+    await expect(other.getByTestId('live-status')).toHaveText('Live', { timeout: 15000 })
     await expect(other.getByTestId('participant').filter({ hasText: me.username })).toBeVisible()
     for (const identity of await other.locator('.person-info').all()) expect(await identity.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
     await cardByText(other, 'Profile test note').getByTestId('comment-badge').click()
