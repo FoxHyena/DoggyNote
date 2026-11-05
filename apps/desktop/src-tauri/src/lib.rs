@@ -149,6 +149,11 @@ pub fn run() {
           request_exit_save(window.app_handle());
         }
       }
+      // Closing the main window quits. Otherwise the hidden capture window keeps
+      // a windowless DoggyNote running (before sign-in, nothing holds the close).
+      if let tauri::WindowEvent::Destroyed = event {
+        window.app_handle().exit(0);
+      }
     })
     .setup(|app| {
       // ⌃⌥Space from anywhere: toggle the quick-capture window (Toy box).
