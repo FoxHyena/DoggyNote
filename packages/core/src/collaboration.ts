@@ -40,7 +40,7 @@ export function replaceText(text: Y.Text, next: string, origin: unknown = null) 
 export type LivePoint = { x: number; y: number }
 export type LivePreview = { id: string; x: number; y: number; w?: number; h?: number }
 export type LivePresence = {
-  sessionId: string; userId: string; username: string; canEdit: boolean
+  sessionId: string; userId: string; username: string; displayName?: string | null; avatarId?: string | null; canEdit: boolean
   pointer: LivePoint | null; selection: string[]; editing: string | null
   camera: { x: number; y: number; zoom: number }; width: number; height: number
   previews: LivePreview[]; caret: { anchor: string; head: string } | null
@@ -48,7 +48,7 @@ export type LivePresence = {
 export type RoomEvent =
   | { type: 'members'; members: LivePresence[] }
   | { type: 'changed' }
-  | { type: 'ping'; id: string; userId: string; username: string; point: LivePoint }
+  | { type: 'ping'; id: string; userId: string; username: string; displayName?: string | null; point: LivePoint }
 
 const finite = (n: unknown) => typeof n === 'number' && Number.isFinite(n) && Math.abs(n) <= 1e8
 export function livePoint(p: unknown): p is LivePoint {

@@ -1,5 +1,11 @@
 import { expect, test } from '@playwright/test'
 import { MOD, freshBoard, dragBy, waitForSync, postSync, pullAllObjects } from './helpers.ts'
+import { areaHeaderFlow } from './area-header-flow.ts'
+
+test('area headers stay attached through horizontal panning and zoom', async ({ page }, info) => {
+  test.setTimeout(60_000)
+  await areaHeaderFlow(page, info)
+})
 
 test('create an area, add mixed content, move, collapse, resize and remove without losing contents', async ({ page }) => {
   const errors: string[]=[]; page.on('pageerror', e=>errors.push(e.message))
@@ -263,6 +269,11 @@ test('offline removal survives restart and safely detaches a concurrent join ove
   await page.evaluate(id=>localStorage.setItem(`doggynote.cam.${id}`,JSON.stringify({x:0,y:0,zoom:1})),board)
   await page.reload();const areaEl=page.locator(`[data-card-id="${areaId}"]`)
   await expect(areaEl).toBeVisible();await waitForSync(page)
+  // The large family's controls stay at the area's right edge; pan to reach them.
+  const canvas=(await page.getByTestId('canvas').boundingBox())!,more=(await areaEl.getByTestId('area-more').boundingBox())!
+  await page.mouse.move(canvas.x+canvas.width/2,canvas.y+20)
+  await page.mouse.wheel(more.x-canvas.x-canvas.width+80,0)
+  await expect(areaEl.getByTestId('area-more')).toBeInViewport()
   // Only sync pushes fail; a reload still loads real assets and the persisted outbox.
   await page.route('**/api/sync',route=>route.request().method()==='POST'?route.abort('internetdisconnected'):route.continue())
   await areaEl.getByTestId('area-more').click();await page.getByTestId('area-more-menu').getByRole('menuitem',{name:'Remove area, keep contents'}).click()

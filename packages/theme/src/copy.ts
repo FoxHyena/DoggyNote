@@ -97,6 +97,156 @@ export const COPY = {
     /** The server unsynced your copy: you can't edit every copy. */
     detached: "This note stopped syncing: you can't edit every copy. Your edit is kept here.",
   },
+  /** The Boards menu: your Doghouse, recent boards and boards shared with you. */
+  boards: {
+    trigger: 'Boards',
+    triggerHint: 'My boards and shared boards',
+    heading: 'Your spaces',
+    close: 'Close boards',
+    rename: 'Rename current board',
+    recent: 'Recent',
+    favourites: 'Favourites',
+    /** Beside a starred board in Fetch's suggestions. */
+    favouriteTag: 'Favourite',
+    find: 'Find a board',
+    findPlaceholder: 'Sniff out a board…',
+    findResults: 'Matching boards',
+    /** "in Van Camper Conversion": the board a search result lives in. */
+    inParent: 'in',
+    noMatch: 'No board by that name.',
+    favourite: 'Add to Favourites',
+    unfavourite: 'Remove from Favourites',
+    legacy: 'Shared space',
+    legacyHint: 'Boards everyone from the original group can open and edit.',
+    shared: 'Shared with me',
+    sharedEmpty: 'Boards shared with your account will appear here.',
+    /** A shared board's fallback title before its title has synced. */
+    sharedUntitled: 'Shared board',
+    viewOnly: 'View only',
+    /** "Shared by luna": the avatar on a shared board's row. */
+    sharedBy: 'Shared by',
+    /** "Show all (12)": expands the shared list past its first few boards. */
+    showAll: 'Show all',
+  },
+  /** Table cards: starter names, hints and the screen reader's words. */
+  table: {
+    label: 'Table',
+    starterColumns: ['Name', 'Treats', 'Notes'],
+    titlePlaceholder: 'Name this table',
+    columnFallback: 'Column',
+    /** Grid: aria-label for the editable grid. */
+    gridLabel: 'Table',
+    cellLabel: (row: number, column: string) => `Row ${row}, ${column}`,
+    headerLabel: (column: number) => `Column ${column}`,
+    addRow: 'Add row',
+    addColumn: 'Add column',
+    insertRowAbove: 'Insert row above',
+    insertRowBelow: 'Insert row below',
+    insertColumnLeft: 'Insert column left',
+    insertColumnRight: 'Insert column right',
+    deleteRows: (n: number) => (n === 1 ? 'Delete row' : `Delete ${n} rows`),
+    deleteColumns: (n: number) => (n === 1 ? 'Delete column' : `Delete ${n} columns`),
+    clear: 'Clear cells',
+    cells: 'Table cells',
+    previousCell: 'Previous cell',
+    nextCell: 'Next cell',
+    moreActions: 'More table actions',
+    /** Shown at the row cap. */
+    rowsFull: "This table's kennel is full: 100 rows is the most it can hold.",
+    columnsFull: "This table's kennel is full: 26 columns is the most it can hold.",
+    /** Live region text. */
+    announceCell: (row: number, rows: number, column: string, value: string) => `Row ${row} of ${rows}, ${column}${value ? `: ${value}` : ', empty'}`,
+    announceHeader: (column: string) => `Column header, ${column}`,
+    announceRowAdded: 'Row added',
+    announceColumnAdded: 'Column added',
+    announceRowsDeleted: (n: number) => (n === 1 ? 'Row deleted' : `${n} rows deleted`),
+    announceColumnsDeleted: (n: number) => (n === 1 ? 'Column deleted' : `${n} columns deleted`),
+    announceCleared: 'Cells cleared',
+    /** Row and column grips and their menus. */
+    rowGrip: (row: number) => `Row ${row}: select, drag to move`,
+    columnGrip: (name: string) => `${name || 'Column'}: select, drag to move`,
+    columnMenu: (name: string) => `${name || 'Column'}: column actions`,
+    columnActions: 'Column actions',
+    rowActions: 'Row actions',
+    resizeColumn: 'Resize column',
+    /** Keyboard resize: the grip's tooltip says it, the live region reports the result. */
+    columnGripTip: (name: string) => `${name || 'Column'}: select, drag to move · Alt+Shift+< > to resize`,
+    announceResized: (name: string, percent: number) => `${name || 'Column'} is ${percent}% of the table`,
+    announceResizeLimit: (wider: boolean) => (wider ? 'This column is already as wide as it can go' : 'This column is already as narrow as it goes'),
+    renameColumn: 'Rename column',
+    moveRowUp: 'Move up',
+    moveRowDown: 'Move down',
+    moveColumnLeft: 'Move left',
+    moveColumnRight: 'Move right',
+    duplicateRows: (n: number) => (n === 1 ? 'Duplicate row' : `Duplicate ${n} rows`),
+    announceRowsSelected: (n: number) => (n === 1 ? 'Row selected' : `${n} rows selected`),
+    announceColumnsSelected: (n: number) => (n === 1 ? 'Column selected' : `${n} columns selected`),
+    announceMoved: 'Moved',
+    announceDuplicated: 'Duplicated',
+    announcePasted: (n: number) => (n === 1 ? 'Pasted 1 cell' : `Pasted ${n} cells`),
+    announceCopied: 'Copied',
+    announceCut: 'Cut',
+    /** A paste that didn't all fit. */
+    pasteClipped: "That didn't all fit: this table's kennel holds 100 rows and 26 columns, so the rest stayed in the bag.",
+    /** A table with nothing in it to look at. */
+    empty: 'An empty bowl. Add a column to start.',
+    /** Column types. The select type is a tag; ratings are paws. */
+    types: { text: 'Text', number: 'Number', checkbox: 'Checkbox', date: 'Date', select: 'Tag', rating: 'Paws' },
+    columnType: 'Column type',
+    /** Sorting a column, worded for what it holds. */
+    sort: 'Sort',
+    sortLabel: (type: string, dir: 'asc' | 'desc') => {
+      if (type === 'number' || type === 'rating') return dir === 'asc' ? 'Sort 1 to 9' : 'Sort 9 to 1'
+      if (type === 'date') return dir === 'asc' ? 'Oldest first' : 'Newest first'
+      if (type === 'checkbox') return dir === 'asc' ? 'Unticked first' : 'Ticked first'
+      return dir === 'asc' ? 'Sort A to Z' : 'Sort Z to A'
+    },
+    announceSorted: 'Sorted',
+    /** The arrow a sorted column keeps in its header. Its name is the header's aria-sort; this is the tooltip. */
+    sortedBy: (dir: 'asc' | 'desc') => (dir === 'asc' ? 'Sorted A to Z. Editing does not re-sort.' : 'Sorted Z to A. Editing does not re-sort.'),
+    /** A quiet line outside a brand-new table, until a first cell is filled (or it has been seen three times). */
+    firstRunHint: 'Type to fill · Tab for the next cell · drag ⋮⋮ to reorder',
+    firstRunHintTouch: 'Tap to fill · ‹ › below for the next cell',
+    announceType: (name: string) => `Column is now ${name}`,
+    /** Formatting. */
+    bold: 'Bold',
+    align: 'Align',
+    alignLeft: 'Align left',
+    alignCentre: 'Align centre',
+    alignRight: 'Align right',
+    alignCellDefault: 'Column default',
+    alignColumnDefault: 'Automatic',
+    fill: 'Fill',
+    fillRows: 'Row fill',
+    announceFilled: 'Fill changed',
+    announceAligned: 'Alignment changed',
+    announceBold: (on: boolean) => (on ? 'Bold' : 'Not bold'),
+    /** Tags. */
+    findOption: 'Sniff out an option…',
+    createOption: (name: string) => `Create "${name}"`,
+    noOptions: 'No options yet. Type a name to bury the first.',
+    clearValue: 'Clear',
+    optionsFull: "This column's kennel of options is full: 50 is the most it can hold.",
+    editOptions: 'Edit options',
+    optionName: 'Option name',
+    optionColour: (name: string) => `Colour for ${name || 'this option'}`,
+    moveOptionUp: 'Move option up',
+    moveOptionDown: 'Move option down',
+    deleteOption: 'Delete option',
+    addOption: 'Add an option',
+    optionDeleted: (name: string) => `Removed “${name}”`,
+    optionTaken: 'Another option already answers to that name.',
+    announceOptionAdded: (name: string) => `Added ${name}`,
+    /** Ticks, paws and dates. */
+    ticked: 'Ticked',
+    unticked: 'Not ticked',
+    /** A tick box's name: its column, then the row's first cell. Its state is the box's own to say. */
+    checkLabel: (column: string, who: string) => `${column}, ${who}`,
+    pawsLabel: (n: number) => (n === 0 ? 'No paws' : n === 1 ? '1 of 5 paws' : `${n} of 5 paws`),
+    pawLabel: (n: number) => (n === 1 ? '1 paw' : `${n} paws`),
+    pickDate: 'Pick a date',
+    done: 'Done',
+  },
   /** The public guides at /docs. */
   guides: {
     /** Account menu and sign-in link. */

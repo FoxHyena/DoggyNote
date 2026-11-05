@@ -22,6 +22,20 @@ it('requires revisions for replacements and caps atomic proposal size', () => {
   expect(agentProposalSchema.safeParse({ ...base, operations: [{ action: 'replace', object: note, expectedRevision: 10 }] }).success).toBe(true)
   expect(agentProposalSchema.safeParse({ ...base, operations: Array.from({ length: 201 }, () => ({ action: 'create', object: note })) }).success).toBe(false)
 })
+it('accepts a table as columns and rows of cells, and refuses what is not one', () => {
+  const table = { ...note, type: 'table', content: { title: 'Pack', columns: [{ name: 'Dog' }, { name: 'Status', type: 'select', options: [{ name: 'Healthy', color: 'sky' }] }], rows: [{ cells: [{ value: 'Rex', bold: true }, 'Healthy'] }, { color: 'gold', cells: ['Fido', null] }] } }
+  expect(agentObjectSchema.safeParse(table).success).toBe(true)
+  const bad = (content: unknown) => agentObjectSchema.safeParse({ ...table, content }).success
+  expect(bad({ ...table.content, columns: [] })).toBe(false)
+  expect(bad({ ...table.content, columns: Array.from({ length: 27 }, () => ({ name: 'x' })) })).toBe(false)
+  expect(bad({ ...table.content, rows: Array.from({ length: 101 }, () => ({ cells: [] })) })).toBe(false)
+  expect(bad({ ...table.content, rows: [{ cells: [{ value: 'x', italic: true }] }] })).toBe(false)
+  expect(bad({ ...table.content, rows: [{ cells: [['nested']] }] })).toBe(false)
+  expect(bad({ ...table.content, columns: [{ name: 'A', type: 'formula' }] })).toBe(false)
+  expect(bad({ ...table.content, rows: [{ color: '#ff0000', cells: [] }] })).toBe(false)
+  // The stored flat fields are not accepted from an agent.
+  expect(agentObjectSchema.safeParse({ ...table, tr100001: { o: 1 } }).success).toBe(false)
+})
 it('round-trips to-do lists with done times and list options', () => {
   const todo = { ...note, type: 'todo', content: { title: 'Chores', sortDone: false, hideDone: true, items: [{ id: 'a', text: 'Walk', done: true, doneAt: 1_700_000_000_000 }, { id: 'b', text: 'Feed', done: false, doneAt: null }, { id: 'c', text: 'Old', done: true }] } }
   expect(agentObjectSchema.safeParse(todo).success).toBe(true)

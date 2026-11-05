@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { CARD_COLORS } from '@doggynote/theme'
 import { isInkMark, MAX_INK_COORD, MAX_INK_POINTS } from './ink.ts'
 import { BOARD_INK_MAX_SPAN, isSketchPaper } from './sketch.ts'
+import { TABLE_CAPS } from './table.ts'
 
 /** Object ids key plain maps on every client, so built-in property names are refused. */
 export const isReservedId = (id: string) => id === 'prototype' || Object.hasOwn(Object.prototype, id)
@@ -47,6 +48,24 @@ const movieContent = z.strictObject({
   imdbId: z.string().regex(/^tt\d{5,10}$/).optional(), assetId: id.optional(), watched: z.boolean().optional(), watchedAt: stamp.nullable().optional(),
   details: z.boolean().optional(), status: z.enum(['pending', 'ok', 'error']).optional(), info: movieInfo.optional(),
 }).refine((m) => m.tmdbId !== undefined || m.imdbId !== undefined, 'Give the title’s tmdbId (with kind) or imdbId')
+/**
+ * A table as an agent writes it (see tableAgent.ts): columns, then rows of cells in column order.
+ * Ids come from read_board and may be left out; the server turns this into the stored fields.
+ */
+const tableColor = z.enum(CARD_COLORS)
+const tableCell = z.union([
+  z.string().max(TABLE_CAPS.cell), z.number().finite(), z.boolean(), z.null(),
+  z.strictObject({ value: z.union([z.string().max(TABLE_CAPS.cell), z.number().finite(), z.boolean(), z.null()]).optional(), bold: z.boolean().optional(), align: z.enum(['left', 'center', 'right']).optional(), color: tableColor.optional() }),
+])
+const tableContent = z.strictObject({
+  title: z.string().max(1000),
+  columns: z.array(z.strictObject({
+    id: z.string().optional(), name: z.string().max(TABLE_CAPS.name), type: z.enum(['text', 'number', 'checkbox', 'date', 'select', 'rating']).optional(),
+    width: z.number().finite().positive().max(1000).optional(), align: z.enum(['left', 'center', 'right']).optional(),
+    options: z.array(z.strictObject({ id: z.string().optional(), name: z.string().max(TABLE_CAPS.name), color: tableColor.optional() })).max(TABLE_CAPS.options).optional(),
+  })).min(1).max(TABLE_CAPS.cols),
+  rows: z.array(z.strictObject({ id: z.string().optional(), color: tableColor.optional(), cells: z.array(tableCell).max(TABLE_CAPS.cols) })).max(TABLE_CAPS.rows),
+})
 export const agentObjectSchema = z.discriminatedUnion('kind', [
   stickerObjectSchema,
   strokeObjectSchema,
@@ -63,10 +82,11 @@ export const agentObjectSchema = z.discriminatedUnion('kind', [
     z.strictObject({ ...card, type: z.literal('movie'), content: movieContent }),
     z.strictObject({ ...card, type: z.literal('sketch'), sketchTitle: z.string().max(1000).nullable().optional(), sketchPaper: z.string().refine(isSketchPaper, 'Use a #RRGGBB paper colour').nullable().optional(), content: z.strictObject({ title: z.string().max(1000), width: z.number().finite().min(1).max(10_000), height: z.number().finite().min(1).max(10_000), background: z.string().refine(isSketchPaper, 'Use a #RRGGBB paper colour') }) }),
     z.strictObject({ ...card, columnId: z.null().optional(), type: z.literal('ink'), content: z.strictObject({ width: z.number().finite().positive().max(BOARD_INK_MAX_SPAN + 300), height: z.number().finite().positive().max(BOARD_INK_MAX_SPAN + 300) }) }),
+    z.strictObject({ ...card, type: z.literal('table'), content: tableContent }),
     z.strictObject({ ...card, type: z.literal('swatch'), content: z.strictObject({ hex: z.string().regex(/^#[0-9A-F]{6}$/), name: z.string().max(1000).optional() }) }),
   ]),
   z.strictObject({ ...common, kind: z.literal('connection'), boardId: id, from: id, to: id, fromSide: z.enum(['top', 'right', 'bottom', 'left']).nullable().optional(), toSide: z.enum(['top', 'right', 'bottom', 'left']).nullable().optional(), arrow: z.enum(['end', 'none']) }),
-  z.strictObject({ ...common, kind: z.literal('comment'), boardId: id, cardId: id, authorId: id, author: z.string().max(32), text: z.string().max(20_000), editedAt: stamp.nullable().optional(), resolvedAt: stamp.nullable().optional() }),
+  z.strictObject({ ...common, kind: z.literal('comment'), boardId: id, cardId: id, authorId: id, author: z.string().max(64), text: z.string().max(20_000), editedAt: stamp.nullable().optional(), resolvedAt: stamp.nullable().optional() }),
 ])
 
 /** Full replacement shapes deliberately reject arbitrary sync metadata and unknown fields. */

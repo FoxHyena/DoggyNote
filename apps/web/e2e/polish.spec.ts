@@ -9,6 +9,8 @@ test('board selection, explicit rename and double-click opening never create a n
   await page.keyboard.type('New kennel')
   await page.keyboard.press('Enter')
   const tile = cardByText(page, 'New kennel')
+  // The tooltip no longer promises Enter renames: Enter opens, Rename is in the card menu.
+  await expect(tile.locator('.board-card')).toHaveAttribute('title', 'Double-click to open')
   await tile.click()
   await expect(page.getByTestId('board-name')).toHaveText('Interaction QA')
   await expect(tile).toHaveClass(/selected/)

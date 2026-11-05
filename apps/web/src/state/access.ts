@@ -3,7 +3,7 @@ import { api, ApiError } from './api.ts'
 import { user } from './session.ts'
 import * as doc from './doc.ts'
 
-export type BoardPermission = { id: string; parentId: string | null; ownerId: string | null; legacy: boolean; canEdit: boolean; canManage: boolean }
+export type BoardPermission = { id: string; parentId: string | null; ownerId: string | null; legacy: boolean; canEdit: boolean; canManage: boolean; sharedAt?: number; sharedBy?: string | null; sharedByDisplayName?: string | null; sharedById?: string; sharedByAvatarId?: string | null }
 export type AccessSnapshot = { revision: string; homeBoardId: string; legacyShared: boolean; boards: BoardPermission[] }
 const fallbackHome = () => `home:${user()?.id ?? cachedUserId()}`
 function cachedUserId() { try { return (JSON.parse(localStorage.getItem('doggynote.user') ?? '{}') as { id?: string }).id ?? '' } catch { return '' } }

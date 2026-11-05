@@ -3,10 +3,11 @@ import { Portal } from 'solid-js/web'
 import { COPY } from '@doggynote/theme'
 import type { Card, Vec } from '@doggynote/core'
 import * as doc from '../state/doc.ts'
-import { beginEdit, selection, setCardContextOpen } from '../state/ui.ts'
+import { beginEdit, boardId, selection, setCardContextOpen } from '../state/ui.ts'
 import { canCreateAreaFromSelection, createAreaFromSelection, buryArea, tidyArea } from '../state/areas.ts'
 import { burySelection } from '../state/actions.ts'
-import { duplicateSelection } from '../state/clipboard.ts'
+import { copySelection, duplicateSelection } from '../state/clipboard.ts'
+import { pasteFromSystem } from '../canvas/paste.ts'
 import { canMakeSyncedCopy, makeSyncedCopy } from '../state/synced.ts'
 import { liveState, peers, pingAt } from '../state/realtime.ts'
 import { LabelsPopover } from './Labels.tsx'
@@ -15,10 +16,10 @@ import { Icon } from './icons.tsx'
 import { installMenu } from './menu.ts'
 import { SheetGrip } from './SheetGrip.tsx'
 
-export type ContextPoint = Vec & { screenX: number; screenY: number; cardId: string | null; returnTo: HTMLElement }
+export type ContextPoint = Vec & { screenX: number; screenY: number; cardId: string | null; columnId?: string; returnTo: HTMLElement }
 
 /** Card actions use the same selection commands as the floating bar. Empty
- * canvas only gets a menu when there's somebody to receive a location ping. */
+ * canvas gets Paste on a board you can edit, and a location ping when somebody's there. */
 export function CardContextMenu(props: { point: ContextPoint; close: () => void }) {
   let menu!: HTMLDivElement
   const [labels, setLabels] = createSignal(false)
@@ -27,9 +28,10 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
   const cards = createMemo(() => [...selection()].map((id) => doc.getCard(id)).filter((c): c is Card => !!c))
   const sole = () => selection().size === 1 ? card() : undefined
   const writable = () => selection().size > 0 && [...selection()].every((id) => doc.canWriteObject(doc.get(id)))
-  const canEdit = () => !!sole() && writable() && ['area', 'note', 'todo', 'column', 'image', 'swatch', 'board', 'link', 'movie', 'sketch'].includes(sole()!.type)
+  const canEdit = () => !!sole() && writable() && ['area', 'note', 'todo', 'column', 'image', 'swatch', 'board', 'link', 'movie', 'sketch', 'table'].includes(sole()!.type)
   const canLabel = () => writable() && cards().length > 0 && cards().every((c) => c.type !== 'column' && c.type !== 'area' && c.boardId === cards()[0].boardId)
   const canPing = () => liveState() === 'live' && peers().length > 0
+  const canPaste = () => doc.canWriteObject(doc.getBoard(boardId()))
   const close = () => { props.close(); props.point.returnTo.focus({ preventScroll: true }) }
   const run = (action: () => void) => { close(); action() }
   createEffect(() => setCardContextOpen(!!card() && !labels()))
@@ -38,21 +40,28 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
   createEffect(() => {
     const c = card()
     if (props.point.cardId && (!c || c.deletedAt || c.purged)) close()
-    if (!props.point.cardId && !canPing()) close()
+    if (!props.point.cardId && !canPing() && !canPaste()) close()
   })
   onMount(() => {
     setAt({ left: Math.max(8, Math.min(props.point.screenX, innerWidth - menu.offsetWidth - 8)), top: Math.max(8, Math.min(props.point.screenY, innerHeight - menu.offsetHeight - 8)) })
   })
+  // Pastes land where the menu was opened, inside the column there if any.
+  const paste = () => <button class="menu-item" role="menuitem" disabled={!canPaste()} aria-keyshortcuts="Meta+V" onClick={() => run(() => void pasteFromSystem(props.point, props.point.columnId))}><Icon name="paste" size={18} />Paste<kbd aria-hidden="true">⌘V</kbd></button>
   return (
     <Portal>
       <Show when={!labels()} fallback={<LabelsPopover cards={cards()} anchor={() => props.point.returnTo} close={close} />}>
-        <div ref={menu} class="menu canvas-ping-menu" classList={{ 'card-context-menu': !!card() }} role="menu" aria-label={card() ? 'Card actions' : COPY.lookHere} data-testid="canvas-context-menu" data-nodrag
+        <div ref={menu} class="menu canvas-ping-menu" classList={{ 'card-context-menu': !!card() }} role="menu" aria-label={card() ? 'Card actions' : 'Canvas actions'} data-testid="canvas-context-menu" data-nodrag
           style={{ position: 'fixed', left: `${at().left}px`, top: `${at().top}px` }}
           onPointerDown={(e) => e.stopPropagation()} onContextMenu={(e) => e.preventDefault()}>
           <SheetGrip onDismiss={close} />
           <Show when={card()}>
-            <button class="menu-item" role="menuitem" disabled={!canEdit()} onClick={() => run(() => beginEdit(card()!.id))}><Icon name="edit" size={18} />{card()?.type === 'board' ? 'Rename' : 'Edit'}</button>
-            <button class="menu-item" role="menuitem" disabled={!writable()} onClick={() => run(duplicateSelection)}><Icon name="duplicate" size={18} />Duplicate</button>
+            <button class="menu-item" role="menuitem" disabled={!canEdit()} onClick={() => run(() => beginEdit(card()!.id))}><Icon name="edit" size={18} />{card()?.type === 'board' ? 'Rename' : card()?.type === 'image' ? 'Caption' : 'Edit'}</button>
+            <div class="menu-sep" role="separator" />
+            <button class="menu-item" role="menuitem" disabled={!writable()} aria-keyshortcuts="Meta+X" onClick={() => run(() => copySelection(true))}><Icon name="cut" size={18} />Cut<kbd aria-hidden="true">⌘X</kbd></button>
+            <button class="menu-item" role="menuitem" aria-keyshortcuts="Meta+C" onClick={() => run(() => copySelection(false))}><Icon name="copy" size={18} />Copy<kbd aria-hidden="true">⌘C</kbd></button>
+            {paste()}
+            <button class="menu-item" role="menuitem" disabled={!writable()} aria-keyshortcuts="Meta+D" onClick={() => run(duplicateSelection)}><Icon name="duplicate" size={18} />Duplicate<kbd aria-hidden="true">⌘D</kbd></button>
+            <div class="menu-sep" role="separator" />
             <Show when={canMakeSyncedCopy(sole())}>
               <button class="menu-item" role="menuitem" data-testid="make-synced-copy" onClick={() => run(() => makeSyncedCopy(card()!.id))}><Icon name="synced" size={18} />{COPY.synced.make}</button>
             </Show>
@@ -63,8 +72,9 @@ export function CardContextMenu(props: { point: ContextPoint; close: () => void 
             <div class="menu-sep" role="separator" />
             <button class="menu-item" role="menuitem" disabled={!writable()} onClick={() => run(burySelection)}><Icon name="bury" size={18} />{sole()?.type === 'area' ? 'Remove area (keep contents)' : COPY.bury}</button>
           </Show>
+          <Show when={!card() && canPaste()}>{paste()}</Show>
           <Show when={canPing()}>
-            <Show when={card()}><div class="menu-sep" role="separator" /></Show>
+            <Show when={card() || canPaste()}><div class="menu-sep" role="separator" /></Show>
             <button class="menu-item" role="menuitem" onClick={() => run(() => pingAt(props.point))}><Icon name="lookHere" size={18} />{COPY.lookHere}</button>
           </Show>
         </div>

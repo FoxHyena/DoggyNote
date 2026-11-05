@@ -14,7 +14,7 @@ async function fixture() {
   for (const file of readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) sql.exec(readFileSync(new URL(file, dir), 'utf8'))
   const now = Date.now()
   for (const id of ['rex', 'fido', 'spot']) {
-    sql.prepare('INSERT INTO users VALUES(?,?,?,?,?)').run(id, id, 'unused', id === 'rex' ? 1 : 0, now)
+    sql.prepare('INSERT INTO users(id,username,pw_hash,is_admin,created_at) VALUES(?,?,?,?,?)').run(id, id, 'unused', id === 'rex' ? 1 : 0, now)
     sql.prepare('INSERT INTO sessions(token_hash,user_id,created_at,expires_at) VALUES(?,?,?,?)').run(await sha256Hex(`session-${id}`), id, now, now + 86400000)
   }
   function board(id: string, owner: string, parentId: string | null = null, title = id) {

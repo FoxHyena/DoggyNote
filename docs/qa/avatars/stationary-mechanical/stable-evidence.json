@@ -1,0 +1,319 @@
+{
+  "account": {
+    "geometry": {
+      "account": {
+        "x": 1150,
+        "y": 43.5,
+        "width": 280,
+        "height": 319
+      },
+      "options": null
+    },
+    "logs": [
+      {
+        "type": "startGroup",
+        "text": "%c[impeccable] 2 anti-patterns found color: oklch(84% 0.19 80.46); font-weight: bold",
+        "elements": [
+          null,
+          null
+        ]
+      },
+      {
+        "type": "log",
+        "text": "%clow-contrast%c 4.3:1 (need 4.5:1) — text #a69d93 on #3d3934 (gradient on div.viewport) color: oklch(84% 0.19 80.46); font-weight: bold color: inherit JSHandle@node",
+        "elements": [
+          null,
+          null,
+          null,
+          {
+            "tag": "P",
+            "class": "empty-sub",
+            "text": "Double-click anywhere to add a note, or drag something in from the left.",
+            "html": "<p class=\"empty-sub\">Double-click anywhere to add a note, or drag something in from the left.</p>"
+          }
+        ]
+      },
+      {
+        "type": "log",
+        "text": "%ctext-overflow%c button.icon-btn overflows its box by 29px color: oklch(84% 0.19 80.46); font-weight: bold color: inherit JSHandle@node",
+        "elements": [
+          null,
+          null,
+          null,
+          {
+            "tag": "BUTTON",
+            "class": "icon-btn",
+            "text": "100% ",
+            "html": "<button class=\"icon-btn\" data-testid=\"zoom\" data-tooltip=\"Zoom options\" aria-label=\"Zoom: 100%\" aria-expanded=\"false\">100% <svg viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\" class=\"dn-icon\" data-icon=\"chevronDown\" width=\"10\" height=\"10\"><path d=\"M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74."
+          }
+        ]
+      },
+      {
+        "type": "endGroup",
+        "text": "console.groupEnd",
+        "elements": [
+          null
+        ]
+      }
+    ],
+    "overlayCount": 4
+  },
+  "options": {
+    "geometry": {
+      "account": {
+        "x": 1150,
+        "y": 43.5,
+        "width": 280,
+        "height": 319
+      },
+      "options": {
+        "x": 1171,
+        "y": 128.5,
+        "width": 200,
+        "height": 54
+      }
+    },
+    "logs": [
+      {
+        "type": "startGroup",
+        "text": "%c[impeccable] 2 anti-patterns found color: oklch(84% 0.19 80.46); font-weight: bold",
+        "elements": [
+          null,
+          null
+        ]
+      },
+      {
+        "type": "log",
+        "text": "%clow-contrast%c 4.3:1 (need 4.5:1) — text #a69d93 on #3d3934 (gradient on div.viewport) color: oklch(84% 0.19 80.46); font-weight: bold color: inherit JSHandle@node",
+        "elements": [
+          null,
+          null,
+          null,
+          {
+            "tag": "P",
+            "class": "empty-sub",
+            "text": "Double-click anywhere to add a note, or drag something in from the left.",
+            "html": "<p class=\"empty-sub\">Double-click anywhere to add a note, or drag something in from the left.</p>"
+          }
+        ]
+      },
+      {
+        "type": "log",
+        "text": "%ctext-overflow%c button.icon-btn overflows its box by 29px color: oklch(84% 0.19 80.46); font-weight: bold color: inherit JSHandle@node",
+        "elements": [
+          null,
+          null,
+          null,
+          {
+            "tag": "BUTTON",
+            "class": "icon-btn",
+            "text": "100% ",
+            "html": "<button class=\"icon-btn\" data-testid=\"zoom\" data-tooltip=\"Zoom options\" aria-label=\"Zoom: 100%\" aria-expanded=\"false\">100% <svg viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\" class=\"dn-icon\" data-icon=\"chevronDown\" width=\"10\" height=\"10\"><path d=\"M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74."
+          }
+        ]
+      },
+      {
+        "type": "endGroup",
+        "text": "console.groupEnd",
+        "elements": [
+          null
+        ]
+      }
+    ],
+    "overlayCount": 4
+  },
+  "editor": {
+    "geometry": {
+      "account": null,
+      "options": null
+    },
+    "logs": [
+      {
+        "type": "startGroup",
+        "text": "%c[impeccable] 2 anti-patterns found color: oklch(84% 0.19 80.46); font-weight: bold",
+        "elements": [
+          null,
+          null
+        ]
+      },
+      {
+        "type": "log",
+        "text": "%clow-contrast%c 4.3:1 (need 4.5:1) — text #a69d93 on #3d3934 (gradient on div.viewport) color: oklch(84% 0.19 80.46); font-weight: bold color: inherit JSHandle@node",
+        "elements": [
+          null,
+          null,
+          null,
+          {
+            "tag": "P",
+            "class": "empty-sub",
+            "text": "Double-click anywhere to add a note, or drag something in from the left.",
+            "html": "<p class=\"empty-sub\">Double-click anywhere to add a note, or drag something in from the left.</p>"
+          }
+        ]
+      },
+      {
+        "type": "log",
+        "text": "%ctext-overflow%c button.icon-btn overflows its box by 29px color: oklch(84% 0.19 80.46); font-weight: bold color: inherit JSHandle@node",
+        "elements": [
+          null,
+          null,
+          null,
+          {
+            "tag": "BUTTON",
+            "class": "icon-btn",
+            "text": "100% ",
+            "html": "<button class=\"icon-btn\" data-testid=\"zoom\" data-tooltip=\"Zoom options\" aria-label=\"Zoom: 100%\" aria-expanded=\"false\">100% <svg viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\" class=\"dn-icon\" data-icon=\"chevronDown\" width=\"10\" height=\"10\"><path d=\"M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74."
+          }
+        ]
+      },
+      {
+        "type": "endGroup",
+        "text": "console.groupEnd",
+        "elements": [
+          null
+        ]
+      }
+    ],
+    "overlayCount": 4
+  },
+  "stableShapes": [
+    {
+      "name": "panorama",
+      "initial": {
+        "x": 156.59375,
+        "y": 316.3291015625,
+        "width": 6.796875,
+        "height": 6.796875
+      },
+      "zoom": "4",
+      "selection": {
+        "x": 156.59375,
+        "y": 309.59375,
+        "width": 2.125,
+        "height": 2.125
+      },
+      "handles": [
+        {
+          "x": 112.59375,
+          "y": 265.59375,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 158.71875,
+          "y": 265.59375,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 112.59375,
+          "y": 311.71875,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 158.71875,
+          "y": 311.71875,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        }
+      ]
+    },
+    {
+      "name": "portrait",
+      "initial": {
+        "x": 139.59375,
+        "y": 296.39117431640625,
+        "width": 40.796875,
+        "height": 40.796875
+      },
+      "zoom": "4",
+      "selection": {
+        "x": 139.59375,
+        "y": 292.59375,
+        "width": 12.75,
+        "height": 12.75
+      },
+      "handles": [
+        {
+          "x": 95.59375,
+          "y": 248.59375,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 152.34375,
+          "y": 248.59375,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 95.59375,
+          "y": 305.34375,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 152.34375,
+          "y": 305.34375,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        }
+      ]
+    },
+    {
+      "name": "square",
+      "initial": {
+        "x": 119.1875,
+        "y": 274.1898498535156,
+        "width": 81.59375,
+        "height": 81.59375
+      },
+      "zoom": "4",
+      "selection": {
+        "x": 119.1875,
+        "y": 272.1875,
+        "width": 25.5,
+        "height": 25.5
+      },
+      "handles": [
+        {
+          "x": 75.1875,
+          "y": 228.1875,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 144.6875,
+          "y": 228.1875,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 75.1875,
+          "y": 297.6875,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 144.6875,
+          "y": 297.6875,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+import { commentAuthorName } from '../state/profiles.ts'
+import { profileName } from '@doggynote/core'
 import { SheetGrip } from './SheetGrip.tsx'
 import { For, Show, createEffect, createMemo, createSignal } from 'solid-js'
 import { isAlive, parseMarkdown, type Comment } from '@doggynote/core'
@@ -34,7 +36,7 @@ function Message(props: { m: Comment; readOnly: boolean }) {
   return (
     <li class="comment" data-testid="comment">
       <div class="comment-meta">
-        <strong class="comment-author">{props.m.author}</strong>
+        <strong class="comment-author">{!props.readOnly && user()?.id === props.m.authorId ? profileName(user()!) : commentAuthorName(props.m.authorId, props.m.author)}</strong>
         <span class="comment-time" title={new Date(props.m.createdAt).toLocaleString()}>
           {relativeTime(props.m.createdAt)}
           {props.m.editedAt ? ' · edited' : ''}

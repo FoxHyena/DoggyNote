@@ -19,6 +19,8 @@ import { ColorDots } from './ColorDots.tsx'
 import { openThread } from './CommentsPanel.tsx'
 import { TodoOptions, TodoMenuItems } from './TodoOptions.tsx'
 import { BarMenu } from './BarMenu.tsx'
+import { TableBar } from './TableBar.tsx'
+import { activeTable } from '../cards/table/tableControl.ts'
 import { duplicateSelection } from '../state/clipboard.ts'
 import { canMakeSyncedCopy, makeSyncedCopy } from '../state/synced.ts'
 import { Popover } from './Popover.tsx'
@@ -42,14 +44,16 @@ export function SelectionBar() {
   // While typing in a to-do list, its colour and list options stay within reach
   // above it (touch has the docked bar instead).
   const editingList = () => !docked() && doc.getCard(editingId() ?? '')?.type === 'todo'
-  const show = () => !(selection().size === 1 && selection().has(openChatId() ?? '')) && !cardContextOpen() && (cards().length || conns().length) && !draggingIds().size && (!editingId() || editingList()) && !connectMode()
+  // Editing a table's cells with a mouse: the bar holds just the cell actions (touch has TableDock).
+  const editingGrid = () => !docked() && !!activeTable() && activeTable()!.cardId === editingId()
+  const show = () => !(selection().size === 1 && selection().has(openChatId() ?? '')) && !cardContextOpen() && (cards().length || conns().length) && !draggingIds().size && (!editingId() || editingList() || editingGrid()) && !connectMode()
   createEffect(() => { if (!show() || !phone()) setPanel(null) })
   // A colour card is its colour, and ink on the board has no card to tint.
   const tintable = () => cards().some((c) => c.type !== 'swatch' && c.type !== 'ink')
   const sole = () => (cards().length === 1 && selection().size === 1 ? cards()[0] : undefined)
   const editable = () => {
     const c = sole()
-    return !!c && (c.type === 'area' || c.type === 'note' || c.type === 'todo' || c.type === 'column' || c.type === 'image' || c.type === 'swatch' || c.type === 'link' || c.type === 'movie' || c.type === 'sketch') && doc.canWriteObject(c)
+    return !!c && (c.type === 'area' || c.type === 'note' || c.type === 'todo' || c.type === 'column' || c.type === 'image' || c.type === 'swatch' || c.type === 'link' || c.type === 'movie' || c.type === 'sketch' || c.type === 'table') && doc.canWriteObject(c)
   }
   // Labels go on the cards of one board; a column is a container, so it has none.
   const canLabel = () => cards().length > 0 && cards().every((c) => c.type !== 'area' && c.type !== 'column' && c.boardId === cards()[0].boardId && doc.canWriteObject(c))
@@ -111,16 +115,18 @@ export function SelectionBar() {
       const p = worldToScreen(cam, r)
       return [{ x: p.x, y: p.y, w: r.w * cam.zoom, h: COLUMN_HEADER * cam.zoom }]
     })
+    // A table being edited has its grips just outside: the bar floats beyond them.
+    const grips = editingGrid() ? 30 * cam.zoom : 0
     const tl = worldToScreen(cam, u)
     const br = worldToScreen(cam, { x: u.x + u.w, y: u.y + u.h })
     const size = { width: Math.min(barSize().width, v.width - 16), height: barSize().height }
     const x = (tl.x + br.x - size.width) / 2
     const controls = canvasControlsSize()
     const at = placeFloating(size, { x: 8, y: 8, w: v.width - 16, h: v.height - 16 }, [
-      { x, y: tl.y - size.height - 14 },
+      { x, y: tl.y - grips - size.height - 14 },
       { x, y: br.y + 14 },
       { x: br.x + 14, y: tl.y },
-      { x: tl.x - size.width - 14, y: tl.y },
+      { x: tl.x - grips - size.width - 14, y: tl.y },
     ], cardObstacles(cards().map((c) => c.id)), 8, {
       maxShift: 64,
       protectedObstacles: [
@@ -177,6 +183,7 @@ export function SelectionBar() {
         style={docked() ? undefined : { left: `${pos().left}px`, top: `${pos().top}px` }}
         onPointerDown={(e) => e.stopPropagation()}
       >
+        <Show when={!editingGrid()} fallback={<TableBar />}>
         <Show when={cards().length && cards().every((c) => ['note','todo'].includes(c.type)) && writable()}>
           <button class="bar-btn" data-testid="ask-selection" onClick={() => askSelection(cards().map((c) => c.id))}>Ask about selection</button>
         </Show>
@@ -222,7 +229,7 @@ export function SelectionBar() {
         <Show when={touch() && editable()}>
           <button class="bar-btn" data-testid="edit-card" onClick={() => beginEdit(sole()!.id)}>
             <Icon size={18} name="edit" />
-            Edit
+            {sole()?.type === 'image' ? 'Caption' : 'Edit'}
           </button>
         </Show>
         <Show when={sole()?.type === 'todo' && doc.canWriteObject(sole())}>
@@ -264,7 +271,7 @@ export function SelectionBar() {
             <button class="bar-btn" data-testid="selection-done" onClick={clearSelection}>Done<Icon name="close" size={18} /></button>
           </div>
           <div class="selection-phone-actions">
-            <Show when={soleBoard()} fallback={<Show when={editable()}><button class="bar-btn selection-primary" data-testid="edit-card" onClick={() => beginEdit(sole()!.id)}><Icon name="edit" size={20} /><span>Edit</span></button></Show>}>
+            <Show when={soleBoard()} fallback={<Show when={editable()}><button class="bar-btn selection-primary" data-testid="edit-card" onClick={() => beginEdit(sole()!.id)}><Icon name="edit" size={20} /><span>{sole()?.type === 'image' ? 'Caption' : 'Edit'}</span></button></Show>}>
               <button class="bar-btn selection-primary" data-testid="open-board" onClick={() => openBoard(soleBoard()!.id)}><Icon name="open" size={20} /><span>Open</span></button>
             </Show>
             <Show when={tintable()}>
@@ -298,6 +305,7 @@ export function SelectionBar() {
               <Show when={panel() === 'colour'} fallback={boardIcons()}>{colours()}</Show>
             </Popover>
           </Show>
+        </Show>
         </Show>
       </div>
     </Show>

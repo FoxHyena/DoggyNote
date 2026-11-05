@@ -41,6 +41,7 @@ test('link preview, one-shot placement, keyboard transforms, undo, reload, colle
   expect(copy.angle).toBe(32); expect(copy.w).toBe(210)
   await page.getByRole('button', { name: 'Bury', exact: true }).click()
   await expect(page.getByTestId('placed-sticker')).toHaveCount(1)
+  await expect(page.getByTestId('toast')).toContainText('Buried 1 sticker')
   await page.getByTestId('tool-trash').click()
   await page.getByTestId('restore').click()
   await page.keyboard.press('Escape')
@@ -428,6 +429,9 @@ test('several selected stickers share one ring that turns and scales them togeth
   await waitForSync(page)
   const saved = await placedStickers(page, id)
   expect(saved.find((s: { id: string }) => s.id === ids[2]).x).toBeCloseTo(before[2].x + 60, 0)
+  // Burying the pair names them as items, not cards.
+  await page.keyboard.press('Delete')
+  await expect(page.getByTestId('toast')).toContainText('Buried 2 items')
 })
 
 test('transparent padding selects the image underneath; explicit underneath and clipboard preserve overlay behavior', async ({ page, request }) => {
@@ -491,15 +495,22 @@ test('personal packs and favorites refresh across two devices while placed stick
   await stickerBoard(page, request); await importFixturePack(page)
   await page.getByTestId('sticker-pick').first().click(); await page.getByRole('button', { name: 'Place at center', exact: true }).click()
   await openStickerTray(page); const tray = page.getByTestId('sticker-tray')
-  await previewSticker(page); await tray.getByRole('button', { name: 'Favorite', exact: true }).click()
+  await previewSticker(page)
+  // The star changes optimistically; another device must wait for the saved write.
+  const favorited = page.waitForResponse((r) => r.url().includes('/api/stickers/preferences/') && r.request().method() === 'POST' && r.request().postDataJSON().favorite === true)
+  await tray.getByRole('button', { name: 'Favorite', exact: true }).click()
   await expect(tray.getByRole('button', { name: 'Unfavorite', exact: true })).toBeVisible()
+  expect((await favorited).ok()).toBe(true)
   const ctx = await browser.newContext({ baseURL: test.info().project.use.baseURL, storageState: await page.context().storageState() })
   try {
     const other = await ctx.newPage(); await other.goto(page.url()); await openStickerTray(other)
     const second = other.getByTestId('sticker-tray')
     await second.getByRole('button', { name: '★ Favorites', exact: true }).click(); await expect(second.getByTestId('sticker-pick')).toHaveCount(1)
-    await previewSticker(other); await second.getByRole('button', { name: 'Unfavorite', exact: true }).click()
+    await previewSticker(other)
+    const unfavorited = other.waitForResponse((r) => r.url().includes('/api/stickers/preferences/') && r.request().method() === 'POST' && r.request().postDataJSON().favorite === false)
+    await second.getByRole('button', { name: 'Unfavorite', exact: true }).click()
     await expect(second.getByRole('button', { name: 'Favorite', exact: true })).toBeVisible()
+    expect((await unfavorited).ok()).toBe(true)
     await page.reload(); await openStickerTray(page); await tray.getByRole('button', { name: '★ Favorites', exact: true }).click()
     await expect(tray.getByRole('heading', { name: 'Keep your favorites here' })).toBeVisible()
     // With packs saved, the header's Add pack is the only one; the empty state points at the packs instead.
@@ -518,6 +529,22 @@ test('personal packs and favorites refresh across two devices while placed stick
     await expect(page.getByTestId('placed-sticker')).toHaveCount(1)
     await expect.poll(() => page.getByTestId('placed-sticker').locator('img').evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true)
   } finally { await ctx.close() }
+})
+
+test('the favorite star answers before the server does, and flips back if the save fails', async ({ page, request }) => {
+  await stickerBoard(page, request); await importFixturePack(page)
+  const tray = page.getByTestId('sticker-tray'); await previewSticker(page)
+  let release!: () => void; const held = new Promise<void>((done) => { release = done })
+  await page.route('**/api/stickers/preferences/**', async (route) => { await held; await route.continue() })
+  await tray.getByRole('button', { name: 'Favorite', exact: true }).click()
+  await expect(tray.getByRole('button', { name: 'Unfavorite', exact: true })).toBeVisible()
+  const saved = page.waitForResponse((r) => r.url().includes('/api/stickers/preferences/') && r.request().method() === 'POST')
+  release(); await saved; await page.unroute('**/api/stickers/preferences/**')
+  await expect.poll(async () => (await (await page.request.get('/api/stickers')).json()).preferences.some((p: { favorite: number }) => p.favorite)).toBe(true)
+  await page.route('**/api/stickers/preferences/**', (route) => route.fulfill({ status: 500, json: { error: 'The kennel door stuck.' } }))
+  await tray.getByRole('button', { name: 'Unfavorite', exact: true }).click()
+  await expect(tray.getByRole('alert')).toContainText('The kennel door stuck.')
+  await expect(tray.getByRole('button', { name: 'Unfavorite', exact: true })).toBeVisible()
 })
 
 test('an agent proposal that adds a sticker is labelled in review and drawn by the board preview', async ({ page, request }) => {

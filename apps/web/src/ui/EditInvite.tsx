@@ -1,3 +1,4 @@
+import { profileName } from '@doggynote/core'
 import './canvas-entry.css'
 import { Match, Show, Switch, createResource, createSignal, onCleanup, onMount } from 'solid-js'
 import { api, ApiError } from '../state/api.ts'
@@ -44,7 +45,7 @@ export function EditInvite(props: { token: string }) {
       <Switch>
         <Match when={info.loading}><p role="status">Checking your invitation…</p></Match>
         <Match when={info.error}><h1>Invitation unavailable</h1><p class="form-error" role="alert">{info.error instanceof ApiError ? info.error.message : 'Could not check this invitation. Check your connection.'}</p><button class="bar-btn" onClick={() => void refetch()}>Try again</button><a href="/">My boards</a></Match>
-        <Match when={info()}><h1>Join “{info()?.title}”</h1><p>You will be able to edit this board{info()?.includeChildren ? ' and the boards inside it' : ''}.</p><p class="share-sub">Signed in as {user()?.username}. This invitation can be accepted until {new Date(info()!.expiresAt).toLocaleDateString()}.</p><Show when={error()}><p class="form-error" role="alert">{error()}</p></Show><button class="primary-btn" disabled={busy()} onClick={() => void accept()}>{busy() ? 'Joining…' : 'Join board'}</button><a href="/">My boards</a></Match>
+        <Match when={info()}><h1>Join “{info()?.title}”</h1><p>You will be able to edit this board{info()?.includeChildren ? ' and the boards inside it' : ''}.</p><p class="share-sub">Signed in as {user() ? profileName(user()!) : ''}. This invitation can be accepted until {new Date(info()!.expiresAt).toLocaleDateString()}.</p><Show when={error()}><p class="form-error" role="alert">{error()}</p></Show><button class="primary-btn" disabled={busy()} onClick={() => void accept()}>{busy() ? 'Joining…' : 'Join board'}</button><a href="/">My boards</a></Match>
       </Switch>
     </div></div></Match>
   </Switch>

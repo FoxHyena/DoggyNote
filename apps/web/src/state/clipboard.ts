@@ -22,6 +22,7 @@ import { boardId, editingId, select, selection } from './ui.ts'
 import { showToast } from './toast.ts'
 import { carryLabels, labelsOn, moveLabels } from './labels.ts'
 import { rectOf } from '../canvas/layout.ts'
+import { pngOf } from './assets.ts'
 
 // Copy, cut, paste and duplicate cards. The system clipboard gets three things:
 // the clip itself (a private type), the same clip tucked into HTML (survives a
@@ -31,6 +32,8 @@ import { rectOf } from '../canvas/layout.ts'
 // Safari and the desktop app only run copy/cut/paste when something editable is
 // focused, so ⌘C, ⌘X and ⌘V briefly focus a hidden textarea: the native command
 // then fires a real clipboard event, which is where the data is written or read.
+// The card menu does the same, running the command itself. A lone image card goes
+// through the async clipboard instead, so other apps get the picture as a PNG.
 
 const TOO_BIG = 'That’s more than DoggyNote can carry in one go. Try fewer cards.'
 
@@ -38,6 +41,19 @@ let memory: { clip: ClipPayload; text: string } | null = null
 let pending: { clip: ClipPayload; cut: boolean } | null = null
 let plainUntil = 0
 let lastPaste: { key: string; count: number } | null = null
+
+// Leaving the window is the only way another app's copy can replace ours.
+let leftSince = false
+
+/**
+ * The last clip copied here, while the window hasn't been left since: the card menu's
+ * Paste falls back to it when the system clipboard can't be read.
+ */
+export const memoryClip = () => (leftSince ? null : memory?.clip ?? null)
+const remember = (clip: ClipPayload, text: string) => {
+  memory = { clip, text }
+  leftSince = false
+}
 
 /** The clip for the current selection, or null (with a toast if it's too big). */
 export function clipOfSelection(): ClipPayload | null {
@@ -70,7 +86,7 @@ function clipHtml(clip: ClipPayload, text: string): string {
 
 function writeClip(dt: DataTransfer, clip: ClipPayload) {
   const text = clipText(clip, boardTitle)
-  memory = { clip, text }
+  remember(clip, text)
   dt.setData('text/plain', text)
   dt.setData('text/html', clipHtml(clip, text))
   try {
@@ -98,6 +114,55 @@ export function readClip(dt: DataTransfer): ClipPayload | null {
   const text = dt.getData('text/plain')
   if (memory && text && text === memory.text) return memory.clip
   return null
+}
+
+const cutToast = (n: number) => showToast(`Cut ${n} ${n === 1 ? 'card' : 'cards'}. Paste to put ${n === 1 ? 'it' : 'them'} somewhere else.`, 4000)
+
+/** The selection's only card, if it's an image: its picture goes on the clipboard too. */
+function soleImage(clip: ClipPayload): Card<'image'> | null {
+  const root = clip.roots.length === 1 ? clip.objects.find((o) => o.id === clip.roots[0]) : undefined
+  return root?.kind === 'card' && root.type === 'image' ? (root as Card<'image'>) : null
+}
+
+/** Clip, readable text and the PNG in one clipboard item. A cut buries the card once the write lands. */
+function writeImageClip(clip: ClipPayload, image: Card<'image'>, cut: boolean) {
+  const at = Date.now()
+  const final = cut ? { ...clip, cut: { at } } : clip
+  const text = clipText(final, boardTitle)
+  remember(final, text)
+  const item: Record<string, Blob | Promise<Blob>> = {
+    'text/html': new Blob([clipHtml(final, text)], { type: 'text/html' }),
+    'image/png': pngOf(image.content.assetId, image.content.sizes),
+  }
+  if (text) item['text/plain'] = new Blob([text], { type: 'text/plain' })
+  navigator.clipboard.write([new ClipboardItem(item)]).then(
+    () => {
+      if (!cut) return
+      select(clip.roots)
+      trashSelection(at, true)
+      cutToast(1)
+    },
+    () => showToast('That picture couldn’t be copied. Try again.'),
+  )
+}
+
+/**
+ * Copy or cut the selection. ⌘C/⌘X (`fromKeys`: their native command follows) and the
+ * card menu (which runs the command itself). 'written' means the async clipboard took
+ * it, so a key's own copy must be stopped.
+ */
+export function copySelection(cut: boolean, fromKeys = false): 'proxy' | 'written' | null {
+  const clip = clipOfSelection()
+  if (!clip) return null
+  const image = soleImage(clip)
+  if (image && typeof ClipboardItem !== 'undefined' && typeof navigator.clipboard?.write === 'function') {
+    writeImageClip(clip, image, cut)
+    return 'written'
+  }
+  pending = { clip, cut }
+  focusProxy(clipText(clip, boardTitle))
+  if (!fromKeys) document.execCommand('copy')
+  return 'proxy'
 }
 
 /** ⌘⇧V: the next paste is plain text (no clip, no link preview). */
@@ -235,14 +300,10 @@ export function installClipboard(opts: { readOnly: boolean }) {
     const key = e.key.toLowerCase()
     if ((key === 'c' || key === 'x') && selection().size) {
       if (key === 'x' && opts.readOnly) return
-      const clip = clipOfSelection()
-      if (!clip) {
-        // Stickers alone: the canvas writes them; the proxy only makes the native copy fire.
-        if (key === 'c' && [...selection()].some((id) => doc.get(id)?.kind === 'sticker')) focusProxy(' ')
-        return
-      }
-      pending = { clip, cut: key === 'x' }
-      focusProxy(clipText(clip, boardTitle))
+      const done = copySelection(key === 'x', true)
+      if (done === 'written') e.preventDefault()
+      // Stickers alone: the canvas writes them; the proxy only makes the native copy fire.
+      else if (!done && key === 'c' && [...selection()].some((id) => doc.get(id)?.kind === 'sticker')) focusProxy(' ')
     } else if (key === 'v' && !opts.readOnly) {
       plainUntil = e.shiftKey ? Date.now() + 1000 : 0
       focusProxy('')
@@ -261,14 +322,17 @@ export function installClipboard(opts: { readOnly: boolean }) {
       const cutClip = { ...clip, cut: { at } }
       writeClip(e.clipboardData, cutClip)
       trashSelection(at, true)
-      showToast(`Cut ${clip.roots.length} ${clip.roots.length === 1 ? 'card' : 'cards'}. Paste to put ${clip.roots.length === 1 ? 'it' : 'them'} somewhere else.`, 4000)
+      cutToast(clip.roots.length)
     } else writeClip(e.clipboardData, clip)
   }
+  const onLeave = () => (leftSince = true)
   window.addEventListener('keydown', onKey, true)
+  window.addEventListener('blur', onLeave)
   document.addEventListener('copy', onCopy)
   document.addEventListener('cut', onCopy)
   return () => {
     window.removeEventListener('keydown', onKey, true)
+    window.removeEventListener('blur', onLeave)
     document.removeEventListener('copy', onCopy)
     document.removeEventListener('cut', onCopy)
   }

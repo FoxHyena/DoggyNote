@@ -1,0 +1,207 @@
+{
+  "slug": "make-a-table",
+  "category": "working-on-boards",
+  "kind": "task",
+  "title": "Make a table for lists with columns",
+  "summary": "Add a table card, type into it like a spreadsheet, give columns types such as checkbox, date, tag and paws, and paste in a sheet.",
+  "status": "published",
+  "order": 135,
+  "benefit": "Keep lists that need columns, such as a walk log or a vet schedule, on the board next to your notes.",
+  "outcome": "A table called Dog diary lists each pup with an age, a tick for a good boy, a birthday, a status tag and a paw rating.",
+  "prerequisites": [
+    "A board you can edit."
+  ],
+  "keywords": [
+    "spreadsheet",
+    "grid",
+    "rows",
+    "columns",
+    "excel",
+    "sheets",
+    "csv",
+    "paste",
+    "sort",
+    "checkbox",
+    "date",
+    "tag",
+    "rating",
+    "cells"
+  ],
+  "sections": [
+    {
+      "id": "make-a-table",
+      "title": "Make a table",
+      "paragraphs": [
+        "A table is a card with a title, a header row and as many rows as you need. Each column has its own type, so a checkbox column ticks, a date column takes dates and a tag column picks from a list you make. For example, a Dog diary can list every pup with an age, a tick for good behaviour, a birthday and a status."
+      ],
+      "flow": {
+        "entry": "Open the board where the table should live. In the tools on the left, Table is under More.",
+        "steps": [
+          {
+            "action": "Choose Table, or drag it to the spot you want. On a phone, tap + at the bottom of the screen, then Table.",
+            "result": "A table appears with three columns named Name, Treats and Notes and three empty rows. The first cell is ready to type in, and the title says “Name this table”."
+          },
+          {
+            "action": "Click the title and type Dog diary.",
+            "result": "The title sits above the header row."
+          },
+          {
+            "action": "Click a header, such as Treats, and type a new name. Press Tab to move to the next cell.",
+            "result": "The column takes the new name. Tab, Enter and the arrow keys walk you through the table."
+          },
+          {
+            "action": "Press Escape, or click the empty board.",
+            "result": "The table keeps what you typed and the edit tools go away."
+          }
+        ],
+        "completion": "The table saves as you type and syncs to everyone on the board.",
+        "correction": "Press ⌘Z (Ctrl+Z on Windows) to undo your last change. A new table you never typed into is removed when you leave it, so a stray click leaves nothing behind."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/make-a-table/new-table.png",
+          "darkSrc": "/docs/assets/make-a-table/new-table-dark.png",
+          "alt": "A new table named Name this table with the columns Name, Treats and Notes, three empty rows and the first cell outlined in gold.",
+          "caption": "A new table, ready to type in. Small dots above the columns and beside the rows are grips, and the + at the bottom and right edges add a row or a column.",
+          "width": 952,
+          "height": 632
+        }
+      ]
+    },
+    {
+      "id": "move-around-and-type",
+      "title": "Move around and type",
+      "paragraphs": [
+        "The arrow keys move from cell to cell. Hold Shift to select a block of cells, or hold ⌘ (Ctrl on Windows) to jump to the edge. Just start typing to replace what a cell holds.",
+        "Press Enter or F2 to edit the text that is already in a cell. Tab moves to the next cell and Enter moves down; at the end of the table both add a row. Escape cancels what you were typing, and a second Escape leaves the table. Delete clears the selected cells, ⌘B makes them bold, and ⌘A selects every cell."
+      ],
+      "figures": [
+        {
+          "src": "/docs/assets/make-a-table/dog-diary.png",
+          "darkSrc": "/docs/assets/make-a-table/dog-diary-dark.png",
+          "alt": "A table called Dog diary with the columns Pup, Age, Good boy, Birthday, Status and Paws and four rows: Rex, Mochi, Biscuit and Fido. Biscuit's row is filled blue.",
+          "caption": "A finished table. Numbers sit on the right, ticks and paws are centred, and tags look like labels.",
+          "width": 1472,
+          "height": 514
+        }
+      ]
+    },
+    {
+      "id": "rows-and-columns",
+      "title": "Add, move, resize and remove rows and columns",
+      "paragraphs": [
+        "While you edit a table, small grips appear beside every row and above every column. Click a grip to pick that row or column and the bar above the table switches to what you can do with it. Drag a grip to move the row or column, and a line shows where it will land.",
+        "The + at the bottom edge adds a row and the + at the right edge adds a column. A column header's ⋯ opens the column menu, which renames the column, changes its type, inserts a column on either side, moves it and deletes it. Drag the edge between two headers to give one column more room and the next one less, or drag the card's corner to scale every column together.",
+        "No mouse? Shift+Space picks the row you are in and Ctrl+Space picks the column. Then Alt+Shift with an arrow key moves it, and with a picked column Alt+Shift+< or Alt+Shift+> makes it narrower or wider."
+      ],
+      "figures": [
+        {
+          "src": "/docs/assets/make-a-table/rows-and-columns.png",
+          "darkSrc": "/docs/assets/make-a-table/rows-and-columns-dark.png",
+          "alt": "The Dog diary table with its second row picked: grips beside each row and above each column, and above the table a small bar with Fill, Insert row below, Delete and More buttons.",
+          "caption": "Pick a row with its grip. The bar above the table shows fill, insert row, delete and more.",
+          "width": 1536,
+          "height": 702
+        }
+      ]
+    },
+    {
+      "id": "column-types",
+      "title": "Choose what a column holds",
+      "paragraphs": [
+        "Open a column's ⋯ menu, choose Column type, and pick one of six types.",
+        "Text is for words. Number lines up on the right and reads numbers the way your browser writes them, so 1.234,5 works in a German browser and is saved as a plain number. Checkbox ticks with a click, or with Space or Enter. Date takes a date typed in your usual order, or as 2024-05-31, and shows it short. Tag picks one label from a list. Paws is a rating of one to five.",
+        "To use a tag column, select a cell and press Enter. Type to filter the list, press Enter on a name that isn't there yet to create it with the next free colour, or use the column menu's Edit options to rename, recolour, reorder and delete options. Each column keeps up to 50 options. For paws, press 1 to 5 to set a rating and 0 or Delete to clear it; clicking a paw sets that many, and clicking the same paw again clears it.",
+        "A table that is only selected ticks a box with one click, like a to-do. When the table is being edited, click the box itself."
+      ],
+      "callout": {
+        "title": "Changing a type loses nothing",
+        "text": "If a value doesn't fit the new type, such as a word in a number column, it stays in the cell in muted italics. Change the column back and the value appears again."
+      },
+      "figures": [
+        {
+          "src": "/docs/assets/make-a-table/tag-picker.png",
+          "darkSrc": "/docs/assets/make-a-table/tag-picker-dark.png",
+          "alt": "The Dog diary table with the Walked tag cell open: a filter box saying Sniff out an option, the options Walked, Fed and Napping with Walked ticked, and a Clear button.",
+          "caption": "A tag cell opens a small list. Type to filter it, or type a new name to make a new tag.",
+          "width": 1580,
+          "height": 746
+        }
+      ]
+    },
+    {
+      "id": "bold-align-fill-sort",
+      "title": "Bold, align, fill and sort",
+      "paragraphs": [
+        "Select some cells and the bar above the table offers Bold, Align and Fill. Align sets the cells you picked, or choose a column's header to set a default for the whole column. Fill paints cells or a whole row with one of six colours; a ticked box and the text inside take the colour's matching ink so they stay easy to read.",
+        "Sort is a one-off. Pick a column with its grip, choose Sort, then A to Z, Z to A or the number version, and the rows are rearranged once. Empty cells go last, everyone sees the same order, and one undo puts the rows back. The table isn't kept sorted, so rows never jump while you or a friend are typing. The sorted column keeps a small arrow in its header, until you move rows, add a row or sort another column."
+      ],
+      "figures": [
+        {
+          "src": "/docs/assets/make-a-table/sort-menu.png",
+          "darkSrc": "/docs/assets/make-a-table/sort-menu-dark.png",
+          "alt": "The Dog diary table with the Age column picked and a small bar above it showing Type, Sort, Align and More; the Sort menu is open with Sort 1 to 9 and Sort 9 to 1.",
+          "caption": "Pick a column and choose Sort. Number columns offer 1 to 9, and text and dates have their own wording.",
+          "width": 1472,
+          "height": 694
+        }
+      ]
+    },
+    {
+      "id": "paste-from-a-spreadsheet",
+      "title": "Paste from a spreadsheet",
+      "paragraphs": [
+        "Copy cells in Excel, Numbers or Google Sheets, select a cell in your table and paste. The table fills in from there and adds rows and columns as it needs them, up to its limit. If you paste a single value over a block of selected cells, every cell in the block gets it.",
+        "To start a table from a sheet, copy the cells and paste straight onto the board with no card selected. DoggyNote makes a new table and guesses whether your first row is a header. Copy and cut work the other way too, so you can paste a table back into a spreadsheet."
+      ]
+    },
+    {
+      "id": "on-a-phone",
+      "title": "On a phone",
+      "paragraphs": [
+        "Tap a table to select it and tap a cell to edit it. A dock rides on top of the keyboard with ‹ and › to move between cells, because a phone keyboard has no Tab key, then three buttons for what you picked, and ⋯ for more. The buttons change with the selection: Bold, Align and Fill for cells, Fill, Insert row and Delete for a row, and Type, Sort and Align for a column.",
+        "Fill, Type, Sort and Tag lists open as sheets from the bottom. The grips are about the size of a fingertip, and the + for a new row sits just below the table. A date cell opens your phone's own date wheel, and tags and paws open without the keyboard. One finger over a table that isn't being edited still pans the board."
+      ],
+      "figures": [
+        {
+          "src": "/docs/assets/make-a-table/phone-dock.png",
+          "darkSrc": "/docs/assets/make-a-table/phone-dock-dark.png",
+          "alt": "A phone showing the Dog diary table being edited, with the Mochi cell outlined, and at the bottom a dock with previous and next arrows, Bold, Align, Fill and More buttons.",
+          "caption": "The dock sits on top of the keyboard. ‹ and › stand in for the Tab key.",
+          "width": 764,
+          "height": 786
+        },
+        {
+          "src": "/docs/assets/make-a-table/phone-fill-sheet.png",
+          "darkSrc": "/docs/assets/make-a-table/phone-fill-sheet-dark.png",
+          "alt": "A phone showing a Fill sheet from the bottom of the screen with a clear option and six colour dots, over the Dog diary table.",
+          "caption": "Fill, Type and Sort open as sheets on a phone.",
+          "width": 780,
+          "height": 728
+        }
+      ]
+    },
+    {
+      "id": "agents",
+      "title": "Let an agent write a table",
+      "paragraphs": [
+        "A connected agent, such as Claude through the DoggyNote MCP connector, reads a table as plain columns and rows and can propose a new table or changes to one. Tags are named by their label, so an agent can write Walked and doesn't need to know the colour or id behind it.",
+        "As with any agent change, you review it before anything happens. The review says what it would do in words, such as “3 cells changed · 1 row added”, and Preview on the board shows the table as it would look. Approve it to apply the changes, or reverse them afterwards while nobody has edited those cells."
+      ]
+    },
+    {
+      "id": "limits",
+      "title": "Good to know",
+      "paragraphs": [
+        "A table holds up to 100 rows and 26 columns, with up to 2,000 characters in a cell. When a table is full, a dog-themed note says the kennel is full, and a paste that doesn't all fit tells you what stayed behind.",
+        "There are no formulas and no summary row, and a tag cell holds one tag, not several.",
+        "Two people can edit different cells of the same table at the same time and both edits are kept. If two people change the same cell, the last edit wins. People with view-only access, including anyone on a share link, can read every type but can't tick, type or reorder anything. Zoomed far out, a table is drawn as a simple outline of its header, rows and fills; zoom in to read it."
+      ]
+    }
+  ],
+  "related": [
+    "labels-and-search",
+    "align-and-lock-cards"
+  ],
+  "links": []
+}

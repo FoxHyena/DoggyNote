@@ -39,7 +39,7 @@ export function BoardCard(props: CardProps<'board'>) {
   })
 
   return (
-    <div class="board-card" data-open-board={props.card.content.boardId} title={props.readOnly ? 'Open board' : 'Double-click to open · Enter to rename'}>
+    <div class="board-card" data-open-board={props.card.content.boardId} title={props.readOnly ? 'Open board' : 'Double-click to open'}>
       <div class="board-tile" style={{ '--tile-bg': cardColorVars(board()?.color, 'gold').bg, '--tile-fg': cardColorVars(board()?.color, 'gold').text }}>
         <BoardIconSvg icon={board()?.icon ?? 'paw'} size={30} />
       </div>

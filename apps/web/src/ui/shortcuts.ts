@@ -48,7 +48,8 @@ export function installShortcuts(opts: { readOnly: boolean }) {
     }
 
     // Menu and toolbar buttons keep ordinary typing keys away from canvas edits.
-    if ((e.target as Element)?.closest?.('.menu, .topbar, .canvas-controls, .follow-banner, .selection-bar') && !mod) {
+    // Text fields there (board title, Find a board) keep their own Backspace.
+    if (!typing && (e.target as Element)?.closest?.('.menu, .topbar, .canvas-controls, .follow-banner, .selection-bar') && !mod) {
       if (e.key === 'Backspace') e.preventDefault()
       return
     }

@@ -9,6 +9,7 @@ import { boardId, openBoard, renamingBoardId, setRenamingBoardId } from '../stat
 import { BoardNavigation } from './BoardNavigation.tsx'
 import { installMenu } from './menu.ts'
 import { phone, touch } from '../state/device.ts'
+import { FavouriteButton } from './FavouriteButton.tsx'
 
 export function breadcrumbs(id: Id, root: Id = HOME_BOARD_ID): Board[] {
   const out: Board[] = []
@@ -62,14 +63,16 @@ export function TopBar(props: { readOnly: boolean; navigation?: boolean; root?: 
   }
 
   return (
+    // A bare drag region only answers clicks on itself, so the empty layout
+    // wrappers carry it too; buttons and inputs inside still click.
     <header class="topbar" data-tauri-drag-region>
-      <div class="topbar-left">{props.left}<div class="board-heading">
-      <nav class="crumbs" classList={{ 'deep-crumbs': crumbs().length > 2 }} aria-label="Breadcrumbs" data-testid="breadcrumbs">
+      <div class="topbar-left" data-tauri-drag-region>{props.left}<div class="board-heading" data-tauri-drag-region>
+      <nav class="crumbs" data-tauri-drag-region classList={{ 'deep-crumbs': crumbs().length > 2 }} aria-label="Breadcrumbs" data-testid="breadcrumbs">
         <Show when={crumbs().length > 1}><div class="ancestor-menu zoom" ref={ancestorRoot}>
           <button ref={ancestorTrigger} class="crumb" aria-label="Parent boards" data-testid="parent-boards" aria-expanded={ancestorsOpen()} onPointerDown={startHold} onPointerUp={endHold} onPointerLeave={endHold} onPointerCancel={endHold} onClick={onParent}><span class="parent-dots">…</span><Icon name="chevronLeft" class="parent-back" /></button>
           <Show when={ancestorsOpen()}><div class="menu nav-menu" aria-label="Parent boards"><SheetGrip onDismiss={() => { setAncestorsOpen(false); ancestorTrigger.focus() }} /><For each={crumbs().slice(0,-1)}>{(b) => <button class="menu-item" onClick={() => { openBoard(b.id); setAncestorsOpen(false); queueMicrotask(() => (ancestorTrigger.isConnected ? ancestorTrigger : document.querySelector<HTMLButtonElement>('[data-testid=board-name]'))?.focus()) }}>{titleOf(b)}</button>}</For></div></Show>
         </div><span class="crumb-sep ancestor-menu">/</span></Show>
-        <div class="ancestor-crumbs"><For each={crumbs().slice(0, -1)}>
+        <div class="ancestor-crumbs" data-tauri-drag-region><For each={crumbs().slice(0, -1)}>
           {(b) => (
             <>
               <button class="crumb" data-testid="crumb" onClick={() => openBoard(b.id)}>
@@ -108,8 +111,8 @@ export function TopBar(props: { readOnly: boolean; navigation?: boolean; root?: 
             />
           </Show>
         </Show>
-      </nav>{props.status}{props.permission}</div></div>
-      <div class="topbar-right">
+      </nav><Show when={props.navigation && !phone() && current() && !current()!.id.startsWith('toybox:')}><FavouriteButton boardId={current()!.id} class="topbar-favourite" /></Show>{props.status}{props.permission}</div></div>
+      <div class="topbar-right" data-tauri-drag-region>
         {props.right}
       </div>
     </header>

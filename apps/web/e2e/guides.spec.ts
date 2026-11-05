@@ -127,6 +127,8 @@ test('the appearance icon cycles from the keyboard, persists, and the app shares
 
 test('the skip link moves focus to the guide', async ({ page, browserName }) => {
   await page.goto('/docs/reading-and-appearance')
+  // The guide is lazy-loaded; send the key only after its skip link exists.
+  await expect(page.getByRole('link', { name: 'Skip to content' })).toBeAttached()
   const tab = browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab'
   await page.keyboard.press(tab)
   await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused()

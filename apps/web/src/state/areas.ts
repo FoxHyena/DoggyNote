@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js'
-import { AREA_HEADER, AREA_PADDING, areaBurialFamily, areaFamily, areaMembers, planAreaTidy, isArea, isAreaItem, itemArea, newId, union, type Card, type CardType, type Id, type Obj, type Vec } from '@doggynote/core'
+import { AREA_HEADER, AREA_PADDING, DEFAULT_SIZE, areaBurialFamily, areaFamily, areaMembers, planAreaTidy, isArea, isAreaItem, itemArea, newId, union, type Card, type CardType, type Id, type Obj, type Vec } from '@doggynote/core'
 import * as doc from './doc.ts'
 import { beginEdit, boardId, endEdit, select, selection } from './ui.ts'
 import { cardHeight, rectOf, worldPosition } from '../canvas/layout.ts'
@@ -89,7 +89,8 @@ export function areaAddPoint(type?: CardType): Vec | null {
   if (!isArea(area) || isPositionLocked(area.id)) return null
   const members = areaMembers(area, itemsOn(area.boardId))
   const y = Math.max(area.y + AREA_HEADER + AREA_PADDING, ...members.flatMap(item => { const r = rectOf(item.id); return r ? [r.y + r.h + 24] : [] }))
-  return { x: area.x + AREA_PADDING + 130, y: y + 20 }
+  // Cards are placed by their middle: a wide table needs more than the usual 130 to stay inside the area.
+  return { x: area.x + AREA_PADDING + (type === 'table' ? DEFAULT_SIZE.table.w / 2 : 130), y: y + 20 }
 }
 export function rootAreaId(id: Id) { const item = doc.get(id); return isAreaItem(item) ? itemArea(item, doc.get)?.id : undefined }
 export const visibleAreaMember = (id: Id) => !hiddenByColumn(id)

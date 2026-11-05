@@ -13,7 +13,7 @@
   <img src="docs/screenshots/board-dark.png" alt="A DoggyNote board with notes, a packing-list column, to-dos, images, a link preview, a PDF and connectors" width="900">
 </p>
 
-DoggyNote is an infinite canvas for notes, to-do lists, images, links and files. You arrange them freely, group them into columns, nest boards inside boards, and draw lines between them. It's built for a handful of people sharing one server. It runs as a native Mac app, and anyone can view a board you share in their browser.
+DoggyNote is an infinite canvas for notes, to-do lists, tables, images, links and files. You arrange them freely, group them into columns, nest boards inside boards, and draw lines between them. It's built for a handful of people sharing one server. It runs as a native Mac app, and anyone can view a board you share in their browser.
 
 It's designed to stay fast on big boards. The Mac app is a small native app (about 13 MB), not a bundled copy of Chrome. A board with a thousand cards and hundreds of images pans at a steady 60 fps.
 
@@ -21,6 +21,7 @@ It's designed to stay fast on big boards. The Mac app is a small native app (abo
 
 **On the board**
 - **Notes in Markdown** with live preview: headings, bold, lists, checklists and links render as you type.
+- **Tables** with typed columns (text, number, checkbox, date, tag and paw rating), bold, alignment and fills, one-off sort, paste from a spreadsheet, and a compact bar or phone dock for editing. Agents can read and propose them.
 - **To-do lists**, **columns** that cards snap into, and **boards inside boards** with icons and colours.
 - **Images**: paste, drop or upload. Several sizes are stored, so zoomed-out boards stay light.
 - **Chrome image clipper** (private test): hover an image on the web, choose a board, and save it to that board’s Inbox. Place it on the canvas later. [Install and build instructions](apps/extension/README.md).
@@ -38,6 +39,7 @@ It's designed to stay fast on big boards. The Mac app is a small native app (abo
 - **Comment threads** on any card: replies, resolve/reopen, and edit or delete your own messages.
 - **View-only share links**: anyone can look, nobody can edit. Turn a link off at any time.
 - **Private personal boards**, with inherited access for nested boards. Share view or edit access by username, or send a seven-day editing invitation that requires sign-in. Link revocation removes access granted through that link.
+- **Profile names** separate your visible name from your sign-in username. Set one in Account → Edit profile or during signup; names support spaces and emoji, and clearing one falls back to your username.
 - **Account invitations** from the admin People dashboard: single-use signup links, password recovery and session revocation. New accounts start with their own personal home.
 - **Quiet save status**: changes save locally and sync quickly without flashing on every edit. Open Save status for pending work, retry and recovery copies if board access changes.
 - **Agent connections**: a scoped, revocable [local MCP connector](docs/mcp-setup.md) lets agents read boards and propose changes. Preview, approve, reject or reverse their edits inside the app.
@@ -95,6 +97,8 @@ pnpm test:e2e                     # Playwright end-to-end tests, WebKit + Chromi
 ```
 
 Every pull request runs typecheck, unit tests, the full end-to-end suite on WebKit and Chromium, and a performance check. After merging to `main`, manually run the Release workflow to stage signed Mac artifacts and deploy the server and web app. Each Worker advertises the staged updater matching its own version, so a new desktop is exposed together with its compatible server. The fallback updater and GitHub release publish after deployment. [`CLAUDE.md`](CLAUDE.md) holds the project's rules: colours, performance, privacy and API compatibility.
+
+Display names require `0020_display_names.sql` before deploying the updated Worker. The API changes are additive, so older desktop clients remain supported.
 
 For multiplayer, apply migrations through `0012_multiplayer.sql` and release the Worker, web app and compatible desktop updater together. Desktop versions below `0.3.0`, and clients without sync protocol 3, are prompted to update. Older queued note replacements become recovery drafts. [Multiplayer architecture, release ordering and rollback limits](docs/multiplayer.md) describe the coordinated release; deployment remains a separate action.
 

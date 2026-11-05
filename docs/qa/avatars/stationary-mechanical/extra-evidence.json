@@ -1,0 +1,323 @@
+{
+  "focus": [
+    {
+      "engine": "chromium",
+      "via": "actual filechooser",
+      "active": {
+        "tag": "BODY",
+        "label": null,
+        "inside": false
+      }
+    },
+    {
+      "engine": "webkit",
+      "via": "actual filechooser",
+      "active": {
+        "tag": "BODY",
+        "label": null,
+        "inside": false
+      }
+    }
+  ],
+  "panorama": [
+    {
+      "engine": "chromium",
+      "shape": "panorama",
+      "selection": {
+        "x": 156.59375,
+        "y": 309.59375,
+        "width": 6.796875,
+        "height": 6.796875
+      },
+      "handles": [
+        {
+          "x": 112.59375,
+          "y": 265.59375,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 163.390625,
+          "y": 265.59375,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 112.59375,
+          "y": 316.390625,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 163.390625,
+          "y": 316.390625,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        }
+      ],
+      "zoom": "4"
+    },
+    {
+      "engine": "chromium",
+      "shape": "portrait",
+      "selection": {
+        "x": 139.59375,
+        "y": 292.59375,
+        "width": 40.796875,
+        "height": 40.796875
+      },
+      "handles": [
+        {
+          "x": 95.59375,
+          "y": 248.59375,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 180.390625,
+          "y": 248.59375,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 95.59375,
+          "y": 333.390625,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 180.390625,
+          "y": 333.390625,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        }
+      ],
+      "zoom": "4"
+    },
+    {
+      "engine": "chromium",
+      "shape": "transparent-square",
+      "selection": {
+        "x": 119.1875,
+        "y": 272.1875,
+        "width": 81.59375,
+        "height": 81.59375
+      },
+      "handles": [
+        {
+          "x": 75.1875,
+          "y": 228.1875,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 200.796875,
+          "y": 228.1875,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 75.1875,
+          "y": 353.796875,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 200.796875,
+          "y": 353.796875,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        }
+      ],
+      "zoom": "4"
+    },
+    {
+      "engine": "webkit",
+      "shape": "panorama",
+      "selection": {
+        "x": 156.59375,
+        "y": 309.59375,
+        "width": 6.796875,
+        "height": 6.796875
+      },
+      "handles": [
+        {
+          "x": 112.59375,
+          "y": 265.59375,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 163.390625,
+          "y": 265.59375,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 112.59375,
+          "y": 316.390625,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 163.390625,
+          "y": 316.390625,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        }
+      ],
+      "zoom": "4"
+    },
+    {
+      "engine": "webkit",
+      "shape": "portrait",
+      "selection": {
+        "x": 139.59375,
+        "y": 292.59375,
+        "width": 12.75,
+        "height": 12.75
+      },
+      "handles": [
+        {
+          "x": 95.59375,
+          "y": 248.59375,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 152.34375,
+          "y": 248.59375,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 95.59375,
+          "y": 305.34375,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 152.34375,
+          "y": 305.34375,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        }
+      ],
+      "zoom": "4"
+    },
+    {
+      "engine": "webkit",
+      "shape": "transparent-square",
+      "selection": {
+        "x": 119.1875,
+        "y": 272.1875,
+        "width": 81.59375,
+        "height": 81.59375
+      },
+      "handles": [
+        {
+          "x": 75.1875,
+          "y": 228.1875,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 144.6875,
+          "y": 228.1875,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 75.1875,
+          "y": 297.6875,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        },
+        {
+          "x": 144.6875,
+          "y": 297.6875,
+          "width": 44,
+          "height": 44,
+          "hit": true
+        }
+      ],
+      "zoom": "4"
+    }
+  ],
+  "overlays": [
+    {
+      "type": "startGroup",
+      "text": "%c[impeccable] 3 anti-patterns found color: oklch(84% 0.19 80.46); font-weight: bold",
+      "args": [
+        "%c[impeccable] 3 anti-patterns found",
+        "color: oklch(84% 0.19 80.46); font-weight: bold"
+      ]
+    },
+    {
+      "type": "endGroup",
+      "text": "console.groupEnd",
+      "args": [
+        "console.groupEnd"
+      ]
+    },
+    {
+      "type": "log",
+      "text": "%cbody-text-viewport-edge%c <p> with 72-char body bleeds to viewport edge (left 0px / right 0px) color: oklch(84% 0.19 80.46); font-weight: bold color: inherit JSHandle@node",
+      "args": [
+        "%cbody-text-viewport-edge%c <p> with 72-char body bleeds to viewport edge (left 0px / right 0px)",
+        "color: oklch(84% 0.19 80.46); font-weight: bold",
+        "color: inherit",
+        "ref: <Node>"
+      ]
+    },
+    {
+      "type": "log",
+      "text": "%ctext-overflow%c button.icon-btn overflows its box by 33px color: oklch(84% 0.19 80.46); font-weight: bold color: inherit JSHandle@node",
+      "args": [
+        "%ctext-overflow%c button.icon-btn overflows its box by 33px",
+        "color: oklch(84% 0.19 80.46); font-weight: bold",
+        "color: inherit",
+        "ref: <Node>"
+      ]
+    },
+    {
+      "type": "log",
+      "text": "%cbounce-easing%c cubic-bezier(0.3, 1.4, 0.5, 1) color: oklch(84% 0.19 80.46); font-weight: bold color: inherit JSHandle@node",
+      "args": [
+        "%cbounce-easing%c cubic-bezier(0.3, 1.4, 0.5, 1)",
+        "color: oklch(84% 0.19 80.46); font-weight: bold",
+        "color: inherit",
+        "ref: <Node>"
+      ]
+    }
+  ],
+  "touch": {
+    "zoomBefore": "1.25",
+    "zoomAfter": "1",
+    "imageStationary": true,
+    "boardStationary": true
+  }
+}

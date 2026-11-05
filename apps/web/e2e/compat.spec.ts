@@ -31,5 +31,7 @@ test('a card type this app does not know shows a placeholder and keeps its heigh
   expect((await placeholder.boundingBox())!.height).toBeCloseTo(133, 0)
   await page.waitForTimeout(1200)
   expect(writes.filter((w) => w.includes(id))).toEqual([])
+  // Finish intercepted pulls before Playwright tears down the page.
+  await page.unrouteAll({ behavior: 'wait' })
   expect(errors).toEqual([])
 })

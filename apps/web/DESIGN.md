@@ -14,6 +14,8 @@ colors:
   oat-biscuit: "#f3efe9"
   milk-bowl: "#fbf9f6"
   paper-white: "#ffffff"
+  crop-guide: "#ffffff"
+  crop-shade: "#0b0a09"
   oat-hover: "#f7f3ee"
   oat-border: "#ddd5ca"
   oat-dot: "#d3cabe"
@@ -202,9 +204,10 @@ A warm, low-chroma brown family lit by a single golden retriever amber, plus six
 - **Collar Coral** (dark error text): inline field errors only.
 - **Oat Biscuit**, **Milk Bowl**, **Paper White**, **Oat Hover**, **Oat Border**, **Oat Dot**: the light twin of floor, shelf, card, hover, border and grid dots.
 - **Wet Nose Brown** and **Paw Pad Brown**: light theme text and muted text. **Scolded Red** is light theme error text.
+- **Photo Guide** and **Photo Shade** (`--dn-crop-guide`, `--dn-crop-shade`): theme-independent photographic framing materials, present in both themes. A white guide over a dark outline stays legible across supplied photos; the dark material also shades excluded image regions. The same pair frames the account avatar's camera affordance. Their use stays local to profile photos, without adding app accents.
 
 ### Card swatches
-Six colours a person can give a note or column header, each with a background and a matched text colour per theme: **Gold**, **Collar**, **Ball**, **Sky**, **Lilac** and **Peach**, plus **None** (the plain card). Dark-theme swatches (`-den`) are muted mid-tones; light-theme swatches (`-day`) are pale pastels. Their text pairs live in `tokens.ts` and are not repeated here. Synced colour values always pass through `cardColor()` before reaching CSS.
+Six colours a person can give a note or column header, each with a background and a matched text colour per theme: **Gold**, **Collar**, **Ball**, **Sky**, **Lilac** and **Peach**, plus **None** (the plain card). Dark-theme swatches (`-den`) are muted mid-tones; light-theme swatches (`-day`) are pale pastels. Their text pairs live in `tokens.ts` and are not repeated here. Table cell, row and tag fills use their own `tableFills` pairs: the same pastels in light, and in dark a softer tint (about 30% of the swatch over the card) with the theme's light text, so a grid of fills does not outshine the board. Synced colour values always pass through `cardColor()` before reaching CSS.
 
 The same family supplies the **diff** colours (added, changed, removed) shown when previewing an agent's proposal, and the seven **person** colours for collaborator cursors and presence. Both reuse the Ball, Sky, Collar, Lilac, Gold and Peach hues, so collaboration reads as part of the den rather than an overlay.
 
@@ -247,6 +250,8 @@ Spacing runs on small steps: 2, 4, 6, 8, 12, 16 and 24px. Gaps inside controls a
 **Phone layout** (max-width 599px, or a phone on its side): the toolbar becomes a bottom dock with a raised round amber add button. The selection bar docks to the bottom edge as a sheet with an 18px top radius. Panels become sheets over a scrim. Touch-only CSS keys off `html[data-input='touch']`, and every touch target gets a 44px hit area, invisible if necessary.
 
 For signed-in phone users, the board title and the dock's Boards button open the same Your spaces sheet. Rename current board is an explicit action for editable boards. Desktop title clicks still rename; anonymous share viewers have no personal-board navigation.
+
+Your spaces puts fixed places first (My Doghouse, Shared space), then one rule, then lists under real headings (13px semibold, text colour, aligned with the icons, more room above than below): Favourites in star order, Recent (newest first on any device, five, without favourites or the current board), and Shared with me (the top board of each shared tree, newest share first, five before a plain Show all row). A shared row names who shared it with a 20px avatar in that person's cursor colour; View only appears only when it applies. A gold filled star next to the desktop board title adds or removes a favourite; in the menu a starred row reveals its star on hover or focus, and always on touch. Phones get Add to Favourites beside Rename current board. Under the heading, a fixed Sniff out a board… field (32px, 44px on touch) swaps the lists for matching titles with a muted "in <parent>" label; it takes focus on open only with a keyboard, so a phone tap never raises the keyboard. Fetch (⌘K) opens on Favourites, then Recent, with the first preselected.
 
 Connector bodies remain behind cards. Their arrowheads and a short matching end segment paint above column backgrounds, below stickers, without receiving pointer input. Multiplayer cursors occupy a separate screen-space layer above board content through pan, zoom and overview transitions.
 
@@ -311,10 +316,28 @@ Pill-shaped, 12px weight 500, 1px × 8px padding, with each label's own backgrou
 Den Floor fill, 1px border, 8px radius, at least 44px tall, 14px text. Focus is a 2px selection outline with no offset. Errors appear as Collar Coral text beneath, or as a Collar swatch block for form-level errors.
 
 ### Menus and popovers
-Shelf background, 1px border, 10px radius, floating shadow, 4px inner padding. Rows are at least 36px tall, 13px text, 6px radius, with a hover fill. Keyboard hints sit right-aligned in muted 12px. Right-clicking a card hides the selection bar while its menu offers edit (Rename for boards), duplicate, label, comment and bury actions; arrows move through the menu and Escape returns focus to the card. A location ping appears only when another live participant is present. Separators are 1px border lines inset 6px.
+Shelf background, 1px border, 10px radius, floating shadow, 4px inner padding. Rows are at least 36px tall, 13px text, 6px radius, with a hover fill. Keyboard hints sit right-aligned in muted 12px. Right-clicking a card hides the selection bar while its menu offers edit (Rename for boards); cut, copy, paste and duplicate with their ⌘ hints; label, comment and area actions; and bury, in separated groups. Arrows move through the menu and Escape returns focus to the card. Right-clicking empty canvas on a board you can edit offers just Paste, landing at the pointer; a location ping joins it only when another live participant is present. Separators are 1px border lines inset 6px.
 
 ### Dialogs and sheets
 Shelf background, 14px radius, at most 460px wide, over a 45% black backdrop. Headings are 16px. On phones, dialogs and panels become bottom sheets over the scrim token.
+
+### Profile names
+Account pairs its 56px avatar with a 15px semibold display name above a muted 13px `@username`, separated by 4px. The text wraps within the identity row. Display names are optional, nonunique, trimmed single-line names of up to 64 characters; spaces and emoji are supported. Empty names fall back to the username. Usernames remain the stable sign-in and invitation handle.
+
+Edit profile is the first account action after the photo control. It opens the incumbent desktop dialog or phone sheet, with Display name, the hint “This is the name other people see. Leave it empty to use your username.”, and a read-only Username field. Fields use 16px text, Den Floor fill, 8px corners and 44px height; Close, Cancel and Save retain 44px targets. Focus starts in Display name, stays inside the editor, and returns to Edit profile in Account when it closes. Save is the single primary action. Acknowledged saves update the local profile cache; inline errors retain the draft for retry. Saving disables actions and dismissal.
+
+Current names appear in presence, cursors, carets, pings, follow controls, sharing, Shared with me attribution, administration and comments. Historical comments resolve current identity by author ID through the authorized profiles sidecar, retaining their stored author snapshot as a fallback. Both invitation signup flows offer an optional display name. See `.impeccable/surfaces/profile-names.md` for the feature contract.
+
+### Profile photos
+Circular identity images share the existing person-colour initials fallback. Avatars remain decorative within labelled account and identity controls. The standard avatar is 28px with the incumbent 10px, weight-600 initials; the account trigger image is 24px. Images fill the circle with cover cropping. Loading, absent and failed images return to initials.
+
+The desktop Account popover is 280px wide. Its identity row pairs a 56px avatar button, with 20px initials, and the vertically centred display-name and `@username` stack described above. Padding and gap are 16px, with one separator before account actions. The avatar's camera overlay appears only while hovered with a mouse; it remains hidden for keyboard focus, open menus, empty photos and touch. The avatar retains its keyboard focus outline and labelled photo-options button. It opens a small anchored photo menu on desktop and phones: Add photo when empty, or Change photo and Remove photo when saved. Escape closes this child menu before Account; Tab leaves it for Edit profile and Shift+Tab returns to the avatar. Cancelling the file picker retains Account. Closing the photo editor returns to Account and focuses the avatar.
+
+The photo editor inherits the shelf dialog and phone sheet. Its square preview has an 8px corner radius and keeps the entire oriented photograph fixed in view, with 44px clearance for outward-facing corner targets. The stage retains a 224px minimum where viewport width permits. Initial framing and Reset use a centred square at 80% of the source's shorter edge; crop size stays within 25–100% of that edge. The square and simultaneous circular guide move over the photo. The photograph never pans, zooms or automatically reframes, including for tiny selections or viewport changes.
+
+Dragging within the selection and arrow keys move it in the same direction; Shift increases the keyboard step. Spreading fingers enlarges the selection and two-finger movement translates it. Four transparent, disjoint 44px corner targets resize about the opposite corner; handle keys resize the same source crop. Each target contains its painted corner mark, so pressing the visible mark starts resizing. Below a displayed selection size of 44px, a separate 44px grip labelled Move crop on two lines and a leader provide a clear movement target outside the crop and corner targets. Guide marks scale proportionally so they do not cross. There is no visible zoom slider. A quiet checkerboard sits behind source bounds only, using existing shelf and hover tones; it identifies transparency and is excluded from export.
+
+Close photo editor takes focus immediately on mount. Preview and handle focus outlines sit inward to avoid clipping. Reset stays secondary and Save photo is the single primary action. Inline save errors preserve the crop for retry; the body scrolls while the action row stays accessible outside it. See `.impeccable/surfaces/profile-photos.md` for the feature contract and output format.
 
 ### Creation tools
 Note, To-do and Board lead the desktop rail and phone Add sheet. Note is the single accented choice. Occasional tools sit in a quieter More tier; desktop tools keep click and drag creation. Phone Add uses one three-column catalogue of identical 44px inline icon-and-label buttons, with 4px row gaps and 8px column gaps. The first three tools use weight 600; Note alone has the primary button fill. Occasional tools remain visible on the same column grid, without a second heading or button grammar. Add and palette sheets use 16px gutters and a 44px header; their centred 96px-wide grip retains its 28px drag target while sharing the noninteractive space above the heading text.

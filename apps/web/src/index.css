@@ -209,6 +209,12 @@ html[data-input="mouse"] .menu-item:hover {
   z-index: 96;
 }
 
+.menu-item .menu-hint:not(kbd) {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--dn-text-muted);
+  font-size: 12px;
+}
 .menu-item kbd {
   margin-left: auto;
   flex-shrink: 0;

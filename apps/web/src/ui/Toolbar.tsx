@@ -2,6 +2,7 @@ import { areaAddPoint, addingToArea } from '../state/areas.ts'
 import { suggestions, openStickers, stickerTrayOpen } from '../state/stickers.ts'
 import './canvas-entry.css'
 import { For, Show, createSignal } from 'solid-js'
+import { Portal } from 'solid-js/web'
 import { DEFAULT_SIZE, findFreeSpot, screenToWorld, type CardType, type Vec } from '@doggynote/core'
 import { frameChat } from '../canvas/chatViewport.ts'
 import { rectOf } from '../canvas/layout.ts'
@@ -23,6 +24,7 @@ export const TOOLS: Tool[] = [
   { id: 'link', label: 'Link', icon: 'link' },
   { id: 'line', label: 'Line', icon: 'line' },
   { id: 'column', label: 'Column', icon: 'column' },
+  { id: 'table', label: COPY.table.label, icon: 'table' },
   { id: 'area', label: 'Area', icon: 'multi' },
   { id: 'movie', label: 'Movie', icon: 'film' },
   { id: 'swatch', label: 'Colour', icon: 'swatch' },
@@ -172,11 +174,14 @@ export function Toolbar() {
         <Icon size={22} name="bury" />
         <span>{COPY.trash}</span>
       </button>
+      {/* On body: once the toolbar scrolls, WebKit clips fixed children to it. */}
       <Show when={ghost()}>
-        <div class="tool-ghost" style={{ left: `${ghost()!.at.x}px`, top: `${ghost()!.at.y}px` }}>
-          <Icon size={22} name={ghost()!.tool.icon} />
-          {ghost()!.tool.label}
-        </div>
+        <Portal>
+          <div class="tool-ghost" style={{ left: `${ghost()!.at.x}px`, top: `${ghost()!.at.y}px` }}>
+            <Icon size={22} name={ghost()!.tool.icon} />
+            {ghost()!.tool.label}
+          </div>
+        </Portal>
       </Show>
     </aside>
   )

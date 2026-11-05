@@ -6,7 +6,7 @@ Areas group a project on the existing board. Columns inside an area still repres
 
 - Choose **Area** beside **Column**, or select items and choose **Create area from selection**. A selected column brings its cards. Select a column itself, or take a member out, before wrapping it in an area.
 - Drop an item into the highlighted boundary to join. Drag outside to leave. An eligible column takes precedence when dropping a card.
-- Drag the header to move the family. Resize the boundary to set its minimum dimensions; members retain their sizes and relative arrangement. The frame expands around members, including rotated stickers. Header actions stay in the visible horizontal segment of a large area.
+- Drag the header to move the family. Resize the boundary to set its minimum dimensions; members retain their sizes and relative arrangement. The frame expands around members, including rotated stickers. Titles and header actions stay attached to their area on every device, moving and scaling with the canvas. Pan to reach header controls outside the viewport.
 - **Add to area** uses the existing card editors, file/image import, sticker collection and drawing tool. Production uploads retain the existing production limits.
 - **Tidy** aligns columns left to right and places supporting cards below. Stickers and board ink remain where placed. Ordinary editing never tidies automatically.
 - Use **Line** or the existing connection handles for manual arrows. Collapse hides members and internal arrows; external arrows project onto the collapsed frame. Search reveals both the area and a containing column.

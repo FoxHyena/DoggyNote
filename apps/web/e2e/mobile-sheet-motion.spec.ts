@@ -2,7 +2,12 @@ import { expect, test, type Page } from '@playwright/test'
 import { cardByText, freshBoard } from './helpers.ts'
 import { Fingers, note, seedCards } from './touch.ts'
 
-test.beforeEach(async ({ page }) => { await freshBoard(page) })
+test.beforeEach(async ({ page }) => {
+  // Every test shares one account, so its Recent list (synced from the server) holds whatever other
+  // tests just opened. Keep the sheet's height to this device's own boards: these tests time its motion.
+  await page.route('**/api/board-preferences', (route) => route.fulfill({ json: { preferences: [] } }))
+  await freshBoard(page)
+})
 
 async function open(page: Page) {
   await page.getByTestId('board-navigation').tap()
@@ -102,8 +107,10 @@ test('regrabbing a closing sheet cancels its old dismissal', async ({ page }) =>
   await page.waitForTimeout(150)
   await finger.release(0)
   // Slow the existing exit for a reliable hit on the moving 28px grip across
-  // the CDP round trip. Motion remains enabled and the owner must cancel it.
-  await sheet.evaluate((el) => el.getAnimations().forEach((a) => a.updatePlaybackRate(0.15)))
+  // the CDP round trip. The exit always lasts 180ms and travels the sheet's
+  // full height, so a taller sheet moves the grip faster. Motion remains
+  // enabled and the owner must cancel it.
+  await sheet.evaluate((el) => el.getAnimations().forEach((a) => a.updatePlaybackRate(0.05)))
   await page.waitForTimeout(20)
   const b = (await sheet.getByTestId('sheet-grip').boundingBox())!
   const grab = { x: b.x + b.width / 2, y: b.y + 10 }
@@ -111,6 +118,8 @@ test('regrabbing a closing sheet cancels its old dismissal', async ({ page }) =>
   await finger.move(0, { ...grab, y: grab.y - 30 })
   await page.waitForTimeout(240)
   await expect(sheet).toBeAttached()
+  // The regrab cancelled the old dismissal rather than outlasting it.
+  expect(await sheet.evaluate((el) => el.getAnimations().filter((a) => a.playState === 'running').length)).toBe(0)
   await finger.cancel()
   await expect(sheet).toBeVisible()
 })

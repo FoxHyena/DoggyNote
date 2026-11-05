@@ -270,7 +270,7 @@ export function Canvas(props: { readOnly: boolean }) {
           movedWhileEditing = false
           resetPageScroll()
           const r = rectOf(id)
-          if (r) animateCamera(editCamera(r, editRoom(), camera()), 260, () => requestAnimationFrame(revealCaret))
+          if (r) animateCamera(editCamera(editRect(id, r), editRoom(), camera()), 260, () => requestAnimationFrame(revealCaret))
         } else if (!id && prev) {
           // Native text handles do not capture their pointer to the canvas.
           // Their editor may disappear before the release reaches us.
@@ -343,7 +343,9 @@ export function Canvas(props: { readOnly: boolean }) {
         // A finger on the board: the tap decides what happens to the edit.
         if (editingId() !== id || fingers.size) return
         const active = document.activeElement
-        if (active && active !== document.body && (cardEl(id)?.contains(active) || active.closest('.edit-dock, .selection-bar'))) return
+        if (active && active !== document.body && (cardEl(id)?.contains(active) || active.closest('.edit-dock, .selection-bar, .menu, .table-pop'))) return
+        // A table's panel (fill, tags) is open: a tap in it may leave nothing focused, and the edit goes on.
+        if (document.querySelector('.table-pop')) return
         done()
       })
     }
@@ -366,7 +368,7 @@ export function Canvas(props: { readOnly: boolean }) {
         if (!id || !focusEdits() || hasEditSelection()) return
         const r = rectOf(id)
         if (movedWhileEditing || !r || panelEdit(id)) return void requestAnimationFrame(revealCaret)
-        const aim = editCamera(r, editRoom(), camera())
+        const aim = editCamera(editRect(id, r), editRoom(), camera())
         aim.y += caretShift(aim) / aim.zoom
         const c = camera()
         if (Math.abs(aim.x - c.x) * c.zoom < 1 && Math.abs(aim.y - c.y) * c.zoom < 1 && Math.abs(aim.zoom - c.zoom) < 0.001) return
@@ -795,7 +797,7 @@ export function Canvas(props: { readOnly: boolean }) {
       }
       case 'resize': {
         const c = doc.getCard(g.id)!
-        const min = c.type === 'area' ? 320 : c.type === 'ink' ? 8 : c.type === 'image' ? 80 : c.type === 'sketch' ? 120 : 160
+        const min = c.type === 'area' ? 320 : c.type === 'ink' ? 8 : c.type === 'image' ? 80 : c.type === 'sketch' ? 120 : c.type === 'table' ? 200 : 160
         let w = Math.max(min, Math.round(g.w0 + (e.clientX - g.startX) / camera().zoom))
         // Snapping puts the right edge on a grid line.
         const snapping = snapToGrid() && !e.altKey
@@ -908,7 +910,7 @@ export function Canvas(props: { readOnly: boolean }) {
         const again = selection().size === 1 && selection().has(g.id)
         const renames = (c.type === 'column' || c.type === 'area') && !!g.target.closest('[data-edit-title]') && again
         // Zoomed out, cards are shapes on a canvas: a click selects, it can't edit.
-        if (!lod() && (((c.type === 'note' || c.type === 'todo') && again) || renames)) {
+        if (!lod() && (((c.type === 'note' || c.type === 'todo' || c.type === 'table') && again) || renames)) {
           queueEditCaret(g.client)
           beginEdit(g.id)
         } else select([g.id])
@@ -1275,7 +1277,7 @@ export function Canvas(props: { readOnly: boolean }) {
     }
     if (c.type === 'board') return openBoard((c as Card<'board'>).content.boardId)
     const isTitle = !!g.target.closest('[data-edit-title]')
-    if (!lod() && (c.type === 'note' || c.type === 'todo' || ((c.type === 'column' || c.type === 'area') && isTitle) || (c.type === 'image' && double))) {
+    if (!lod() && (c.type === 'note' || c.type === 'todo' || c.type === 'table' || ((c.type === 'column' || c.type === 'area') && isTitle) || (c.type === 'image' && double))) {
       // Synchronously, inside the touch: iOS only raises the keyboard for focus it can tie to a gesture.
       touchEdit(g.id, { x: e.clientX, y: e.clientY })
     }
@@ -1459,7 +1461,7 @@ export function Canvas(props: { readOnly: boolean }) {
     }
     const at = lastPointer ? toWorld(lastPointer) : centerWorld()
     const column = lastPointer ? columnAt(at, new Set()) : null
-    if (handleCanvasPaste(e, at, column?.id)) e.preventDefault()
+    if (handleCanvasPaste(e.clipboardData, at, column?.id)) e.preventDefault()
   }
 
   // iOS starts its own text selection from a held, moving finger; cancelling the
@@ -1576,11 +1578,14 @@ export function Canvas(props: { readOnly: boolean }) {
         const card = id ? doc.getCard(id) : undefined
         if (!card && target.closest('button,[data-nodrag]')) return
         const canPing = liveState() === 'live' && peers().length > 0
-        if ((!card || props.readOnly) && !canPing) return
+        // Empty canvas offers Paste on a board you can edit.
+        const canPaste = !props.readOnly && doc.canWriteObject(doc.getBoard(boardId()))
+        if ((!card || props.readOnly) && !canPing && !canPaste) return
         e.preventDefault()
         endEdit()
         if (card && !props.readOnly && !selection().has(card.id)) select([card.id])
-        setContextPoint({ ...toWorld(e), screenX: e.clientX, screenY: e.clientY, cardId: props.readOnly ? null : card?.id ?? null, returnTo: (card && cardEl(card.id)) || vp })
+        const world = toWorld(e)
+        setContextPoint({ ...world, screenX: e.clientX, screenY: e.clientY, cardId: props.readOnly ? null : card?.id ?? null, columnId: columnAt(world, new Set())?.id, returnTo: (card && cardEl(card.id)) || vp })
       }}
       onDragOver={(e) => {
         if (!props.readOnly) e.preventDefault()
@@ -1647,12 +1652,17 @@ let movedWhileEditing = false
 /** Phones and short touch screens get the editing camera and keyboard handling. */
 const focusEdits = () => touch() && (phone() || visibleArea().height < 600)
 
+/** A table's grips hang this far (board px) over its top and left edges; the edit camera frames them with the card. */
+const GRIPS_OUTSIDE = 40
+const editRect = (id: Id, r: Rect): Rect => (doc.getCard(id)?.type === 'table' ? { x: r.x - GRIPS_OUTSIDE, y: r.y - GRIPS_OUTSIDE, w: r.w + GRIPS_OUTSIDE, h: r.h + GRIPS_OUTSIDE } : r)
+
 /** The part of the canvas the keyboard and the edit dock leave visible, in canvas px. */
 function editRoom() {
   const v = viewport()
   const vis = visibleArea()
   const top = Math.max(0, vis.top - v.top)
-  const dock = doc.getCard(editingId())?.type === 'note' ? EDIT_DOCK : 0
+  const dockType = doc.getCard(editingId())?.type
+  const dock = dockType === 'note' || dockType === 'table' ? EDIT_DOCK : 0
   const bottom = Math.min(v.height, vis.top + vis.height - v.top) - dock
   return { width: v.width, top, bottom }
 }
@@ -1660,14 +1670,14 @@ function editRoom() {
 /** Edit a card from touch. Zoomed out it isn't DOM yet, so jump in first (no animation) to mount the editor now. */
 export function touchEdit(id: Id, caret?: Vec) {
   const r = rectOf(id)
-  if (r && focusEdits() && camera().zoom < LOD_ZOOM) setCamera(editCamera(r, editRoom(), camera()))
+  if (r && focusEdits() && camera().zoom < LOD_ZOOM) setCamera(editCamera(editRect(id, r), editRoom(), camera()))
   // Queue the caret first: the editor mounts (and reads it) inside beginEdit.
   if (caret) queueEditCaret(caret)
   beginEdit(id)
   const el = cardEl(id)
   // iOS only raises the keyboard for focus inside the touch, so focus the field
   // here rather than relying on when the editor's onMount runs.
-  const field = el?.querySelector<HTMLTextAreaElement>('textarea.image-caption-input')
+  const field = el?.querySelector<HTMLTextAreaElement>('textarea.image-caption-input, textarea.table-input')
   if (field && document.activeElement !== field) field.focus({ preventScroll: true })
   if (el) keepEditFocus(id, el)
 }
@@ -1750,6 +1760,11 @@ function revealCaret() {
     cancelCameraAnimation()
     setCamera(panBy(camera(), 0, dy))
   }
+}
+
+/** Keep the caret (a table's active cell) above the keyboard after the editor moved it. */
+export function revealEditCaret() {
+  requestAnimationFrame(revealCaret)
 }
 
 /** After entering edit mode from a click, the editor places its caret at the click. */

@@ -1,6 +1,7 @@
 import { Match, Switch, createResource, onCleanup, onMount } from 'solid-js'
 import { installShortcuts } from './ui/shortcuts.ts'
-import type { Obj } from '@doggynote/core'
+import { clearProfiles, installProfiles } from './state/profiles.ts'
+import type { Profile, Obj } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
 import { ApiError, api, setShareToken } from './state/api.ts'
 import * as doc from './state/doc.ts'
@@ -14,21 +15,23 @@ import { Loader } from './ui/Loader.tsx'
 import { CommentsPanel } from './ui/CommentsPanel.tsx'
 import { BoardIconSvg, DogMark } from './ui/icons.tsx'
 
-type Shared = { rootBoardId: string; sharedBoards: string[]; objects: Obj[] }
+type Shared = { profiles?: Profile[]; rootBoardId: string; sharedBoards: string[]; objects: Obj[] }
 
 /** Read-only viewer for /s/<token>. Nothing is stored on the viewer's device. */
 export function Viewer(props: { token: string }) {
   const theme = createTheme()
+  clearProfiles(false)
   onCleanup(installShortcuts({ readOnly: true }))
   const [data, { refetch }] = createResource(async () => {
     let res: Shared
     try { res = await api<Shared>(`/api/share/${encodeURIComponent(props.token)}`) }
     catch (error) {
-      if (error instanceof ApiError && [403, 404, 410].includes(error.status)) { doc.loadSnapshot([]); setShareToken(null) }
+      if (error instanceof ApiError && [403, 404, 410].includes(error.status)) { doc.loadSnapshot([]); clearProfiles(false); setShareToken(null) }
       throw error
     }
     setShareToken(props.token)
     await doc.load({ persist: false, readOnly: true })
+    installProfiles(res.profiles ?? [], false)
     doc.loadSnapshot(res.objects)
     setRootBoard(res.rootBoardId)
     return res
@@ -37,7 +40,7 @@ export function Viewer(props: { token: string }) {
     const refresh = () => { if (document.visibilityState === 'visible') void refetch() }
     const timer = setInterval(refresh, 10_000)
     window.addEventListener('focus', refresh)
-    onCleanup(() => { clearInterval(timer); window.removeEventListener('focus', refresh); setShareToken(null) })
+    onCleanup(() => { clearInterval(timer); window.removeEventListener('focus', refresh); setShareToken(null); clearProfiles(false) })
   })
 
   const notFoundMsg = () => (data.error instanceof ApiError ? data.error.message : "Couldn't load this board.")

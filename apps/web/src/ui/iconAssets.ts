@@ -9,6 +9,12 @@ import listChecksSvg from '@phosphor-icons/core/regular/list-checks.svg?raw'
 import arrowUpRightSvg from '@phosphor-icons/core/regular/arrow-up-right.svg?raw'
 import squaresFourSvg from '@phosphor-icons/core/regular/squares-four.svg?raw'
 import rowsSvg from '@phosphor-icons/core/regular/rows.svg?raw'
+import tableSvg from '@phosphor-icons/core/regular/table.svg?raw'
+import rowsPlusTopSvg from '@phosphor-icons/core/regular/rows-plus-top.svg?raw'
+import rowsPlusBottomSvg from '@phosphor-icons/core/regular/rows-plus-bottom.svg?raw'
+import columnsPlusLeftSvg from '@phosphor-icons/core/regular/columns-plus-left.svg?raw'
+import columnsPlusRightSvg from '@phosphor-icons/core/regular/columns-plus-right.svg?raw'
+import columnsSvg from '@phosphor-icons/core/regular/columns.svg?raw'
 import imageSvg from '@phosphor-icons/core/regular/image.svg?raw'
 import boneSvg from '@phosphor-icons/core/regular/bone.svg?raw'
 import archiveSvg from '@phosphor-icons/core/regular/archive.svg?raw'
@@ -22,6 +28,7 @@ import plusSvg from '@phosphor-icons/core/regular/plus.svg?raw'
 import eyeSvg from '@phosphor-icons/core/regular/eye.svg?raw'
 import pushPinSvg from '@phosphor-icons/core/regular/push-pin.svg?raw'
 import arrowsOutSimpleSvg from '@phosphor-icons/core/regular/arrows-out-simple.svg?raw'
+import arrowsOutCardinalSvg from '@phosphor-icons/core/regular/arrows-out-cardinal.svg?raw'
 import arrowLineUpSvg from '@phosphor-icons/core/regular/arrow-line-up.svg?raw'
 import arrowLineDownSvg from '@phosphor-icons/core/regular/arrow-line-down.svg?raw'
 import stackSvg from '@phosphor-icons/core/regular/stack.svg?raw'
@@ -57,6 +64,9 @@ import alignBottomSvg from '@phosphor-icons/core/regular/align-bottom.svg?raw'
 import lockSimpleSvg from '@phosphor-icons/core/regular/lock-simple.svg?raw'
 import lockSimpleOpenSvg from '@phosphor-icons/core/regular/lock-simple-open.svg?raw'
 import copySvg from '@phosphor-icons/core/regular/copy.svg?raw'
+import filesSvg from '@phosphor-icons/core/regular/files.svg?raw'
+import scissorsSvg from '@phosphor-icons/core/regular/scissors.svg?raw'
+import clipboardTextSvg from '@phosphor-icons/core/regular/clipboard-text.svg?raw'
 import dotsThreeSvg from '@phosphor-icons/core/regular/dots-three.svg?raw'
 import dotsSixVerticalSvg from '@phosphor-icons/core/regular/dots-six-vertical.svg?raw'
 import layoutSvg from '@phosphor-icons/core/regular/layout.svg?raw'
@@ -79,7 +89,24 @@ import scribbleSvg from '@phosphor-icons/core/regular/scribble.svg?raw'
 import pencilSimpleLineSvg from '@phosphor-icons/core/regular/pencil-simple-line.svg?raw'
 import penSvg from '@phosphor-icons/core/regular/pen.svg?raw'
 import highlighterSvg from '@phosphor-icons/core/regular/highlighter.svg?raw'
+import arrowUpSvg from '@phosphor-icons/core/regular/arrow-up.svg?raw'
+import arrowDownSvg from '@phosphor-icons/core/regular/arrow-down.svg?raw'
+import arrowLeftSvg from '@phosphor-icons/core/regular/arrow-left.svg?raw'
+import arrowRightSvg from '@phosphor-icons/core/regular/arrow-right.svg?raw'
 import eraserSvg from '@phosphor-icons/core/regular/eraser.svg?raw'
+import listBulletsSvg from '@phosphor-icons/core/regular/list-bullets.svg?raw'
+import textTSvg from '@phosphor-icons/core/regular/text-t.svg?raw'
+import hashSvg from '@phosphor-icons/core/regular/hash.svg?raw'
+import checkSquareSvg from '@phosphor-icons/core/regular/check-square.svg?raw'
+import calendarBlankSvg from '@phosphor-icons/core/regular/calendar-blank.svg?raw'
+import pawPrintSvg from '@phosphor-icons/core/regular/paw-print.svg?raw'
+import sortAscendingSvg from '@phosphor-icons/core/regular/sort-ascending.svg?raw'
+import sortDescendingSvg from '@phosphor-icons/core/regular/sort-descending.svg?raw'
+import textAlignLeftSvg from '@phosphor-icons/core/regular/text-align-left.svg?raw'
+import textAlignCenterSvg from '@phosphor-icons/core/regular/text-align-center.svg?raw'
+import textAlignRightSvg from '@phosphor-icons/core/regular/text-align-right.svg?raw'
+import textBSvg from '@phosphor-icons/core/regular/text-b.svg?raw'
+import paintBucketSvg from '@phosphor-icons/core/regular/paint-bucket.svg?raw'
 import pawPrintFillSvg from '@phosphor-icons/core/fill/paw-print-fill.svg?raw'
 import starFillSvg from '@phosphor-icons/core/fill/star-fill.svg?raw'
 import pushPinFillSvg from '@phosphor-icons/core/fill/push-pin-fill.svg?raw'
@@ -98,6 +125,12 @@ export const ICONS = {
   line: body(arrowUpRightSvg),
   board: body(squaresFourSvg),
   column: body(rowsSvg),
+  table: body(tableSvg),
+  rowAbove: body(rowsPlusTopSvg),
+  rowBelow: body(rowsPlusBottomSvg),
+  columnLeft: body(columnsPlusLeftSvg),
+  columnRight: body(columnsPlusRightSvg),
+  columns: body(columnsSvg),
   image: body(imageSvg),
   bury: body(archiveSvg),
   trash: body(trashSvg),
@@ -110,6 +143,7 @@ export const ICONS = {
   eye: body(eyeSvg),
   pin: body(pushPinSvg),
   resize: body(arrowsOutSimpleSvg),
+  move: body(arrowsOutCardinalSvg),
   forward: body(arrowLineUpSvg),
   backward: body(arrowLineDownSvg),
   layers: body(stackSvg),
@@ -136,6 +170,7 @@ export const ICONS = {
   swatch: body(swatchesSvg),
   chevronDown: body(caretDownSvg),
   chevronLeft: body(caretLeftSvg),
+  chevronRight: body(caretRightSvg),
   alignLeft: body(alignLeftSvg),
   alignCenterH: body(alignCenterHorizontalSvg),
   alignRight: body(alignRightSvg),
@@ -146,6 +181,9 @@ export const ICONS = {
   lock: body(lockSimpleSvg),
   unlock: body(lockSimpleOpenSvg),
   duplicate: body(copySvg),
+  cut: body(scissorsSvg),
+  copy: body(filesSvg),
+  paste: body(clipboardTextSvg),
   more: body(dotsThreeSvg),
   grip: body(dotsSixVerticalSvg),
   template: body(layoutSvg),
@@ -176,7 +214,26 @@ export const ICONS = {
   pen: body(penSvg),
   highlighter: body(highlighterSvg),
   eraser: body(eraserSvg),
+  listBullets: body(listBulletsSvg),
+  typeText: body(textTSvg),
+  typeNumber: body(hashSvg),
+  typeCheckbox: body(checkSquareSvg),
+  typeDate: body(calendarBlankSvg),
+  typeSelect: body(tagSvg),
+  typeRating: body(pawPrintSvg),
+  sortAsc: body(sortAscendingSvg),
+  sortDesc: body(sortDescendingSvg),
+  textAlignLeft: body(textAlignLeftSvg),
+  textAlignCenter: body(textAlignCenterSvg),
+  textAlignRight: body(textAlignRightSvg),
+  bold: body(textBSvg),
+  fill: body(paintBucketSvg),
+  arrowUp: body(arrowUpSvg),
+  arrowDown: body(arrowDownSvg),
+  arrowLeft: body(arrowLeftSvg),
+  arrowRight: body(arrowRightSvg),
   paw: body(pawPrintFillSvg),
+  pawOutline: body(pawPrintSvg),
   starFilled: body(starFillSvg),
   pinFilled: body(pushPinFillSvg),
 } as const

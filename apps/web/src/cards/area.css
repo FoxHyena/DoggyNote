@@ -4,11 +4,11 @@
 .area { height: 100%; }
 .area-head { container-type: inline-size; display: flex; align-items: center; gap: 8px; min-height: var(--area-header); padding: 2px 10px; border-radius: 12px 12px 0 0; pointer-events: auto; cursor: grab; }
 .area-head:active { cursor: grabbing; }
-.area-grip { display: flex; color: var(--dn-text-muted); }
-.area-title { flex: 1; min-width: 60px; }
+.area-grip { display: flex; flex-shrink: 0; color: var(--dn-text-muted); }
+.area-title { flex: 1; min-width: 0; }
 .area-title strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; font-weight: 600; }
 .area-title .column-title-input { width: 100%; }
-.area-actions { display: flex; align-items: center; gap: 4px; cursor: default; }
+.area-actions { display: flex; flex-shrink: 0; align-items: center; gap: 4px; cursor: default; }
 .area-actions .bar-btn { min-height: 32px; font-size: 12px; }
 .area-file-input { display: none; }
 .area-edge { position: absolute; pointer-events: auto; }

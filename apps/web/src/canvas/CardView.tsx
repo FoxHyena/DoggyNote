@@ -26,6 +26,7 @@ import { MovieCard } from '../cards/MovieCard.tsx'
 import { SwatchCard } from '../cards/SwatchCard.tsx'
 import { SketchCard } from '../cards/SketchCard.tsx'
 import { InkCard } from '../cards/InkCard.tsx'
+import { TableCard } from '../cards/table/TableGrid.tsx'
 import { CardLabels } from '../ui/Labels.tsx'
 import { SyncedMarker } from '../ui/SyncedCopies.tsx'
 import { copiesOf } from '../state/synced.ts'
@@ -146,6 +147,9 @@ export function CardView(props: { card: Card; lod: boolean; readOnly: boolean; i
         </Match>
         <Match when={props.card.type === 'ink'}>
           <InkCard {...(props2() as CardProps<'ink'>)} />
+        </Match>
+        <Match when={props.card.type === 'table'}>
+          <TableCard {...(props2() as CardProps<'table'>)} />
         </Match>
         <Match when={props.card.type === 'area'}><AreaCard {...(props2() as CardProps<'area'>)} /></Match>
         <Match when={props.card.type === 'column'}>

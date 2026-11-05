@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CARD_COLORS, cardColor, cardColorVars, cardColors, contrast, customText, nextMode, normalizeHex, parseMode, resolveTheme, surfaces, themeCss } from './index.ts'
+import { CARD_COLORS, TABLE_EMPTY_INK, cardColor, cardColorVars, cardColors, contrast, customText, luminance, nextMode, normalizeHex, parseMode, resolveTheme, surfaces, tableFillVars, tableFills, themeCss } from './index.ts'
 
 const THEMES = ['dark', 'light'] as const
 
@@ -19,6 +19,9 @@ describe('contrast', () => {
     })
     it(`${t}: body text clears 4.5:1 on canvas, panel and card`, () => {
       for (const bg of [s.bg, s.panel, s.card, s.cardHover]) expect(contrast(s.text, bg)).toBeGreaterThanOrEqual(4.5)
+    })
+    it(`${t}: photographic crop guides have a contrasting outline in either appearance`, () => {
+      expect(contrast(s.cropGuide, s.cropShade)).toBeGreaterThanOrEqual(4.5)
     })
     it(`${t}: muted text clears 4.5:1 on card`, () => {
       expect(contrast(s.textMuted, s.card)).toBeGreaterThanOrEqual(4.5)
@@ -71,6 +74,60 @@ describe('contrast', () => {
       })
     }
   }
+})
+
+/** `ink` at `alpha` over `bg`, as the browser blends an opacity or a colour-mix. */
+const blend = (ink: string, bg: string, alpha: number) => '#' + [1, 3, 5].map((i) => Math.round(parseInt(ink.slice(i, i + 2), 16) * alpha + parseInt(bg.slice(i, i + 2), 16) * (1 - alpha)).toString(16).padStart(2, '0')).join('')
+
+describe('table fills', () => {
+  for (const t of THEMES) {
+    const s = surfaces[t]
+    for (const c of CARD_COLORS) {
+      it(`${t}: ${c} fill text clears 4.5:1`, () => {
+        const f = tableFills[t][c]
+        expect(contrast(f.text, f.bg)).toBeGreaterThanOrEqual(4.5)
+      })
+      // The pale light fills were never 3:1 with the gold ring (an ink ring runs inside it there); softer dark fills clear it.
+      if (t === 'dark') it(`dark: the selection outline clears 3:1 on a ${c} fill`, () => {
+        expect(contrast(s.selection, tableFills.dark[c].bg)).toBeGreaterThanOrEqual(3)
+      })
+      it(`${t}: ${c} fill text stays readable under the range tint`, () => {
+        const f = tableFills[t][c]
+        // The range tint is the selection at 14% (dark) or 18% (light) over the fill.
+        const tint = blend(s.selection, f.bg, t === 'dark' ? 0.14 : 0.18)
+        expect(contrast(f.text, tint)).toBeGreaterThanOrEqual(4.5)
+      })
+      it(`${t}: empty paws and unticked boxes clear 3:1 on a ${c} cell, and a filled paw stands clearly apart`, () => {
+        const f = tableFills[t][c]
+        const empty = blend(f.text, f.bg, TABLE_EMPTY_INK)
+        expect(contrast(empty, f.bg)).toBeGreaterThanOrEqual(3)
+        expect(contrast(f.text, f.bg) / contrast(empty, f.bg)).toBeGreaterThan(1.2)
+      })
+    }
+  }
+  it('dark fills are quieter than the swatches they come from, and light fills are the swatches', () => {
+    for (const c of CARD_COLORS) {
+      if (c === 'none') continue
+      const soft = tableFills.dark[c].bg, full = cardColors.dark[c].bg
+      expect(luminance(soft)).toBeLessThan(luminance(full))
+      // Still a tint of the card, not the card itself: each hue is told apart from the plain cell.
+      expect(contrast(soft, surfaces.dark.card)).toBeGreaterThanOrEqual(1.4)
+      expect(tableFills.light[c]).toEqual(cardColors.light[c])
+    }
+  })
+  it('keeps the six hues apart from each other in the dark theme', () => {
+    const hues = CARD_COLORS.filter((c) => c !== 'none').map((c) => tableFills.dark[c].bg)
+    expect(new Set(hues).size).toBe(hues.length)
+  })
+  it('gives CSS a table variable for a preset and the plain cell for anything else', () => {
+    expect(tableFillVars('gold')).toEqual({ bg: 'var(--dn-table-gold-bg)', text: 'var(--dn-table-gold-text)' })
+    for (const bad of ['#ff0000', 'nope', 3, null]) expect(tableFillVars(bad).bg).toBe('var(--dn-table-none-bg)')
+  })
+  it('emits the fills and the empty-ink strength for both themes', () => {
+    const css = themeCss()
+    expect(css.match(/--dn-table-sky-bg:/g)).toHaveLength(2)
+    expect(css.match(/--dn-table-empty-ink:/g)).toHaveLength(2)
+  })
 })
 
 describe('custom card colours', () => {

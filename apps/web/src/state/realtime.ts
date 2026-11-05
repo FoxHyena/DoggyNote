@@ -2,7 +2,7 @@ import { createEffect, createMemo, createRoot, createSignal, on, onCleanup } fro
 import { createStore, reconcile } from 'solid-js/store'
 import * as Y from 'yjs'
 import { Awareness } from 'y-protocols/awareness'
-import { decodeUpdate, encodeUpdate, type LivePoint, type LivePresence, type LivePreview, type RoomEvent } from '@doggynote/core'
+import { profileName, decodeUpdate, encodeUpdate, type LivePoint, type LivePresence, type LivePreview, type RoomEvent } from '@doggynote/core'
 import { API_BASE, api } from './api.ts'
 import { user } from './session.ts'
 import { canReadBoard } from './access.ts'
@@ -13,7 +13,16 @@ import { rectOf } from '../canvas/layout.ts'
 
 const [room, setRoom] = createStore<{ members: LivePresence[] }>({ members: [] })
 export const members = () => room.members
-const setMembers = (next: LivePresence[]) => setRoom('members', reconcile(next, { key: 'sessionId' }))
+// This page's earlier sessions. A suspended page (iOS) can lose its socket
+// without the close reaching the room, which then lists the old session until
+// it times out; it is still us, so never draw it as another device.
+const pastSessions = new Set<string>()
+const setMembers = (next: LivePresence[]) => setRoom('members', reconcile(next.filter((m) => !pastSessions.has(m.sessionId)), { key: 'sessionId' }))
+/** The room's own list: once it stops naming an old session, that one has gone for good. */
+function roomMembers(next: LivePresence[]) {
+  for (const id of pastSessions) if (!next.some((m) => m.sessionId === id)) pastSessions.delete(id)
+  setMembers(next)
+}
 export const [liveState, setLiveState] = createSignal<'connecting' | 'live' | 'offline'>('connecting')
 export const [selfSession, setSelfSession] = createSignal('')
 export const [following, setFollowing] = createSignal<string | null>(null)
@@ -22,13 +31,14 @@ export const [pings, setPings] = createSignal<Ping[]>([])
 export const peers = () => members().filter((m) => m.sessionId !== selfSession())
 export function sessionName(p: LivePresence) {
   const sessions = members().filter((m) => m.userId === p.userId).sort((a, b) => a.sessionId.localeCompare(b.sessionId))
-  return `${p.username}${sessions.length > 1 ? ` · device ${sessions.findIndex((m) => m.sessionId === p.sessionId) + 1}` : ''}`
+  return `${profileName(p)}${sessions.length > 1 ? ` · device ${sessions.findIndex((m) => m.sessionId === p.sessionId) + 1}` : ''}`
 }
 export function personColor(id: string) {
   let hash = 0
   for (const ch of id) hash = ((hash * 31) + ch.charCodeAt(0)) | 0
   return ['sky', 'ball', 'lilac', 'collar', 'gold', 'peach'][Math.abs(hash) % 6]!
 }
+export const initials = (name: string) => name.slice(0, 2).toUpperCase()
 export function personStyle(id: string) {
   const color = personColor(id)
   return { '--person-color': `var(--dn-person-${color})`, '--person-ink': 'var(--dn-person-ink)' }
@@ -77,7 +87,7 @@ export function noteAwareness(id: string) {
   const a = new Awareness(doc.noteDoc(id))
   awareness.set(id, a)
   const color = getComputedStyle(document.documentElement).getPropertyValue(`--dn-person-${personColor(user()?.id ?? '')}`).trim()
-  a.setLocalStateField('user', { name: user()?.username ?? '', color, colorLight: color + '33' })
+  a.setLocalStateField('user', { name: user() ? profileName(user()!) : '', color, colorLight: color + '33' })
   const changed = (_changes: unknown, origin: unknown) => {
     if (origin === 'remote') return
     const state = a.getLocalState()?.cursor
@@ -90,6 +100,8 @@ export function noteAwareness(id: string) {
 }
 export function updateAwareness() {
   for (const [id, a] of awareness) {
+    const local = a.getLocalState()?.user
+    if (local && user() && local.name !== profileName(user()!)) a.setLocalStateField('user', { ...local, name: profileName(user()!) })
     if (doc.isNoteComposing(id)) continue
     const states = a.getStates()
     const removed = [...states.keys()].filter((client) => client !== a.clientID)
@@ -108,10 +120,13 @@ export function updateAwareness() {
 export function installRealtime() {
   return createRoot((dispose) => {
     let generation = 0, retry: ReturnType<typeof setTimeout> | null = null, activeBoard = ''
-    let blurred = false
+    // A window can open behind another app (a relaunch after an update) and
+    // never see a blur, so start from whether it actually has focus.
+    let blurred = !document.hasFocus()
     const disconnect = () => {
       generation++; if (retry) clearTimeout(retry)
       retry = null; socket?.close(); socket = null
+      if (selfSession()) pastSessions.add(selfSession())
       setMembers([]); setSelfSession(''); setPings([]); previews.clear(); pointer = null; caret = null; stopFollowing(); updateAwareness()
     }
     const connect = async () => {
@@ -122,6 +137,7 @@ export function installRealtime() {
       const failed = () => {
         if (current !== generation) return
         performance.clearMarks('doggynote.live.connection-failure'); performance.mark('doggynote.live.connection-failure')
+        if (selfSession()) pastSessions.add(selfSession())
         setLiveState('offline'); setMembers([]); setSelfSession(''); stopFollowing(); updateAwareness()
         retry = setTimeout(() => void connect(), 2000 + Math.random() * 1000)
       }
@@ -147,7 +163,7 @@ export function installRealtime() {
               performance.measure('doggynote.live.convergence', { start, end: performance.now() })
             })
           }
-          if (event.type === 'members') { setMembers(event.members); updateAwareness(); if (following()) applyFollow() }
+          if (event.type === 'members') { roomMembers(event.members); updateAwareness(); if (following()) applyFollow() }
           if (event.type === 'ping') {
             setPings((all) => [...all.filter((p) => p.until > Date.now()).slice(-9), { ...event, until: Date.now() + 3000 }])
             setTimeout(() => setPings((all) => all.filter((p) => p.until > Date.now())), 3000)
@@ -164,7 +180,7 @@ export function installRealtime() {
       if (blurred || document.hidden || !canvas || e.pointerType === 'touch') { pointer = null; schedulePresence(); return }
       pointer = { x: e.clientX, y: e.clientY }; schedulePresence()
     }
-    const manual = (e: Event) => { const target = e.target as Element; if (target?.closest?.('[data-testid="canvas"]') && !target.closest('.follow-banner')) stopFollowing() }
+    const manual = (e: Event) => { if (e.type === 'pointerdown') blurred = false; const target = e.target as Element; if (target?.closest?.('[data-testid="canvas"]') && !target.closest('.follow-banner')) stopFollowing() }
     const key = (e: KeyboardEvent) => { if (following() && (e.key === 'Escape' || e.key.startsWith('Arrow'))) stopFollowing(); if (e.key === 'Escape') { previews.clear(); schedulePresence() } }
     const finishGesture = clearLivePreviews
     const visibility = () => { if (document.hidden) { disconnect(); setLiveState('offline') } else void connect() }
@@ -183,6 +199,7 @@ export function installRealtime() {
       for (const p of doc.pendingOutbox()) if ('x' in p.patch || 'y' in p.patch || 'w' in p.patch || 'h' in p.patch) previews.delete(p.id)
       schedulePresence()
     })
+    createEffect(on(() => user()?.displayName, () => { updateAwareness(); schedulePresence() }))
     const heartbeat = setInterval(schedulePresence, 10_000)
     window.addEventListener('pointermove', move); window.addEventListener('pointerdown', manual, true); window.addEventListener('wheel', manual, true); window.addEventListener('keydown', key, true)
     window.addEventListener('pointerup', finishGesture); window.addEventListener('pointercancel', finishGesture)

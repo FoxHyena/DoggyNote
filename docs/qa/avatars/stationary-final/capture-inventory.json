@@ -1,0 +1,932 @@
+{
+  "captures": [
+    {
+      "file": "webkit/desktop-dark-account.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-dark-crop.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-dark-error.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-dark-framed.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-dark-options-empty.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-dark-options-saved.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-dark-panorama.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-dark-portrait.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-dark-saved.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-dark-saving.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-dark-transparent.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-light-account.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-light-crop.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-light-error.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-light-framed.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-light-options-empty.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-light-options-saved.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-light-panorama.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-light-portrait.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-light-saved.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-light-saving.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/desktop-light-transparent.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "webkit/narrow-dark-account.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "webkit/narrow-dark-crop.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "webkit/narrow-dark-error.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "webkit/narrow-dark-framed.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "webkit/narrow-dark-options-empty.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "webkit/narrow-dark-options-saved.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "webkit/narrow-dark-panorama.png",
+      "width": 320,
+      "height": 480
+    },
+    {
+      "file": "webkit/narrow-dark-portrait.png",
+      "width": 320,
+      "height": 480
+    },
+    {
+      "file": "webkit/narrow-dark-saved.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "webkit/narrow-dark-saving.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "webkit/narrow-dark-transparent.png",
+      "width": 320,
+      "height": 480
+    },
+    {
+      "file": "webkit/narrow-light-account.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "webkit/narrow-light-crop.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "webkit/narrow-light-error.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "webkit/narrow-light-framed.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "webkit/narrow-light-options-empty.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "webkit/narrow-light-options-saved.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "webkit/narrow-light-panorama.png",
+      "width": 320,
+      "height": 480
+    },
+    {
+      "file": "webkit/narrow-light-portrait.png",
+      "width": 320,
+      "height": 480
+    },
+    {
+      "file": "webkit/narrow-light-saved.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "webkit/narrow-light-saving.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "webkit/narrow-light-transparent.png",
+      "width": 320,
+      "height": 480
+    },
+    {
+      "file": "webkit/phone-dark-account.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "webkit/phone-dark-crop.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "webkit/phone-dark-error.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "webkit/phone-dark-framed.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "webkit/phone-dark-options-empty.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "webkit/phone-dark-options-saved.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "webkit/phone-dark-saved.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "webkit/phone-dark-saving.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "webkit/phone-light-account.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "webkit/phone-light-crop.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "webkit/phone-light-error.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "webkit/phone-light-framed.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "webkit/phone-light-options-empty.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "webkit/phone-light-options-saved.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "webkit/phone-light-saved.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "webkit/phone-light-saving.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "webkit/short-dark-account.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "webkit/short-dark-crop.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "webkit/short-dark-error.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "webkit/short-dark-framed.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "webkit/short-dark-options-empty.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "webkit/short-dark-options-saved.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "webkit/short-dark-saved.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "webkit/short-dark-saving.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "webkit/short-light-account.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "webkit/short-light-crop.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "webkit/short-light-error.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "webkit/short-light-framed.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "webkit/short-light-options-empty.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "webkit/short-light-options-saved.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "webkit/short-light-saved.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "webkit/short-light-saving.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "webkit/tablet-dark-account.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "webkit/tablet-dark-crop.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "webkit/tablet-dark-error.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "webkit/tablet-dark-framed.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "webkit/tablet-dark-options-empty.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "webkit/tablet-dark-options-saved.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "webkit/tablet-dark-saved.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "webkit/tablet-dark-saving.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "webkit/tablet-light-account.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "webkit/tablet-light-crop.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "webkit/tablet-light-error.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "webkit/tablet-light-framed.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "webkit/tablet-light-options-empty.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "webkit/tablet-light-options-saved.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "webkit/tablet-light-saved.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "webkit/tablet-light-saving.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "chromium/desktop-dark-account.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-dark-crop.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-dark-error.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-dark-framed.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-dark-options-empty.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-dark-options-saved.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-dark-panorama.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-dark-portrait.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-dark-saved.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-dark-saving.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-dark-transparent.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-light-account.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-light-crop.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-light-error.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-light-framed.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-light-options-empty.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-light-options-saved.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-light-panorama.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-light-portrait.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-light-saved.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-light-saving.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/desktop-light-transparent.png",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "chromium/narrow-dark-account.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "chromium/narrow-dark-crop.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "chromium/narrow-dark-error.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "chromium/narrow-dark-framed.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "chromium/narrow-dark-options-empty.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "chromium/narrow-dark-options-saved.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "chromium/narrow-dark-panorama.png",
+      "width": 320,
+      "height": 480
+    },
+    {
+      "file": "chromium/narrow-dark-portrait.png",
+      "width": 320,
+      "height": 480
+    },
+    {
+      "file": "chromium/narrow-dark-saved.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "chromium/narrow-dark-saving.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "chromium/narrow-dark-transparent.png",
+      "width": 320,
+      "height": 480
+    },
+    {
+      "file": "chromium/narrow-light-account.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "chromium/narrow-light-crop.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "chromium/narrow-light-error.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "chromium/narrow-light-framed.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "chromium/narrow-light-options-empty.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "chromium/narrow-light-options-saved.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "chromium/narrow-light-panorama.png",
+      "width": 320,
+      "height": 480
+    },
+    {
+      "file": "chromium/narrow-light-portrait.png",
+      "width": 320,
+      "height": 480
+    },
+    {
+      "file": "chromium/narrow-light-saved.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "chromium/narrow-light-saving.png",
+      "width": 320,
+      "height": 568
+    },
+    {
+      "file": "chromium/narrow-light-transparent.png",
+      "width": 320,
+      "height": 480
+    },
+    {
+      "file": "chromium/phone-dark-account.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "chromium/phone-dark-crop.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "chromium/phone-dark-error.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "chromium/phone-dark-framed.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "chromium/phone-dark-options-empty.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "chromium/phone-dark-options-saved.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "chromium/phone-dark-saved.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "chromium/phone-dark-saving.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "chromium/phone-light-account.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "chromium/phone-light-crop.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "chromium/phone-light-error.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "chromium/phone-light-framed.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "chromium/phone-light-options-empty.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "chromium/phone-light-options-saved.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "chromium/phone-light-saved.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "chromium/phone-light-saving.png",
+      "width": 393,
+      "height": 659
+    },
+    {
+      "file": "chromium/short-dark-account.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "chromium/short-dark-crop.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "chromium/short-dark-error.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "chromium/short-dark-framed.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "chromium/short-dark-options-empty.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "chromium/short-dark-options-saved.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "chromium/short-dark-saved.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "chromium/short-dark-saving.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "chromium/short-light-account.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "chromium/short-light-crop.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "chromium/short-light-error.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "chromium/short-light-framed.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "chromium/short-light-options-empty.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "chromium/short-light-options-saved.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "chromium/short-light-saved.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "chromium/short-light-saving.png",
+      "width": 720,
+      "height": 480
+    },
+    {
+      "file": "chromium/tablet-dark-account.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "chromium/tablet-dark-crop.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "chromium/tablet-dark-error.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "chromium/tablet-dark-framed.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "chromium/tablet-dark-options-empty.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "chromium/tablet-dark-options-saved.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "chromium/tablet-dark-saved.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "chromium/tablet-dark-saving.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "chromium/tablet-light-account.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "chromium/tablet-light-crop.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "chromium/tablet-light-error.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "chromium/tablet-light-framed.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "chromium/tablet-light-options-empty.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "chromium/tablet-light-options-saved.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "chromium/tablet-light-saved.png",
+      "width": 768,
+      "height": 720
+    },
+    {
+      "file": "chromium/tablet-light-saving.png",
+      "width": 768,
+      "height": 720
+    }
+  ],
+  "source_sha256": {
+    "apps/web/src/ui/AccountMenu.tsx": "f27c939f1bb45e81bc3b7e4e450c743eb618d719326b0b69d7dbc041bbbbf04e",
+    "apps/web/src/ui/AvatarEditor.tsx": "197763d0932a4f1b44581a8394b6be7bc28c1207490e324a68fac97d9875df86",
+    "apps/web/src/ui/avatar.css": "415727de962b9ac91ca7b848d763c279784e3f0456a700a3a5302fe9f94f7345",
+    "apps/web/src/ui/avatarCrop.ts": "8d2b1742bb36227d157c904ff0e8eddac06ae83ba3bb84d283c069cb322fdf65",
+    "apps/web/src/ui/navigation.css": "4cc5759a2708c1a32b71413e3965437bee78ef35fec31d77505744a85013f94f",
+    "apps/web/src/ui/iconAssets.ts": "8c6d5b4a7d18c6cdb3b4eef1f10481fa4e93816c516843bcaa261bc51fefdca3"
+  }
+}

@@ -607,7 +607,6 @@ html[data-input='touch'] .card > .connect-handle { border-color: var(--dn-select
 /* UX1-04: the connect hint never swallows the tap meant for a card. */
 .connect-banner { pointer-events: none; }
 .connect-banner button { pointer-events: auto; }
-.nav-menu-recent { padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--dn-border); }
 /* Taps answer with a press state (hover doesn't exist on glass). */
 html[data-input='touch'] :is(.icon-btn, .bar-btn, .menu-item, .tool, .toast-action):active:not(:disabled) { background: var(--dn-card-hover); }
 
@@ -730,3 +729,34 @@ html[data-input='touch'] .selection-phone-actions > .selection-primary:active:no
   :is(.menu.add-sheet, .menu.selection-style-sheet)[data-phone-sheet] { padding-top: 16px !important; }
   :is(.add-sheet, .selection-style-sheet) > .sheet-grip { width: 96px; margin-inline: auto; top: -16px; margin-top: -16px; margin-bottom: -12px; }
 }
+
+/* ---- table dock ----------------------------------------------------------------
+   Editing a table: ‹ › on the left (Tab for a keyboard with none), a rule, the
+   selection's own buttons in the middle (room for three of PR 4's: Bold, Align,
+   Fill), and ⋯ pushed to the right edge. 44px targets, 12px side gutters; seven of
+   them and the gaps fit 360px. */
+.table-dock { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; padding-inline: 12px; }
+.table-dock-btn,
+.table-dock .bar-btn {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 10px;
+  color: var(--dn-text);
+}
+.table-dock-btn:active,
+.table-dock .bar-btn:active { background: var(--dn-card-hover); }
+.table-dock-btn:focus-visible,
+.table-dock .bar-btn:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: -2px; }
+.table-dock-btn:disabled { opacity: 0.4; }
+.table-dock-sep { width: 1px; height: 24px; background: var(--dn-border); }
+.table-dock-btn { border: 0; background: transparent; }
+.table-dock .bar-btn { border: 0; background: transparent; }
+.table-dock-slots { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.table-dock-menu { display: contents; }
+.table-dock > .table-dock-menu > .bar-btn { margin-left: auto; }
+.table-dock .bar-btn[aria-pressed='true'], .table-dock-btn[aria-pressed='true'] { color: var(--dn-accent); background: var(--dn-card-hover); }
+html[data-input='touch'] .menu-item kbd { display: none; }

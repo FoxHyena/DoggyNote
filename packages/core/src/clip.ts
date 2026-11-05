@@ -8,6 +8,7 @@ import type { Board, Card, Connection, Id, Obj, Sticker, Stroke } from './model.
 import type { Rect, Vec } from './geometry.ts'
 import { areaFamily, itemArea } from './areas.ts'
 import { cardText } from './cardtext.ts'
+import { withoutTableTombstones } from './table.ts'
 import { tmdbPage } from './movie.ts'
 import { boardLabels, cardLabelIds, parseLabels, type Label } from './labels.ts'
 
@@ -57,7 +58,7 @@ export function collectClip(ids: Id[], src: ClipSource, opts: { allowBuried?: bo
   let points = 0
   const add = (o: Obj) => {
     if (o.kind === 'stroke' && !objects.has(o.id)) { strokes++; points += Array.isArray(o.points) ? o.points.length : 0 }
-    objects.set(o.id, structuredClone(o))
+    objects.set(o.id, structuredClone(withoutTableTombstones(o)))
   }
   const tooBig = () => objects.size - strokes > limit || strokes > CLIP_STROKE_LIMIT || points > CLIP_INK_POINT_LIMIT
   // Roots, flattened to world positions.
@@ -126,7 +127,8 @@ export function materialise(
   const intoColumn = opts.column ? [...roots].filter((c) => c.type !== 'column' && c.type !== 'area' && c.type !== 'ink').sort((a, b) => a.y - b.y || a.x - b.x) : []
   const out: Obj[] = []
   for (const o of clip.objects) {
-    const base = { ...structuredClone(o), id: ids.get(o.id)!, createdAt: opts.now, deletedAt: null, burialId: null, purged: false } as Obj & { hidden?: unknown }
+    // A table's removed rows, columns and cells (null fields) are not worth copying.
+    const base = { ...structuredClone(withoutTableTombstones(o)), id: ids.get(o.id)!, createdAt: opts.now, deletedAt: null, burialId: null, purged: false } as Obj & { hidden?: unknown }
     delete base.hidden
     // Pasted, duplicated and template copies of a synced note start independent.
     delete (base as Partial<Card>).syncId

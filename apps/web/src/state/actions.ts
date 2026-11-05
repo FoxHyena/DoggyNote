@@ -5,6 +5,7 @@ import {
   DEFAULT_SWATCH_HEX,
   newId,
   orderBetween,
+  starterTable,
   snap,
   type Board,
   type Card,
@@ -42,6 +43,7 @@ export const EMPTY_CONTENT: { [T in CardType]: () => CardContent[T] } = {
   swatch: () => ({ hex: DEFAULT_SWATCH_HEX }),
   sketch: () => ({ ...DEFAULT_SKETCH }),
   ink: () => ({ width: 1, height: 1 }),
+  table: () => ({ title: '' }),
 }
 
 /** Where a new card goes: a world point (card's top-centre lands there) or a column slot. */
@@ -110,12 +112,14 @@ export function createCard(
     tx.push(doc.createChange(board))
     content = { boardId: board.id }
   }
-  const card = baseCard(type, place, content, opts.extra, opts.boardId)
+  // A new table starts with named columns and empty rows, in the same step that creates it.
+  const extra = type === 'table' && !opts.content && !opts.extra ? (starterTable(COPY.table.starterColumns) as Partial<Card>) : opts.extra
+  const card = baseCard(type, place, content, extra, opts.boardId)
   tx.push(doc.createChange(card))
   doc.commit(tx)
   // Created somewhere else (e.g. straight into the Toy box): don't select or edit it here.
   if (opts.boardId && opts.boardId !== boardId()) return card.id
-  const editable = type === 'area' || type === 'note' || type === 'todo' || type === 'column' || type === 'board' || type === 'link' || type === 'movie' || type === 'swatch' || type === 'sketch'
+  const editable = type === 'area' || type === 'note' || type === 'todo' || type === 'column' || type === 'board' || type === 'link' || type === 'movie' || type === 'swatch' || type === 'sketch' || type === 'table'
   if (opts.edit ?? editable) beginEdit(card.id, { isNew: true })
   else select([card.id])
   return card.id
@@ -155,14 +159,18 @@ export function trashSelection(now = Date.now(), buryAreas = false) {
 /** Bury the selection and say so, with Undo. Every way of burying (bar, Delete key, sheet) goes through here. */
 export function burySelection() {
   const sink = prepareBuryMotion(selection())
-  let n = 0
+  let cards = 0, stickers = 0
   for (const id of selection()) {
     const kind = doc.get(id)?.kind
-    if (kind === 'card' || kind === 'sticker') n++
+    if (kind === 'card') cards++
+    else if (kind === 'sticker') stickers++
   }
   trashSelection()
   sink()
-  if (n) showToast(`${COPY.buried} ${n} ${n === 1 ? 'card' : 'cards'}`, 5000, { label: 'Undo', run: () => doc.undo() })
+  const n = cards + stickers
+  // Say what went: stickers alone are stickers, a mix is items.
+  const noun = !stickers ? 'card' : !cards ? 'sticker' : 'item'
+  if (n) showToast(`${COPY.buried} ${n} ${noun}${n === 1 ? '' : 's'}`, 5000, { label: 'Undo', run: () => doc.undo() })
 }
 
 export function restoreCard(id: Id) {

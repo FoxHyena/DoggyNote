@@ -196,7 +196,8 @@ function TodoEditor(props: { card: Card<'todo'>; setContent: (c: Content) => voi
   })
 
   function setItem(itemId: string, text: string) {
-    props.setContent({ ...content(), items: content().items.map((i) => (i.id === itemId ? { ...i, text } : i)) })
+    // A done task cleared of its text is a fresh blank task, not a ticked, struck-through placeholder.
+    props.setContent({ ...content(), items: content().items.map((i) => (i.id !== itemId ? i : i.done && !text.trim() ? { ...i, text, done: false, doneAt: null } : { ...i, text })) })
   }
 
   function insertAfter(itemId: string | null) {
