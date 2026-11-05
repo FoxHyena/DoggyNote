@@ -24,13 +24,13 @@ test.beforeEach(async ({ page }) => {
         return id
       },
       invoke: async (cmd: string, args?: Record<string, unknown>) => {
-        if (cmd.startsWith('plugin:updater|') || cmd.startsWith('plugin:process|') || cmd === 'haptic') keychain.calls.push(cmd)
+        if (cmd.startsWith('plugin:updater|') || cmd.startsWith('plugin:process|') || cmd.startsWith('plugin:window|') || cmd === 'haptic') keychain.calls.push(cmd)
         // A test sets this to pretend the server has a newer desktop release.
         const offered = sessionStorage.getItem('fake-update')
         if (cmd === 'plugin:updater|check')
           return offered ? { rid: 1, currentVersion: '0.0.1', version: offered, date: null, body: 'notes', rawJson: {} } : null
         if (cmd === 'plugin:updater|download') return 2
-        if (cmd === 'plugin:updater|install' || cmd === 'plugin:process|restart' || cmd === 'plugin:resources|close' || cmd === 'haptic') return null
+        if (cmd === 'plugin:updater|install' || cmd === 'plugin:process|restart' || cmd === 'plugin:resources|close' || cmd === 'plugin:window|start_dragging' || cmd === 'haptic') return null
         if (cmd === 'get_token') return keychain.token
         // This fixture has no provider children; session lifecycle still calls
         // the native execution barrier before removing or replacing credentials.
@@ -325,4 +325,57 @@ test('desktop: upload a file cross-origin; the download opens in the browser wit
   const res = await request.get(url, { headers: { cookie: '' } })
   expect(res.status()).toBe(200)
   expect(Buffer.compare(await res.body(), bytes)).toBe(0)
+})
+
+test('desktop: the empty top bar drags the window, its buttons still click', async ({ page }) => {
+  // Tauri's drag script (crates/tauri/src/window/scripts/drag.js, 2.12): a bare
+  // data-tauri-drag-region only answers mousedowns on that very element, and a
+  // clickable element without the attribute blocks dragging.
+  await page.addInitScript(() => {
+    const clickable = (el: HTMLElement) => ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'LABEL', 'SUMMARY'].includes(el.tagName)
+      || (el.hasAttribute('contenteditable') && el.getAttribute('contenteditable') !== 'false')
+      || (el.hasAttribute('tabindex') && el.getAttribute('tabindex') !== '-1')
+      || ['button', 'link', 'menuitem', 'tab', 'checkbox', 'radio', 'switch', 'option'].includes(el.getAttribute('role') ?? '')
+    document.addEventListener('mousedown', (e) => {
+      const path = e.composedPath()
+      for (const el of path) {
+        if (!(el instanceof HTMLElement)) continue
+        const attr = el.getAttribute('data-tauri-drag-region')
+        if (clickable(el) && attr === null) return
+        if (attr === null) continue
+        if (attr === 'false') return
+        if (attr === 'deep' || el === path[0]) void (window as unknown as { __TAURI_INTERNALS__: { invoke(cmd: string): Promise<unknown> } }).__TAURI_INTERNALS__.invoke('plugin:window|start_dragging')
+        return
+      }
+    })
+  })
+  await page.goto('/')
+  await page.getByLabel('Username').fill('rex')
+  await page.getByLabel('Password').fill('goodboy123')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await freshBoard(page)
+  const drags = () => page.evaluate(() => (window as unknown as { __fakeKeychain: { calls: string[] } }).__fakeKeychain.calls.filter((c) => c === 'plugin:window|start_dragging').length)
+
+  // Top centre, and either end of the empty stretch between the board heading and the toolbar.
+  const bar = (await page.locator('header.topbar').boundingBox())!
+  const name = (await page.getByTestId('board-name').boundingBox())!
+  const [from, to] = await page.evaluate(() => [
+    Math.max(...[...document.querySelectorAll('.board-heading > *')].map((el) => el.getBoundingClientRect().right)),
+    Math.min(...[...document.querySelectorAll('.topbar-right > *')].map((el) => el.getBoundingClientRect().left)),
+  ])
+  expect(to - from).toBeGreaterThan(100)
+  const y = name.y + name.height / 2
+  for (const x of [bar.x + bar.width / 2, from + 10, to - 10]) {
+    const before = await drags()
+    await page.mouse.move(x, y)
+    await page.mouse.down()
+    await page.mouse.up()
+    expect(await drags(), `drag at x=${Math.round(x)}`).toBe(before + 1)
+  }
+
+  // The board name is a button: it renames, it doesn't drag.
+  const before = await drags()
+  await page.getByTestId('board-name').click()
+  await expect(page.getByTestId('board-name-input')).toBeVisible()
+  expect(await drags()).toBe(before)
 })
