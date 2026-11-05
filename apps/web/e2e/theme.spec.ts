@@ -83,6 +83,8 @@ test('account appearance works from the keyboard and dismisses without losing fo
   // Photo controls lead the identity row; use Safari's all-controls tab shortcut.
   await expect(menu.getByTestId('photo-options-trigger')).toBeFocused()
   await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab')
+  await expect(menu.getByTestId('edit-profile')).toBeFocused()
+  await page.keyboard.press(browserName === 'webkit' && process.platform === 'darwin' ? 'Alt+Tab' : 'Tab')
   await expect(toggle).toBeFocused()
   await page.keyboard.press('Enter')
   await expect(toggle).toHaveAccessibleName('Appearance: System')

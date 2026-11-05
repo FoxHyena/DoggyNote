@@ -1,3 +1,4 @@
+import { profileName } from '@doggynote/core'
 import { Hono, type Context } from 'hono'
 import { agentProposalSchema, type AgentChange, type AgentObject, type AgentProposalInput } from '@doggynote/core/agent'
 import { z } from 'zod'
@@ -200,7 +201,7 @@ async function validateChanges(db: D1Database, access: Access, credential: Crede
     ) : { ...after }
     const denied = stampComment(patch, before ? { kind: before.kind, author_id: before.kind === 'comment' ? before.authorId : null } : undefined, after.kind, user)
     if (denied) error(denied)
-    if (after.kind === 'comment' && !before) { after.authorId = user.id; after.author = user.username }
+    if (after.kind === 'comment' && !before) { after.authorId = user.id; after.author = profileName(user) }
     return { id: change.id, patch }
   })
   const denied = await deniedChanges(db, access, user.id, patches)
@@ -261,10 +262,10 @@ const machine = new Hono<AgentEnv>()
 machine.use('*', async (c, next) => {
   const token = c.req.header('authorization')?.match(/^Bearer (dn_agent_\S+)$/)?.[1]
   if (!token) return c.json({ error: 'Agent connection token required' }, 401)
-  const r = await c.env.DB.prepare('SELECT a.*,u.username,u.is_admin FROM agent_credentials a JOIN users u ON u.id=a.user_id WHERE a.token_hash=?1 AND a.revoked_at IS NULL AND a.expires_at>?2').bind(await sha256Hex(token), Date.now()).first<Credential & { username: string; is_admin: number }>()
+  const r = await c.env.DB.prepare('SELECT a.*,u.username,u.display_name,u.is_admin FROM agent_credentials a JOIN users u ON u.id=a.user_id WHERE a.token_hash=?1 AND a.revoked_at IS NULL AND a.expires_at>?2').bind(await sha256Hex(token), Date.now()).first<Credential & { username: string; display_name: string | null; is_admin: number }>()
   if (!r) return c.json({ error: 'Agent connection expired or revoked' }, 401)
   c.set('agent', r)
-  c.set('user', { id: r.user_id, username: r.username, isAdmin: !!r.is_admin })
+  c.set('user', { id: r.user_id, username: r.username, displayName: r.display_name, isAdmin: !!r.is_admin })
   c.header('cache-control', 'no-store')
   await c.env.DB.prepare('UPDATE agent_credentials SET last_used_at=?1 WHERE id=?2').bind(Date.now(), r.id).run()
   await next()

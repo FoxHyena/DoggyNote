@@ -55,6 +55,7 @@ test('on a phone, the account sheet has the appearance icon and the guides link'
   await expect(page.getByTestId('canvas')).toBeVisible()
   await page.getByTestId('account').tap()
   const sheet = page.getByRole('dialog', { name: 'Account', exact: true })
+  await sheet.evaluate(async el => { await Promise.all(el.getAnimations().map(a => a.finished.catch(() => {}))) })
   await reachable(sheet.getByTestId('theme-toggle'))
   await expect(sheet.getByRole('link', { name: 'Guides' })).toBeInViewport()
   await chooseAppearance(sheet, 'Light', { tap: true })

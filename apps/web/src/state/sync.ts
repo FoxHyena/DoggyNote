@@ -1,3 +1,5 @@
+import { clearProfiles, installProfiles } from './profiles.ts'
+import type { Profile } from '@doggynote/core'
 import { createSignal } from 'solid-js'
 import { isArea, isAreaItem, orderedAreaChanges, type Obj } from '@doggynote/core'
 import { repairAreaRemovals, detachLockedCreates } from './areas.ts'
@@ -102,7 +104,7 @@ async function push() {
 }
 
 const writable = (object: Obj) => canEditBoard(object.kind === 'board' ? object.id : object.boardId)
-type SyncPull = { objects: Obj[]; cursor: number; more: boolean; epoch: string; accessRevision: string; reset: boolean }
+type SyncPull = { profiles?: Profile[]; objects: Obj[]; cursor: number; more: boolean; epoch: string; accessRevision: string; reset: boolean }
 
 /** A large cross-board move cannot move a parent and all its references in one
  * 200-row push. Detach source references first, keeping the intended destination
@@ -210,6 +212,7 @@ async function pull() {
       await preserveDenied(denied, 'Your access to this board changed. Download these edits to keep a copy.')
       doc.reconcileSnapshot(snapshot, writable)
     }
+    if (res.profiles) installProfiles(res.profiles)
     syncedAccessRevision = res.accessRevision
     await doc.settleNoteCompositions()
     await doc.flush()
@@ -233,6 +236,7 @@ async function runOnce() {
     setSyncState('idle')
   } catch (e) {
     if (e instanceof ApiError && e.status === 401) {
+      clearProfiles()
       setSyncState('signed-out')
       onSignedOut?.()
     } else if (e instanceof ApiError) {

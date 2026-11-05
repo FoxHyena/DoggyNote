@@ -1,3 +1,5 @@
+import { profileName } from '@doggynote/core'
+import { ProfileEditor } from './ProfileEditor.tsx'
 import { SheetGrip } from './SheetGrip.tsx'
 import './navigation.css'
 import { Show, createEffect, createSignal, createUniqueId, onCleanup } from 'solid-js'
@@ -38,6 +40,7 @@ export function AccountMenu(props: ThemeToggleProps) {
     finally { setPhotoBusy(false); photoTrigger?.focus({ preventScroll: true }) }
   }
   const [open, setOpen] = createSignal(false)
+  const [profile, setProfile] = createSignal(false)
   const [people, setPeople] = createSignal(false)
   const [agents, setAgents] = createSignal(false)
   const [about, setAbout] = createSignal(false)
@@ -111,16 +114,16 @@ export function AccountMenu(props: ThemeToggleProps) {
           }
         }}
       >
-        <Show when={user()?.avatarId} fallback={<Icon name="user" />}><Avatar userId={user()!.id} name={user()!.username} avatarId={user()?.avatarId} class="account-trigger-avatar" /></Show>
+        <Show when={user()?.avatarId} fallback={<Icon name="user" />}><Avatar userId={user()!.id} name={profileName(user()!)} avatarId={user()?.avatarId} class="account-trigger-avatar" /></Show>
       </button>
       <Show when={open()}>
         <div ref={menu} id={menuId} class="menu nav-menu account-popover" role="dialog" aria-label="Account"><SheetGrip onDismiss={() => close(true)} />
           <div class="account-menu-identity account-photo-identity">
             <button ref={photoTrigger} type="button" class="account-photo-button" classList={{ 'account-photo-empty': !user()?.avatarId }} data-testid="photo-options-trigger" aria-label={photoBusy() ? 'Removing profile photo' : 'Profile photo options'} aria-haspopup="menu" aria-expanded={photoOptions()} aria-controls={photoOptions() ? photoMenuId : undefined} disabled={photoBusy()} onClick={() => photoOptions() ? closePhotoOptions() : setPhotoOptions(true)} onKeyDown={(event) => { if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); setPhotoOptions(true) } }}>
-              <Avatar userId={user()!.id} name={user()!.username} avatarId={user()?.avatarId} class="account-photo-avatar" />
+              <Avatar userId={user()!.id} name={profileName(user()!)} avatarId={user()?.avatarId} class="account-photo-avatar" />
               <span class="account-photo-camera" aria-hidden="true"><Icon name="camera" size={16} /></span>
             </button>
-            <strong>{user()?.username}</strong>
+            <div class="account-profile-text"><strong>{user() ? profileName(user()!) : ''}</strong><small>@{user()?.username}</small></div>
           </div>
           <Show when={photoBusy()}><span class="avatar-sr" role="status">Removing photo…</span></Show>
           <Show when={photoOptions()}>
@@ -129,7 +132,7 @@ export function AccountMenu(props: ThemeToggleProps) {
                 if (event.key === 'Tab') {
                   event.preventDefault(); event.stopPropagation(); closePhotoOptions()
                   if (event.shiftKey) photoTrigger?.focus()
-                  else menu?.querySelector<HTMLButtonElement>('[data-testid="theme-toggle"]')?.focus()
+                  else menu?.querySelector<HTMLButtonElement>('[data-testid="edit-profile"]')?.focus()
                   return
                 }
                 if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
@@ -144,6 +147,7 @@ export function AccountMenu(props: ThemeToggleProps) {
             </Popover>
           </Show>
           <Show when={photoError()}><p class="form-error account-photo-error" role="alert">{photoError()}</p></Show>
+          <button class="menu-item" data-testid="edit-profile" onClick={() => { close(); setProfile(true) }}>Edit profile</button>
           <div class="account-menu-appearance"><span aria-hidden="true">Appearance</span><ThemeToggle mode={props.mode} onThemeChange={props.onThemeChange} /></div>
           <Show when={user()?.isAdmin}>
             <button
@@ -182,6 +186,7 @@ export function AccountMenu(props: ThemeToggleProps) {
       </Show>
       <input ref={photoInput} type="file" accept={PHOTO_TYPES} hidden data-testid="avatar-input" onChange={(e) => { const file = e.currentTarget.files?.[0]; e.currentTarget.value = ''; if (file) { close(); setPhoto(file) } }} />
       <Show when={photo()}>{(file) => <AvatarEditor file={file()} onClose={returnToAccount} />}</Show>
+      <Show when={profile()}><ProfileEditor onClose={() => { setProfile(false); setOpen(true); queueMicrotask(() => menu?.querySelector<HTMLButtonElement>('[data-testid="edit-profile"]')?.focus({ preventScroll: true })) }} /></Show>
       <Show when={about()}><AboutDialog onClose={() => { setAbout(false); trigger.focus() }} /></Show>
       <Show when={agents()}><AgentConnections onClose={() => { setAgents(false); trigger.focus() }} /></Show>
       <Show when={people()}>

@@ -21,6 +21,6 @@ export type Env = {
   TMDB_IMAGE_BASE?: string
 }
 
-export type User = { id: string; username: string; isAdmin: boolean; avatarId?: string | null }
+export type User = { id: string; username: string; displayName?: string | null; isAdmin: boolean; avatarId?: string | null }
 
 export type AppEnv = { Bindings: Env; Variables: { user: User; sessionHash: string } }

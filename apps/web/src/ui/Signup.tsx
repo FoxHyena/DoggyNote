@@ -15,6 +15,7 @@ export function Signup(props: { token?: string; boardToken?: string; mode?: 'sig
   createTheme()
   const reset = () => props.mode === 'reset'
   const [username, setUsername] = createSignal('')
+  const [displayName, setDisplayName] = createSignal('')
   const [password, setPassword] = createSignal('')
   const [confirmPassword, setConfirmPassword] = createSignal('')
   const [busy, setBusy] = createSignal(false)
@@ -44,7 +45,7 @@ export function Signup(props: { token?: string; boardToken?: string; mode?: 'sig
         setPassword(''); setConfirmPassword(''); setDone(true)
         history.replaceState(null, '', '/reset/complete')
       } else {
-        const result = await api<{ user: User; token?: string; boardId?: string }>('/api/auth/signup', { method: 'POST', json: { token: props.token, boardToken: props.boardToken, username: username().trim(), password: password(), bearer: isTauri } })
+        const result = await api<{ user: User; token?: string; boardId?: string }>('/api/auth/signup', { method: 'POST', json: { token: props.token, boardToken: props.boardToken, username: username().trim(), displayName: displayName(), password: password(), bearer: isTauri } })
         await acceptSession(result)
         location.assign(result.boardId ? `/#/b/${encodeURIComponent(result.boardId)}` : '/')
       }
@@ -67,6 +68,7 @@ export function Signup(props: { token?: string; boardToken?: string; mode?: 'sig
         <p class="account-link-note">{reset() ? `Reset the password for ${info()?.username ?? 'your account'}. This signs out every device and agent.` : props.boardToken ? 'Create an account to edit this shared board. Your other boards start private.' : 'Choose your own username and password. Your boards start private.'}</p>
         <form onSubmit={submit} data-testid={reset() ? 'reset-form' : 'signup-form'}>
           <Show when={!reset()}><label>Username<input name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck={false} enterkeyhint="next" required minLength={2} maxLength={32} pattern="[a-zA-Z0-9_.-]+" value={username()} onInput={(e) => setUsername(e.currentTarget.value)} ref={(el) => queueMicrotask(() => el.focus())} /></label></Show>
+          <Show when={!reset()}><label>Display name (optional)<input name="displayName" autocomplete="nickname" maxLength={64} value={displayName()} onInput={(e) => setDisplayName(e.currentTarget.value)} aria-describedby="signup-name-hint" /></label><p id="signup-name-hint" class="account-link-note">This is the name other people see. Leave it empty to use your username.</p></Show>
           <label>{reset() ? 'New password' : 'Password'}<input name="password" type="password" ref={(el) => reset() && queueMicrotask(() => el.focus())} autocomplete="new-password" required minLength={8} maxLength={200} value={password()} onInput={(e) => setPassword(e.currentTarget.value)} /></label>
           <label>Confirm password<input name="confirm-password" type="password" autocomplete="new-password" required minLength={8} maxLength={200} value={confirmPassword()} onInput={(e) => setConfirmPassword(e.currentTarget.value)} /></label>
           <Show when={error()}><p class="form-error" role="alert">{error()}</p></Show>

@@ -1,9 +1,10 @@
+import { startProfiles, clearProfiles } from './profiles.ts'
 import { createSignal } from 'solid-js'
 import { ApiError, api, clearAssetToken, setBearer } from './api.ts'
 import * as doc from './doc.ts'
 import { isTauri, tokenStore } from './platform.ts'
 
-export type User = { id: string; username: string; isAdmin: boolean; avatarId?: string | null }
+export type User = { id: string; username: string; displayName?: string | null; isAdmin: boolean; avatarId?: string | null }
 
 const USER_KEY = 'doggynote.user'
 /** Survives sign-out and expired sessions, so signing in as someone else clears the local copy. */
@@ -43,16 +44,19 @@ export async function checkSession(): Promise<'ok' | 'offline' | 'anon'> {
   if (isTauri) setBearer(await tokenStore.get())
   try {
     const { user: u } = await api<{ user: User }>('/api/me')
+    startProfiles(u.id)
     setUser(u)
     cacheUser(u)
     return 'ok'
   } catch (e) {
     if (e instanceof ApiError && e.status === 401) {
+      clearProfiles()
       cacheUser(null)
       return 'anon'
     }
     const u = cachedUser()
     if (u) {
+      startProfiles(u.id)
       setUser(u)
       return 'offline'
     }
@@ -80,7 +84,8 @@ export async function acceptSession(res: { user: User; token?: string }): Promis
   } catch {
     // Without a trustworthy previous identity, clear before opening this account.
   }
-  if (last !== res.user.id) await doc.resetLocal()
+  if (last !== res.user.id) { clearProfiles(); await doc.resetLocal() }
+  startProfiles(res.user.id)
   setUser(res.user)
   cacheUser(res.user)
   return res.user
@@ -98,6 +103,7 @@ export async function logout() {
   setBearer(null)
   clearAssetToken()
   cacheUser(null)
+  clearProfiles()
   await doc.resetLocal()
   location.hash = ''
   location.reload()

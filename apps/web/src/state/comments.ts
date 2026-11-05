@@ -1,3 +1,4 @@
+import { profileName } from '@doggynote/core'
 import { createSignal } from 'solid-js'
 import { newId, type Comment, type Id } from '@doggynote/core'
 import * as doc from './doc.ts'
@@ -22,7 +23,7 @@ export function addComment(cardId: Id, text: string) {
     boardId: card.boardId,
     cardId,
     authorId: me.id,
-    author: me.username,
+    author: profileName(me),
     text: t,
     createdAt: Date.now(),
   }
