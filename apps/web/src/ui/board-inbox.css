@@ -1,0 +1,16 @@
+.inbox-tabs { display: flex; gap: 4px; padding: 0 12px 12px; border-bottom: 1px solid var(--dn-border); }
+.inbox-tabs button { flex: 1; min-height: 36px; }
+.inbox-tabs [aria-selected="true"] { background: var(--dn-card-hover); color: var(--dn-text); font-weight: 600; }
+.board-inbox { min-height: 0; display: flex; flex: 1; flex-direction: column; overflow: hidden; }
+.board-inbox-list { padding: 12px; }
+.board-inbox-item { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; touch-action: pan-y; }
+.board-inbox-item img { width: 100%; max-height: 320px; object-fit: contain; background: var(--dn-bg); border-radius: 6px; }
+.board-inbox-source, .image-source { color: var(--dn-accent); font-size: 13px; overflow-wrap: anywhere; text-underline-offset: 3px; }
+.board-inbox-actions { display: flex; align-items: center; gap: 8px; }
+.board-inbox-actions span { flex: 1; min-width: 0; overflow-wrap: anywhere; color: var(--dn-text-muted); font-size: 12px; }
+.board-inbox-item.inbox-dragging { opacity: .6; outline: 2px solid var(--dn-selection); }
+.image-source { display: block; padding: 6px 10px; }
+.clipper-connect { width: min(100% - 32px, 460px); margin: 12vh auto; padding: 24px; background: var(--dn-panel); border-radius: 14px; overflow-wrap: anywhere; }
+.clipper-connect h1 { font-size: 22px; }
+.clipper-connect p { line-height: 1.5; }
+.clipper-connect-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }

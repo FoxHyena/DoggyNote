@@ -2,52 +2,18 @@ import { newId, type Id } from '@doggynote/core'
 import * as idb from './idb.ts'
 import { assetUrl } from './api.ts'
 
-// Images are resized in the browser before upload: Workers can't run sharp and
-// Cloudflare Images costs money. Three sizes, re-encoded, which also strips
-// EXIF (GPS etc.) from everything we store. Only GIF originals are kept as-is
-// so animation survives at full size.
-
-// `small` (640) is what a card at 100% on a Retina screen needs; decoding
-// `medium` there cost ~2.5× the memory per visible image.
-export const SIZES = { thumb: 256, small: 640, medium: 1024, full: 4096 } as const
-export type AssetSize = keyof typeof SIZES
+import { SIZES, processImage, type AssetSize } from '@doggynote/browser-images'
+export { SIZES, type AssetSize }
 
 const listeners = new Set<() => void>()
 export const onAssetQueued = (fn: () => void) => (listeners.add(fn), () => listeners.delete(fn))
-
-let webpOk: Promise<boolean> | null = null
-function canEncodeWebp(): Promise<boolean> {
-  webpOk ??= new OffscreenCanvas(1, 1)
-    .convertToBlob({ type: 'image/webp' })
-    .then((b) => b.type === 'image/webp')
-    .catch(() => false)
-  return webpOk
-}
-
 export type ImportedImage = { assetId: Id; width: number; height: number; sizes: AssetSize[] }
 
 export async function importImage(file: Blob): Promise<ImportedImage> {
-  const bitmap = await createImageBitmap(file)
-  const { width, height } = bitmap
-  const mayHaveAlpha = !/jpe?g|heic|heif/i.test(file.type)
-  const type = mayHaveAlpha ? ((await canEncodeWebp()) ? 'image/webp' : 'image/png') : 'image/jpeg'
+  const { width, height, renditions } = await processImage(file)
   const assetId = newId()
   const entries: [string, StoredBlob][] = []
-  for (const [size, max] of Object.entries(SIZES) as [AssetSize, number][]) {
-    if (size === 'full' && file.type === 'image/gif') {
-      entries.push([`${assetId}/${size}`, await toStored(file)])
-      continue
-    }
-    const scale = Math.min(1, max / Math.max(width, height))
-    const w = Math.max(1, Math.round(width * scale))
-    const h = Math.max(1, Math.round(height * scale))
-    const canvas = new OffscreenCanvas(w, h)
-    const ctx = canvas.getContext('2d')!
-    ctx.imageSmoothingQuality = 'high'
-    ctx.drawImage(bitmap, 0, 0, w, h)
-    entries.push([`${assetId}/${size}`, await toStored(await canvas.convertToBlob({ type, quality: size === 'thumb' ? 0.8 : 0.88 }))])
-  }
-  bitmap.close()
+  for (const { size, blob } of renditions) entries.push([`${assetId}/${size}`, await toStored(blob)])
   await idb.putMany('assets', entries)
   await idb.put('meta', `upload:${assetId}`, true)
   for (const l of listeners) l()

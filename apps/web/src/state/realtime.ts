@@ -155,6 +155,7 @@ export function installRealtime() {
           try { event = JSON.parse(message.data) } catch { return }
           if (event.type === 'ready') { setSelfSession(event.sessionId); setLiveState('live'); schedulePresence(); void syncNow() }
           if (event.type === 'changed') {
+            window.dispatchEvent(new Event('doggynote:board-changed'))
             const start = performance.now()
             void syncNow().then(() => {
               if (syncState() !== 'idle') return

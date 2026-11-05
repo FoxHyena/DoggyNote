@@ -1,5 +1,5 @@
 import { createEffect, createMemo, createSignal, onCleanup, onMount, Show } from 'solid-js'
-import type { Card } from '@doggynote/core'
+import { safeHref, type Card } from '@doggynote/core'
 import { COPY } from '@doggynote/theme'
 import { acquireUrl, releaseUrl, type AssetSize } from '../state/assets.ts'
 import { camera, endEdit } from '../state/ui.ts'
@@ -55,6 +55,7 @@ export function ImageCard(props: CardProps<'image'>) {
       <Show when={editing()} fallback={<Show when={!props.lod && caption()}><p class="image-caption" data-testid="image-caption">{caption()}</p></Show>}>
         <CaptionEditor card={props.card} />
       </Show>
+      <Show when={!props.lod && safeHref(props.card.content.source?.pageUrl ?? '')} keyed>{(href) => <a class="image-source" href={href} target="_blank" rel="noopener noreferrer" data-nodrag data-testid="image-source">From {new URL(href).hostname}</a>}</Show>
     </>
   )
 }

@@ -1,4 +1,4 @@
-import { loadAccess } from './access.ts'
+import { isLiveBoard, loadAccess } from './access.ts'
 import { Hono, type Context } from 'hono'
 import type { AppEnv } from './env.ts'
 import { requireUser, sessionUser } from './auth.ts'
@@ -33,7 +33,8 @@ assets.get('/assets/token', requireUser, async (c) => {
   return c.json({ token: await signAssetToken(secret, `session:${c.get('sessionHash')}`, expiresAt), expiresAt })
 })
 
-assets.put('/assets/:id/:size', requireUser, async (c) => {
+/** Shared byte writer; callers must authenticate a session or scoped clipper first. */
+export async function putImageAsset(c: Context<AppEnv>) {
   const { id, size } = c.req.param()
   if (!UUID.test(id) || !SIZES.has(size)) return c.json({ error: 'bad asset path' }, 400)
   const telegram = await c.env.DB.prepare("SELECT 1 FROM sticker_assets WHERE asset_id=?1").bind(id).first()
@@ -55,7 +56,8 @@ assets.put('/assets/:id/:size', requireUser, async (c) => {
       .run()
   }
   return c.json({ ok: true }, existing ? 200 : 201)
-})
+}
+assets.put('/assets/:id/:size', requireUser, putImageAsset)
 
 type Access = 'ok' | 'unauthenticated' | 'forbidden'
 
@@ -70,6 +72,11 @@ async function privateToSomeoneElse(c: Context<AppEnv>, assetId: string, userId:
   const source = await c.env.DB.prepare("SELECT pack_name AS name FROM sticker_assets WHERE asset_id=?1").bind(assetId).first<{ name: string }>()
   if (source && await c.env.DB.prepare('SELECT 1 FROM sticker_memberships WHERE user_id=?1 AND pack_name=?2 UNION SELECT 1 FROM sticker_previews WHERE user_id=?1 AND pack_name=?2 AND expires_at>?3').bind(userId, source.name, Date.now()).first()) return false
   if (results.some((r) => (!r.owner_id || r.owner_id === userId) && a.canRead(r.board_id) && !(JSON.parse(r.data) as { purged?: boolean }).purged)) return false
+  const { results: clips } = await c.env.DB.prepare("SELECT board_id FROM board_inbox WHERE asset_id=?1 AND state='pending'").bind(assetId).all<{ board_id: string }>()
+  for (const clip of clips) if (a.canRead(clip.board_id) && await isLiveBoard(c.env.DB, clip.board_id)) return false
+  // A pending/discarded clip is a protected reference, not a freely readable orphan.
+  const clip = await c.env.DB.prepare('SELECT 1 FROM board_inbox WHERE asset_id=?1').bind(assetId).first()
+  if (clip) return true
   if (!source && !results.length) {
     return !(await c.env.DB.prepare('SELECT 1 FROM assets WHERE id=?1 AND created_by=?2').bind(assetId, userId).first())
   }

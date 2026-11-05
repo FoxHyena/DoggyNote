@@ -1,5 +1,6 @@
 // Pure, DOM-free logic shared by the web app, desktop shell and server.
 export * from './model.ts'
+export * from './clipper.ts'
 export * from './profile.ts'
 export * from './columns.ts'
 export * from './areas.ts'

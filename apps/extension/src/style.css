@@ -1,0 +1,32 @@
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--dn-bg); color: var(--dn-text); font: 14px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+::selection { background: var(--dn-selection); color: var(--dn-accent-text); }
+:focus-visible { outline: 2px solid var(--dn-selection); outline-offset: 2px; }
+a { color: var(--dn-accent); text-underline-offset: 3px; overflow-wrap: anywhere; }
+button, input, select { font: inherit; }
+button, .primary { min-height: 40px; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+button:disabled { cursor: default; color: var(--dn-text-muted); background: var(--dn-card-hover); }
+input, select { width: 100%; min-height: 44px; border: 1px solid var(--dn-border); border-radius: 8px; padding: 8px 12px; background: var(--dn-bg); color: var(--dn-text); caret-color: var(--dn-accent); }
+input::placeholder { color: var(--dn-text-muted); }
+select { overflow: hidden; text-overflow: ellipsis; }
+main { padding: 16px; max-width: 640px; margin-inline: auto; }
+header { display: flex; gap: 8px; align-items: center; margin-bottom: 24px; }
+h1 { font-size: 16px; font-weight: 600; flex: 1; margin: 0; }
+h2 { font-size: 20px; line-height: 1.3; }
+p { overflow-wrap: anywhere; }
+.primary { display: inline-flex; justify-content: center; align-items: center; background: var(--dn-accent); color: var(--dn-accent-text); border: 0; font-weight: 600; text-decoration: none; }
+.quiet { background: transparent; color: var(--dn-text-muted); border: 0; }
+@media(hover:hover) { .quiet:hover { background: var(--dn-card-hover); color: var(--dn-text); } .primary:not(:disabled):hover { filter: brightness(1.06); } }
+.capture { background: var(--dn-panel); border-radius: 14px; padding: 12px; }
+.preview { display: block; width: 100%; max-height: 55vh; object-fit: contain; border-radius: 6px; }
+.preview-placeholder { min-height: 160px; display: grid; place-items: center; color: var(--dn-text-muted); }
+.source { margin: 12px 0 20px; }
+label { display: block; font-size: 13px; margin: 12px 0 4px; }
+.save { width: 100%; margin-top: 20px; }
+.muted, footer { color: var(--dn-text-muted); font-size: 13px; }
+footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 24px; }
+footer span { min-width: 0; overflow-wrap: anywhere; }
+.error { color: var(--dn-error-text); }
+.saved { display: flex; flex-direction: column; gap: 16px; }
+.saved p { margin: 0; }
+* { scrollbar-color: var(--dn-border) var(--dn-bg); scrollbar-width: thin; }

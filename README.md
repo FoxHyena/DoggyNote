@@ -24,6 +24,7 @@ It's designed to stay fast on big boards. The Mac app is a small native app (abo
 - **Tables** with typed columns (text, number, checkbox, date, tag and paw rating), bold, alignment and fills, one-off sort, paste from a spreadsheet, and a compact bar or phone dock for editing. Agents can read and propose them.
 - **To-do lists**, **columns** that cards snap into, and **boards inside boards** with icons and colours.
 - **Images**: paste, drop or upload. Several sizes are stored, so zoomed-out boards stay light.
+- **Chrome image clipper** (private test): hover an image on the web, choose a board, and save it to that board’s Inbox. Place it on the canvas later. [Install and build instructions](apps/extension/README.md).
 - **Links** unfurl into previews with title, description and image.
 - **Files** up to 50 MB (PDFs, docs, zips…). PDFs show their first page.
 - **Connectors** between cards, snapping to the middle of each side.
@@ -44,7 +45,7 @@ It's designed to stay fast on big boards. The Mac app is a small native app (abo
 - **Agent connections**: a scoped, revocable [local MCP connector](docs/mcp-setup.md) lets agents read boards and propose changes. Preview, approve, reject or reverse their edits inside the app.
 
 **Just for you**
-- **Inbox**: a private place only you can see. Jot something down now and drag it onto a board later. Privacy is enforced by the server, not just hidden in the app.
+- **Private Inbox**: a place only you can see. Jot something down now and drag it onto a board later. Privacy is enforced by the server, not just hidden in the app.
 - **Quick capture** (⌃⌥Space in the Mac app): a little window from anywhere that drops a thought, link or image into your Inbox.
 
 **Getting things out**

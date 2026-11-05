@@ -16,6 +16,8 @@ import { Icon } from './icons.tsx'
 import { phone, touch } from '../state/device.ts'
 import { showToast } from '../state/toast.ts'
 import { screenToWorld } from '@doggynote/core'
+import { BoardInbox } from './BoardInbox.tsx'
+import { boardInboxItems, inboxTab, setInboxTab, refreshBoardInbox } from '../state/boardInbox.ts'
 
 export const [toyboxOpen, setToyboxOpen] = createSignal(false)
 
@@ -27,15 +29,18 @@ export function ToyboxButton() {
       classList={{ on: toyboxOpen() }}
       data-testid="toybox-button"
       aria-expanded={toyboxOpen()}
-      data-tooltip={`Your private ${COPY.unsorted}`}
-      onClick={() => setToyboxOpen(!toyboxOpen())}
+      data-tooltip={`Open ${COPY.unsorted}`}
+      onClick={() => {
+        if (!toyboxOpen()) { setInboxTab(boardInboxItems().length ? 'board' : 'private'); void refreshBoardInbox() }
+        setToyboxOpen(!toyboxOpen())
+      }}
     >
       <Icon name="inbox" />
       <span class="icon-btn-label">
         {COPY.unsorted}
-        <Show when={toyboxCards().length}><span class="count-inline"> · {toyboxCards().length}</span></Show>
+        <Show when={toyboxCards().length + boardInboxItems().length}><span class="count-inline"> · {toyboxCards().length + boardInboxItems().length}</span></Show>
       </span>
-      <Show when={toyboxCards().length}><span class="count-badge" aria-hidden="true">{toyboxCards().length}</span></Show>
+      <Show when={toyboxCards().length + boardInboxItems().length}><span class="count-badge" aria-hidden="true">{toyboxCards().length + boardInboxItems().length}</span></Show>
     </button>
   )
 }
@@ -110,13 +115,26 @@ export function ToyboxPanel() {
 
   return (
     <Show when={toyboxOpen()}>
-      <aside ref={panel} class="trash toybox" data-testid="toybox-panel" aria-label={COPY.unsorted} onPaste={onPaste} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}><SheetGrip onDismiss={() => setToyboxOpen(false)} />
+      <aside ref={panel} class="trash toybox" data-testid="toybox-panel" aria-label={COPY.unsorted} onPaste={(e) => inboxTab() === 'private' && onPaste(e)} onDragOver={(e) => inboxTab() === 'private' && e.preventDefault()} onDrop={(e) => inboxTab() === 'private' && onDrop(e)}><SheetGrip onDismiss={() => setToyboxOpen(false)} />
         <header class="trash-head">
           <h2>{COPY.unsorted}</h2>
           <button class="icon-btn" title="Close" onClick={() => setToyboxOpen(false)}>
             <Icon name="close" />
           </button>
         </header>
+        <div class="inbox-tabs" role="tablist" aria-label="Inbox location" onKeyDown={(e) => {
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return
+          e.preventDefault(); e.stopPropagation()
+          const next = e.key === 'Home' ? 'board' : e.key === 'End' ? 'private' : inboxTab() === 'board' ? 'private' : 'board'
+          setInboxTab(next)
+          if (next === 'board') void refreshBoardInbox()
+          e.currentTarget.querySelector<HTMLButtonElement>(`#${next === 'board' ? 'board' : 'private'}-inbox-tab`)?.focus()
+        }}>
+          <button class="bar-btn" role="tab" id="board-inbox-tab" tabindex={inboxTab() === 'board' ? 0 : -1} aria-controls="board-inbox-content" aria-selected={inboxTab() === 'board'} onClick={() => { setInboxTab('board'); void refreshBoardInbox() }}>This board{boardInboxItems().length ? ` · ${boardInboxItems().length}` : ''}</button>
+          <button class="bar-btn" role="tab" id="private-inbox-tab" tabindex={inboxTab() === 'private' ? 0 : -1} aria-controls="private-inbox-content" aria-selected={inboxTab() === 'private'} onClick={() => setInboxTab('private')}>Private{toyboxCards().length ? ` · ${toyboxCards().length}` : ''}</button>
+        </div>
+        <Show when={inboxTab() === 'board'}><div id="board-inbox-content" role="tabpanel" aria-labelledby="board-inbox-tab" class="board-inbox"><BoardInbox /></div></Show>
+        <Show when={inboxTab() === 'private'}><div id="private-inbox-content" role="tabpanel" aria-labelledby="private-inbox-tab" class="board-inbox">
         <p class="toybox-sub">Only you can see this. {touch() ? 'Place things onto a board when you\'re ready.' : 'Drag things onto a board when you\'re ready.'}</p>
         <Show when={!canPlace()}><p class="toybox-sub" id="toybox-move-hint">You need editing access to place items on this board. You can still add to your {COPY.unsorted}.</p></Show>
         <div class="toybox-add">
@@ -193,6 +211,7 @@ export function ToyboxPanel() {
             </For>
           </ul>
         </Show>
+        </div></Show>
         <Show when={ghost()}>
           <div class="tool-ghost" style={{ left: `${ghost()!.at.x}px`, top: `${ghost()!.at.y}px` }}>
             {describeCard(ghost()!.card)}

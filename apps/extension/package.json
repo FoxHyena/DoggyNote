@@ -1,0 +1,27 @@
+{
+  "name": "extension",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p . && node scripts/build.mjs",
+    "package": "pnpm build && node scripts/package.mjs",
+    "typecheck": "tsc -p .",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@doggynote/browser-images": "workspace:*",
+    "@doggynote/core": "workspace:*",
+    "@doggynote/theme": "workspace:*",
+    "@phosphor-icons/core": "2.1.1",
+    "solid-js": "^1.9.15"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@types/chrome": "^0.1.24",
+    "@types/node": "^24.13.3",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0",
+    "vite-plugin-solid": "^2.11.14"
+  }
+}

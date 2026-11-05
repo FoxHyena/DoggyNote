@@ -5,7 +5,7 @@
 
 const KEY = 'doggynote.launch'
 
-type Launch = { share?: string; title?: string; inbox?: boolean }
+type Launch = { share?: string; title?: string; inbox?: boolean; boardInbox?: string }
 
 /**
  * What to drop in the Inbox from a share. A bare link becomes a link card
@@ -28,7 +28,8 @@ export function captureLaunch() {
   if (u.pathname === '/share') {
     const p = (k: string) => u.searchParams.get(k) ?? ''
     launch = { share: sharedText(p('title'), p('text'), p('url')), title: p('title').trim() || undefined, inbox: true }
-  } else if (u.searchParams.has('inbox')) launch = { inbox: true }
+  } else if (u.searchParams.has('boardInbox')) launch = { boardInbox: u.searchParams.get('boardInbox')! }
+  else if (u.searchParams.has('inbox')) launch = { inbox: true }
   if (!launch) return
   try {
     sessionStorage.setItem(KEY, JSON.stringify(launch))

@@ -23,4 +23,4 @@ export type Env = {
 
 export type User = { id: string; username: string; displayName?: string | null; isAdmin: boolean; avatarId?: string | null }
 
-export type AppEnv = { Bindings: Env; Variables: { user: User; sessionHash: string } }
+export type AppEnv = { Bindings: Env; Variables: { user: User; sessionHash: string; clipperId?: string } }

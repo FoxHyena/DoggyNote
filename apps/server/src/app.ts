@@ -14,6 +14,7 @@ import { desktop } from './desktop.ts'
 import { isFetchableUrl, proxyImage, unfurl } from './unfurl.ts'
 import { movies } from './movies.ts'
 import { realtime } from './realtime.ts'
+import { clipper } from './clipper.ts'
 
 export type { Env } from './env.ts'
 
@@ -84,6 +85,7 @@ app.route('/', avatars)
 app.route('/', shares)
 app.route('/', accessRoutes)
 app.route('/', agents)
+app.route('/', clipper)
 app.route('/', chats)
 app.route('/', realtime)
 app.route('/', desktop)

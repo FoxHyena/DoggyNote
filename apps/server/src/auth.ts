@@ -137,6 +137,8 @@ users.post('/me/password', async (c) => {
     // Sign out every other device.
     c.env.DB.prepare('DELETE FROM sessions WHERE user_id = ?1 AND token_hash != ?2').bind(user.id, c.get('sessionHash')),
     c.env.DB.prepare('UPDATE agent_credentials SET revoked_at = ?1 WHERE user_id = ?2').bind(Date.now(), user.id),
+    c.env.DB.prepare('UPDATE clipper_credentials SET revoked_at = ?1 WHERE user_id = ?2').bind(Date.now(), user.id),
+    c.env.DB.prepare('DELETE FROM clipper_codes WHERE user_id = ?1').bind(user.id),
   ])
   return c.json({ ok: true })
 })
@@ -272,6 +274,8 @@ auth.post('/reset', async (c) => {
     c.env.DB.prepare(`UPDATE users SET pw_hash = ?1 WHERE id = ?2 AND ${guard}`).bind(await hashPassword(body.password), link.user_id, tokenHash, redemption),
     c.env.DB.prepare(`DELETE FROM sessions WHERE user_id = ?2 AND ?1 IS NOT NULL AND ${guard}`).bind(now, link.user_id, tokenHash, redemption),
     c.env.DB.prepare(`UPDATE agent_credentials SET revoked_at = ?1 WHERE user_id = ?2 AND ${guard}`).bind(now, link.user_id, tokenHash, redemption),
+    c.env.DB.prepare(`UPDATE clipper_credentials SET revoked_at = ?1 WHERE user_id = ?2 AND ${guard}`).bind(now, link.user_id, tokenHash, redemption),
+    c.env.DB.prepare(`DELETE FROM clipper_codes WHERE user_id = ?2 AND ?1 IS NOT NULL AND ${guard}`).bind(now, link.user_id, tokenHash, redemption),
     c.env.DB.prepare(`UPDATE account_links SET revoked_at = ?1 WHERE user_id = ?2 AND kind = 'recovery' AND used_at IS NULL AND ${guard}`).bind(now, link.user_id, tokenHash, redemption),
   ])
   if (!result[0]?.meta.changes) return c.json({ error: linkError }, 410)
@@ -331,6 +335,8 @@ users.delete('/users/:id/sessions', requireAdmin, async (c) => {
   await c.env.DB.batch([
     c.env.DB.prepare('DELETE FROM sessions WHERE user_id = ?1').bind(c.req.param('id')),
     c.env.DB.prepare('UPDATE agent_credentials SET revoked_at = ?1 WHERE user_id = ?2').bind(Date.now(), c.req.param('id')),
+    c.env.DB.prepare('UPDATE clipper_credentials SET revoked_at = ?1 WHERE user_id = ?2').bind(Date.now(), c.req.param('id')),
+    c.env.DB.prepare('DELETE FROM clipper_codes WHERE user_id = ?1').bind(c.req.param('id')),
   ])
   return c.json({ ok: true })
 })
