@@ -20,4 +20,3 @@ export async function captureBoardImage(api: APIRequestContext, boardId: string,
   expect(response.ok(), await response.text()).toBe(true)
   return { id, token, credentialId }
 }
-
