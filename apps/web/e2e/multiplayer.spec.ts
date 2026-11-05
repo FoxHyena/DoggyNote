@@ -6,7 +6,7 @@ async function focusEditor(page: Page) { await page.bringToFront(); await page.g
 async function start(page: Page) { await focusEditor(page); await page.keyboard.press(`${MOD}+a`); await page.keyboard.press('ArrowLeft') }
 async function end(page: Page) { await focusEditor(page); await page.keyboard.press(`${MOD}+a`); await page.keyboard.press('ArrowRight') }
 test.afterEach(async () => { await Promise.all([...contexts].map((c) => c.close())); contexts.clear() })
-async function friend(browser: Browser, owner: Page, permission = 'edit') {
+async function friend(browser: Browser, owner: Page, permission = 'edit', options: { unfocused?: boolean } = {}) {
   const id = owner.url().split('/b/')[1]!
   const grant = await owner.request.post(`/api/boards/${id}/members`, { data: { username: 'fido', permission, includeChildren: true } })
   expect(grant.ok(), await grant.text()).toBe(true)
@@ -14,6 +14,12 @@ async function friend(browser: Browser, owner: Page, permission = 'edit') {
   contexts.add(context)
   expect((await context.request.post('/api/auth/login', { data: { username: 'fido', password: 'fetchfetch' } })).ok()).toBe(true)
   const page = await context.newPage()
+  // Until a focus event, the page behaves as a window behind another app.
+  if (options.unfocused) await page.addInitScript(() => {
+    let focused = false
+    Document.prototype.hasFocus = () => focused
+    window.addEventListener('focus', () => { focused = true }, true)
+  })
   await page.goto(owner.url())
   await expect(page.getByTestId('canvas')).toBeVisible()
   return page
@@ -45,6 +51,30 @@ test('window blur hides a cursor without leaving the room; focus requires a fres
   await expect(page.getByTestId('remote-cursor')).toBeVisible()
   await page.getByTestId('collaborators').click()
   await expect(page.getByTestId('participant')).toHaveCount(2)
+})
+
+test('a window that opens without focus keeps its cursor to itself until it is focused', async ({ page, browser }) => {
+  await freshBoard(page)
+  const other = await friend(browser, page, 'edit', { unfocused: true })
+  // Check the room from the focused side: any click in the other window would count as focus.
+  await live(page)
+  await page.getByTestId('collaborators').click(); await expect(page.getByTestId('participant')).toHaveCount(2); await page.keyboard.press('Escape')
+  const box = (await other.getByTestId('canvas').boundingBox())!
+  // No blur ever fires for a window that was never focused (an app relaunched
+  // behind another one), and macOS still delivers hover moves to it.
+  await other.mouse.move(box.x + 120, box.y + 120)
+  await other.mouse.move(box.x + 140, box.y + 140)
+  await page.waitForTimeout(500)
+  await expect(page.getByTestId('remote-cursor')).toHaveCount(0)
+  await other.evaluate(() => window.dispatchEvent(new Event('focus')))
+  await other.mouse.move(box.x + 160, box.y + 160)
+  await expect(page.getByTestId('remote-cursor')).toBeVisible()
+  // A press on the board also counts as being in the window, focus event or not.
+  await other.evaluate(() => window.dispatchEvent(new Event('blur')))
+  await expect(page.getByTestId('remote-cursor')).toHaveCount(0)
+  await other.mouse.click(box.x + 180, box.y + 180)
+  await other.mouse.move(box.x + 200, box.y + 200)
+  await expect(page.getByTestId('remote-cursor')).toBeVisible()
 })
 
 test('a stationary remote cursor stays painted while the observer pans, zooms and crosses overview', async ({ page, browser }, info) => {

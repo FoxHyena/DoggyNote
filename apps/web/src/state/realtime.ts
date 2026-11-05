@@ -109,7 +109,9 @@ export function updateAwareness() {
 export function installRealtime() {
   return createRoot((dispose) => {
     let generation = 0, retry: ReturnType<typeof setTimeout> | null = null, activeBoard = ''
-    let blurred = false
+    // A window can open behind another app (a relaunch after an update) and
+    // never see a blur, so start from whether it actually has focus.
+    let blurred = !document.hasFocus()
     const disconnect = () => {
       generation++; if (retry) clearTimeout(retry)
       retry = null; socket?.close(); socket = null
@@ -164,7 +166,7 @@ export function installRealtime() {
       if (blurred || document.hidden || !canvas || e.pointerType === 'touch') { pointer = null; schedulePresence(); return }
       pointer = { x: e.clientX, y: e.clientY }; schedulePresence()
     }
-    const manual = (e: Event) => { const target = e.target as Element; if (target?.closest?.('[data-testid="canvas"]') && !target.closest('.follow-banner')) stopFollowing() }
+    const manual = (e: Event) => { if (e.type === 'pointerdown') blurred = false; const target = e.target as Element; if (target?.closest?.('[data-testid="canvas"]') && !target.closest('.follow-banner')) stopFollowing() }
     const key = (e: KeyboardEvent) => { if (following() && (e.key === 'Escape' || e.key.startsWith('Arrow'))) stopFollowing(); if (e.key === 'Escape') { previews.clear(); schedulePresence() } }
     const finishGesture = clearLivePreviews
     const visibility = () => { if (document.hidden) { disconnect(); setLiveState('offline') } else void connect() }
