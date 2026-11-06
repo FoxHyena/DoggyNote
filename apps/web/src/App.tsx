@@ -91,17 +91,17 @@ function EditorApp() {
       // editable offline (the chunk can't be fetched then). Viewers never load it.
       void import('./editor/codemirror.ts')
       await doc.load({ persist: true, readOnly: false })
-      const { first } = await startSync({ onSignedOut: () => setSignedOut(true) })
+      const { ready } = await startSync({ onSignedOut: () => setSignedOut(true) })
       // Quick captures land on the server; pull them in right away.
       if (isTauri) void import('@tauri-apps/api/event').then(({ listen }) => listen('toybox-captured', () => void syncNow()))
       // Permissions and the personal home are established before showing cached content.
-      await first
+      await ready
       void startChatRuntime().catch(() => {})
       doc.setWriteGuard((object) => canEditBoard(object.kind === 'board' ? object.id : object.boardId))
       if (!location.hash && boardId() === 'home' && !localStorage.getItem('doggynote.lastBoard')) openBoard(homeBoardId())
       // The remembered board may have been deleted. Only decide once the first
       // sync has had its say, or a slow pull would bounce us home.
-      void first.then(() => {
+      void ready.then(() => {
         if (!doc.getBoard(boardId()) || !canReadBoard(boardId())) openBoard(homeBoardId())
         migrateNotesToMarkdown()
         ensureToybox()
