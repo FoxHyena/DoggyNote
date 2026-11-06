@@ -8,3 +8,5 @@ export type ConnectPreview = { from: Id; fromSide: Side; to: Vec; target: { id: 
 export const [connectPreview, setConnectPreview] = createSignal<ConnectPreview | null>(null)
 export const [draggingIds, setDraggingIds] = createSignal<ReadonlySet<Id>>(new Set())
 export const [resizingId, setResizingId] = createSignal<Id | null>(null)
+/** A board tile accepting the current item gesture, independent of column insertion. */
+export const [boardDropTarget, setBoardDropTarget] = createSignal<{ cardId: Id; boardId: Id; count: number } | null>(null)

@@ -18,6 +18,7 @@ import { canvasControlsSize } from './CanvasControls.tsx'
 import { ColorDots } from './ColorDots.tsx'
 import { openThread } from './CommentsPanel.tsx'
 import { TodoOptions, TodoMenuItems } from './TodoOptions.tsx'
+import { MoveToBoardMenuItem } from './MoveBoardPicker.tsx'
 import { BarMenu } from './BarMenu.tsx'
 import { TableBar } from './TableBar.tsx'
 import { activeTable } from '../cards/table/tableControl.ts'
@@ -38,6 +39,7 @@ export function SelectionBar() {
   const [barSize, setBarSize] = createSignal({ width: 400, height: 46 })
   const cards = createMemo(() => [...selection()].map((id) => doc.getCard(id)).filter((c): c is Card => !!c))
   const conns = createMemo(() => [...selection()].filter((id) => doc.get(id)?.kind === 'connection'))
+  const stickerGroup = () => !cards().length && selection().size > 1 && [...selection()].some(id => doc.get(id)?.kind === 'sticker')
   const connectionOnly = () => !cards().length && conns().length > 0
   // Touch screens get a bar along the bottom: thumbs reach it, and it never covers the card.
   const docked = () => phone() || touch()
@@ -46,7 +48,7 @@ export function SelectionBar() {
   const editingList = () => !docked() && doc.getCard(editingId() ?? '')?.type === 'todo'
   // Editing a table's cells with a mouse: the bar holds just the cell actions (touch has TableDock).
   const editingGrid = () => !docked() && !!activeTable() && activeTable()!.cardId === editingId()
-  const show = () => !(selection().size === 1 && selection().has(openChatId() ?? '')) && !cardContextOpen() && (cards().length || conns().length) && !draggingIds().size && (!editingId() || editingList() || editingGrid()) && !connectMode()
+  const show = () => !(selection().size === 1 && selection().has(openChatId() ?? '')) && !cardContextOpen() && (cards().length || conns().length || stickerGroup()) && !draggingIds().size && (!editingId() || editingList() || editingGrid()) && !connectMode()
   createEffect(() => { if (!show() || !phone()) setPanel(null) })
   // A colour card is its colour, and ink on the board has no card to tint.
   const tintable = () => cards().some((c) => c.type !== 'swatch' && c.type !== 'ink')
@@ -94,14 +96,14 @@ export function SelectionBar() {
   const partlyLocked = () => cards().some((c) => c.positionLocked === true) && !cards().every((c) => c.positionLocked === true)
   // Docked, the lock is one of the labelled actions; the position row only holds what's left.
   const positionRow = () => !docked() || partlyLocked() || canAlign()
-  const hasActions = () => docked() || connectionOnly() || (sole()?.type === 'todo' && writable())
+  const hasActions = () => cards().length > 0 || stickerGroup() || docked() || connectionOnly() || (sole()?.type === 'todo' && writable())
 
   // Float just above the selection, or below it if there's no room.
   const pos = createMemo(() => {
     if (docked()) return { left: 0, top: 0 }
     layoutTick()
-    const rects = cards()
-      .map((c) => rectOf(c.id))
+    const rects = [...selection()]
+      .map((id) => rectOf(id))
       .filter((r): r is NonNullable<typeof r> => !!r)
     const u = union(rects)
     const v = viewport()
@@ -258,6 +260,11 @@ export function SelectionBar() {
             {selection().size > 1 ? `${selection().size} picked` : 'Select'}
           </button>
         </Show>
+        <Show when={!phone() && (cards().length || stickerGroup())}>
+          <BarMenu triggerRef={el => { moreTrigger = el }} label="" tip="More card actions" title="More card actions" testId="selection-more" menuTestId="selection-more-menu" icon={<Icon name="more" size={18} />}>
+            {close => <MoveToBoardMenuItem close={close} anchor={() => moreTrigger} />}
+          </BarMenu>
+        </Show>
         <Show when={docked() || connectionOnly()}>
           <BarAction testid="bury" icon="bury" label={sole()?.type === 'area' ? 'Remove area' : COPY.bury} title={`${COPY.bury}: move to ${COPY.trash} (Delete)`} labelled={docked()} onClick={burySelection} />
         </Show>
@@ -281,6 +288,7 @@ export function SelectionBar() {
             <BarAction testid="bury" icon="bury" label={sole()?.type === 'area' ? 'Remove area' : COPY.bury} labelled onClick={burySelection} />
             <BarMenu triggerRef={(el) => { moreTrigger = el }} label="More" title="More card actions" testId="selection-more" menuTestId="selection-more-menu" icon={<Icon name="more" size={20} />}>
               {(close) => <>
+                <MoveToBoardMenuItem close={close} anchor={() => moreTrigger} />
                 <Show when={soleBoard()}>
                   <button class="menu-item" role="menuitem" data-testid="rename-board" disabled={!doc.canWriteObject(soleBoard())} onClick={() => { close(); beginEdit(sole()!.id) }}><Icon name="edit" />Rename</button>
                   <button class="menu-item" role="menuitem" data-testid="selection-icon" disabled={!doc.canWriteObject(soleBoard())} onClick={() => { close(); openPanel('icon') }}><Icon name="board" />Board icon</button>

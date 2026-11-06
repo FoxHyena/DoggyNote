@@ -1,3 +1,4 @@
+import { removalWithoutRestore } from './syncRemovals.ts'
 import { clearProfiles, installProfiles } from './profiles.ts'
 import type { Profile } from '@doggynote/core'
 import { createSignal } from 'solid-js'
@@ -173,15 +174,7 @@ async function pull() {
       continue
     }
     const queued = new Map(doc.pendingOutbox().map((change) => [change.id, change.patch]))
-    const removed = res.objects.filter((object) => {
-      if ((object as { hidden?: boolean }).hidden) return true
-      const pending = queued.get(object.id)
-      const restoring = pending?.noteRestore || (pending && 'deletedAt' in pending && pending.deletedAt === null) || (pending?.purged === false && !pending.noteUpdate)
-      // Our own delete or purge (Empty Buried bones) must still reach the server,
-      // or a deleted comment keeps its words there.
-      const removing = pending?.purged === true || (typeof pending?.deletedAt === 'number' && pending.deletedAt > 0)
-      return (object.deletedAt || object.purged) && !restoring && !removing
-    }).map((object) => object.id)
+    const removed = res.objects.filter(object => removalWithoutRestore(object, queued.get(object.id))).map(object => object.id)
     // A moved/private or removed row can arrive before a queued write is tried.
     // Preserve inactive drafts too, before receiveRemote drops the local copy.
     await preserveDenied(removed, 'This object was removed or moved out of your access. Your unsent edits are preserved here.')

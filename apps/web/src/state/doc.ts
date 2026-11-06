@@ -319,7 +319,6 @@ function applyTx(tx: Transaction) {
 /** Apply a transaction and push it onto the undo stack. */
 export function commit(tx: Transaction) {
   if (readOnly || previewing() || !tx.length || !layoutAllowed(tx)) return
-  if (writeGuard && tx.some((c) => state.objs[c.id] && !writeGuard!({ ...state.objs[c.id], ...c.after, id: c.id } as Obj))) return
   if (writeGuard) {
     const freshBoards = new Map(tx.filter((change) => !state.objs[change.id] && change.after.kind === 'board').map((change) => [change.id, change.after as Board]))
     const writableBoard = (id: Id, seen = new Set<Id>()): boolean => {
@@ -331,7 +330,15 @@ export function commit(tx: Transaction) {
       return !!fresh && (writeGuard!(fresh) || !fresh.parentId || writableBoard(fresh.parentId, seen))
     }
     if (tx.some((change) => {
-      if (state.objs[change.id]) return !writeGuard!(state.objs[change.id])
+      const current = state.objs[change.id]
+      if (current) {
+        if (!writeGuard!(current)) return true
+        const proposed = { ...current, ...change.after, id: change.id } as Obj
+        if (writeGuard!(proposed)) return false
+        // A move may target a board created in this same atomic command. Its
+        // parent must be writable, and every other guard still applies.
+        return proposed.kind === 'board' || current.kind === 'board' || !freshBoards.has(proposed.boardId) || !writableBoard(proposed.boardId) || !writeGuard!({ ...proposed, boardId: current.boardId } as Obj)
+      }
       const object = change.after as Obj
       return object.kind === 'board' ? !writableBoard(change.id) : !writableBoard(object.boardId)
     })) return
