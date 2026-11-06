@@ -39,6 +39,12 @@ let pushTimer: ReturnType<typeof setTimeout> | null = null
 let onSignedOut: (() => void) | null = null
 let syncedAccessRevision = ''
 let roomLive = false
+let initialReadDone: (() => void) | null = null
+
+function finishInitialRead() {
+  initialReadDone?.()
+  initialReadDone = null
+}
 
 /** Set by realtime: a connected room pushes `changed`, so the poll can slow down. */
 export function setRoomLive(live: boolean) { roomLive = live }
@@ -221,6 +227,9 @@ async function runOnce() {
     await refreshAccess()
     // Reconcile permissions before replaying offline writes.
     await pull()
+    // Opening a board needs its authorized snapshot, not every queued image's
+    // bytes. A large photo drop can take minutes to upload after a restart.
+    finishInitialRead()
     await uploadAssets()
     await push()
     await pull()
@@ -239,6 +248,9 @@ async function runOnce() {
       setSyncState('offline')
     }
   } finally {
+    // A failed/offline first read must also let startup show its local fallback
+    // and save status, just as a failed complete first round did before.
+    finishInitialRead()
     setPendingCount(doc.outboxSize())
   }
 }
@@ -264,13 +276,15 @@ function schedulePush() {
   pushTimer = setTimeout(() => void syncNow(), 100)
 }
 
-/** Start background sync. `first` settles after the first round; `fresh` means this device never synced. */
-export async function startSync(opts: { onSignedOut: () => void }): Promise<{ first: Promise<void>; fresh: boolean }> {
+/** `ready` settles after the first read (or its failure), `first` after the full
+ * round including uploads; `fresh` means this device never synced. */
+export async function startSync(opts: { onSignedOut: () => void }): Promise<{ ready: Promise<void>; first: Promise<void>; fresh: boolean }> {
   onSignedOut = opts.onSignedOut
   cursor = (await idb.get<number>('meta', 'cursor')) ?? 0
   syncedAccessRevision = (await idb.get<string>('meta', 'syncedAccessRevision')) ?? ''
   await loadRecovery()
   const fresh = cursor === 0
+  const ready = new Promise<void>((resolve) => { initialReadDone = resolve })
   doc.onOutbox(schedulePush)
   onAssetQueued(schedulePush)
   window.addEventListener('online', () => void syncNow())
@@ -280,5 +294,5 @@ export async function startSync(opts: { onSignedOut: () => void }): Promise<{ fi
     if (roomLive && Date.now() - (lastSyncAt() ?? 0) < LIVE_POLL_MS - POLL_MS / 2) return
     void syncNow()
   }, POLL_MS)
-  return { first: syncNow(), fresh }
+  return { ready, first: syncNow(), fresh }
 }
