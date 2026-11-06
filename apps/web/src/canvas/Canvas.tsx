@@ -26,6 +26,7 @@ import {
   panBy,
   rectFromPoints,
   screenToWorld,
+  worldToScreen,
   union,
   viewRect,
   zoomAt,
@@ -84,6 +85,10 @@ import { resetPageScroll, visible as visibleArea } from '../state/viewport.ts'
 import { showToast } from '../state/toast.ts'
 import { boardDrawing } from '../state/drawing.ts'
 import { BoardInkBar, BoardInkPreview, createBoardInk } from '../drawing/BoardInk.tsx'
+import { MoveBoardPickerHost } from '../ui/MoveBoardPicker.tsx'
+import { moveDestinationProblem, moveFamily, moveItemsToBoard } from '../state/boardMoves.ts'
+import { cancelBoardMoveMotion, prepareBoardMoveMotion } from './boardMoveMotion.ts'
+import { boardDropTarget, setBoardDropTarget } from './dnd.ts'
 import { CardContextMenu, type ContextPoint } from '../ui/CardContextMenu.tsx'
 
 type Gesture =
@@ -250,7 +255,7 @@ export function Canvas(props: { readOnly: boolean }) {
   )
   createEffect(
     on(boardId, () => {
-      resetInteraction(); cancelStickerPlacement()
+      cancelBoardMoveMotion(); resetInteraction(); cancelStickerPlacement()
       // A thread belongs to a card on the board you left.
       setThreadCardId(null)
     }, { defer: true }),
@@ -423,6 +428,54 @@ export function Canvas(props: { readOnly: boolean }) {
     return null
   }
 
+  let boardHoverFamily: { key: string; exclude: Set<Id>; count: number; destination?: Id; problem?: string | null } | null = null
+  /** Geometric hit-testing ignores dragged content even under pointer capture and LOD. */
+  function updateBoardDrop(ids: Id[], point: Vec) {
+    const key = ids.join(',')
+    if (boardHoverFamily?.key !== key) {
+      const family = moveFamily(ids)
+      boardHoverFamily = { key, exclude: new Set(family.items.map(o => o.id)), count: family.roots.length }
+    }
+    const cache = boardHoverFamily, exclude = cache.exclude
+    let hit: Card | undefined, top = -Infinity
+    for (const c of doc.cardsOn(boardId())) {
+      if (exclude.has(c.id) || hiddenByColumn(c.id)) continue
+      const r = rectOf(c.id)
+      if (!r || point.x < r.x || point.x > r.x + r.w || point.y < r.y || point.y > r.y + r.h) continue
+      if (isArea(c) && point.y > r.y + AREA_HEADER && point.x > r.x + 8 && point.x < r.x + r.w - 8 && point.y < r.y + r.h - 8) continue
+      const z = isArea(c) ? -Infinity : c.columnId ? (doc.getCard(c.columnId)?.z ?? 0) + 0.5 : c.z
+      if (z >= top) { hit = c; top = z }
+    }
+    if (hit?.type !== 'board') { setBoardDropTarget(null); return }
+    const destination = (hit.content as { boardId: Id }).boardId
+    if (cache.destination !== destination) { cache.destination = destination; cache.problem = moveDestinationProblem(ids, destination) }
+    if (cache.problem) { setBoardDropTarget(null); return }
+    const old = boardDropTarget()
+    if (old?.cardId !== hit.id || old.count !== cache.count) setBoardDropTarget({ cardId: hit.id, boardId: destination, count: cache.count })
+  }
+  const moveGestureIds = () => [...selection()].filter(id => { const o = doc.get(id); return o?.kind === 'card' || o?.kind === 'sticker' })
+  function finishBoardDrop(ids: Id[], snap: Record<Id, Partial<Obj>>): boolean {
+    const target = boardDropTarget()
+    setBoardDropTarget(null); boardHoverFamily = null
+    if (!target) return false
+    const r = rectOf(target.cardId), viewportRect = vp.getBoundingClientRect()
+    const point = r ? worldToScreen(camera(), { x: r.x + r.w / 2, y: r.y + Math.min(r.h / 2, 42) }) : { x: 0, y: 0 }
+    const animate = prepareBoardMoveMotion(moveFamily(ids).roots.map(o => o.id), { x: point.x + viewportRect.left, y: point.y + viewportRect.top })
+    // Roll back uncommitted drag geometry first: the move's inverse must be the pre-drag layout.
+    for (const [id, patch] of Object.entries(snap)) doc.transient(id, patch)
+    thawAreas(); setAreaDropTarget(null); setDropTarget(null); setDraggingIds(new Set<Id>()); setManipulatingSticker(null)
+    const result = moveItemsToBoard(ids, target.boardId)
+    doc.unmarkBusy(Object.keys(snap)); clearLivePreviews()
+    if (result.ok) { animate(); haptic('drop') } else showToast(result.reason)
+    return true
+  }
+  const boardDropStyle = () => {
+    const target = boardDropTarget(), r = target && rectOf(target.cardId), cam = camera()
+    if (!r) return {}
+    const p = worldToScreen(cam, r)
+    return { left: `${p.x - 5}px`, top: `${p.y - 5}px`, width: `${r.w * cam.zoom + 10}px`, height: `${r.h * cam.zoom + 10}px` }
+  }
+
   /** Index in the column's children where a drop at world y lands. */
   function insertIndex(columnId: Id, y: number, exclude: Set<Id>): number {
     const kids = columnChildren(columnId).filter((k) => !exclude.has(k.id))
@@ -477,6 +530,7 @@ export function Canvas(props: { readOnly: boolean }) {
   }
 
   function onPointerDown(e: PointerEvent) {
+    cancelBoardMoveMotion(); boardHoverFamily = null
     lastPointerType = e.pointerType
     if (e.pointerType === 'touch') return touchDown(e)
     if (e.button === 2) return
@@ -725,7 +779,7 @@ export function Canvas(props: { readOnly: boolean }) {
         }
         g.moved = true; select([s.id]); setManipulatingSticker(s.id)
         const point = toWorld(e)
-        if (g.action === 'move') setAreaDropTarget(areaAt(point)?.id ?? null)
+        if (g.action === 'move') { updateBoardDrop([s.id], point); setAreaDropTarget(boardDropTarget() ? null : areaAt(point)?.id ?? null) }
         if (g.action === 'move') doc.transient(s.id, { x: Math.max(-1e6, Math.min(1e6, s.x + point.x - g.start.x)), y: Math.max(-1e6, Math.min(1e6, s.y + point.y - g.start.y)), areaId: null })
         else doc.transient(s.id, { ...transformSticker(s, g.start, point), areaId: null })
         break
@@ -787,12 +841,13 @@ export function Canvas(props: { readOnly: boolean }) {
           const o = g.origins.get(id)!
           doc.transient(id, { x: Math.round(o.x + dx), y: Math.round(o.y + dy) } as Partial<Card>)
         }
+        updateBoardDrop(moveGestureIds(), w)
         const set = new Set(g.ids)
         // Columns hold cards: a drag that carries a column, ink drawn on the board or stickers never drops into one.
         const hasColumn = g.ids.some((id) => doc.getCard(id)?.type === 'column' || doc.getCard(id)?.type === 'area' || doc.getCard(id)?.type === 'ink' || !doc.getCard(id))
-        const col = hasColumn ? null : columnAt(w, set)
+        const col = hasColumn || boardDropTarget() ? null : columnAt(w, set)
         setDropTarget(col ? { columnId: col.id, index: insertIndex(col.id, w.y, set) } : null)
-        setAreaDropTarget(!col && !g.ids.some(id => isArea(doc.getCard(id))) ? areaAt(w, set)?.id ?? null : null)
+        setAreaDropTarget(!boardDropTarget() && !col && !g.ids.some(id => isArea(doc.getCard(id))) ? areaAt(w, set)?.id ?? null : null)
         break
       }
       case 'resize': {
@@ -835,6 +890,7 @@ export function Canvas(props: { readOnly: boolean }) {
     if (ink.up(e)) return
     const g = gesture
     gesture = null
+    boardHoverFamily = null
     setPanning(false)
     setSnapping(false)
     setResizingId(null)
@@ -842,6 +898,7 @@ export function Canvas(props: { readOnly: boolean }) {
   }
 
   function endGesture(g: Gesture, e: PointerEvent) {
+    if (e.type === 'pointercancel') setBoardDropTarget(null)
     if (e.type === 'pointercancel' && (g.kind === 'drag' || g.kind === 'resize')) {
       for (const [id, snap] of Object.entries(g.snap)) doc.transient(id, snap)
       doc.unmarkBusy(Object.keys(g.snap)); thawAreas(); setAreaDropTarget(null); setDropTarget(null); setDraggingIds(new Set<Id>()); clearLivePreviews()
@@ -855,6 +912,7 @@ export function Canvas(props: { readOnly: boolean }) {
       }
       case 'sticker-group': {
         const ids = g.originals.map((s) => s.id)
+        setBoardDropTarget(null)
         if (e.type === 'pointercancel') { for (const id of ids) doc.transient(id, g.snap[id]); setGroupTurn(g.turn) }
         else { for (const item of g.originals) { const current = doc.get(item.id); if (current?.kind === 'sticker') doc.transient(item.id, areaPlacement({ x: current.x, y: current.y }, item.areaId ? doc.getCard(item.areaId) : undefined)) } doc.commitFrom(g.snap) }
         thawAreas(); setAreaDropTarget(null)
@@ -863,6 +921,8 @@ export function Canvas(props: { readOnly: boolean }) {
       }
       case 'sticker': {
         const id = g.original.id
+        if (e.type !== 'pointercancel' && g.moved && g.action === 'move' && finishBoardDrop([id], g.snap)) break
+        setBoardDropTarget(null)
         if (e.type === 'pointercancel') doc.transient(id, g.snap[id])
         else { const item = doc.get(id); if (g.moved && item?.kind === 'sticker') doc.transient(id, areaPlacement({ x: item.x, y: item.y }, g.action === 'move' ? areaAt(toWorld(e)) : g.original.areaId ? doc.getCard(g.original.areaId) : undefined)); select([id]); doc.commitFrom(g.snap) }
         thawAreas(); setAreaDropTarget(null)
@@ -917,6 +977,8 @@ export function Canvas(props: { readOnly: boolean }) {
         break
       }
       case 'drag': {
+        updateBoardDrop(moveGestureIds(), toWorld(e))
+        if (finishBoardDrop(moveGestureIds(), g.snap)) break
         const drop = dropTarget()
         setDropTarget(null)
         setDraggingIds(new Set<Id>())
@@ -959,9 +1021,10 @@ export function Canvas(props: { readOnly: boolean }) {
   function cancelGesture() {
     const g = gesture
     gesture = null
+    boardHoverFamily = null
     setPanning(false)
     setSnapping(false)
-    thawAreas(); setAreaDropTarget(null)
+    thawAreas(); setAreaDropTarget(null); setBoardDropTarget(null)
     if (!g) return
     switch (g.kind) {
       case 'sticker-place': setStickerGhost(null); break
@@ -1469,7 +1532,7 @@ export function Canvas(props: { readOnly: boolean }) {
   const onSelectStart = (e: Event) => { if (gesture && lastPointerType === 'touch') e.preventDefault() }
   const onTouchMoveNative = (e: TouchEvent) => { if (stickerTouch || gesture?.kind === 'tzoom') e.preventDefault() }
 
-  onCleanup(() => { resetInteraction(); cancelStickerPlacement() })
+  onCleanup(() => { cancelBoardMoveMotion(); resetInteraction(); cancelStickerPlacement() })
   onMount(() => {
     const finishOutside = (e: PointerEvent) => {
       if (!e.composedPath().includes(vp) && (fingers.has(e.pointerId) || capturedPointers.has(e.pointerId))) onPointerUp(e)
@@ -1575,7 +1638,8 @@ export function Canvas(props: { readOnly: boolean }) {
         if (lastPointerType === 'touch') { e.preventDefault(); return }
         if (target.closest('a')) return
         const id = cardIdAt(target, e)
-        const card = id ? doc.getCard(id) : undefined
+        const sticker = stickerAt(toWorld(e), false)
+        const card = sticker ?? (id ? doc.getCard(id) : undefined)
         if (!card && target.closest('button,[data-nodrag]')) return
         const canPing = liveState() === 'live' && peers().length > 0
         // Empty canvas offers Paste on a board you can edit.
@@ -1585,7 +1649,7 @@ export function Canvas(props: { readOnly: boolean }) {
         endEdit()
         if (card && !props.readOnly && !selection().has(card.id)) select([card.id])
         const world = toWorld(e)
-        setContextPoint({ ...world, screenX: e.clientX, screenY: e.clientY, cardId: props.readOnly ? null : card?.id ?? null, columnId: columnAt(world, new Set())?.id, returnTo: (card && cardEl(card.id)) || vp })
+        setContextPoint({ ...world, screenX: e.clientX, screenY: e.clientY, cardId: props.readOnly ? null : card?.id ?? null, columnId: columnAt(world, new Set())?.id, returnTo: (card && (cardEl(card.id) || document.querySelector<HTMLElement>(`[data-sticker-id="${CSS.escape(card.id)}"] .sticker-accessible-pick`))) || vp })
       }}
       onDragOver={(e) => {
         if (!props.readOnly) e.preventDefault()
@@ -1598,6 +1662,8 @@ export function Canvas(props: { readOnly: boolean }) {
     >
       <Show when={!props.readOnly}><p id="canvas-keys" class="save-label-quiet">Option or Alt with the arrow keys moves between cards. The arrow keys move the selected card. Enter edits a card or opens a board.</p></Show>
       <CollaborationOverlay />
+      <Show when={!props.readOnly}><MoveBoardPickerHost /></Show>
+      <Show when={boardDropTarget()}>{target => <div class="board-move-target" data-testid="board-drop-target" style={boardDropStyle()}><span class="board-move-hint" role="status">{target().count === 1 ? 'Add to this board' : `Add ${target().count} items to this board`}</span></div>}</Show>
       <Show when={contextPoint()} keyed>{(point) => <CardContextMenu point={point} close={() => setContextPoint(null)} />}</Show>
       <div class="world" data-testid="world" style={{ transform: transform() }}>
         <Show when={snapping()}>

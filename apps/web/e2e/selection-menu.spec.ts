@@ -52,9 +52,9 @@ test('card context actions support arrows, Escape, editing, clipboard, duplicati
   const open = () => card.click({ button: 'right', position: { x: 30, y: 20 } })
   await open()
   await expect(page.getByTestId('selection-bar')).toHaveCount(0)
-  await expect(menu.getByRole('menuitem')).toHaveText(['Edit', 'Cut⌘X', 'Copy⌘C', 'Paste⌘V', 'Duplicate⌘D', 'Make a synced copy', 'Labels', 'Comment', 'Create area from selection', 'Bury'])
+  await expect(menu.getByRole('menuitem')).toHaveText(['Edit', 'Cut⌘X', 'Copy⌘C', 'Paste⌘V', 'Move to board…', 'Duplicate⌘D', 'Make a synced copy', 'Labels', 'Comment', 'Create area from selection', 'Bury'])
   // Menus share the migrated icon family and Bury uses Archive, distinct from permanent deletion.
-  await expect(menu.locator('svg')).toHaveCount(10)
+  await expect(menu.locator('svg')).toHaveCount(11)
   for (const name of ['edit', 'cut', 'copy', 'paste', 'duplicate', 'synced', 'label', 'comment', 'bury']) {
     const icon = menu.locator(`svg[data-icon="${name}"]`)
     await expect(icon).toHaveAttribute('viewBox', '0 0 256 256')

@@ -107,7 +107,7 @@ export function StickerLayer(props: { readOnly: boolean }) {
       <div class="sticker-rotation" style={{ transform: `rotate(${s.angle}deg)` }}>
         <div class="sticker-visual"><StickerImage sticker={s.content} animate={camera().zoom >= LOD_ZOOM && !exporting() && !playbackPaused(s.id)} /></div>
       </div>
-      <button class="sticker-accessible-pick" aria-label={`Select ${s.content.emoji || 'sticker'} from ${s.content.packName}`} onFocus={() => { if (!props.readOnly) select([s.id]) }} onClick={() => { if (!props.readOnly) select([s.id]) }} disabled={props.readOnly} />
+      <button class="sticker-accessible-pick" aria-label={`Select ${s.content.emoji || 'sticker'} from ${s.content.packName}`} onFocus={() => { if (!props.readOnly && !selection().has(s.id)) select([s.id]) }} onClick={() => { if (!props.readOnly) select([s.id]) }} disabled={props.readOnly} />
     </div>}</For>
     <div class="sticker-selection-layer">
       <Show when={!props.readOnly && !exporting() && ring()}>{(r) => {

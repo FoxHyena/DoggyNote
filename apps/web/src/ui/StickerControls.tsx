@@ -3,13 +3,15 @@ import { stickerRingRadius, usableSticker, worldToScreen, type Sticker } from '@
 import { COPY } from '@doggynote/theme'
 import * as doc from '../state/doc.ts'
 import { armedSticker, cancelStickerPlacement, duplicateSticker, reorderSticker, placeSticker, stickerGhost, stickerCenter, STICKER_TOUCH_OFFSET } from '../state/stickers.ts'
-import { boardId, camera, select, selection, viewport } from '../state/ui.ts'
+import { boardId, camera, cardContextOpen, select, selection, viewport } from '../state/ui.ts'
 import { phone, touch } from '../state/device.ts'
 import { burySelection } from '../state/actions.ts'
 import { contains } from '@doggynote/core'
 import { rectOf } from '../canvas/layout.ts'
 import { viewStickerPack } from './StickerTray.tsx'
 import { StickerImage } from './StickerImage.tsx'
+import { BarMenu } from './BarMenu.tsx'
+import { MoveToBoardMenuItem } from './MoveBoardPicker.tsx'
 import { Icon, type IconName } from './icons.tsx'
 import { manipulatingSticker } from '../canvas/StickerLayer.tsx'
 import { playbackPaused, togglePlayback } from '../state/stickerPlayback.ts'
@@ -17,6 +19,7 @@ import { playbackPaused, togglePlayback } from '../state/stickerPlayback.ts'
 // One selected sticker: a compact bar of icon actions just above its ring (a bottom sheet on phones).
 // Turning and resizing belong to the ring itself (drag it, or use the arrow keys while it has focus).
 export function StickerControls() {
+  let moreTrigger!: HTMLButtonElement
   const [barSize, setBarSize] = createSignal({ width: 420, height: 46 })
   const selected = createMemo(() => {
     if (selection().size !== 1) return null
@@ -45,7 +48,7 @@ export function StickerControls() {
   return <>
     <Show when={armedSticker()}><div class="sticker-placement" role="status" data-testid="sticker-placement"><StickerImage sticker={armedSticker()!} /><span>Tap your board to place</span><button class="bar-btn" onClick={() => { placeSticker(armedSticker()!); queueMicrotask(() => document.querySelector<HTMLElement>('[data-testid="sticker-controls"]')?.focus({ preventScroll: true })) }}>Place at center</button><button class="bar-btn" onClick={cancelStickerPlacement}>Cancel</button></div></Show>
     <Show when={stickerGhost()}><div class="sticker-ghost" data-testid="sticker-ghost" style={{ left: `${stickerGhost()!.at.x}px`, top: `${stickerGhost()!.at.y - (stickerGhost()!.touch ? STICKER_TOUCH_OFFSET : 0)}px` }}><StickerImage sticker={stickerGhost()!.sticker} /></div></Show>
-    <Show when={selected() && !armedSticker() && !manipulatingSticker()}>
+    <Show when={selected() && !armedSticker() && !manipulatingSticker() && !cardContextOpen()}>
       <div ref={(el) => {
         // The phone launcher sits above the sheet, so it publishes its height.
         const o = new ResizeObserver(() => { setBarSize({ width: el.offsetWidth, height: el.offsetHeight }); document.documentElement.style.setProperty('--dn-sticker-sheet', `${el.offsetHeight}px`) })
@@ -65,7 +68,8 @@ export function StickerControls() {
           </Show>
           {action('View pack', 'Pack', 'sticker', () => viewStickerPack(selected()!.content.packName))}
           {action('Duplicate', 'Duplicate', 'duplicate', () => duplicateSticker(selected()!))}
-          {action('Bury', 'Bury', 'bury', burySelection, `Move to ${COPY.trash} (Delete)`)}
+          <BarMenu triggerRef={el => { moreTrigger = el }} label="More" title="More sticker actions" testId="sticker-more" menuTestId="sticker-more-menu" icon={<Icon name="more" size={18} />}>{close => <MoveToBoardMenuItem close={close} anchor={() => moreTrigger} />}</BarMenu>
+          {action('Bury' , 'Bury', 'bury', burySelection, `Move to ${COPY.trash} (Delete)`)}
         </div>
       </div>
     </Show>

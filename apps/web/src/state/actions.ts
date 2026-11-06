@@ -25,7 +25,7 @@ import { COPY, type CardColor } from '@doggynote/theme'
 import * as doc from './doc.ts'
 import { prepareBuryMotion } from '../canvas/buryMotion.ts'
 import { snapToGrid } from './grid.ts'
-import { labelsOn, moveLabels } from './labels.ts'
+import { moveItemsToBoard } from './boardMoves.ts'
 import { showToast } from './toast.ts'
 import { beginEdit, boardId, clearSelection, editingId, endEdit, select, selection } from './ui.ts'
 
@@ -244,24 +244,7 @@ export function selectAll() {
 export function moveCardTo(id: Id, toBoard: Id, place: Placement) {
   const c = doc.getCard(id)
   if (!c) return
-  const size = { w: c.w, h: c.h }
-  const patch: Partial<Card> =
-    'columnId' in place
-      ? { boardId: toBoard, areaId: null, columnId: place.columnId, order: place.order }
-      : { boardId: toBoard, areaId: null, columnId: null, x: onGrid(place.at.x - size.w / 2), y: onGrid(place.at.y - 20), z: doc.maxZ(toBoard) + 1 }
-  // Parent moves carry their family, preserving local offsets and owned ink/comments.
-  const family = isArea(c) ? areaFamily(c, [...doc.cardsOn(c.boardId), ...doc.stickersOn(c.boardId)]) : c.type === 'column' ? columnChildren(c.id) : []
-  const moved = [c, ...family], movedIds = new Set(moved.map(item => item.id))
-  const patches: Record<Id, Partial<Obj>> = { [id]: patch }
-  for (const item of family) patches[item.id] = { boardId: toBoard }
-  for (const conn of doc.connectionsOn(c.boardId)) {
-    if (movedIds.has(conn.from) && movedIds.has(conn.to)) patches[conn.id] = { boardId: toBoard }
-    else if (movedIds.has(conn.from) || movedIds.has(conn.to)) patches[conn.id] = { purged: true }
-  }
-  for (const item of moved) if (item.kind === 'card') {
-    for (const m of doc.commentsOn(item.id)) patches[m.id] = { boardId: toBoard }
-    for (const stroke of doc.strokesOn(item.id)) patches[stroke.id] = { boardId: toBoard }
-  }
-  if (toBoard !== c.boardId) for (const [key, p] of Object.entries(moveLabels(moved.filter((item): item is Card => item.kind === 'card'), labelsOn(c.boardId), toBoard))) patches[key] = { ...patches[key], ...p } as Partial<Obj>
-  doc.update(patches)
+  const placement = 'columnId' in place ? place : { at: { x: onGrid(place.at.x - c.w / 2), y: onGrid(place.at.y - 20) } }
+  const result = moveItemsToBoard([id], toBoard, { placement, allowInbox: true, notify: false })
+  if (!result.ok) showToast(result.reason)
 }
