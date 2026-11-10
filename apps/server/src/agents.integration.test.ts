@@ -43,12 +43,16 @@ async function fixture() {
     },
   } as unknown as D1Database
   const app = new Hono<AppEnv>().basePath('/api').route('/', agents)
-  const request = (path: string, body?: unknown, token = 'test-session', method = body === undefined ? 'GET' : 'POST') => app.request(`/api${path}`, { method, headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }, { DB: db } as Env)
+  const stored = new Map<string, ArrayBuffer>()
+  const BUCKET = { async head(key: string) { return stored.has(key) ? {} : null }, async put(key: string, body: ArrayBuffer) { stored.set(key, body) } } as unknown as R2Bucket
+  const env = { DB: db, BUCKET } as Env
+  const request = (path: string, body?: unknown, token = 'test-session', method = body === undefined ? 'GET' : 'POST') => app.request(`/api${path}`, { method, headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }, env)
+  const putImage = (path: string, token: string) => app.request(`/api${path}`, { method: 'PUT', headers: { authorization: `Bearer ${token}`, 'content-type': 'image/webp' }, body: new Uint8Array([1, 2, 3]) }, env)
   const connection = await request('/agent-connections', { name: 'Test client', mode: 'propose', boardIds: ['root'] })
   expect(connection.status).toBe(201)
   const { token, id: credentialId } = await connection.json() as { token: string; id: string }
   const card = (id: string, text: string) => ({ id, kind: 'card', type: 'note', boardId: 'root', x: 0, y: 0, w: 260, h: 80, z: 1, color: 'none', content: { md: text }, createdAt: now })
-  return { sql, request, token, credentialId, card, beforeBatch: (hook: () => void) => { beforeBatch = hook } }
+  return { sql, request, putImage, stored, token, credentialId, card, beforeBatch: (hook: () => void) => { beforeBatch = hook } }
 }
 
 it('stages idempotently, rejects machine approval, applies atomically and reverses after measurement', async () => {
@@ -432,5 +436,39 @@ it('keeps the 512 KB request and 200 operation limits for tables', async () => {
     expect(ok.response.status).toBe(201)
     expect((await f.request(`/agent-proposals/${ok.body.id}/approve`, {})).status).toBe(200)
     expect(Object.keys(storedTable(f)).filter((k) => k.startsWith('tc')).length).toBe(2600)
+  } finally { f.sql.close() }
+})
+
+it('a connection uploads its own images and places them only once every rendition is stored', async () => {
+  const f = await fixture()
+  try {
+    const assetId = '0f8fad5b-d9cb-469f-a165-70867728950e'
+    const image = (id: string, sizes: string[]) => ({ id, kind: 'card', type: 'image', boardId: 'root', x: 0, y: 0, w: 260, h: 195, z: 1, color: 'none', createdAt: 0, content: { assetId, width: 800, height: 600, sizes } })
+    const propose = (key: string, object: object, token = f.token) => f.request('/agent/proposals', { idempotencyKey: key, label: 'Reference images', operations: [{ action: 'create', object }] }, token)
+    // Nothing is reserved yet: renditions are refused, and so is a card naming the id.
+    expect((await f.putImage(`/agent/assets/${assetId}/full`, f.token)).status).toBe(403)
+    expect((await f.request('/agent/uploads', { assetId }, f.token)).status).toBe(200)
+    // Reserving again is a no-op retry; another connection cannot take the id.
+    expect((await f.request('/agent/uploads', { assetId }, f.token)).status).toBe(200)
+    const other = await (await f.request('/agent-connections', { name: 'Other client', mode: 'propose', boardIds: ['root'] })).json() as { token: string }
+    expect((await f.request('/agent/uploads', { assetId }, other.token)).status).toBe(409)
+    expect((await f.putImage(`/agent/assets/${assetId}/thumb`, other.token)).status).toBe(403)
+    const reader = await (await f.request('/agent-connections', { name: 'Reader', mode: 'read', boardIds: ['root'] })).json() as { token: string }
+    expect((await f.request('/agent/uploads', { assetId: crypto.randomUUID() }, reader.token)).status).toBe(403)
+    // Only `full` stored: the card would show broken thumbnails, so it's refused.
+    expect((await f.putImage(`/agent/assets/${assetId}/full`, f.token)).status).toBe(201)
+    expect((await propose('too-early-upload', image('ref-1', ['thumb', 'small', 'medium', 'full']))).status).toBe(409)
+    for (const size of ['thumb', 'small', 'medium']) expect((await f.putImage(`/agent/assets/${assetId}/${size}`, f.token)).status).toBe(201)
+    expect((await f.putImage(`/agent/assets/${assetId}/full`, f.token)).status).toBe(200)
+    expect(f.stored.size).toBe(4)
+    expect(await (await f.request('/agent/uploads', { assetId }, f.token)).json()).toMatchObject({ stored: expect.arrayContaining(['thumb', 'small', 'medium', 'full']) })
+    // Another connection cannot place an upload that isn't on a board yet.
+    expect((await propose('borrow-upload', image('ref-2', ['thumb', 'medium', 'full']), other.token)).status).toBe(409)
+    const staged = await propose('place-upload', image('ref-1', ['thumb', 'small', 'medium', 'full']))
+    expect(staged.status).toBe(201)
+    const { id } = await staged.json() as { id: string }
+    expect((await f.request(`/agent-proposals/${id}/approve`, {})).status).toBe(200)
+    const card = JSON.parse((f.sql.prepare("SELECT data FROM objects WHERE id='ref-1'").get() as { data: string }).data)
+    expect(card.content.assetId).toBe(assetId)
   } finally { f.sql.close() }
 })

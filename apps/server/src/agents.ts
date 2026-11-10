@@ -34,6 +34,7 @@ type Row = { id: string; data: string; seq: number; owner_id: string | null }
 type Proposal = { id: string; credential_id: string; user_id: string; label: string; status: string; changes: string; applied_revisions: string | null; created_at: number; applied_at: number | null; request_hash: string }
 type RecordObject = { object: AgentObject; revision: number; owner: string | null }
 const DAY = 86_400_000
+const MAX_UPLOADS_PER_DAY = 1000
 /** The guard SQL in applyProposal quotes ids inline, so they are re-checked right before. */
 const SAFE_ID = /^[a-zA-Z0-9_:-]{1,64}$/
 const active = (o: AgentObject) => !o.deletedAt && !o.purged
@@ -161,6 +162,25 @@ export async function prepareAgentChanges(db: D1Database, access: Access, creden
   return [...changes.values()]
 }
 
+/** Renditions of each new image asset this connection uploaded itself, by asset id. */
+async function agentUploads(db: D1Database, credential: Credential, user: User, changes: AgentChange[]): Promise<Map<string, Set<string>>> {
+  const ids = [...new Set(changes.flatMap((ch) => ch.after.kind === 'card' && ch.after.type === 'image' && assetOf(ch.after) !== (ch.before ? assetOf(ch.before) : undefined) ? [assetOf(ch.after)!] : []))]
+  const out = new Map<string, Set<string>>()
+  for (let i = 0; i < ids.length; i += 90) {
+    const chunk = ids.slice(i, i + 90)
+    const { results } = await db.prepare(`SELECT a.id,a.size FROM agent_uploads u JOIN assets a ON a.id=u.asset_id WHERE u.credential_id=?1 AND a.created_by=?2 AND u.asset_id IN (${chunk.map((_, j) => `?${j + 3}`).join(',')})`).bind(credential.id, user.id, ...chunk).all<{ id: string; size: string }>()
+    for (const r of results) out.set(r.id, (out.get(r.id) ?? new Set()).add(r.size))
+  }
+  return out
+}
+/** An image card may name its connection's own upload once every rendition the app loads is stored
+ * (thumb, medium and full always; small when the card lists it). */
+function ownUpload(o: AgentObject, uploaded: Map<string, Set<string>>): boolean {
+  if (o.kind !== 'card' || o.type !== 'image') return false
+  const sizes = uploaded.get(o.content.assetId)
+  return !!sizes && ['thumb', 'medium', 'full', ...(o.content.sizes ?? [])].every((s) => sizes.has(s))
+}
+
 async function validateChanges(db: D1Database, access: Access, credential: Credential, user: User, changes: AgentChange[]) {
   const created = new Map(changes.filter((c) => !c.before && c.after.kind === 'board').map((c) => [c.id, c.after]))
   const scoped = (id: string, seen = new Set<string>()): boolean => {
@@ -170,6 +190,7 @@ async function validateChanges(db: D1Database, access: Access, credential: Crede
     return b?.kind === 'board' ? !!b.parentId && scoped(b.parentId, seen) : access.canEdit(id) && inAgentScope(access, credential, id)
   }
   const all = await records(db)
+  const uploaded = await agentUploads(db, credential, user, changes)
   const patches = changes.map((change) => {
     const after = change.after
     if (!scoped(onBoard(after)) || (change.before && !scoped(onBoard(change.before)))) error('Board is outside the connection’s editable scope')
@@ -180,7 +201,7 @@ async function validateChanges(db: D1Database, access: Access, credential: Crede
     const assetId = assetOf(after)
     if (assetId) {
       const existingId = before ? assetOf(before) : undefined
-      if (assetId !== existingId && ![...all.values()].some((r) => assetOf(r.object) === assetId && readable(access, credential, user.id, r))) error('Use an asset already visible within this connection’s boards')
+      if (assetId !== existingId && !ownUpload(after, uploaded) && ![...all.values()].some((r) => assetOf(r.object) === assetId && readable(access, credential, user.id, r))) error('Use an asset already visible within this connection’s boards, or one this connection uploaded')
     }
     // A sticker can only reuse sticker artwork already visible within the connection's boards.
     if (after.kind === 'sticker') {
@@ -309,6 +330,31 @@ machine.post('/proposals', async (c) => {
     }
     return c.json({ id, status: 'pending', reviewInApp: true, changedObjects: changes.length }, 201)
   } catch (e) { return c.json({ error: e instanceof Error ? e.message : 'Invalid proposal' }, 409) }
+})
+/** Reserve an image id for this connection; its renditions then go to PUT /agent/assets/:id/:size.
+ * The image stays private to this account until a person approves a proposal that places it. */
+machine.post('/uploads', async (c) => {
+  const agent = c.get('agent')
+  if (agent.mode !== 'propose') return c.json({ error: 'This connection is read-only' }, 403)
+  const parsed = z.strictObject({ assetId: z.uuid() }).safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: schemaError(parsed) }, 400)
+  const { assetId } = parsed.data, now = Date.now()
+  const prior = await c.env.DB.prepare('SELECT credential_id FROM agent_uploads WHERE asset_id=?1').bind(assetId).first<{ credential_id: string }>()
+  if (!prior) {
+    const recent = await c.env.DB.prepare('SELECT COUNT(*) AS n FROM agent_uploads WHERE credential_id=?1 AND created_at>?2').bind(agent.id, now - DAY).first<{ n: number }>()
+    if ((recent?.n ?? 0) >= MAX_UPLOADS_PER_DAY) return c.json({ error: `This connection uploaded ${MAX_UPLOADS_PER_DAY} images today; try again tomorrow` }, 429)
+    await c.env.DB.prepare(`INSERT OR IGNORE INTO agent_uploads(asset_id,credential_id,created_at) SELECT ?1,?2,?3
+      WHERE NOT EXISTS(SELECT 1 FROM assets WHERE id=?1) AND NOT EXISTS(SELECT 1 FROM sticker_assets WHERE asset_id=?1) AND NOT EXISTS(SELECT 1 FROM clipper_uploads WHERE asset_id=?1)`).bind(assetId, agent.id, now).run()
+  }
+  const owner = await c.env.DB.prepare('SELECT credential_id FROM agent_uploads WHERE asset_id=?1').bind(assetId).first<{ credential_id: string }>()
+  if (owner?.credential_id !== agent.id) return c.json({ error: 'Image identifier already belongs to another upload' }, 409)
+  const { results } = await c.env.DB.prepare('SELECT size FROM assets WHERE id=?1').bind(assetId).all<{ size: string }>()
+  return c.json({ assetId, stored: results.map((r) => r.size) })
+})
+machine.put('/assets/:id/:size', async (c) => {
+  const owner = await c.env.DB.prepare('SELECT credential_id FROM agent_uploads WHERE asset_id=?1').bind(c.req.param('id')).first<{ credential_id: string }>()
+  if (c.get('agent').mode !== 'propose' || owner?.credential_id !== c.get('agent').id) return c.json({ error: 'Reserve this image with POST /api/agent/uploads first' }, 403)
+  return putImageAsset(c as unknown as Context<AppEnv>)
 })
 machine.get('/proposals/:id', async (c) => {
   const p = await c.env.DB.prepare('SELECT id,label,status,created_at,applied_at FROM agent_proposals WHERE id=?1 AND credential_id=?2').bind(c.req.param('id'), c.get('agent').id).first()
@@ -486,4 +532,5 @@ agents.post('/agent-proposals/:id/approve', requireUser, (c) => applyProposal(c,
 agents.post('/agent-proposals/:id/reverse', requireUser, (c) => applyProposal(c, true))
 import { prepareNote } from './notes.ts'
 import { agentFanOut } from './synced.ts'
+import { putImageAsset } from './assets.ts'
 import { notifyRooms } from './realtime.ts'
