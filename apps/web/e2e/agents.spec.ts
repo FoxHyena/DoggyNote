@@ -108,6 +108,41 @@ test('a real stdio MCP client stages a board layout, a person previews/approves 
   expect((await page.request.get('/api/agent/boards', { headers: { authorization: `Bearer ${token}` } })).status()).toBe(401)
 })
 
+test('a real stdio MCP client uploads a folder of reference images, and a person approves the grid', async ({ page }, testInfo) => {
+  test.setTimeout(60_000)
+  await freshBoard(page, 'MCP reference images')
+  await waitForSync(page)
+  const boardId = new URL(page.url()).hash.split('/').at(-1)!
+  const { token } = await (await page.request.post('/api/agent-connections', { data: { name: 'Image uploader', mode: 'propose', boardIds: [boardId] } })).json()
+  const result = JSON.parse(execFileSync(process.execPath, ['--experimental-strip-types', `${appRoot}/apps/mcp/src/upload-smoke.ts`], { cwd: appRoot, env: { ...process.env, DOGGYNOTE_URL: new URL(page.url()).origin, DOGGYNOTE_TOKEN: token, DOGGYNOTE_SMOKE_BOARD: boardId }, timeout: 30_000, encoding: 'utf8' })) as { label: string; uploaded: { path: string; width: number }[]; skipped: { path: string }[] }
+  // Folder order, the text file skipped, and nothing on the live board yet.
+  expect(result.uploaded.map((u) => u.path.split('/').at(-1))).toEqual(['ref-1.png', 'ref-2.jpg', 'ref-3.png'])
+  expect(result.uploaded.map((u) => u.width)).toEqual([600, 700, 800])
+  expect(result.skipped).toEqual([])
+  expect(result.label).toMatch(/^Add 3 images from dn-refs-/)
+  await expect(page.getByTestId('card-image')).toHaveCount(0)
+  await openProposals(page)
+  await page.getByTestId('agent-review').getByRole('button', { name: new RegExp(result.label) }).click()
+  await page.getByTestId('preview-on-board').click()
+  // The proposed cards draw the uploaded renditions before approval.
+  const images = page.locator('[data-type=image][data-preview=added] img')
+  await expect(images).toHaveCount(3)
+  for (const i of [0, 1, 2]) await expect.poll(() => images.nth(i).evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBeGreaterThan(0)
+  await capture(page, testInfo, 'upload-images-preview.png')
+  await page.getByTestId('proposal-approve').click()
+  await expect(page.getByTestId('proposal-banner')).toHaveCount(0)
+  const live = page.locator('[data-type=image]:not([data-preview])')
+  await expect(live).toHaveCount(3)
+  await expect(page.getByTestId('image-caption')).toHaveText(['ref-1', 'ref-2', 'ref-3'])
+  // Two columns: the third image starts a new row under the first, clear of its caption.
+  const [a, b, c] = await Promise.all([0, 1, 2].map(async (i) => (await live.nth(i).boundingBox())!))
+  expect(Math.abs(a.y - b.y)).toBeLessThan(2)
+  expect(b.x).toBeGreaterThan(a.x + a.width)
+  expect(Math.abs(c.x - a.x)).toBeLessThan(2)
+  expect(c.y).toBeGreaterThan(a.y + a.height)
+  await capture(page, testInfo, 'upload-images-approved.png')
+})
+
 test('agent scope, read-only mode, session isolation, stale approval and newer-edit reversal conflicts are enforced', async ({ page }) => {
   await freshBoard(page, 'MCP conflict board')
   await addNote(page, 'Human original')

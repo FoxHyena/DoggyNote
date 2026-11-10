@@ -25,7 +25,23 @@ The connector works with local MCP clients that launch a stdio command. The desk
 
 Use the configuration format supported by your MCP client. The executable and environment values above are the connector's complete setup contract. A local development server may use `http://localhost:8787`; other servers require HTTPS.
 
-The tools are `list_boards`, `read_board`, `propose_board`, `propose_changes`, and `proposal_status`. A board read includes revisions and a pagination cursor. A proposal supports notes/markdown, todo lists, columns, links, nested boards, connectors, comments, layout changes, trash/restore, movie and show cards (name the title by `tmdbId` and `kind`, or `imdbId`, with `status: 'pending'`; DoggyNote fetches the poster and details after approval), and table cards, and reuse of existing scoped image/file asset IDs. Uploading new image/file bytes is not part of this version.
+The tools are `list_boards`, `read_board`, `propose_board`, `propose_changes`, `upload_images`, and `proposal_status`. A board read includes revisions and a pagination cursor. A proposal supports notes/markdown, todo lists, columns, links, nested boards, connectors, comments, layout changes, trash/restore, movie and show cards (name the title by `tmdbId` and `kind`, or `imdbId`, with `status: 'pending'`; DoggyNote fetches the poster and details after approval), and table cards, and reuse of existing scoped image/file asset IDs.
+
+### Images
+
+`upload_images` brings local pictures onto a board, for example a folder of reference images. Give it a board, one or more absolute paths to image files or folders, and an idempotency key:
+
+```json
+{ "boardId": "…", "paths": ["/Users/me/Pictures/refs"], "captions": "filename", "idempotencyKey": "refs-2026-11-09" }
+```
+
+- It reads jpg, png, webp, gif, avif and tiff, in file-name order (`recursive: true` adds subfolders), up to 150 images per call. Other files are skipped and listed in the result.
+- Each image is resized on your computer into the same four sizes the app makes, with EXIF rotation applied, and uploaded with the connection's token (15 MB per size, 1,000 images per connection per day). Animated GIFs keep their animation.
+- It stages one proposal with a grid of image cards: `columns` (default 5) and `cardWidth` (default 260) set the grid, and without `x`/`y` it starts under the board's existing cards. `captions: "filename"` puts each file name under its picture.
+- The pictures stay private to your account until you approve the proposal. Only the connection that uploaded an image can place it before then.
+- Retrying with the same key and arguments reuses the uploaded images and returns the same proposal. The result lists each image's `assetId`, `width`, `height` and `sizes`, which `propose_changes` image cards may use too.
+
+The machine API behind it is `POST /api/agent/uploads { assetId }` (reserves a UUID for this connection and returns the sizes already stored) and `PUT /api/agent/assets/:assetId/:size` (`thumb`, `small`, `medium`, `full`; JPEG, PNG, WebP or GIF).
 
 ### Tables
 
@@ -59,4 +75,4 @@ Applied proposals can be reversed while their affected objects have no newer mea
 
 The connector cannot approve proposals, permanently purge objects, change sharing, or administer accounts. Tokens never authorize ordinary sync endpoints. Every read/proposal/approval intersects token scope with the user's current permissions.
 
-The real SDK client check used by E2E tests is `apps/mcp/src/client-smoke.ts`. With `DOGGYNOTE_URL`, `DOGGYNOTE_TOKEN`, and `DOGGYNOTE_SMOKE_BOARD` set, running it through Node stages a small reviewable layout and verifies tool discovery, reads, proposal status, and idempotent retry. It prints only the proposal result, never the token.
+The real SDK client check used by E2E tests is `apps/mcp/src/client-smoke.ts`. With `DOGGYNOTE_URL`, `DOGGYNOTE_TOKEN`, and `DOGGYNOTE_SMOKE_BOARD` set, running it through Node stages a small reviewable layout and verifies tool discovery, reads, proposal status, and idempotent retry. It prints only the proposal result, never the token. `apps/mcp/src/upload-smoke.ts` does the same for `upload_images` with a generated folder of three pictures.
